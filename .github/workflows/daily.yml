@@ -16,10 +16,11 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - name: 패키지 설치
-        run: pip install yfinance pandas numpy
+        run: pip install -r requirements.txt
       - name: 분석 및 메일 전송
         env:
           NAVER_EMAIL:    ${{ secrets.NAVER_EMAIL }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
           RECEIVE_EMAIL:  ${{ secrets.RECEIVE_EMAIL }}
+          DART_API_KEY:   ${{ secrets.DART_API_KEY }}
         run: python stock.py
