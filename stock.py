@@ -1172,7 +1172,14 @@ def make_report(kr_top: list, us_top: list, avoid: list,
     sp500_col  = "#e03131" if mood["sp500_chg"] >= 0 else "#1971c2"
     kos_col    = "#e03131" if mood["kospi_chg"] >= 0 else "#1971c2"
 
-    html = f"""
+    html = f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>투자 비서 리포트 {today}</title>
+</head>
+<body>
 <div style="font-family:Apple SD Gothic Neo,맑은 고딕,sans-serif;
             max-width:680px;margin:0 auto;color:#1a1a1a;">
 
@@ -1276,7 +1283,9 @@ def make_report(kr_top: list, us_top: list, avoid: list,
     🟢낮음=안정적 &nbsp;|&nbsp; 🟡중간=보통 &nbsp;|&nbsp; 🔴높음=신중 &nbsp;|&nbsp;
     단기=1~4주 &nbsp;|&nbsp; 중기=1~6개월 &nbsp;|&nbsp; 장기=1년+
   </div>
-</div>"""
+</div>
+</body>
+</html>"""
 
     return html
 
