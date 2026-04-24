@@ -1,31 +1,29 @@
 """
-투자 비서 프로그램 v4.0
+투자 비서 프로그램 v5.0
 - 단기/중기/장기 종목 분류
 - 매수이유 상세 설명
 - 200만원 기준 매수/매도/손절가 계산
 - 분할매수 전략 제안
 - 리스크 등급 및 주의사항
 - 시장 브리핑 / 피해야 할 종목 경고
-- OpenDart API 공식 재무제표 + 공시 알림 (v4.0)
+- OpenDart API 공식 재무제표 + 공시 알림
+- 한국투자증권 API: 국내주식 실시간 시세 + 외국인/기관 순매수
+- 텔레그램 봇 알림 (v5.0)
 """
 
 import os
-import smtplib
 import requests
 import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import time
 
 # ================================================
-# 인증 정보 (환경변수 우선)
+# 텔레그램 설정 (환경변수)
 # ================================================
-NAVER_EMAIL    = os.environ.get("NAVER_EMAIL",    "eeun4623@naver.com")
-NAVER_PASSWORD = os.environ.get("NAVER_PASSWORD", "W4WWBQS7DJDV")
-RECEIVE_EMAIL  = os.environ.get("RECEIVE_EMAIL",  "eeun4623@naver.com")
+TELEGRAM_TOKEN   = os.environ.get("TELEGRAM_TOKEN",   "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # ================================================
 # 투자 설정
@@ -35,6 +33,130 @@ STOP_LOSS_PCT    = 0.07
 TARGET1_PCT      = 0.10
 TARGET2_PCT      = 0.20
 TARGET3_PCT      = 0.40
+
+# ================================================
+# 한국투자증권 (KIS) API
+# ================================================
+KIS_APP_KEY    = os.environ.get("KIS_APP_KEY", "")
+KIS_APP_SECRET = os.environ.get("KIS_APP_SECRET", "")
+KIS_BASE       = "https://openapi.koreainvestment.com:9443"
+
+
+def _safe_float(val, default: float = 0.0) -> float:
+    """문자열 포함 숫자 파싱 — 공백/대시/None 안전 처리"""
+    try:
+        return float(str(val).replace(",", "")) if val not in (None, "", "-", "N/A") else default
+    except (ValueError, TypeError):
+        return default
+
+
+class KisClient:
+    """한국투자증권 Open API 클라이언트 (토큰 자동 갱신)"""
+
+    def __init__(self):
+        self._token: str = ""
+        self._token_exp: datetime = datetime.min
+
+    def available(self) -> bool:
+        return bool(KIS_APP_KEY and KIS_APP_SECRET)
+
+    def _ensure_token(self):
+        if not self.available() or datetime.now() < self._token_exp:
+            return
+        try:
+            r = requests.post(
+                f"{KIS_BASE}/oauth2/tokenP",
+                json={
+                    "grant_type": "client_credentials",
+                    "appkey":     KIS_APP_KEY,
+                    "appsecret":  KIS_APP_SECRET,
+                },
+                timeout=10,
+            )
+            d = r.json()
+            self._token     = d.get("access_token", "")
+            expires_in      = int(d.get("expires_in", 86400))
+            self._token_exp = datetime.now() + timedelta(seconds=expires_in - 600)
+        except Exception as e:
+            print(f"  [KIS] 토큰 발급 실패: {e}")
+
+    def _get(self, path: str, tr_id: str, params: dict) -> dict:
+        if not self.available():
+            return {}
+        self._ensure_token()
+        if not self._token:
+            return {}
+        try:
+            r = requests.get(
+                f"{KIS_BASE}{path}",
+                headers={
+                    "content-type":  "application/json; charset=utf-8",
+                    "authorization": f"Bearer {self._token}",
+                    "appkey":        KIS_APP_KEY,
+                    "appsecret":     KIS_APP_SECRET,
+                    "tr_id":         tr_id,
+                    "custtype":      "P",
+                },
+                params=params,
+                timeout=10,
+            )
+            d = r.json()
+            if d.get("rt_cd") != "0":
+                return {}
+            return d
+        except Exception as e:
+            print(f"  [KIS] 요청 실패 ({tr_id}): {e}")
+            return {}
+
+    def get_price(self, stock_code: str) -> dict:
+        """주식현재가 시세조회 (FHKST01010100)"""
+        d = self._get(
+            "/uapi/domestic-stock/v1/quotations/inquire-price",
+            "FHKST01010100",
+            {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": stock_code},
+        )
+        return d.get("output", {})
+
+    def get_investor(self, stock_code: str) -> dict:
+        """당일 외국인/기관 순매수 (FHKST01010900)"""
+        d = self._get(
+            "/uapi/domestic-stock/v1/quotations/inquire-investor",
+            "FHKST01010900",
+            {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": stock_code},
+        )
+        output = d.get("output", [])
+        return output[0] if isinstance(output, list) and output else {}
+
+    def get_daily_chart(self, stock_code: str, months: int = 5) -> list:
+        """일별 주가 OHLCV (FHKST03010100) — 최대 100봉"""
+        end_dt   = datetime.now().strftime("%Y%m%d")
+        start_dt = (datetime.now() - timedelta(days=months * 31)).strftime("%Y%m%d")
+        d = self._get(
+            "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
+            "FHKST03010100",
+            {
+                "FID_COND_MRKT_DIV_CODE": "J",
+                "FID_INPUT_ISCD":         stock_code,
+                "FID_INPUT_DATE_1":       start_dt,
+                "FID_INPUT_DATE_2":       end_dt,
+                "FID_PERIOD_DIV_CODE":    "D",
+                "FID_ORG_ADJ_PRC":        "0",
+            },
+        )
+        rows = d.get("output2", [])
+        return list(reversed(rows))  # KIS는 최신순 → 오래된순으로 뒤집기
+
+    def get_kospi(self) -> dict:
+        """코스피 지수 현재가 (FHPUP02100000)"""
+        d = self._get(
+            "/uapi/domestic-stock/v1/quotations/inquire-index-price",
+            "FHPUP02100000",
+            {"FID_COND_MRKT_DIV_CODE": "U", "FID_INPUT_ISCD": "0001"},
+        )
+        return d.get("output", {})
+
+
+_kis = KisClient()
 
 # ================================================
 # OpenDart API
@@ -254,20 +376,34 @@ SECTOR_DESC = {
 def get_market_mood() -> dict:
     mood = {}
     try:
-        kospi  = yf.Ticker("^KS11").history(period="5d")
+        # ── 코스피: KIS 우선, 실패 시 yfinance 폴백 ─────────
+        kospi_ok = False
+        if _kis.available():
+            try:
+                ki = _kis.get_kospi()
+                if ki:
+                    mood["kospi_price"] = round(_safe_float(ki.get("bstp_nmix_prpr")), 2)
+                    mood["kospi_chg"]   = round(_safe_float(ki.get("prdy_ctrt")), 2)
+                    kospi_ok = True
+            except Exception:
+                pass
+
+        if not kospi_ok:
+            kospi = yf.Ticker("^KS11").history(period="5d")
+            if len(kospi) >= 2:
+                k_chg = (kospi["Close"].iloc[-1] - kospi["Close"].iloc[-2]) / kospi["Close"].iloc[-2] * 100
+                mood["kospi_chg"]   = round(k_chg, 2)
+                mood["kospi_price"] = round(float(kospi["Close"].iloc[-1]), 2)
+            else:
+                mood["kospi_chg"] = 0
+                mood["kospi_price"] = 0
+
+        # ── 해외 지표: yfinance ──────────────────────────────
         vix    = yf.Ticker("^VIX").info
         usdkrw = yf.Ticker("KRW=X").info
         wti    = yf.Ticker("CL=F").info
         gold   = yf.Ticker("GC=F").info
         sp500  = yf.Ticker("^GSPC").history(period="2d")
-
-        if len(kospi) >= 2:
-            k_chg = (kospi["Close"].iloc[-1] - kospi["Close"].iloc[-2]) / kospi["Close"].iloc[-2] * 100
-            mood["kospi_chg"]   = round(k_chg, 2)
-            mood["kospi_price"] = round(float(kospi["Close"].iloc[-1]), 2)
-        else:
-            mood["kospi_chg"] = 0
-            mood["kospi_price"] = 0
 
         if len(sp500) >= 2:
             s_chg = (sp500["Close"].iloc[-1] - sp500["Close"].iloc[-2]) / sp500["Close"].iloc[-2] * 100
@@ -304,51 +440,105 @@ def get_market_mood() -> dict:
 
 def analyze(ticker: str, name: str, period: str, sector: str,
             dart_data: dict | None = None) -> dict | None:
+    is_kr    = ".KS" in ticker or ".KQ" in ticker
+    currency = "KRW" if is_kr else "USD"
+
+    # ── 1. 데이터 수집 (KIS / yfinance 분기) ───────────────
+    foreign_net = 0.0  # 외국인 순매수 금액 (원)
+    inst_net    = 0.0  # 기관 순매수 금액 (원)
+    revenue     = 0
+    profit      = 0
+
     try:
-        stock = yf.Ticker(ticker)
-        info  = stock.info
+        if is_kr and _kis.available():
+            # ── KIS: 국내주식 ──────────────────────────────
+            stock_code = ticker.split(".")[0]
 
-        if not info or not info.get("regularMarketPrice"):
-            return None
+            price_info = _kis.get_price(stock_code)
+            if not price_info:
+                return None
 
-        price    = float(info.get("regularMarketPrice", 0))
-        prev     = float(info.get("regularMarketPreviousClose") or price)
-        change   = round((price - prev) / prev * 100, 2) if prev else 0
-        per      = info.get("trailingPE") or info.get("forwardPE")
-        pbr      = info.get("priceToBook")
-        roe      = round((info.get("returnOnEquity") or 0) * 100, 1)
-        div      = round((info.get("dividendYield") or 0) * 100, 1)
-        debt     = round(info.get("debtToEquity") or 0, 1)
-        revenue  = info.get("totalRevenue", 0)
-        profit   = info.get("netIncomeToCommon", 0)
-        low52    = info.get("fiftyTwoWeekLow", price)
-        high52   = info.get("fiftyTwoWeekHigh", price)
-        mktcap   = info.get("marketCap", 0)
-        currency = "KRW" if ".KS" in ticker or ".KQ" in ticker else "USD"
+            price = _safe_float(price_info.get("stck_prpr"))
+            if price <= 0:
+                return None
 
-        pct_from_low  = round((price - low52)  / low52  * 100, 1) if low52  else 0
-        pct_from_high = round((price - high52) / high52 * 100, 1) if high52 else 0
+            change = _safe_float(price_info.get("prdy_ctrt"))
+            per    = _safe_float(price_info.get("per"))  or None
+            pbr    = _safe_float(price_info.get("pbr"))  or None
+            div    = _safe_float(price_info.get("dvdn_yield"))
+            low52  = _safe_float(price_info.get("w52_lwpr"), price)
+            high52 = _safe_float(price_info.get("w52_hgpr"), price)
+            mktcap = _safe_float(price_info.get("hts_avls")) * 1e8  # 억원 → 원
 
-        hist = stock.history(period="6mo")
-        if hist is None or len(hist) < 20:
-            return None
+            # ROE ≈ EPS / BPS × 100 (KIS 제공 수치 활용)
+            eps = _safe_float(price_info.get("eps"))
+            bps = _safe_float(price_info.get("bps"))
+            roe = round(eps / bps * 100, 1) if bps > 0 else 0.0
+            debt = 0.0  # KIS 미제공 — 부채비율 스코어링 생략
 
-        close  = hist["Close"].squeeze()
-        volume = hist["Volume"].squeeze()
+            # 일별 OHLCV (기술적 분석용)
+            rows = _kis.get_daily_chart(stock_code, months=5)
+            if len(rows) < 20:
+                return None
+            close  = pd.Series([_safe_float(r.get("stck_clpr")) for r in rows], dtype=float)
+            volume = pd.Series([_safe_float(r.get("acml_vol"))   for r in rows], dtype=float)
+
+            # 외국인/기관 당일 순매수
+            inv = _kis.get_investor(stock_code)
+            foreign_net = _safe_float(inv.get("frgn_ntby_tr_pbmn"))  # 원 단위
+            inst_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))   # 원 단위
+
+        else:
+            # ── yfinance: 해외주식 (또는 KIS 키 미설정 시 폴백) ──
+            stock = yf.Ticker(ticker)
+            info  = stock.info
+
+            if not info or not info.get("regularMarketPrice"):
+                return None
+
+            price  = float(info.get("regularMarketPrice", 0))
+            prev   = float(info.get("regularMarketPreviousClose") or price)
+            change = round((price - prev) / prev * 100, 2) if prev else 0
+            per    = info.get("trailingPE") or info.get("forwardPE")
+            pbr    = info.get("priceToBook")
+            roe    = round((info.get("returnOnEquity") or 0) * 100, 1)
+            div    = round((info.get("dividendYield") or 0) * 100, 1)
+            debt   = round(info.get("debtToEquity") or 0, 1)
+            low52  = info.get("fiftyTwoWeekLow", price)
+            high52 = info.get("fiftyTwoWeekHigh", price)
+            mktcap = info.get("marketCap", 0)
+            revenue = info.get("totalRevenue", 0)
+            profit  = info.get("netIncomeToCommon", 0)
+
+            hist = stock.history(period="6mo")
+            if hist is None or len(hist) < 20:
+                return None
+            close  = hist["Close"].squeeze()
+            volume = hist["Volume"].squeeze()
+
+    except Exception as e:
+        print(f"  [{ticker}] 데이터 수집 오류: {e}")
+        return None
+
+    pct_from_low  = round((price - low52)  / low52  * 100, 1) if low52  else 0
+    pct_from_high = round((price - high52) / high52 * 100, 1) if high52 else 0
+
+    # ── 2. 기술적 지표 계산 (공통) ─────────────────────────
+    try:
+        delta = close.diff()
 
         # RSI
-        delta = close.diff()
         gain  = delta.clip(lower=0).rolling(14).mean()
         loss  = (-delta.clip(upper=0)).rolling(14).mean()
         rs    = gain / loss.replace(0, 1e-9)
         rsi   = round(float((100 - 100 / (1 + rs)).iloc[-1]), 1)
 
         # MACD
-        ema12      = close.ewm(span=12).mean()
-        ema26      = close.ewm(span=26).mean()
-        macd       = ema12 - ema26
-        signal_line= macd.ewm(span=9).mean()
-        macd_cross = float(macd.iloc[-1]) > float(signal_line.iloc[-1])
+        ema12       = close.ewm(span=12).mean()
+        ema26       = close.ewm(span=26).mean()
+        macd_line   = ema12 - ema26
+        signal_line = macd_line.ewm(span=9).mean()
+        macd_cross  = float(macd_line.iloc[-1]) > float(signal_line.iloc[-1])
 
         # 볼린저밴드
         sma20  = close.rolling(20).mean()
@@ -362,13 +552,14 @@ def analyze(ticker: str, name: str, period: str, sector: str,
         last_vol  = float(volume.iloc[-1])
         vol_ratio = round(last_vol / avg_vol * 100, 0) if avg_vol else 100
 
-        ret_1w = round((float(close.iloc[-1]) - float(close.iloc[-5]))  / float(close.iloc[-5])  * 100, 1) if len(close) >= 5  else 0
-        ret_1m = round((float(close.iloc[-1]) - float(close.iloc[-20])) / float(close.iloc[-20]) * 100, 1) if len(close) >= 20 else 0
+        n = len(close)
+        ret_1w = round((float(close.iloc[-1]) - float(close.iloc[-5]))  / float(close.iloc[-5])  * 100, 1) if n >= 5  else 0
+        ret_1m = round((float(close.iloc[-1]) - float(close.iloc[-20])) / float(close.iloc[-20]) * 100, 1) if n >= 20 else 0
         ret_3m = round((float(close.iloc[-1]) - float(close.iloc[0]))   / float(close.iloc[0])   * 100, 1)
 
         # 과거 패턴 승률
         win_count = total_count = 0
-        for i in range(20, len(close) - 20):
+        for i in range(20, n - 20):
             d  = delta.iloc[:i + 1]
             g  = d.clip(lower=0).rolling(14).mean()
             ll = (-d.clip(upper=0)).rolling(14).mean()
@@ -381,51 +572,57 @@ def analyze(ticker: str, name: str, period: str, sector: str,
                     win_count += 1
         win_rate = round(win_count / total_count * 100) if total_count > 0 else 50
 
-        # ── 점수 계산 ──────────────────────────────────────
-        score    = 0
-        reasons  = []
-        warnings = []
+    except Exception as e:
+        print(f"  [{ticker}] 기술적 지표 오류: {e}")
+        return None
 
-        if per:
-            if per <= 8:
-                score += 30; reasons.append(f"PER {per:.1f}배 — 업종 평균 대비 매우 저렴한 수준이에요")
-            elif per <= 12:
-                score += 22; reasons.append(f"PER {per:.1f}배 — 적정 수준보다 저렴해요")
-            elif per <= 15:
-                score += 15; reasons.append(f"PER {per:.1f}배 — 합리적인 가격 수준이에요")
-            elif per <= 20:
-                score += 7;  warnings.append(f"PER {per:.1f}배 — 약간 비싼 편이에요")
-            else:
-                score -= 5;  warnings.append(f"PER {per:.1f}배 — 현재 주가가 비싼 편이에요")
+    # ── 3. 점수 계산 (공통) ─────────────────────────────────
+    score    = 0
+    reasons  = []
+    warnings = []
+
+    if per:
+        if per <= 8:
+            score += 30; reasons.append(f"PER {per:.1f}배 — 업종 평균 대비 매우 저렴한 수준이에요")
+        elif per <= 12:
+            score += 22; reasons.append(f"PER {per:.1f}배 — 적정 수준보다 저렴해요")
+        elif per <= 15:
+            score += 15; reasons.append(f"PER {per:.1f}배 — 합리적인 가격 수준이에요")
+        elif per <= 20:
+            score += 7;  warnings.append(f"PER {per:.1f}배 — 약간 비싼 편이에요")
         else:
-            warnings.append("PER 정보 없음 — 수익성 확인 필요")
+            score -= 5;  warnings.append(f"PER {per:.1f}배 — 현재 주가가 비싼 편이에요")
+    else:
+        warnings.append("PER 정보 없음 — 수익성 확인 필요")
 
-        if pbr:
-            if pbr <= 0.8:
-                score += 25; reasons.append(f"PBR {pbr:.2f}배 — 회사 자산보다 싸게 살 수 있어요")
-            elif pbr <= 1.2:
-                score += 18; reasons.append(f"PBR {pbr:.2f}배 — 자산 대비 저렴하게 거래 중이에요")
-            elif pbr <= 1.5:
-                score += 10; reasons.append(f"PBR {pbr:.2f}배 — 적정 수준이에요")
-            else:
-                warnings.append(f"PBR {pbr:.2f}배 — 자산 대비 다소 비쌀 수 있어요")
-
-        if roe >= 15:
-            score += 15; reasons.append(f"ROE {roe}% — 돈을 매우 잘 버는 회사예요")
-        elif roe >= 10:
-            score += 10; reasons.append(f"ROE {roe}% — 꾸준히 수익을 내는 안정적인 회사예요")
-        elif roe >= 5:
-            score += 5
+    if pbr:
+        if pbr <= 0.8:
+            score += 25; reasons.append(f"PBR {pbr:.2f}배 — 회사 자산보다 싸게 살 수 있어요")
+        elif pbr <= 1.2:
+            score += 18; reasons.append(f"PBR {pbr:.2f}배 — 자산 대비 저렴하게 거래 중이에요")
+        elif pbr <= 1.5:
+            score += 10; reasons.append(f"PBR {pbr:.2f}배 — 적정 수준이에요")
         else:
-            warnings.append(f"ROE {roe}% — 수익성이 낮은 편이에요")
+            warnings.append(f"PBR {pbr:.2f}배 — 자산 대비 다소 비쌀 수 있어요")
 
-        if div >= 4:
-            score += 10; reasons.append(f"배당수익률 {div}% — 은행 이자보다 훨씬 높은 배당을 줘요")
-        elif div >= 2:
-            score += 6;  reasons.append(f"배당수익률 {div}% — 안정적인 배당이 있어요")
-        elif div >= 1:
-            score += 3
+    if roe >= 15:
+        score += 15; reasons.append(f"ROE {roe}% — 돈을 매우 잘 버는 회사예요")
+    elif roe >= 10:
+        score += 10; reasons.append(f"ROE {roe}% — 꾸준히 수익을 내는 안정적인 회사예요")
+    elif roe >= 5:
+        score += 5
+    elif roe > 0:
+        warnings.append(f"ROE {roe}% — 수익성이 낮은 편이에요")
 
+    if div >= 4:
+        score += 10; reasons.append(f"배당수익률 {div}% — 은행 이자보다 훨씬 높은 배당을 줘요")
+    elif div >= 2:
+        score += 6;  reasons.append(f"배당수익률 {div}% — 안정적인 배당이 있어요")
+    elif div >= 1:
+        score += 3
+
+    # debt: KIS에서 미제공 시(=0.0, is_kr) 부채 스코어링 생략
+    if not (is_kr and _kis.available()):
         if debt > 200:
             score -= 10; warnings.append(f"부채비율 {debt}% — 부채가 많은 편이에요")
         elif debt > 100:
@@ -433,135 +630,151 @@ def analyze(ticker: str, name: str, period: str, sector: str,
         elif debt <= 50:
             score += 5;  reasons.append(f"부채비율 {debt}% — 재무 건전성이 매우 좋아요")
 
-        if rsi < 30:
-            score += 15; reasons.append(f"RSI {rsi} — 과매도 구간이에요. 반등 가능성이 높아요")
-        elif rsi < 45:
-            score += 10; reasons.append(f"RSI {rsi} — 저점 매수 구간이에요")
-        elif rsi > 70:
-            score -= 10; warnings.append(f"RSI {rsi} — 과매수 구간이에요. 단기 조정 가능성 있어요")
+    if rsi < 30:
+        score += 15; reasons.append(f"RSI {rsi} — 과매도 구간이에요. 반등 가능성이 높아요")
+    elif rsi < 45:
+        score += 10; reasons.append(f"RSI {rsi} — 저점 매수 구간이에요")
+    elif rsi > 70:
+        score -= 10; warnings.append(f"RSI {rsi} — 과매수 구간이에요. 단기 조정 가능성 있어요")
 
-        if macd_cross:
-            score += 8;  reasons.append("MACD 골든크로스 — 상승 전환 신호가 포착됐어요")
+    if macd_cross:
+        score += 8;  reasons.append("MACD 골든크로스 — 상승 전환 신호가 포착됐어요")
 
-        if bb_pct < 20:
-            score += 10; reasons.append(f"볼린저밴드 하단 근처 ({bb_pct}%) — 통계적으로 반등 가능성이 높아요")
-        elif bb_pct > 80:
-            warnings.append(f"볼린저밴드 상단 근처 ({bb_pct}%) — 단기 과열 구간이에요")
+    if bb_pct < 20:
+        score += 10; reasons.append(f"볼린저밴드 하단 근처 ({bb_pct}%) — 통계적으로 반등 가능성이 높아요")
+    elif bb_pct > 80:
+        warnings.append(f"볼린저밴드 상단 근처 ({bb_pct}%) — 단기 과열 구간이에요")
 
-        if pct_from_low <= 10:
-            score += 12; reasons.append(f"52주 최저가 대비 +{pct_from_low}% — 역사적 저점 근처예요")
-        elif pct_from_low <= 20:
-            score += 6;  reasons.append(f"52주 최저가 대비 +{pct_from_low}% — 저점 구간에 있어요")
+    if pct_from_low <= 10:
+        score += 12; reasons.append(f"52주 최저가 대비 +{pct_from_low}% — 역사적 저점 근처예요")
+    elif pct_from_low <= 20:
+        score += 6;  reasons.append(f"52주 최저가 대비 +{pct_from_low}% — 저점 구간에 있어요")
 
-        if pct_from_high < -30:
-            score += 5;  reasons.append(f"52주 최고가 대비 {pct_from_high}% — 고점 대비 많이 빠진 상태예요")
+    if pct_from_high < -30:
+        score += 5;  reasons.append(f"52주 최고가 대비 {pct_from_high}% — 고점 대비 많이 빠진 상태예요")
 
-        if vol_ratio >= 200:
-            score += 10; reasons.append(f"거래량 평균 대비 {vol_ratio:.0f}% — 강한 매수세가 들어오고 있어요")
-        elif vol_ratio >= 150:
-            score += 6;  reasons.append(f"거래량 평균 대비 {vol_ratio:.0f}% — 평소보다 거래가 활발해요")
-        elif vol_ratio < 50:
-            warnings.append("거래량이 매우 적어요 — 유동성 위험이 있어요")
+    if vol_ratio >= 200:
+        score += 10; reasons.append(f"거래량 평균 대비 {vol_ratio:.0f}% — 강한 매수세가 들어오고 있어요")
+    elif vol_ratio >= 150:
+        score += 6;  reasons.append(f"거래량 평균 대비 {vol_ratio:.0f}% — 평소보다 거래가 활발해요")
+    elif vol_ratio < 50:
+        warnings.append("거래량이 매우 적어요 — 유동성 위험이 있어요")
 
-        if ret_1m < -15:
-            score -= 8;  warnings.append(f"최근 1달 {ret_1m}% 하락 — 하락 추세 주의")
-        elif ret_1m < -5:
-            score += 3;  reasons.append(f"최근 1달 {ret_1m}% 조정 — 눌림목 매수 기회일 수 있어요")
+    if ret_1m < -15:
+        score -= 8;  warnings.append(f"최근 1달 {ret_1m}% 하락 — 하락 추세 주의")
+    elif ret_1m < -5:
+        score += 3;  reasons.append(f"최근 1달 {ret_1m}% 조정 — 눌림목 매수 기회일 수 있어요")
 
-        sector_bonus = 0
-        if sector in ["조선", "방산", "원전", "전력", "바이오"]:
-            sector_bonus = 15; reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')}")
-        elif sector in ["신재생", "리츠", "소비재"]:
-            sector_bonus = 8;  reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')} (장기 보유 추천)")
-        elif sector in ["금융", "해운", "에너지"]:
-            sector_bonus = 10; reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')}")
-        score += sector_bonus
+    sector_bonus = 0
+    if sector in ["조선", "방산", "원전", "전력", "바이오"]:
+        sector_bonus = 15; reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')}")
+    elif sector in ["신재생", "리츠", "소비재"]:
+        sector_bonus = 8;  reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')} (장기 보유 추천)")
+    elif sector in ["금융", "해운", "에너지"]:
+        sector_bonus = 10; reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')}")
+    score += sector_bonus
 
-        # ── DART 신호 점수 조정 ────────────────────────────
-        dart_fin  = {}
-        dart_sigs = {}
-        if dart_data:
-            dart_fin  = dart_data.get("financials", {})
-            dart_sigs = dart_data.get("signals", {})
+    # ── 외국인/기관 순매수 (KIS 전용) ──────────────────────
+    foreign_eok = foreign_net / 1e8  # 원 → 억원
+    inst_eok    = inst_net    / 1e8
+    if is_kr and _kis.available():
+        if foreign_eok >= 50:
+            score += 10; reasons.append(f"외국인 순매수 +{foreign_eok:.0f}억원 — 강한 외국인 매수세")
+        elif foreign_eok >= 10:
+            score += 5;  reasons.append(f"외국인 순매수 +{foreign_eok:.0f}억원")
+        elif foreign_eok <= -50:
+            score -= 8;  warnings.append(f"외국인 순매도 {foreign_eok:.0f}억원 — 외국인 이탈 주의")
 
-            if dart_sigs.get("rights"):
-                score -= 15
-                warnings.append("유상증자 결정 공시 감지 — 주가 희석 우려, 단기 하락 리스크")
+        if inst_eok >= 50:
+            score += 8;  reasons.append(f"기관 순매수 +{inst_eok:.0f}억원 — 기관 집중 매수")
+        elif inst_eok >= 10:
+            score += 4;  reasons.append(f"기관 순매수 +{inst_eok:.0f}억원")
+        elif inst_eok <= -50:
+            score -= 5;  warnings.append(f"기관 순매도 {inst_eok:.0f}억원")
 
-            if dart_sigs.get("buyback"):
-                score += 10
-                reasons.append("자사주 매입 결정 공시 — 주주 가치 제고 호재 신호")
+    # ── DART 신호 점수 조정 ─────────────────────────────────
+    dart_fin  = {}
+    dart_sigs = {}
+    if dart_data:
+        dart_fin  = dart_data.get("financials", {})
+        dart_sigs = dart_data.get("signals", {})
 
-            if dart_sigs.get("order"):
-                bonus = 15 if sector == "조선" else 10
-                score += bonus
-                n = len(dart_sigs["order"])
-                reasons.append(
-                    f"신규 수주 공시 {n}건 감지" +
-                    (" — 조선주 핵심 호재" if sector == "조선" else "")
-                )
+        if dart_sigs.get("rights"):
+            score -= 15
+            warnings.append("유상증자 결정 공시 감지 — 주가 희석 우려, 단기 하락 리스크")
 
-            if dart_sigs.get("dividend"):
-                score += 5
-                reasons.append("배당 결정 공시 — 주주환원 신호")
+        if dart_sigs.get("buyback"):
+            score += 10
+            reasons.append("자사주 매입 결정 공시 — 주주 가치 제고 호재 신호")
 
-        # ── 리스크 등급 ────────────────────────────────────
-        if score >= 80 and len(warnings) <= 1:
-            risk = "🟢 낮음";  risk_desc = "안정적인 투자 기회예요"
-        elif score >= 60:
-            risk = "🟡 중간";  risk_desc = "적정 리스크 수준이에요"
-        else:
-            risk = "🔴 높음";  risk_desc = "신중하게 접근하세요"
+        if dart_sigs.get("order"):
+            bonus = 15 if sector == "조선" else 10
+            score += bonus
+            n_ord = len(dart_sigs["order"])
+            reasons.append(
+                f"신규 수주 공시 {n_ord}건 감지" +
+                (" — 조선주 핵심 호재" if sector == "조선" else "")
+            )
 
-        buy_price  = round(price * 0.99)
-        stop_price = round(price * (1 - STOP_LOSS_PCT))
-        target1    = round(price * (1 + TARGET1_PCT))
-        target2    = round(price * (1 + TARGET2_PCT))
-        target3    = round(price * (1 + TARGET3_PCT))
+        if dart_sigs.get("dividend"):
+            score += 5
+            reasons.append("배당 결정 공시 — 주주환원 신호")
 
-        shares      = int(INVEST_PER_STOCK / buy_price)
-        invest_real = shares * buy_price
-        profit1     = shares * (target1 - buy_price)
-        profit2     = shares * (target2 - buy_price)
-        profit3     = shares * (target3 - buy_price)
-        loss_amt    = shares * (buy_price - stop_price)
+    # ── 리스크 등급 ─────────────────────────────────────────
+    if score >= 80 and len(warnings) <= 1:
+        risk = "🟢 낮음";  risk_desc = "안정적인 투자 기회예요"
+    elif score >= 60:
+        risk = "🟡 중간";  risk_desc = "적정 리스크 수준이에요"
+    else:
+        risk = "🔴 높음";  risk_desc = "신중하게 접근하세요"
 
-        split1_shares = int(shares * 0.5)
-        split2_price  = round(price * 0.95)
-        split2_shares = shares - split1_shares
+    buy_price  = round(price * 0.99)
+    stop_price = round(price * (1 - STOP_LOSS_PCT))
+    target1    = round(price * (1 + TARGET1_PCT))
+    target2    = round(price * (1 + TARGET2_PCT))
+    target3    = round(price * (1 + TARGET3_PCT))
 
-        if period == "단기":
-            period_strategy = f"1차 목표가({target1:,}) 도달 시 전량 매도 권장. 손절은 빠르게."
-        elif period == "중기":
-            period_strategy = f"1차({target1:,})에서 절반 매도, 나머지는 2차 목표({target2:,}) 대기."
-        else:
-            period_strategy = f"1~2차 목표에서 일부만 매도, 나머지는 장기 보유. 배당도 챙기세요."
+    shares        = int(INVEST_PER_STOCK / buy_price)
+    invest_real   = shares * buy_price
+    profit1       = shares * (target1 - buy_price)
+    profit2       = shares * (target2 - buy_price)
+    profit3       = shares * (target3 - buy_price)
+    loss_amt      = shares * (buy_price - stop_price)
+    split1_shares = int(shares * 0.5)
+    split2_price  = round(price * 0.95)
+    split2_shares = shares - split1_shares
 
-        return {
-            "ticker": ticker, "name": name, "period": period, "sector": sector,
-            "price": price, "change": change, "currency": currency,
-            "per": per, "pbr": pbr, "roe": roe, "div": div, "debt": debt,
-            "low52": low52, "high52": high52,
-            "pct_from_low": pct_from_low, "pct_from_high": pct_from_high,
-            "rsi": rsi, "macd_cross": macd_cross, "bb_pct": bb_pct,
-            "vol_ratio": vol_ratio, "ret_1w": ret_1w, "ret_1m": ret_1m, "ret_3m": ret_3m,
-            "win_rate": win_rate, "score": score, "risk": risk, "risk_desc": risk_desc,
-            "reasons": reasons, "warnings": warnings,
-            "buy_price": buy_price, "stop_price": stop_price,
-            "target1": target1, "target2": target2, "target3": target3,
-            "shares": shares, "invest_real": invest_real,
-            "profit1": profit1, "profit2": profit2, "profit3": profit3,
-            "loss_amt": loss_amt,
-            "split1_shares": split1_shares, "split2_price": split2_price,
-            "split2_shares": split2_shares, "period_strategy": period_strategy,
-            "mktcap": mktcap, "revenue": revenue,
-            "dart_financials": dart_fin,
-            "dart_signals":    dart_sigs,
-        }
+    if period == "단기":
+        period_strategy = f"1차 목표가({target1:,}) 도달 시 전량 매도 권장. 손절은 빠르게."
+    elif period == "중기":
+        period_strategy = f"1차({target1:,})에서 절반 매도, 나머지는 2차 목표({target2:,}) 대기."
+    else:
+        period_strategy = f"1~2차 목표에서 일부만 매도, 나머지는 장기 보유. 배당도 챙기세요."
 
-    except Exception as e:
-        print(f"  [{ticker}] 오류: {e}")
-        return None
+    return {
+        "ticker": ticker, "name": name, "period": period, "sector": sector,
+        "price": price, "change": change, "currency": currency,
+        "per": per, "pbr": pbr, "roe": roe, "div": div, "debt": debt,
+        "low52": low52, "high52": high52,
+        "pct_from_low": pct_from_low, "pct_from_high": pct_from_high,
+        "rsi": rsi, "macd_cross": macd_cross, "bb_pct": bb_pct,
+        "vol_ratio": vol_ratio, "ret_1w": ret_1w, "ret_1m": ret_1m, "ret_3m": ret_3m,
+        "win_rate": win_rate, "score": score, "risk": risk, "risk_desc": risk_desc,
+        "reasons": reasons, "warnings": warnings,
+        "buy_price": buy_price, "stop_price": stop_price,
+        "target1": target1, "target2": target2, "target3": target3,
+        "shares": shares, "invest_real": invest_real,
+        "profit1": profit1, "profit2": profit2, "profit3": profit3,
+        "loss_amt": loss_amt,
+        "split1_shares": split1_shares, "split2_price": split2_price,
+        "split2_shares": split2_shares, "period_strategy": period_strategy,
+        "mktcap": mktcap, "revenue": revenue,
+        "foreign_net": foreign_net, "inst_net": inst_net,
+        "foreign_eok": foreign_eok, "inst_eok": inst_eok,
+        "is_kr_kis": is_kr and _kis.available(),
+        "dart_financials": dart_fin,
+        "dart_signals":    dart_sigs,
+    }
 
 
 def fmt(price, currency="KRW"):
@@ -689,6 +902,31 @@ def card_html(rank: int, s: dict) -> str:
       <ul style="margin:0;padding-left:0;list-style:none;">{"".join(sig_items_html)}</ul>
     </div>"""
 
+    # ── 외국인/기관 순매수 블록 (KIS 데이터) ───────────────
+    investor_html = ""
+    if s.get("is_kr_kis"):
+        f_eok = s.get("foreign_eok", 0.0)
+        i_eok = s.get("inst_eok",    0.0)
+        f_col = "#e03131" if f_eok >= 0 else "#1971c2"
+        i_col = "#e03131" if i_eok >= 0 else "#1971c2"
+        f_str = f"{'▲' if f_eok >= 0 else '▼'} {abs(f_eok):.1f}억원"
+        i_str = f"{'▲' if i_eok >= 0 else '▼'} {abs(i_eok):.1f}억원"
+        investor_html = f"""
+    <div style="margin-bottom:16px;padding:14px;background:#f0f4ff;border-radius:10px;
+                border-left:4px solid #364fc7;">
+      <div style="font-weight:700;font-size:14px;color:#364fc7;margin-bottom:10px;">
+        👥 외국인/기관 순매수 (당일 · KIS)
+      </div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr>
+          <td style="padding:5px 0;color:#868e96;width:25%;">외국인</td>
+          <td style="padding:5px 0;font-weight:700;color:{f_col};">{f_str}</td>
+          <td style="padding:5px 0;color:#868e96;width:25%;">기관</td>
+          <td style="padding:5px 0;font-weight:700;color:{i_col};">{i_str}</td>
+        </tr>
+      </table>
+    </div>"""
+
     return f"""
 <div style="margin:0 0 28px;border:1px solid #dee2e6;border-radius:14px;
             overflow:hidden;font-family:Apple SD Gothic Neo,맑은 고딕,sans-serif;">
@@ -788,6 +1026,8 @@ def card_html(rank: int, s: dict) -> str:
     </div>
 
     {dart_fin_html}
+
+    {investor_html}
 
     <!-- 200만원 투자 시뮬레이션 -->
     <div style="margin-bottom:16px;border:2px solid #1a3a5c;border-radius:10px;overflow:hidden;">
@@ -1041,23 +1281,113 @@ def make_report(kr_top: list, us_top: list, avoid: list,
     return html
 
 
-def send_email(html_body: str):
-    today = datetime.now().strftime("%m/%d")
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"📊 [{today}] 오늘의 투자 비서 — 국내3 + 해외3 추천"
-    msg["From"]    = NAVER_EMAIL
-    msg["To"]      = RECEIVE_EMAIL
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
-    with smtplib.SMTP_SSL("smtp.naver.com", 465) as server:
-        server.login(NAVER_EMAIL, NAVER_PASSWORD)
-        server.sendmail(NAVER_EMAIL, RECEIVE_EMAIL, msg.as_string())
-    print("✅ 메일 전송 완료!")
+def make_telegram_message(kr_top: list, us_top: list, avoid: list,
+                          mood: dict, dart_alerts: list | None = None) -> str:
+    today = datetime.now().strftime("%Y년 %m월 %d일")
+    now   = datetime.now().strftime("%H:%M")
+    medals = ["🥇", "🥈", "🥉", "4위", "5위"]
+
+    kos_arr = "▲" if mood["kospi_chg"] >= 0 else "▼"
+    sp5_arr = "▲" if mood["sp500_chg"] >= 0 else "▼"
+
+    lines = [
+        "<b>📊 투자 비서 리포트</b>",
+        f"<i>{today} · {now} KST</i>",
+        "",
+        "<b>🌏 시장 브리핑</b>",
+        (f"코스피 {mood['kospi_price']:,.0f} {kos_arr}{abs(mood['kospi_chg']):.2f}%"
+         f"  |  S&P500 {sp5_arr}{abs(mood['sp500_chg']):.2f}%"),
+        f"VIX {mood['vix']} ({mood['status']})  |  달러/원 {mood['usdkrw']:,.0f}원",
+        f"WTI ${mood['wti']}  |  금 ${mood['gold']:,.0f}",
+        mood["advice"],
+        "",
+        "<b>🇰🇷 국내 추천 TOP 5</b>",
+    ]
+    for i, s in enumerate(kr_top):
+        chg_arr = "▲" if s["change"] >= 0 else "▼"
+        lines.append(f"{medals[i]} <b>{s['name']}</b> — {s['score']}점 {s['risk']} ({s['period']})")
+        lines.append(f"   {s['price']:,.0f}원 {chg_arr}{abs(s['change']):.2f}%")
+        if s.get("is_kr_kis"):
+            f_eok = s.get("foreign_eok", 0.0)
+            i_eok = s.get("inst_eok",    0.0)
+            lines.append(
+                f"   외국인 {'▲' if f_eok >= 0 else '▼'}{abs(f_eok):.1f}억"
+                f"  기관 {'▲' if i_eok >= 0 else '▼'}{abs(i_eok):.1f}억"
+            )
+
+    lines += ["", "<b>🇺🇸 해외 추천 TOP 5</b>"]
+    for i, s in enumerate(us_top):
+        chg_arr = "▲" if s["change"] >= 0 else "▼"
+        lines.append(f"{medals[i]} <b>{s['name']}</b> — {s['score']}점 {s['risk']} ({s['period']})")
+        lines.append(f"   ${s['price']:,.2f} {chg_arr}{abs(s['change']):.2f}%")
+
+    if avoid:
+        lines += ["", "<b>🚫 오늘 피해야 할 종목</b>"]
+        for a in avoid[:5]:
+            lines.append(f"• {a['name']} — RSI {a['rsi']} / 1달 {a['ret_1m']:+.1f}%")
+
+    if dart_alerts:
+        lines += ["", "<b>📢 DART 공시 알림 (최근 7일)</b>"]
+        for a in dart_alerts[:5]:
+            icon = "⚠️" if a["is_risk"] else "✅"
+            lines.append(f"{icon} <b>{a['name']}</b> — {a['label']}: {a['items'][0]['title']}")
+
+    lines += ["", "<i>⚠️ 본 리포트는 참고용입니다. 투자 판단은 본인이 직접 하세요.</i>"]
+    return "\n".join(lines)
+
+
+def send_telegram(text_msg: str, html_report: str):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        print("  [텔레그램] TELEGRAM_TOKEN 또는 TELEGRAM_CHAT_ID 미설정 — 전송 건너뜀")
+        return
+
+    base = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
+    stamp = datetime.now().strftime("%m%d_%H%M")
+
+    # 텍스트 요약 (4096자 초과 시 단락 단위로 분할)
+    MAX = 4096
+    chunks, buf = [], text_msg
+    while buf:
+        if len(buf) <= MAX:
+            chunks.append(buf)
+            break
+        cut = buf.rfind("\n\n", 0, MAX)
+        if cut == -1:
+            cut = MAX
+        chunks.append(buf[:cut])
+        buf = buf[cut:].lstrip()
+
+    for chunk in chunks:
+        r = requests.post(
+            f"{base}/sendMessage",
+            json={"chat_id": TELEGRAM_CHAT_ID, "text": chunk, "parse_mode": "HTML"},
+            timeout=15,
+        )
+        if not r.ok:
+            print(f"  [텔레그램] 메시지 전송 실패: {r.text[:200]}")
+
+    # HTML 전문 파일 첨부
+    r = requests.post(
+        f"{base}/sendDocument",
+        data={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "caption": f"📊 투자 비서 리포트 전문 ({datetime.now().strftime('%m/%d %H:%M')})",
+        },
+        files={"document": (f"report_{stamp}.html", html_report.encode("utf-8"), "text/html")},
+        timeout=30,
+    )
+    if not r.ok:
+        print(f"  [텔레그램] 파일 전송 실패: {r.text[:200]}")
+    else:
+        print("  텔레그램 전송 완료!")
 
 
 def run():
     print("=" * 55)
-    print("투자 비서 v4.0 시작")
+    print("투자 비서 v5.0 시작")
+    kis_status = "KIS API 연결됨" if _kis.available() else "KIS API 키 없음 (yfinance 폴백)"
     print(f"국내 {len(KR_STOCKS)}종목 + 해외 {len(US_STOCKS)}종목 분석 중...")
+    print(f"국내주식 데이터 소스: {kis_status}")
     print("=" * 55)
 
     print("\n[시장 분위기 파악 중...]")
@@ -1100,7 +1430,7 @@ def run():
     avoid_list = [s for s in kr_results + us_results if s["rsi"] > 70 or s["ret_1m"] < -15]
     avoid_list = sorted(avoid_list, key=lambda x: x["ret_1m"])[:5]
 
-    # 메일 리포트용 DART 알림 목록 구성
+    # DART 알림 목록 구성
     dart_alerts = []
     for ticker, dd in all_dart.items():
         name, _, sector = KR_STOCKS[ticker]
@@ -1131,10 +1461,11 @@ def run():
             flag = "⚠️" if a["is_risk"] else "✅"
             print(f"  {flag} {a['name']} — {a['label']}: {a['items'][0]['title']}")
 
-    print("\n[리포트 생성 및 메일 전송 중...]")
+    print("\n[리포트 생성 및 텔레그램 전송 중...]")
     html = make_report(kr_top3, us_top3, avoid_list, mood, dart_alerts=dart_alerts)
-    send_email(html)
-    print("\n🎉 완료! 네이버 메일을 확인하세요.")
+    text = make_telegram_message(kr_top3, us_top3, avoid_list, mood, dart_alerts=dart_alerts)
+    send_telegram(text, html)
+    print("\n완료! 텔레그램을 확인하세요.")
 
 
 if __name__ == "__main__":
