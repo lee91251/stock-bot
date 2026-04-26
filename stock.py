@@ -473,6 +473,68 @@ def get_market_mood() -> dict:
 
 
 # ════════════════════════════════════════════════
+# 미국 경제지표 (FRED 공개 URL + 야후 파이낸스)
+# ════════════════════════════════════════════════
+def get_us_macro_indicators() -> dict:
+    """미국 주요 경제지표 수집 — API 키 없음 (yfinance + FRED 공개 CSV)"""
+    macro: dict = {
+        "tnx": None, "tnx_prev": None,
+        "irx": None, "irx_prev": None,
+        "dxy": None, "dxy_prev": None,
+        "cpi_yoy": None, "cpi_mom": None, "cpi_month": "",
+        "fed_direction": "확인불가", "fed_note": "",
+        "yield_spread": None,
+    }
+
+    # ── 야후 파이낸스: 국채금리 + 달러인덱스 ──────
+    for key, tkr in [("tnx", "^TNX"), ("irx", "^IRX"), ("dxy", "DX-Y.NYB")]:
+        try:
+            hist = yf.Ticker(tkr).history(period="3mo")
+            if len(hist) >= 2:
+                macro[key]              = round(float(hist["Close"].iloc[-1]), 3)
+                macro[f"{key}_prev"]   = round(float(hist["Close"].iloc[0]),  3)
+        except Exception:
+            pass
+
+    # ── 장단기 금리차 (10Y − 단기) ───────────────
+    if macro["tnx"] is not None and macro["irx"] is not None:
+        macro["yield_spread"] = round(macro["tnx"] - macro["irx"], 3)
+
+    # ── CPI: FRED 공개 CSV (API 키 없음) ─────────
+    try:
+        r = requests.get(
+            "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=12,
+        )
+        rows = [ln.split(",") for ln in r.text.strip().split("\n")[1:] if ln]
+        if len(rows) >= 13:
+            v_now  = float(rows[-1][1])
+            v_prev = float(rows[-2][1])
+            v_yr   = float(rows[-13][1])
+            macro["cpi_yoy"]   = round((v_now - v_yr)   / v_yr   * 100, 2)
+            macro["cpi_mom"]   = round((v_now - v_prev) / v_prev * 100, 2)
+            macro["cpi_month"] = rows[-1][0][:7]
+    except Exception:
+        pass
+
+    # ── 연준 기준금리 방향 감지 ───────────────────
+    if macro["irx"] is not None and macro["irx_prev"] is not None:
+        diff = macro["irx"] - macro["irx_prev"]
+        if diff >= 0.15:
+            macro["fed_direction"] = "인상 기조"
+            macro["fed_note"]      = f"단기금리 3개월 +{diff:.2f}%p 상승 → 추가 인상 가능성"
+        elif diff <= -0.15:
+            macro["fed_direction"] = "인하 기조"
+            macro["fed_note"]      = f"단기금리 3개월 {diff:.2f}%p 하락 → 완화 전환 신호"
+        else:
+            macro["fed_direction"] = "동결 기조"
+            macro["fed_note"]      = f"단기금리 3개월 변화 {diff:+.2f}%p → 연준 관망 국면"
+
+    return macro
+
+
+# ════════════════════════════════════════════════
 # 지지/저항 + ATR
 # ════════════════════════════════════════════════
 def calc_support_resistance(close: pd.Series) -> dict:
@@ -1076,6 +1138,47 @@ def ai_sector_rotation(mood: dict) -> str:
         return ""
 
 
+def ai_us_macro_impact(macro: dict, mood: dict) -> str:
+    """미국 경제지표 → 한국 주식 영향 AI 분석"""
+    client = _get_ai_client()
+    if not client:
+        return ""
+    try:
+        tnx_str = f"{macro['tnx']:.3f}%" if macro["tnx"] else "N/A"
+        irx_str = f"{macro['irx']:.3f}%" if macro["irx"] else "N/A"
+        dxy_str = f"{macro['dxy']:.2f}"  if macro["dxy"] else "N/A"
+        cpi_str = (
+            f"전년비 {macro['cpi_yoy']:+.2f}%, 전월비 {macro['cpi_mom']:+.2f}% ({macro['cpi_month']})"
+            if macro["cpi_yoy"] is not None else "N/A"
+        )
+        spd_str = f"{macro['yield_spread']:+.3f}%p" if macro["yield_spread"] is not None else "N/A"
+
+        prompt = (
+            f"미국 경제지표:\n"
+            f"- 10년물 국채금리: {tnx_str} (3개월 전: {macro.get('tnx_prev') or 'N/A'}%)\n"
+            f"- 단기금리(2년물 근사): {irx_str} (3개월 전: {macro.get('irx_prev') or 'N/A'}%)\n"
+            f"- 달러인덱스(DXY): {dxy_str} (3개월 전: {macro.get('dxy_prev') or 'N/A'})\n"
+            f"- CPI 소비자물가: {cpi_str}\n"
+            f"- 연준 기준금리 방향: {macro['fed_direction']} — {macro['fed_note']}\n"
+            f"- 장단기 금리차(10Y-단기): {spd_str}\n"
+            f"- 달러/원 환율: {mood.get('usdkrw', 1300):,.0f}원\n\n"
+            "위 지표가 오늘 한국 주식시장에 미치는 영향을 아래 3가지로 각각 1문장씩 분석:\n"
+            "1. 금리·달러 환경이 수출주(조선·방산·반도체)에 미치는 영향\n"
+            "2. 현재 매크로 환경에서 주목할 한국 섹터\n"
+            "3. 오늘 가장 주의해야 할 매크로 리스크"
+        )
+        resp = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=350,
+            system=_AI_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp.content[0].text.strip()
+    except Exception as e:
+        print(f"  [AI] 매크로 분석 실패: {e}")
+        return ""
+
+
 def ai_stock_insight(s: dict) -> str:
     """개별 종목 AI 한줄 인사이트"""
     client = _get_ai_client()
@@ -1651,6 +1754,80 @@ def dart_alerts_section_html(dart_alerts: list) -> str:
 # ════════════════════════════════════════════════
 # HTML 전체 리포트
 # ════════════════════════════════════════════════
+def _make_macro_html(macro: dict, ai_macro: str) -> str:
+    """미국 경제지표 HTML 섹션"""
+    if not macro:
+        return ""
+
+    def _fmt(val, unit="", fmt=".3f"):
+        return f"{val:{fmt}}{unit}" if val is not None else "N/A"
+
+    tnx  = _fmt(macro.get("tnx"), "%")
+    irx  = _fmt(macro.get("irx"), "%")
+    dxy  = _fmt(macro.get("dxy"), "", ".2f")
+    spd  = _fmt(macro.get("yield_spread"), "%p")
+    cpi_yoy = f"{macro['cpi_yoy']:+.2f}%" if macro.get("cpi_yoy") is not None else "N/A"
+    cpi_mom = f"{macro['cpi_mom']:+.2f}%" if macro.get("cpi_mom") is not None else "N/A"
+    cpi_month = macro.get("cpi_month", "")
+    fed = macro.get("fed_direction", "확인불가")
+    fed_note = macro.get("fed_note", "")
+
+    fed_color = (
+        "#e03131" if "인상" in fed else
+        "#2f9e44" if "인하" in fed else
+        "#e67700"
+    )
+    spd_val = macro.get("yield_spread")
+    spd_color = "#e03131" if (spd_val is not None and spd_val < 0) else "#2f9e44"
+
+    ai_html = ""
+    if ai_macro:
+        ai_html = (
+            f'<div style="margin-top:14px;padding:12px 16px;background:#f3f0ff;'
+            f'border-radius:8px;border-left:4px solid #7950f2;font-size:13px;'
+            f'color:#5f3dc4;line-height:1.8;white-space:pre-line;">'
+            f'🤖 AI 매크로 분석: {ai_macro}</div>'
+        )
+
+    return f"""
+  <div style="background:#e8f4fd;padding:18px 24px;border-bottom:1px solid #dee2e6;">
+    <div style="font-weight:700;font-size:15px;color:#1a3a5c;margin-bottom:12px;">🇺🇸 미국 경제지표 브리핑</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
+        <div style="font-size:12px;color:#868e96;">10년물 국채금리</div>
+        <div style="font-size:18px;font-weight:700;">{tnx}</div>
+        <div style="font-size:11px;color:#868e96;">3개월 전: {_fmt(macro.get('tnx_prev'), '%')}</div>
+      </div>
+      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
+        <div style="font-size:12px;color:#868e96;">단기금리(2년물 근사)</div>
+        <div style="font-size:18px;font-weight:700;">{irx}</div>
+        <div style="font-size:11px;color:#868e96;">3개월 전: {_fmt(macro.get('irx_prev'), '%')}</div>
+      </div>
+      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
+        <div style="font-size:12px;color:#868e96;">달러인덱스(DXY)</div>
+        <div style="font-size:18px;font-weight:700;">{dxy}</div>
+        <div style="font-size:11px;color:#868e96;">3개월 전: {_fmt(macro.get('dxy_prev'), '', '.2f')}</div>
+      </div>
+      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
+        <div style="font-size:12px;color:#868e96;">CPI 소비자물가</div>
+        <div style="font-size:16px;font-weight:700;">전년비 {cpi_yoy}</div>
+        <div style="font-size:11px;color:#868e96;">전월비 {cpi_mom} ({cpi_month})</div>
+      </div>
+      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
+        <div style="font-size:12px;color:#868e96;">연준 기준금리 방향</div>
+        <div style="font-size:15px;font-weight:700;color:{fed_color};">{fed}</div>
+        <div style="font-size:11px;color:#868e96;">{fed_note[:30] if fed_note else ''}</div>
+      </div>
+      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
+        <div style="font-size:12px;color:#868e96;">장단기 금리차(10Y-단기)</div>
+        <div style="font-size:18px;font-weight:700;color:{spd_color};">{spd}</div>
+        <div style="font-size:11px;color:#868e96;">{'역전=경기침체 신호' if (spd_val is not None and spd_val < 0) else '정상 커브'}</div>
+      </div>
+    </div>
+    {ai_html}
+  </div>"""
+
+
 def make_report(
     kr_top: list,
     us_top: list,
@@ -1661,6 +1838,8 @@ def make_report(
     ai_sector: str = "",
     fg: dict = None,
     ai_insights: dict = None,
+    macro: dict = None,
+    ai_macro: str = "",
 ) -> str:
     today     = datetime.now().strftime("%Y년 %m월 %d일 (%A)")
     now       = datetime.now().strftime("%H:%M")
@@ -1702,6 +1881,8 @@ def make_report(
   </div>
 
   {ai_section}
+
+  {_make_macro_html(macro, ai_macro)}
 
   <div style="background:#f8f9fa;padding:18px 24px;border-bottom:1px solid #dee2e6;">
     <div style="font-weight:700;font-size:15px;color:#1a3a5c;margin-bottom:12px;">🌏 오늘의 시장 브리핑</div>
@@ -1794,6 +1975,8 @@ def make_telegram_message(
     dart_alerts: list = None,
     ai_summary: str = "",
     fg: dict = None,
+    macro: dict = None,
+    ai_macro: str = "",
 ) -> str:
     today  = datetime.now().strftime("%Y년 %m월 %d일")
     now    = datetime.now().strftime("%H:%M")
@@ -1811,6 +1994,28 @@ def make_telegram_message(
 
     if ai_summary:
         lines += ["<b>🤖 AI 시장 판단</b>", ai_summary, ""]
+
+    # 미국 경제지표 브리핑
+    if macro:
+        tnx_str = f"{macro['tnx']:.3f}%" if macro.get("tnx") else "N/A"
+        irx_str = f"{macro['irx']:.3f}%" if macro.get("irx") else "N/A"
+        dxy_str = f"{macro['dxy']:.2f}"  if macro.get("dxy") else "N/A"
+        cpi_str = (
+            f"전년비 {macro['cpi_yoy']:+.2f}% / 전월비 {macro['cpi_mom']:+.2f}%"
+            if macro.get("cpi_yoy") is not None else "N/A"
+        )
+        fed_str = macro.get("fed_direction", "확인불가")
+        lines += [
+            "<b>🇺🇸 미국 경제지표</b>",
+            f"10년물금리 {tnx_str}  |  단기금리 {irx_str}",
+            f"달러인덱스(DXY) {dxy_str}",
+            f"CPI: {cpi_str}",
+            f"연준 방향: {fed_str}",
+        ]
+        if ai_macro:
+            lines += [f"🤖 {ai_macro}", ""]
+        else:
+            lines.append("")
 
     lines += [
         "<b>🌏 시장 브리핑</b>",
@@ -2024,18 +2229,23 @@ def run():
             print("\n[월간 성과 리포트 전송]")
             tg_send(monthly)
 
-    print("\n[1/6] 시장 분위기 파악 중...")
+    print("\n[1/7] 시장 분위기 파악 중...")
     mood = get_market_mood()
     fg   = get_fear_greed(mood)
     print(f"  → 시장: {mood['status']} / VIX: {mood['vix']} / 코스피: {mood['kospi_chg']:+.2f}%")
     print(f"  → 공포탐욕지수: {fg['score']} ({fg['label']})")
 
-    print("\n[2/6] DART 공시 데이터 수집 중...")
+    print("\n[2/7] 미국 경제지표 수집 중...")
+    macro = get_us_macro_indicators()
+    print(f"  → 10년물: {macro['tnx']}% / 단기금리: {macro['irx']}% / DXY: {macro['dxy']}")
+    print(f"  → CPI 전년비: {macro['cpi_yoy']}% / 연준: {macro['fed_direction']}")
+
+    print("\n[3/7] DART 공시 데이터 수집 중...")
     all_dart = get_all_dart_data(KR_STOCKS)
     sig_count = sum(1 for dd in all_dart.values() for items in dd["signals"].values() if items)
     print(f"  → {len(all_dart)}개 수집 / 주요 공시 {sig_count}건")
 
-    print("\n[3/6] 국내 종목 분석 중...")
+    print("\n[4/7] 국내 종목 분석 중...")
     kr_results = []
     for ticker, val in KR_STOCKS.items():
         name, period, sector = val
@@ -2047,7 +2257,7 @@ def run():
             kr_results.append(r)
         time.sleep(0.8)
 
-    print("\n[4/6] 해외 종목 분석 중...")
+    print("\n[5/7] 해외 종목 분석 중...")
     us_results = []
     for ticker, val in US_STOCKS.items():
         name, period, sector = val
@@ -2078,9 +2288,10 @@ def run():
                     "key": key, "label": label, "is_risk": is_risk, "items": items,
                 })
 
-    print("\n[5/6] AI 분석 중...")
+    print("\n[6/7] AI 분석 중...")
     ai_summary = ai_market_summary(mood, kr_top5, us_top5, fg)
     ai_sector  = ai_sector_rotation(mood)
+    ai_macro   = ai_us_macro_impact(macro, mood)
 
     # 개별 종목 AI 인사이트 (TOP5 국내만)
     ai_insights: dict = {}
@@ -2090,7 +2301,7 @@ def run():
             ai_insights[s["ticker"]] = insight
         time.sleep(0.3)
 
-    print("\n[6/6] 리포트 생성 및 전송 중...")
+    print("\n[7/7] 리포트 생성 및 전송 중...")
     html = make_report(
         kr_top5, us_top5, avoid_list, mood,
         dart_alerts=dart_alerts,
@@ -2098,12 +2309,16 @@ def run():
         ai_sector=ai_sector,
         fg=fg,
         ai_insights=ai_insights,
+        macro=macro,
+        ai_macro=ai_macro,
     )
     text = make_telegram_message(
         kr_top5, us_top5, avoid_list, mood,
         dart_alerts=dart_alerts,
         ai_summary=ai_summary,
         fg=fg,
+        macro=macro,
+        ai_macro=ai_macro,
     )
 
     tg_send(text)
@@ -2811,18 +3026,23 @@ def run():
             print("\n[월간 성과 리포트 전송]")
             tg_send(monthly)
 
-    print("\n[1/6] 시장 분위기 파악 중...")
+    print("\n[1/7] 시장 분위기 파악 중...")
     mood = get_market_mood()
     fg   = get_fear_greed(mood)
     print(f"  → 시장: {mood['status']} / VIX: {mood['vix']} / 코스피: {mood['kospi_chg']:+.2f}%")
     print(f"  → 공포탐욕지수: {fg['score']} ({fg['label']})")
 
-    print("\n[2/6] DART 공시 데이터 수집 중...")
+    print("\n[2/7] 미국 경제지표 수집 중...")
+    macro = get_us_macro_indicators()
+    print(f"  → 10년물: {macro['tnx']}% / 단기금리: {macro['irx']}% / DXY: {macro['dxy']}")
+    print(f"  → CPI 전년비: {macro['cpi_yoy']}% / 연준: {macro['fed_direction']}")
+
+    print("\n[3/7] DART 공시 데이터 수집 중...")
     all_dart  = get_all_dart_data(KR_STOCKS)
     sig_count = sum(1 for dd in all_dart.values() for items in dd["signals"].values() if items)
     print(f"  → {len(all_dart)}개 수집 / 주요 공시 {sig_count}건")
 
-    print("\n[3/6] 국내 종목 분석 중...")
+    print("\n[4/7] 국내 종목 분석 중...")
     kr_results = []
     for ticker, val in KR_STOCKS.items():
         name, period, sector = val
@@ -2834,7 +3054,7 @@ def run():
             kr_results.append(r)
         time.sleep(0.8)
 
-    print("\n[4/6] 해외 종목 분석 중...")
+    print("\n[5/7] 해외 종목 분석 중...")
     us_results = []
     for ticker, val in US_STOCKS.items():
         name, period, sector = val
@@ -2864,9 +3084,10 @@ def run():
                     "key": key, "label": label, "is_risk": is_risk, "items": items,
                 })
 
-    print("\n[5/6] AI 분석 중...")
+    print("\n[6/7] AI 분석 중...")
     ai_summary = ai_market_summary(mood, kr_top5, us_top5, fg)
     ai_sector  = ai_sector_rotation(mood)
+    ai_macro   = ai_us_macro_impact(macro, mood)
 
     ai_insights: dict = {}
     for s in kr_top5:
@@ -2875,7 +3096,7 @@ def run():
             ai_insights[s["ticker"]] = insight
         time.sleep(0.3)
 
-    print("\n[6/6] 리포트 생성 및 전송 중...")
+    print("\n[7/7] 리포트 생성 및 전송 중...")
     html = make_report(
         kr_top5, us_top5, avoid_list, mood,
         dart_alerts=dart_alerts,
@@ -2883,12 +3104,16 @@ def run():
         ai_sector=ai_sector,
         fg=fg,
         ai_insights=ai_insights,
+        macro=macro,
+        ai_macro=ai_macro,
     )
     text = make_telegram_message(
         kr_top5, us_top5, avoid_list, mood,
         dart_alerts=dart_alerts,
         ai_summary=ai_summary,
         fg=fg,
+        macro=macro,
+        ai_macro=ai_macro,
     )
     tg_send(text)
     tg_send_document(html)
