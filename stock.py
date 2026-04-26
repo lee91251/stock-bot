@@ -2731,17 +2731,37 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
 
             # ── 오늘 추천 ────────────────────────
             if any(kw in text for kw in ["뭐 사", "뭐사", "추천", "오늘 추천"]):
-                buy_stocks = [s for s in (kr_top + us_top) if s.get("buy_signal")]
-                if buy_stocks:
-                    lines = ["<b>💚 오늘 매수 신호 종목</b>", ""]
-                    for s in buy_stocks[:5]:
-                        lines.append(
-                            f"✅ <b>{s['name']}</b> ({s['score']}점) — {s.get('buy_reason', '')}\n"
-                            f"   목표: {s['target1']:,} / 손절: {s['stop_price']:,}"
-                        )
-                    tg_send("\n".join(lines), chat_id)
+                kr_buy = [s for s in kr_top if s.get("buy_signal")]
+                us_buy = [s for s in us_top if s.get("buy_signal")]
+
+                if "국내" in text:
+                    pool   = kr_buy[:5]
+                    header = "🇰🇷 국내 매수 신호 종목"
+                    flag   = "kr_only"
+                elif "해외" in text:
+                    pool   = us_buy[:5]
+                    header = "🇺🇸 해외 매수 신호 종목"
+                    flag   = "us_only"
                 else:
-                    tg_send("오늘은 명확한 매수 신호 종목이 없습니다. 관망을 권장합니다.", chat_id)
+                    pool   = kr_buy[:3] + us_buy[:3]
+                    header = "💚 오늘 매수 신호 종목 (국내 3 + 해외 3)"
+                    flag   = "both"
+
+                if pool:
+                    reply = [f"<b>{header}</b>", ""]
+                    for s in pool:
+                        cur     = s["currency"]
+                        p_str   = f"{s['price']:,.0f}원" if cur == "KRW" else f"${s['price']:,.2f}"
+                        t1_str  = f"{s['target1']:,.0f}원" if cur == "KRW" else f"${s['target1']:,.2f}"
+                        sl_str  = f"{s['stop_price']:,.0f}원" if cur == "KRW" else f"${s['stop_price']:,.2f}"
+                        reply.append(
+                            f"✅ <b>{s['name']}</b> ({s['score']}점/{s['period']}) — {s.get('buy_reason', '')}\n"
+                            f"   현재가: {p_str} / 목표: {t1_str} / 손절: {sl_str}"
+                        )
+                    tg_send("\n".join(reply), chat_id)
+                else:
+                    scope = "국내" if flag == "kr_only" else ("해외" if flag == "us_only" else "")
+                    tg_send(f"오늘은 {scope} 명확한 매수 신호 종목이 없습니다. 관망을 권장합니다.", chat_id)
                 continue
 
             # ── 자연어 질의 → AI 응답 ────────────
