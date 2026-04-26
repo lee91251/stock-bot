@@ -10,17 +10,17 @@ on:
     - cron: "50 23 * * 0-4"
     # 평일 오후 3시 35분 KST (UTC 06:35) — 장 마감 결산
     - cron: "35 6 * * 1-5"
-    # 평일 오전 9시 5분 KST (UTC 00:05) — 장중 실시간 모니터링 시작
+    # 평일 오전 9시 5분 KST (UTC 00:05) — 장중 실시간 모니터링
     - cron: "5 0 * * 1-5"
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (비워두면 일일 리포트)"
+        description: "실행 모드"
         required: false
-        default: ""
+        default: "daily"
         type: choice
         options:
-          - ""
+          - "daily"
           - "--usclose"
           - "--premarket"
           - "--close"
@@ -36,9 +36,11 @@ env:
   HOLDINGS_JSON:     ${{ secrets.HOLDINGS_JSON }}
 
 jobs:
-  # ── 일일 AI 리포트 (평일 7시) ───────────────────
+  # ── 일일 AI 리포트 (평일 7시) ────────────────────
   daily-report:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '30 20 * * 1-5')
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'schedule' && github.event.schedule == '30 20 * * 1-5')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -50,7 +52,13 @@ jobs:
       - name: 패키지 설치
         run: pip install -r requirements.txt
       - name: AI 분석 및 텔레그램 전송
-        run: python stock.py ${{ github.event.inputs.mode }}
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          if [ "$MODE" = "daily" ] || [ -z "$MODE" ]; then
+            python stock.py
+          else
+            python stock.py "$MODE"
+          fi
       - name: 성과 기록 커밋
         run: |
           git config user.name "github-actions[bot]"
@@ -107,7 +115,7 @@ jobs:
       - name: 마감 결산
         run: python stock.py --close
 
-  # ── 장중 실시간 모니터링 (9시~16시, 30분 제한) ──
+  # ── 장중 실시간 모니터링 (20분, 2분 간격) ────────
   intraday-monitor:
     if: github.event_name == 'schedule' && github.event.schedule == '5 0 * * 1-5'
     runs-on: ubuntu-latest
@@ -121,7 +129,4 @@ jobs:
       - name: 패키지 설치
         run: pip install -r requirements.txt
       - name: 장중 모니터링 (20분)
-        run: python -c "
-import stock, sys
-stock.run_monitor(duration_hours=0.33, interval_sec=120)
-"
+        run: python -c "import stock; stock.run_monitor(duration_hours=0.33, interval_sec=120)"
