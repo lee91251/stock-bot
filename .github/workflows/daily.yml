@@ -1,13 +1,44 @@
-name: 매일 아침 7시 투자 비서 (AI 강화판)
+name: 투자 비서 v6.0 — AI 강화판
 
 on:
   schedule:
-    # 평일 오전 7시 KST = UTC 22:30 (전날)
+    # 평일 아침 7시 KST (UTC 전날 22:30) — 일일 AI 리포트
     - cron: "30 20 * * 1-5"
+    # 평일 새벽 6시 KST (UTC 전날 21:00) — 미국 시장 마감 브리핑
+    - cron: "0 21 * * 0-4"
+    # 평일 오전 8시 50분 KST (UTC 전날 23:50) — 장 시작 전 브리핑
+    - cron: "50 23 * * 0-4"
+    # 평일 오후 3시 35분 KST (UTC 06:35) — 장 마감 결산
+    - cron: "35 6 * * 1-5"
+    # 평일 오전 9시 5분 KST (UTC 00:05) — 장중 실시간 모니터링 시작
+    - cron: "5 0 * * 1-5"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "실행 모드 (비워두면 일일 리포트)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - "--usclose"
+          - "--premarket"
+          - "--close"
+          - "--monitor"
+
+env:
+  TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
+  TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+  DART_API_KEY:      ${{ secrets.DART_API_KEY }}
+  KIS_APP_KEY:       ${{ secrets.KIS_APP_KEY }}
+  KIS_APP_SECRET:    ${{ secrets.KIS_APP_SECRET }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  HOLDINGS_JSON:     ${{ secrets.HOLDINGS_JSON }}
 
 jobs:
-  send-report:
+  # ── 일일 AI 리포트 (평일 7시) ───────────────────
+  daily-report:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '30 20 * * 1-5')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -19,19 +50,78 @@ jobs:
       - name: 패키지 설치
         run: pip install -r requirements.txt
       - name: AI 분석 및 텔레그램 전송
-        env:
-          TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
-          DART_API_KEY:      ${{ secrets.DART_API_KEY }}
-          KIS_APP_KEY:       ${{ secrets.KIS_APP_KEY }}
-          KIS_APP_SECRET:    ${{ secrets.KIS_APP_SECRET }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          HOLDINGS_JSON:     ${{ secrets.HOLDINGS_JSON }}
-        run: python stock.py
+        run: python stock.py ${{ github.event.inputs.mode }}
       - name: 성과 기록 커밋
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add performance.json || true
-          git diff --staged --quiet || git commit -m "chore: 일일 성과 기록 업데이트 $(date '+%Y-%m-%d')"
+          git diff --staged --quiet || git commit -m "chore: 일일 성과 기록 $(date '+%Y-%m-%d')"
           git push || true
+
+  # ── 미국 시장 마감 브리핑 (새벽 6시) ────────────
+  us-briefing:
+    if: github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0-4'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 미국 마감 브리핑
+        run: python stock.py --usclose
+
+  # ── 장 시작 전 브리핑 (8시 50분) ────────────────
+  premarket-briefing:
+    if: github.event_name == 'schedule' && github.event.schedule == '50 23 * * 0-4'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 장전 브리핑
+        run: python stock.py --premarket
+
+  # ── 장 마감 결산 (3시 35분) ──────────────────────
+  close-summary:
+    if: github.event_name == 'schedule' && github.event.schedule == '35 6 * * 1-5'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 마감 결산
+        run: python stock.py --close
+
+  # ── 장중 실시간 모니터링 (9시~16시, 30분 제한) ──
+  intraday-monitor:
+    if: github.event_name == 'schedule' && github.event.schedule == '5 0 * * 1-5'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 장중 모니터링 (20분)
+        run: python -c "
+import stock, sys
+stock.run_monitor(duration_hours=0.33, interval_sec=120)
+"

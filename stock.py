@@ -2140,5 +2140,773 @@ def run():
     print("\n완료! 텔레그램을 확인하세요.")
 
 
+# ════════════════════════════════════════════════
+# 실시간 모니터링 신호 감지
+# ════════════════════════════════════════════════
+_sent_alerts: set = set()   # 중복 알림 방지 (세션 내)
+
+
+def _alert_key(*args) -> str:
+    return "|".join(str(a) for a in args)
+
+
+def _check_monitor_signals(prev_scores: dict) -> list:
+    """KR_STOCKS 전체 스캔 → 감지된 신호 목록 반환"""
+    signals = []
+    now_str = datetime.now().strftime("%Y%m%d%H")
+
+    for ticker, (name, period, sector) in KR_STOCKS.items():
+        if not _kis.available():
+            break
+        code = ticker.split(".")[0]
+        try:
+            pi = _kis.get_price(code)
+            if not pi:
+                continue
+            price     = _safe_float(pi.get("stck_prpr"))
+            change    = _safe_float(pi.get("prdy_ctrt"))
+            vol_ratio = _safe_float(pi.get("acml_vol")) / max(_safe_float(pi.get("avg_vol", 0)), 1) * 100 if pi.get("avg_vol") else 0
+
+            inv      = _kis.get_investor(code)
+            f_net    = _safe_float(inv.get("frgn_ntby_tr_pbmn"))   # 외국인 순매수
+            i_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))    # 기관 순매수
+            f_eok    = f_net / 1e8
+            i_eok    = i_net / 1e8
+
+            prev = prev_scores.get(ticker, {})
+            prev_score = prev.get("score", 0)
+
+            # 1. 급등 감지: 거래량 300%↑ + 주가 3%↑
+            key1 = _alert_key("surge", ticker, now_str)
+            if change >= 3.0 and vol_ratio >= 300 and key1 not in _sent_alerts:
+                _sent_alerts.add(key1)
+                signals.append({
+                    "type": "surge",
+                    "msg": (
+                        f"🚀 <b>[급등 감지]</b> {name}\n"
+                        f"주가 +{change:.1f}% / 거래량 평균대비 {vol_ratio:.0f}%\n"
+                        f"현재가: {price:,.0f}원\n"
+                        f"💡 단기 모멘텀 급상승 — 추격 매수 시 손절 철저히"
+                    ),
+                })
+
+            # 2. 외국인+기관 동시 순매수
+            key2 = _alert_key("dual_buy", ticker, now_str)
+            if f_eok >= 20 and i_eok >= 20 and key2 not in _sent_alerts:
+                _sent_alerts.add(key2)
+                signals.append({
+                    "type": "dual_buy",
+                    "msg": (
+                        f"✅ <b>[외국인+기관 동시 매수]</b> {name}\n"
+                        f"외국인 +{f_eok:.1f}억 / 기관 +{i_eok:.1f}억\n"
+                        f"현재가: {price:,.0f}원 ({change:+.1f}%)\n"
+                        f"💡 기관·외국인 동시 매수 = 강한 상승 신호"
+                    ),
+                })
+
+            # 3. 수급 급변 — 외국인 대량 순매도
+            key3 = _alert_key("frgn_sell", ticker, now_str)
+            if f_eok <= -100 and key3 not in _sent_alerts:
+                _sent_alerts.add(key3)
+                signals.append({
+                    "type": "frgn_sell",
+                    "msg": (
+                        f"⚠️ <b>[외국인 대량 매도 경고]</b> {name}\n"
+                        f"외국인 순매도 {f_eok:.1f}억원\n"
+                        f"현재가: {price:,.0f}원 ({change:+.1f}%)\n"
+                        f"🔴 보유 중이라면 손절선 재확인 필요"
+                    ),
+                })
+
+            # 4. 눌림목 감지 — 고점수 종목 -3% 이상 하락
+            key4 = _alert_key("pullback", ticker, now_str)
+            if prev_score >= 70 and change <= -3.0 and key4 not in _sent_alerts:
+                _sent_alerts.add(key4)
+                signals.append({
+                    "type": "pullback",
+                    "msg": (
+                        f"💎 <b>[눌림목 매수 기회]</b> {name} ({sector})\n"
+                        f"종합점수 {prev_score}점 우량주 / 오늘 {change:.1f}% 하락\n"
+                        f"현재가: {price:,.0f}원\n"
+                        f"💡 고점수 우량주 일시 조정 — 분할매수 검토"
+                    ),
+                })
+
+        except Exception as e:
+            print(f"  [모니터] {name} 조회 오류: {e}")
+        time.sleep(0.3)
+
+    # 5. 보유종목 손절/목표 감지
+    for h in HOLDINGS:
+        code      = h.get("code", "")
+        name      = h.get("name", code)
+        qty       = h.get("qty", 0)
+        avg_price = h.get("avg_price", 0)
+        if not (code and qty and avg_price):
+            continue
+        try:
+            pi         = _kis.get_price(code) if _kis.available() else {}
+            curr_price = _safe_float(pi.get("stck_prpr")) if pi else float(
+                yf.Ticker(f"{code}.KS").info.get("regularMarketPrice", 0)
+            )
+            if curr_price <= 0:
+                continue
+            pct        = (curr_price - avg_price) / avg_price * 100
+            stop_price = avg_price * (1 - STOP_LOSS_PCT)
+            target1    = avg_price * (1 + TARGET1_PCT)
+            target2    = avg_price * (1 + TARGET2_PCT)
+
+            # 손절가 1% 이내 근접
+            key_s = _alert_key("near_stop", code, now_str)
+            if curr_price <= stop_price * 1.01 and key_s not in _sent_alerts:
+                _sent_alerts.add(key_s)
+                signals.append({
+                    "type": "near_stop",
+                    "msg": (
+                        f"🚨 <b>[손절 경고]</b> {name}\n"
+                        f"현재가 {curr_price:,.0f}원 / 손절가 {stop_price:,.0f}원\n"
+                        f"손실률: {pct:.1f}%\n"
+                        f"🔴 <b>지금 매도하세요!</b> 손절가 {stop_price:,.0f}원 도달 임박"
+                    ),
+                })
+
+            # 1차 목표 도달
+            key_t1 = _alert_key("target1", code, now_str[:8])   # 하루에 한 번만
+            if curr_price >= target1 and key_t1 not in _sent_alerts:
+                _sent_alerts.add(key_t1)
+                signals.append({
+                    "type": "target1",
+                    "msg": (
+                        f"🎯 <b>[1차 목표 달성]</b> {name}\n"
+                        f"현재가 {curr_price:,.0f}원 (+{pct:.1f}%)\n"
+                        f"1차 목표가: {target1:,.0f}원\n"
+                        f"💚 <b>지금 매수하세요!</b> — 절반 매도 or 트레일링 스탑 설정 권장"
+                    ),
+                })
+
+            # 2차 목표 도달
+            key_t2 = _alert_key("target2", code, now_str[:8])
+            if curr_price >= target2 and key_t2 not in _sent_alerts:
+                _sent_alerts.add(key_t2)
+                signals.append({
+                    "type": "target2",
+                    "msg": (
+                        f"🎯🎯 <b>[2차 목표 달성]</b> {name}\n"
+                        f"현재가 {curr_price:,.0f}원 (+{pct:.1f}%)\n"
+                        f"2차 목표가: {target2:,.0f}원\n"
+                        f"💚 <b>지금 매도하세요!</b> — 수익 실현 강력 권장"
+                    ),
+                })
+
+        except Exception as e:
+            print(f"  [모니터] 보유종목 {name} 오류: {e}")
+        time.sleep(0.2)
+
+    return signals
+
+
+def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
+    """장중 실시간 모니터링 루프 (기본: 7시간, 5분 간격)"""
+    print(f"[모니터] 실시간 모니터링 시작 — {duration_hours}시간, {interval_sec}초 간격")
+    tg_send("📡 <b>실시간 모니터링 시작</b>\n장중 신호 감지 시 즉시 알림을 보내드립니다.")
+
+    deadline    = time.time() + duration_hours * 3600
+    prev_scores = {}   # {ticker: {score, price}}
+
+    # 초기 점수 캐시 로드 (일일 리포트 결과가 있으면 활용)
+    perf  = load_performance()
+    today = datetime.now().strftime("%Y-%m-%d")
+    for rec in perf.get("recommendations", []):
+        if rec.get("date") == today:
+            prev_scores[rec["ticker"]] = {"score": rec.get("score", 0)}
+
+    cycle = 0
+    while time.time() < deadline:
+        cycle += 1
+        now = datetime.now()
+        # 장 시간(09:00~15:30) 이외에는 대기
+        if not (9 <= now.hour < 15 or (now.hour == 15 and now.minute <= 35)):
+            print(f"  [모니터] 장 시간 외 대기 중 ({now.strftime('%H:%M')})")
+            time.sleep(interval_sec)
+            continue
+
+        print(f"  [모니터] 사이클 {cycle} ({now.strftime('%H:%M')})")
+        signals = _check_monitor_signals(prev_scores)
+
+        for sig in signals:
+            print(f"  [모니터] 신호: {sig['type']}")
+            tg_send(sig["msg"])
+
+        time.sleep(interval_sec)
+
+    tg_send("📡 실시간 모니터링 종료")
+    print("[모니터] 종료")
+
+
+# ════════════════════════════════════════════════
+# 브리핑 함수 (스케줄별)
+# ════════════════════════════════════════════════
+def run_us_briefing():
+    """새벽 6시 — 미국 시장 마감 브리핑"""
+    print("[브리핑] 미국 시장 마감 브리핑")
+    try:
+        sp500  = yf.Ticker("^GSPC").history(period="2d")
+        nasdaq = yf.Ticker("^IXIC").history(period="2d")
+        dow    = yf.Ticker("^DJI").history(period="2d")
+        vix    = yf.Ticker("^VIX").info
+        usdkrw = yf.Ticker("KRW=X").info
+        gold   = yf.Ticker("GC=F").info
+        wti    = yf.Ticker("CL=F").info
+
+        def chg(hist):
+            if len(hist) >= 2:
+                return round((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2] * 100, 2)
+            return 0.0
+
+        sp_chg  = chg(sp500)
+        nq_chg  = chg(nasdaq)
+        dj_chg  = chg(dow)
+        vix_val = round(float(vix.get("regularMarketPrice") or 20), 1)
+        fx_val  = round(float(usdkrw.get("regularMarketPrice") or 1300), 0)
+        gold_v  = round(float(gold.get("regularMarketPrice") or 2000), 0)
+        wti_v   = round(float(wti.get("regularMarketPrice") or 75), 1)
+
+        def arr(v): return "▲" if v >= 0 else "▼"
+
+        mood_txt = ""
+        if vix_val > 28:
+            mood_txt = "⛔ VIX 급등 — 오늘 코스피 하락 가능성 높음. 방어적 접근 권장."
+        elif sp_chg <= -1.5:
+            mood_txt = "⚠️ 미국 급락 — 오늘 코스피 동조 하락 주의. 신규 매수 자제."
+        elif sp_chg >= 1.5:
+            mood_txt = "✅ 미국 강세 — 오늘 코스피 상승 출발 예상. 관심 종목 체크."
+        else:
+            mood_txt = "📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
+
+        lines = [
+            f"<b>🌙 미국 시장 마감 브리핑</b>",
+            f"<i>{datetime.now().strftime('%Y-%m-%d')} 새벽 브리핑</i>",
+            "",
+            f"S&P500  {arr(sp_chg)}{abs(sp_chg):.2f}%",
+            f"나스닥   {arr(nq_chg)}{abs(nq_chg):.2f}%",
+            f"다우    {arr(dj_chg)}{abs(dj_chg):.2f}%",
+            f"VIX    {vix_val}",
+            f"달러/원 {fx_val:,.0f}원",
+            f"금      ${gold_v:,.0f}  /  WTI ${wti_v}",
+            "",
+            mood_txt,
+        ]
+
+        # AI 분석 추가
+        client = _get_ai_client()
+        if client:
+            try:
+                prompt = (
+                    f"미국 증시 마감 데이터: S&P500 {sp_chg:+.2f}%, 나스닥 {nq_chg:+.2f}%, "
+                    f"VIX {vix_val}, 달러/원 {fx_val:,.0f}원\n"
+                    "오늘 한국 증시 예상과 주목할 섹터를 2문장으로 요약해줘."
+                )
+                resp = client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=200,
+                    system=_AI_SYSTEM,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                lines += ["", f"🤖 {resp.content[0].text.strip()}"]
+            except Exception:
+                pass
+
+        tg_send("\n".join(lines))
+    except Exception as e:
+        print(f"  [브리핑] 미국 브리핑 오류: {e}")
+        tg_send(f"⚠️ 미국 시장 브리핑 수집 실패: {e}")
+
+
+def run_premarket_briefing():
+    """8시 50분 — 장 시작 전 10분 브리핑"""
+    print("[브리핑] 장 시작 전 브리핑")
+    try:
+        mood = get_market_mood()
+        fg   = get_fear_greed(mood)
+
+        lines = [
+            "<b>🔔 장 시작 전 브리핑 (8:50)</b>",
+            f"<i>9시 개장 10분 전</i>",
+            "",
+            f"코스피 야간선물: {mood['kospi_price']:,.0f} ({mood['kospi_chg']:+.2f}%)",
+            f"달러/원: {mood['usdkrw']:,.0f}원",
+            f"VIX: {mood['vix']} ({mood['status']})",
+            f"공포탐욕: {fg['score']} ({fg['label']})",
+            "",
+            mood["advice"],
+            "",
+        ]
+
+        # 오늘 주목 종목 (보유종목 + 고점수 종목)
+        watch_list = []
+        for h in HOLDINGS:
+            watch_list.append(f"📦 보유: {h.get('name', h.get('code', ''))}")
+        if watch_list:
+            lines += ["<b>📋 오늘 체크할 보유종목</b>"] + watch_list[:5]
+
+        client = _get_ai_client()
+        if client:
+            try:
+                prompt = (
+                    f"코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']}, "
+                    f"달러/원 {mood['usdkrw']:,.0f}원 환경에서 "
+                    "오늘 장 초반 전략을 1~2문장으로 알려줘."
+                )
+                resp = client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=150,
+                    system=_AI_SYSTEM,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                lines += ["", f"🤖 AI: {resp.content[0].text.strip()}"]
+            except Exception:
+                pass
+
+        tg_send("\n".join(lines))
+    except Exception as e:
+        print(f"  [브리핑] 장전 브리핑 오류: {e}")
+        tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
+
+
+def run_close_summary():
+    """3시 35분 — 장 마감 결산"""
+    print("[브리핑] 장 마감 결산")
+    try:
+        mood = get_market_mood()
+        fg   = get_fear_greed(mood)
+
+        kos_arr = "▲" if mood["kospi_chg"] >= 0 else "▼"
+        lines = [
+            "<b>📉 장 마감 결산 (15:35)</b>",
+            f"<i>{datetime.now().strftime('%Y-%m-%d')} 오늘의 결산</i>",
+            "",
+            f"코스피  {mood['kospi_price']:,.0f}  {kos_arr}{abs(mood['kospi_chg']):.2f}%",
+            f"달러/원  {mood['usdkrw']:,.0f}원",
+            f"VIX     {mood['vix']}  ({mood['status']})",
+            f"공포탐욕  {fg['score']} ({fg['label']})",
+            "",
+        ]
+
+        # 보유종목 오늘 성과
+        ha = check_holdings_alerts()
+        if ha:
+            lines.append("<b>📦 보유종목 오늘 성과</b>")
+            for a in ha:
+                emoji = "🔴" if a["type"] == "손절" else ("🟢" if "목표" in a["type"] else "⚪")
+                lines.append(
+                    f"{emoji} {a['name']}: {a['pct']:+.1f}%"
+                    f" / 수익 {a['profit']:+,.0f}원"
+                )
+            lines.append("")
+
+        client = _get_ai_client()
+        if client:
+            try:
+                prompt = (
+                    f"오늘 코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']} 마감.\n"
+                    "내일 장 전망과 주목할 포인트를 2문장으로 요약해줘."
+                )
+                resp = client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=200,
+                    system=_AI_SYSTEM,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                lines += [f"🤖 내일 전망: {resp.content[0].text.strip()}"]
+            except Exception:
+                pass
+
+        tg_send("\n".join(lines))
+    except Exception as e:
+        print(f"  [브리핑] 마감 결산 오류: {e}")
+        tg_send(f"⚠️ 마감 결산 수집 실패: {e}")
+
+
+# ════════════════════════════════════════════════
+# 종목 비교 / 투자 시뮬레이션 (텔레그램 명령)
+# ════════════════════════════════════════════════
+def compare_stocks(name_a: str, name_b: str, all_stocks: list) -> str:
+    """두 종목 비교 분석"""
+    def find(q):
+        q = q.strip().replace(" ", "")
+        return next((s for s in all_stocks if q in s["name"].replace(" ", "") or q.lower() == s["ticker"].lower()), None)
+
+    a = find(name_a)
+    b = find(name_b)
+
+    if not a or not b:
+        missing = name_a if not a else name_b
+        return f"'{missing}' 종목을 찾을 수 없습니다."
+
+    def row(label, va, vb, higher_better=True):
+        if isinstance(va, float) and isinstance(vb, float):
+            winner = "◀" if (va > vb) == higher_better else ("▶" if va != vb else "")
+            return f"{label}: <b>{va}</b> {winner}  |  <b>{vb}</b>"
+        return f"{label}: {va}  |  {vb}"
+
+    lines = [
+        f"<b>⚖️ 종목 비교</b>",
+        f"<b>{a['name']}</b>  vs  <b>{b['name']}</b>",
+        "",
+        row("종합점수",  float(a['score']),   float(b['score'])),
+        row("RSI",      float(a['rsi']),      float(b['rsi']),     False),
+        row("1달 수익률", float(a['ret_1m']),  float(b['ret_1m'])),
+        row("3달 수익률", float(a['ret_3m']),  float(b['ret_3m'])),
+        row("볼린저(%)",  float(a['bb_pct']),  float(b['bb_pct']),  False),
+        row("배당(%)",   float(a['div']),     float(b['div'])),
+        "",
+        f"{a['name']} 매수시그널: {'✅ YES' if a.get('buy_signal') else '❌ NO'}",
+        f"{b['name']} 매수시그널: {'✅ YES' if b.get('buy_signal') else '❌ NO'}",
+        "",
+    ]
+
+    winner = a if a["score"] > b["score"] else b
+    loser  = b if a["score"] > b["score"] else a
+    lines.append(f"🏆 <b>종합 우위: {winner['name']}</b> ({winner['score']}점 vs {loser['score']}점)")
+    if winner.get("buy_signal"):
+        lines.append(f"💡 <b>지금 매수하세요!</b> — {winner['buy_reason']}")
+
+    client = _get_ai_client()
+    if client:
+        try:
+            prompt = (
+                f"{a['name']}(점수:{a['score']}, RSI:{a['rsi']}, 1달:{a['ret_1m']:+.1f}%)와 "
+                f"{b['name']}(점수:{b['score']}, RSI:{b['rsi']}, 1달:{b['ret_1m']:+.1f}%) 비교.\n"
+                "어느 종목이 지금 더 유리한지 이유와 함께 1~2문장으로."
+            )
+            resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=200,
+                system=_AI_SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            lines += ["", f"🤖 AI: {resp.content[0].text.strip()}"]
+        except Exception:
+            pass
+
+    return "\n".join(lines)
+
+
+def simulate_investment(name: str, amount: int, all_stocks: list) -> str:
+    """투자 금액 시뮬레이션"""
+    q = name.strip().replace(" ", "")
+    s = next((st for st in all_stocks if q in st["name"].replace(" ", "") or q.lower() == st["ticker"].lower()), None)
+    if not s:
+        return f"'{name}' 종목을 찾을 수 없습니다."
+
+    price    = s["price"]
+    currency = s["currency"]
+    shares   = int(amount / price)
+    if shares == 0:
+        return f"{name}의 현재가({price:,.0f})가 투자금액({amount:,}원)보다 높아 1주도 살 수 없습니다."
+
+    invest_real = shares * price
+    fmt = (lambda v: f"{v:,.0f}원") if currency == "KRW" else (lambda v: f"${v:,.2f}")
+
+    t1 = shares * price * TARGET1_PCT
+    t2 = shares * price * TARGET2_PCT
+    t3 = shares * price * TARGET3_PCT
+    sl = shares * price * STOP_LOSS_PCT
+
+    buy_tag = ""
+    if s.get("buy_signal"):
+        buy_tag = f"\n💚 <b>지금 매수하세요!</b> — {s.get('buy_reason', '')}"
+    else:
+        buy_tag = "\n⚪ 현재 매수 신호 없음 — 관망 권장"
+
+    return "\n".join([
+        f"<b>💰 투자 시뮬레이션 — {s['name']}</b>",
+        f"투자금액: {amount:,}원  /  매수가: {fmt(price)}  /  수량: {shares}주",
+        f"실제 투자금: {invest_real:,}원",
+        buy_tag,
+        "",
+        f"📈 단기 수익 (+{TARGET1_PCT*100:.0f}%): <b>+{t1:,.0f}원</b>",
+        f"📈 중기 수익 (+{TARGET2_PCT*100:.0f}%): <b>+{t2:,.0f}원</b>",
+        f"📈 장기 수익 (+{TARGET3_PCT*100:.0f}%): <b>+{t3:,.0f}원</b>",
+        f"🛑 손절 손실 (-{STOP_LOSS_PCT*100:.0f}%): <b>-{sl:,.0f}원</b>",
+        "",
+        f"분할매수: 1차 {shares//2}주 / 2차 {shares-shares//2}주 ({fmt(price*0.95)} 이하)",
+        f"리스크 등급: {s['risk']}",
+    ])
+
+
+# ════════════════════════════════════════════════
+# 텔레그램 봇 (인터랙티브 폴링) — 명령어 확장
+# ════════════════════════════════════════════════
+def run_bot_extended(kr_results: list, us_results: list, mood: dict,
+                     kr_top: list, us_top: list, avoid: list,
+                     dart_alerts: list, ai_summary: str, fg: dict,
+                     duration_sec: int = 300):
+    if not TELEGRAM_TOKEN:
+        print("  [봇] TELEGRAM_TOKEN 없음 — 건너뜀")
+        return
+
+    print(f"  [봇] 텔레그램 봇 폴링 ({duration_sec}초)")
+    offset     = 0
+    deadline   = time.time() + duration_sec
+    all_stocks = kr_results + us_results
+
+    while time.time() < deadline:
+        updates = tg_get_updates(offset)
+        for upd in updates:
+            offset  = upd["update_id"] + 1
+            msg     = upd.get("message", {})
+            text    = (msg.get("text") or "").strip()
+            chat_id = str(msg.get("chat", {}).get("id", ""))
+            if not text:
+                continue
+
+            print(f"  [봇] 수신: {text[:60]}")
+
+            # ── 기본 명령어 ─────────────────────
+            if text in ("/start", "/리포트"):
+                summary = make_telegram_message(
+                    kr_top, us_top, avoid, mood,
+                    dart_alerts=dart_alerts, ai_summary=ai_summary, fg=fg,
+                )
+                tg_send(summary, chat_id)
+                continue
+
+            if text in ("/도움말", "/help"):
+                tg_send(
+                    "<b>📌 투자 비서 v6.0 명령어</b>\n\n"
+                    "<b>기본</b>\n"
+                    "/리포트 — 오늘 전체 리포트\n"
+                    "/보유 — 보유종목 현황\n"
+                    "/도움말 — 이 메시지\n\n"
+                    "<b>종목 분석</b>\n"
+                    "현대로템 어때? — AI 종목 분석\n"
+                    "현대로템 vs 한화에어로스페이스 — 두 종목 비교\n\n"
+                    "<b>투자 시뮬레이션</b>\n"
+                    "현대로템 300만원 — 투자 시뮬레이션\n"
+                    "삼성중공업 500 — 500만원 시뮬레이션\n\n"
+                    "<b>시장</b>\n"
+                    "지금 시장 어때? — 시장 현황 분석\n"
+                    "오늘 뭐 사? — 오늘의 추천 종목",
+                    chat_id,
+                )
+                continue
+
+            if text == "/보유":
+                ha = check_holdings_alerts()
+                if not ha:
+                    tg_send("보유종목이 없거나 HOLDINGS_JSON이 설정되지 않았습니다.", chat_id)
+                else:
+                    lines = ["<b>📦 보유종목 현황</b>", ""]
+                    for a in ha:
+                        emoji = "🔴" if a["type"] == "손절" else ("🟢" if "목표" in a["type"] else "⚪")
+                        alert = ""
+                        if a["type"] == "손절":
+                            alert = "\n   🔴 <b>지금 매도하세요!</b>"
+                        elif "목표" in a["type"]:
+                            alert = f"\n   💚 <b>지금 매도하세요!</b> ({a['type']} 달성)"
+                        lines.append(
+                            f"{emoji} <b>{a['name']}</b>: {a['pct']:+.1f}%"
+                            f" ({a['curr_price']:,}원) / 수익 {a['profit']:+,.0f}원{alert}"
+                        )
+                    tg_send("\n".join(lines), chat_id)
+                continue
+
+            # ── 종목 비교: A vs B ────────────────
+            vs_match = re.match(r"^(.+?)\s+vs\s+(.+)$", text, re.IGNORECASE)
+            if vs_match:
+                result = compare_stocks(vs_match.group(1), vs_match.group(2), all_stocks)
+                tg_send(result, chat_id)
+                continue
+
+            # ── 투자 시뮬레이션: 종목명 + 금액 ──
+            sim_match = re.match(r"^(.+?)\s+(\d+)(?:만원?|만)?$", text)
+            if sim_match:
+                stock_name = sim_match.group(1).strip()
+                amount_man = int(sim_match.group(2))
+                amount     = amount_man * 10_000
+                result = simulate_investment(stock_name, amount, all_stocks)
+                tg_send(result, chat_id)
+                continue
+
+            # ── 오늘 추천 ────────────────────────
+            if any(kw in text for kw in ["뭐 사", "뭐사", "추천", "오늘 추천"]):
+                buy_stocks = [s for s in (kr_top + us_top) if s.get("buy_signal")]
+                if buy_stocks:
+                    lines = ["<b>💚 오늘 매수 신호 종목</b>", ""]
+                    for s in buy_stocks[:5]:
+                        lines.append(
+                            f"✅ <b>{s['name']}</b> ({s['score']}점) — {s.get('buy_reason', '')}\n"
+                            f"   목표: {s['target1']:,} / 손절: {s['stop_price']:,}"
+                        )
+                    tg_send("\n".join(lines), chat_id)
+                else:
+                    tg_send("오늘은 명확한 매수 신호 종목이 없습니다. 관망을 권장합니다.", chat_id)
+                continue
+
+            # ── 자연어 질의 → AI 응답 ────────────
+            answer = ai_answer_query(text, kr_results, us_results, mood)
+            if not answer:
+                q_clean = re.sub(r"[어때사도될까\?？\s]", "", text)
+                found   = [s for s in all_stocks if q_clean in s["name"].replace(" ", "")]
+                if found:
+                    s = found[0]
+                    buy_line = (
+                        f"💚 <b>지금 매수하세요!</b> — {s['buy_reason']}"
+                        if s.get("buy_signal")
+                        else "⚪ 현재 매수 신호 없음 — 관망 권장"
+                    )
+                    answer = (
+                        f"<b>{s['name']}</b> ({s['ticker']})\n"
+                        f"현재가: {s['price']:,} ({s['change']:+.2f}%)\n"
+                        f"점수: {s['score']}점 / {s['risk']}\n"
+                        f"{buy_line}\n"
+                        f"목표: {s['target1']:,} / 손절: {s['stop_price']:,}"
+                    )
+                else:
+                    answer = (
+                        "해당 종목을 찾을 수 없습니다.\n"
+                        "예: 현대로템 어때? / 현대로템 vs 삼성중공업 / 현대로템 300만원"
+                    )
+            tg_send(answer, chat_id)
+
+    print("  [봇] 폴링 종료")
+
+
+# ════════════════════════════════════════════════
+# 메인 실행
+# ════════════════════════════════════════════════
+def run():
+    print("=" * 60)
+    print("투자 비서 v6.0 시작")
+    print(f"국내 {len(KR_STOCKS)}종목 + 해외 {len(US_STOCKS)}종목 분석 중...")
+    print(f"KIS API: {'연결됨' if _kis.available() else 'yfinance 폴백'}")
+    print(f"AI 분석: {'Claude 활성화' if (_ANTHROPIC_OK and ANTHROPIC_API_KEY) else '비활성화 (ANTHROPIC_API_KEY 없음)'}")
+    print("=" * 60)
+
+    # ── 월간 리포트 (매월 1일) ──────────────────
+    if datetime.now().day == 1:
+        monthly = make_monthly_report()
+        if monthly:
+            print("\n[월간 성과 리포트 전송]")
+            tg_send(monthly)
+
+    print("\n[1/6] 시장 분위기 파악 중...")
+    mood = get_market_mood()
+    fg   = get_fear_greed(mood)
+    print(f"  → 시장: {mood['status']} / VIX: {mood['vix']} / 코스피: {mood['kospi_chg']:+.2f}%")
+    print(f"  → 공포탐욕지수: {fg['score']} ({fg['label']})")
+
+    print("\n[2/6] DART 공시 데이터 수집 중...")
+    all_dart  = get_all_dart_data(KR_STOCKS)
+    sig_count = sum(1 for dd in all_dart.values() for items in dd["signals"].values() if items)
+    print(f"  → {len(all_dart)}개 수집 / 주요 공시 {sig_count}건")
+
+    print("\n[3/6] 국내 종목 분석 중...")
+    kr_results = []
+    for ticker, val in KR_STOCKS.items():
+        name, period, sector = val
+        print(f"  분석: {name}")
+        r = analyze(ticker, name, period, sector,
+                    dart_data=all_dart.get(ticker),
+                    with_sentiment=True)
+        if r:
+            kr_results.append(r)
+        time.sleep(0.8)
+
+    print("\n[4/6] 해외 종목 분석 중...")
+    us_results = []
+    for ticker, val in US_STOCKS.items():
+        name, period, sector = val
+        print(f"  분석: {name}")
+        r = analyze(ticker, name, period, sector)
+        if r:
+            us_results.append(r)
+        time.sleep(0.8)
+
+    kr_sorted  = sorted(kr_results, key=lambda x: x["score"], reverse=True)
+    us_sorted  = sorted(us_results, key=lambda x: x["score"], reverse=True)
+    kr_top5    = kr_sorted[:5]
+    us_top5    = us_sorted[:5]
+    avoid_list = sorted(
+        [s for s in kr_results + us_results if s["rsi"] > 70 or s["ret_1m"] < -15],
+        key=lambda x: x["ret_1m"],
+    )[:5]
+
+    dart_alerts = []
+    for ticker, dd in all_dart.items():
+        name, _, sector = KR_STOCKS[ticker]
+        for key, items in dd["signals"].items():
+            if items:
+                _, label, is_risk = SIGNAL_DEFS[key]
+                dart_alerts.append({
+                    "ticker": ticker, "name": name, "sector": sector,
+                    "key": key, "label": label, "is_risk": is_risk, "items": items,
+                })
+
+    print("\n[5/6] AI 분석 중...")
+    ai_summary = ai_market_summary(mood, kr_top5, us_top5, fg)
+    ai_sector  = ai_sector_rotation(mood)
+
+    ai_insights: dict = {}
+    for s in kr_top5:
+        insight = ai_stock_insight(s)
+        if insight:
+            ai_insights[s["ticker"]] = insight
+        time.sleep(0.3)
+
+    print("\n[6/6] 리포트 생성 및 전송 중...")
+    html = make_report(
+        kr_top5, us_top5, avoid_list, mood,
+        dart_alerts=dart_alerts,
+        ai_summary=ai_summary,
+        ai_sector=ai_sector,
+        fg=fg,
+        ai_insights=ai_insights,
+    )
+    text = make_telegram_message(
+        kr_top5, us_top5, avoid_list, mood,
+        dart_alerts=dart_alerts,
+        ai_summary=ai_summary,
+        fg=fg,
+    )
+    tg_send(text)
+    tg_send_document(html)
+
+    ha = check_holdings_alerts()
+    alert_msgs = [a["msg"] for a in ha if "msg" in a]
+    if alert_msgs:
+        print(f"\n[보유종목 알림 {len(alert_msgs)}건]")
+        tg_send("\n".join(["<b>📦 보유종목 알림</b>", ""] + alert_msgs))
+
+    record_recommendations(kr_top5, us_top5)
+
+    print("\n[결과 요약]")
+    for s in kr_top5:
+        print(f"  {s['name']} — {s['score']}점 / {'✅' if s.get('buy_signal') else '❌'}")
+    for s in us_top5:
+        print(f"  {s['name']} — {s['score']}점 / {'✅' if s.get('buy_signal') else '❌'}")
+
+    # 텔레그램 봇 폴링 (5분)
+    run_bot_extended(
+        kr_results, us_results, mood,
+        kr_top5, us_top5, avoid_list,
+        dart_alerts, ai_summary, fg,
+        duration_sec=300,
+    )
+    print("\n완료! 텔레그램을 확인하세요.")
+
+
 if __name__ == "__main__":
-    run()
+    mode = sys.argv[1] if len(sys.argv) > 1 else ""
+
+    if mode == "--monitor":
+        run_monitor(duration_hours=7.0, interval_sec=300)
+    elif mode == "--usclose":
+        run_us_briefing()
+    elif mode == "--premarket":
+        run_premarket_briefing()
+    elif mode == "--close":
+        run_close_summary()
+    else:
+        run()
