@@ -124,7 +124,10 @@ class KisClient:
                 timeout=10,
             )
             d = r.json()
-            return d if d.get("rt_cd") == "0" else {}
+            if d.get("rt_cd") == "0":
+                return d
+            print(f"  [KIS] {tr_id} API 오류: rt_cd={d.get('rt_cd')} msg={d.get('msg1','')}")
+            return {}
         except Exception as e:
             print(f"  [KIS] {tr_id} 실패: {e}")
             return {}
@@ -143,8 +146,16 @@ class KisClient:
             "FHKST01010900",
             {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code},
         )
-        out = d.get("output", [])
-        return out[0] if isinstance(out, list) and out else {}
+        if not d:
+            return {}
+        for key in ("output", "output1"):
+            out = d.get(key)
+            if isinstance(out, list) and out:
+                return out[0]
+            if isinstance(out, dict) and out:
+                return out
+        print(f"  [KIS] 투자자 데이터 없음 ({code}): keys={list(d.keys())}")
+        return {}
 
     def get_daily_chart(self, code: str, months: int = 5) -> list:
         end_dt   = datetime.now().strftime("%Y%m%d")
@@ -683,6 +694,7 @@ def analyze(
     currency = "KRW" if is_kr else "USD"
 
     foreign_net = inst_net = 0.0
+    inv_ok = False
     revenue = profit = 0
     high_series = low_series = None
 
@@ -728,6 +740,7 @@ def analyze(
             inv         = _kis.get_investor(code)
             foreign_net = _safe_float(inv.get("frgn_ntby_tr_pbmn"))
             inst_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))
+            inv_ok      = bool(inv)
 
         else:
             stock = yf.Ticker(ticker)
@@ -1041,6 +1054,7 @@ def analyze(
         "foreign_net": foreign_net, "inst_net": inst_net,
         "foreign_eok": foreign_eok, "inst_eok": inst_eok,
         "is_kr_kis": is_kr and _kis.available(),
+        "inv_ok": is_kr and _kis.available() and inv_ok,
         "dart_financials": dart_fin, "dart_signals": dart_sigs,
         "support": sr["support"], "resistance": sr["resistance"],
         "ma20": sr["ma20"], "ma60": sr["ma60"],
@@ -1514,12 +1528,17 @@ def card_html(rank: int, s: dict, ai_insight: str = "") -> str:
     # 외국인/기관 수급
     investor_html = ""
     if s.get("is_kr_kis"):
-        f_eok = s.get("foreign_eok", 0.0)
-        i_eok = s.get("inst_eok",    0.0)
-        f_col = "#e03131" if f_eok >= 0 else "#1971c2"
-        i_col = "#e03131" if i_eok >= 0 else "#1971c2"
-        f_str = f"{'▲' if f_eok >= 0 else '▼'} {abs(f_eok):.1f}억원"
-        i_str = f"{'▲' if i_eok >= 0 else '▼'} {abs(i_eok):.1f}억원"
+        inv_ok = s.get("inv_ok", False)
+        f_eok  = s.get("foreign_eok", 0.0)
+        i_eok  = s.get("inst_eok",    0.0)
+        if inv_ok:
+            f_col = "#e03131" if f_eok >= 0 else "#1971c2"
+            i_col = "#e03131" if i_eok >= 0 else "#1971c2"
+            f_str = f"{'▲' if f_eok >= 0 else '▼'} {abs(f_eok):.1f}억원"
+            i_str = f"{'▲' if i_eok >= 0 else '▼'} {abs(i_eok):.1f}억원"
+        else:
+            f_col = i_col = "#868e96"
+            f_str = i_str = "조회불가"
         investor_html = (
             f'<div style="margin-bottom:16px;padding:14px;background:#f0f4ff;border-radius:10px;'
             f'border-left:4px solid #364fc7;">'
@@ -2032,12 +2051,15 @@ def make_telegram_message(
         lines.append(f"{medals[i]} <b>{s['name']}</b> — {s['score']}점 {s['risk']} ({s['period']}){buy_tag}")
         lines.append(f"   {s['price']:,.0f}원 {chg_arr}{abs(s['change']):.2f}%")
         if s.get("is_kr_kis"):
-            f_eok = s.get("foreign_eok", 0.0)
-            i_eok = s.get("inst_eok",    0.0)
-            lines.append(
-                f"   외국인 {'▲' if f_eok>=0 else '▼'}{abs(f_eok):.1f}억"
-                f"  기관 {'▲' if i_eok>=0 else '▼'}{abs(i_eok):.1f}억"
-            )
+            if s.get("inv_ok"):
+                f_eok = s.get("foreign_eok", 0.0)
+                i_eok = s.get("inst_eok",    0.0)
+                lines.append(
+                    f"   외국인 {'▲' if f_eok>=0 else '▼'}{abs(f_eok):.1f}억"
+                    f"  기관 {'▲' if i_eok>=0 else '▼'}{abs(i_eok):.1f}억"
+                )
+            else:
+                lines.append("   외국인/기관 수급 조회불가")
 
     lines += ["", "<b>🇺🇸 해외 추천 TOP 5</b>"]
     for i, s in enumerate(us_top):
