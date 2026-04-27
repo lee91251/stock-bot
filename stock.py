@@ -44,6 +44,9 @@ KIS_APP_KEY       = os.environ.get("KIS_APP_KEY",       "")
 KIS_APP_SECRET    = os.environ.get("KIS_APP_SECRET",    "")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
+# Claude AI 모델 — 모델 변경 시 이 값만 수정하면 됨
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
+
 INVEST_PER_STOCK = 2_000_000
 STOP_LOSS_PCT    = 0.07
 TARGET1_PCT      = 0.10
@@ -1155,7 +1158,7 @@ def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
             "3. 오늘 가장 중요한 리스크 요인"
         )
         resp = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=400,
             system=_AI_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
@@ -1185,7 +1188,7 @@ def ai_sector_rotation(mood: dict) -> str:
             "형식: 유망: [섹터1] - 이유 / [섹터2] - 이유 | 주의: [섹터] - 이유"
         )
         resp = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=200,
             system=_AI_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
@@ -1226,7 +1229,7 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
             "3. 오늘 가장 주의해야 할 매크로 리스크"
         )
         resp = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=350,
             system=_AI_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
@@ -1251,7 +1254,7 @@ def ai_stock_insight(s: dict) -> str:
             "이 종목에 대한 핵심 인사이트를 50자 이내 한 문장으로."
         )
         resp = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=100,
             system=_AI_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
@@ -1293,7 +1296,7 @@ def ai_answer_query(query: str, kr_results: list, us_results: list, mood: dict) 
             )
 
         resp = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=CLAUDE_MODEL,
             max_tokens=400,
             system=_AI_SYSTEM,
             messages=[{
@@ -2545,7 +2548,7 @@ def run_us_briefing():
                     "오늘 한국 증시 예상과 주목할 섹터를 2문장으로 요약해줘."
                 )
                 resp = client.messages.create(
-                    model="claude-sonnet-4-6",
+                    model=CLAUDE_MODEL,
                     max_tokens=200,
                     system=_AI_SYSTEM,
                     messages=[{"role": "user", "content": prompt}],
@@ -2596,7 +2599,7 @@ def run_premarket_briefing():
                     "오늘 장 초반 전략을 1~2문장으로 알려줘."
                 )
                 resp = client.messages.create(
-                    model="claude-sonnet-4-6",
+                    model=CLAUDE_MODEL,
                     max_tokens=150,
                     system=_AI_SYSTEM,
                     messages=[{"role": "user", "content": prompt}],
@@ -2650,7 +2653,7 @@ def run_close_summary():
                     "내일 장 전망과 주목할 포인트를 2문장으로 요약해줘."
                 )
                 resp = client.messages.create(
-                    model="claude-sonnet-4-6",
+                    model=CLAUDE_MODEL,
                     max_tokens=200,
                     system=_AI_SYSTEM,
                     messages=[{"role": "user", "content": prompt}],
@@ -2718,7 +2721,7 @@ def compare_stocks(name_a: str, name_b: str, all_stocks: list) -> str:
                 "어느 종목이 지금 더 유리한지 이유와 함께 1~2문장으로."
             )
             resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=CLAUDE_MODEL,
                 max_tokens=200,
                 system=_AI_SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
@@ -3405,18 +3408,43 @@ def run():
     print("\n완료! 텔레그램을 확인하세요.")
 
 
+def _notify_fatal(mode: str, exc: BaseException):
+    """봇 실행 중 처리되지 않은 예외 발생 시 텔레그램으로 즉시 알림."""
+    import traceback
+    tb_full = traceback.format_exc()
+    # 텔레그램 가독성을 위해 마지막 트레이스백 8줄만 표시
+    tb_tail = "\n".join(tb_full.strip().splitlines()[-8:])
+    err_msg = (
+        f"🚨 <b>[봇 실행 실패]</b>\n"
+        f"모드: <code>{mode or 'run (기본)'}</code>\n"
+        f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        f"오류: <code>{type(exc).__name__}: {str(exc)[:300]}</code>\n\n"
+        f"<b>트레이스백:</b>\n<pre>{tb_tail[:1500]}</pre>\n\n"
+        f"<i>GitHub Actions 로그에서 전체 내용 확인 가능</i>"
+    )
+    try:
+        tg_send(err_msg)
+    except Exception as send_err:
+        print(f"[FATAL] 실패 알림 전송도 실패: {send_err}", file=sys.stderr)
+    print(f"\n[FATAL] {tb_full}", file=sys.stderr)
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else ""
 
-    if mode == "--monitor":
-        run_monitor(duration_hours=7.0, interval_sec=300)
-    elif mode == "--usclose":
-        run_us_briefing()
-    elif mode == "--premarket":
-        run_premarket_briefing()
-    elif mode == "--close":
-        run_close_summary()
-    elif mode == "--marketscan":
-        run_market_scan()
-    else:
-        run()
+    try:
+        if mode == "--monitor":
+            run_monitor(duration_hours=7.0, interval_sec=300)
+        elif mode == "--usclose":
+            run_us_briefing()
+        elif mode == "--premarket":
+            run_premarket_briefing()
+        elif mode == "--close":
+            run_close_summary()
+        elif mode == "--marketscan":
+            run_market_scan()
+        else:
+            run()
+    except Exception as e:
+        _notify_fatal(mode, e)
+        sys.exit(1)
