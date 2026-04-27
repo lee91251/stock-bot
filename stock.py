@@ -27,6 +27,13 @@ try:
 except ImportError:
     _ANTHROPIC_OK = False
 
+try:
+    from pykrx import stock as _pykrx
+    _PYKRX_OK = True
+except ImportError:
+    _PYKRX_OK = False
+    _pykrx = None
+
 # ════════════════════════════════════════════════
 # 환경변수 & 기본 설정
 # ════════════════════════════════════════════════
@@ -50,7 +57,9 @@ try:
 except Exception:
     HOLDINGS = []
 
-PERFORMANCE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
+PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
+MARKET_SCAN_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
+MARKET_SCAN_N     = 1500
 KIS_BASE  = "https://openapi.koreainvestment.com:9443"
 DART_BASE = "https://opendart.fss.or.kr/api"
 
@@ -2909,6 +2918,331 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
 
 
 # ════════════════════════════════════════════════
+# pykrx 시장 전체 스캔
+# ════════════════════════════════════════════════
+def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
+    """pykrx로 코스피+코스닥 시가총액 상위 n개 종목 리스트 반환 [(code, name, mkt), ...]"""
+    if not _PYKRX_OK:
+        print("  [pykrx] 미설치 — 시장 스캔 불가")
+        return []
+
+    date_obj = datetime.now() - timedelta(days=1)
+    date_str = ""
+    for _ in range(7):
+        date_str = date_obj.strftime("%Y%m%d")
+        try:
+            df_test = _pykrx.get_market_cap_by_ticker(date_str, market="KOSPI")
+            if df_test is not None and not df_test.empty:
+                break
+        except Exception:
+            pass
+        date_obj -= timedelta(days=1)
+    else:
+        print("  [pykrx] 시가총액 데이터 없음")
+        return []
+
+    try:
+        df_kospi  = _pykrx.get_market_cap_by_ticker(date_str, market="KOSPI")
+        df_kosdaq = _pykrx.get_market_cap_by_ticker(date_str, market="KOSDAQ")
+    except Exception as e:
+        print(f"  [pykrx] 시가총액 조회 오류: {e}")
+        return []
+
+    kospi_set = set(df_kospi.index.tolist()) if df_kospi is not None else set()
+    frames = [f for f in [df_kospi, df_kosdaq] if f is not None and not f.empty]
+    if not frames:
+        return []
+    df_all = pd.concat(frames, axis=0)
+    df_all = df_all[df_all["시가총액"] > 0].sort_values("시가총액", ascending=False).head(n)
+
+    result = []
+    for code in df_all.index:
+        try:
+            name = _pykrx.get_market_ticker_name(code)
+            mkt  = "KOSPI" if code in kospi_set else "KOSDAQ"
+            result.append((code, name, mkt))
+        except Exception:
+            continue
+
+    print(f"  [pykrx] 시가총액 상위 {len(result)}종목 로드 (기준일: {date_str})")
+    return result
+
+
+def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
+    """pykrx OHLCV + 펀더멘털로 종목 분석 (KIS/DART/감성 없는 빠른 버전)"""
+    try:
+        end_obj   = datetime.now()
+        start_obj = end_obj - timedelta(days=190)
+        start_str = start_obj.strftime("%Y%m%d")
+        end_str   = end_obj.strftime("%Y%m%d")
+
+        df = _pykrx.get_market_ohlcv_by_date(start_str, end_str, code)
+        if df is None or len(df) < 20:
+            return None
+
+        close  = df["종가"].astype(float)
+        volume = df["거래량"].astype(float)
+        high_s = df["고가"].astype(float)
+        low_s  = df["저가"].astype(float)
+
+        price = float(close.iloc[-1])
+        if price <= 0:
+            return None
+
+        # 유동성 필터: 거래대금 5억 미만 제외
+        if "거래대금" in df.columns:
+            last_amt = float(df["거래대금"].iloc[-1])
+            if 0 < last_amt < 500_000_000:
+                return None
+
+        prev   = float(close.iloc[-2]) if len(close) >= 2 else price
+        change = round((price - prev) / prev * 100, 2) if prev else 0
+
+        low52  = float(close.min())
+        high52 = float(close.max())
+        pct_from_low  = round((price - low52)  / low52  * 100, 1) if low52  else 0
+        pct_from_high = round((price - high52) / high52 * 100, 1) if high52 else 0
+
+        # 기술적 지표
+        delta = close.diff()
+        gain  = delta.clip(lower=0).rolling(14).mean()
+        loss  = (-delta.clip(upper=0)).rolling(14).mean()
+        rsi   = round(float((100 - 100 / (1 + gain / loss.replace(0, 1e-9))).iloc[-1]), 1)
+
+        ema12       = close.ewm(span=12).mean()
+        ema26       = close.ewm(span=26).mean()
+        macd_line   = ema12 - ema26
+        signal_line = macd_line.ewm(span=9).mean()
+        macd_cross  = float(macd_line.iloc[-1]) > float(signal_line.iloc[-1])
+        macd_hist   = float(macd_line.iloc[-1]) - float(signal_line.iloc[-1])
+
+        sma20    = close.rolling(20).mean()
+        std20    = close.rolling(20).std()
+        bb_upper = sma20 + 2 * std20
+        bb_lower = sma20 - 2 * std20
+        bb_pct   = round(
+            (float(close.iloc[-1]) - float(bb_lower.iloc[-1]))
+            / (float(bb_upper.iloc[-1]) - float(bb_lower.iloc[-1]) + 1e-9) * 100, 1
+        )
+
+        avg_vol   = float(volume.rolling(20).mean().iloc[-1])
+        last_vol  = float(volume.iloc[-1])
+        vol_ratio = round(last_vol / avg_vol * 100, 0) if avg_vol else 100
+
+        n_rows = len(close)
+        ret_1w = round((float(close.iloc[-1]) - float(close.iloc[-5]))  / float(close.iloc[-5])  * 100, 1) if n_rows >= 5  else 0
+        ret_1m = round((float(close.iloc[-1]) - float(close.iloc[-20])) / float(close.iloc[-20]) * 100, 1) if n_rows >= 20 else 0
+        ret_3m = round((float(close.iloc[-1]) - float(close.iloc[0]))   / float(close.iloc[0])   * 100, 1)
+
+        atr_val = calc_atr(close, high_s, low_s)
+        sr      = calc_support_resistance(close)
+
+        momentum_bad        = ret_3m < -20 and rsi < 40 and macd_hist < 0
+        manipulation_signal = vol_ratio > 300 and ret_1w < -10
+
+        # 펀더멘털 (pykrx)
+        per = pbr = None
+        div = roe = mktcap = 0.0
+        try:
+            fund_df = _pykrx.get_market_fundamental_by_ticker(end_str, market=mkt)
+            if fund_df is not None and code in fund_df.index:
+                row = fund_df.loc[code]
+                per = float(row.get("PER", 0) or 0) or None
+                pbr = float(row.get("PBR", 0) or 0) or None
+                div = float(row.get("DIV", 0) or 0)
+                eps = float(row.get("EPS", 0) or 0)
+                bps = float(row.get("BPS", 0) or 0)
+                roe = round(eps / bps * 100, 1) if bps > 0 else 0.0
+        except Exception:
+            pass
+
+        try:
+            cap_df = _pykrx.get_market_cap_by_ticker(end_str, market=mkt)
+            if cap_df is not None and code in cap_df.index:
+                mktcap = float(cap_df.loc[code, "시가총액"])
+        except Exception:
+            pass
+
+        # 점수 계산
+        score    = 0
+        reasons  = []
+        warnings = []
+
+        if per:
+            if per <= 8:    score += 30; reasons.append(f"PER {per:.1f}배 — 매우 저렴")
+            elif per <= 12: score += 22; reasons.append(f"PER {per:.1f}배 — 저렴")
+            elif per <= 15: score += 15; reasons.append(f"PER {per:.1f}배 — 적정")
+            elif per <= 20: score += 7;  warnings.append(f"PER {per:.1f}배 — 약간 비쌈")
+            else:           score -= 5;  warnings.append(f"PER {per:.1f}배 — 비쌈")
+        else:
+            warnings.append("PER 없음")
+
+        if pbr:
+            if pbr <= 0.8:   score += 25; reasons.append(f"PBR {pbr:.2f}배 — 자산 대비 저렴")
+            elif pbr <= 1.2: score += 18; reasons.append(f"PBR {pbr:.2f}배 — 자산 대비 적정")
+            elif pbr <= 1.5: score += 10; reasons.append(f"PBR {pbr:.2f}배 — 적정")
+            else:            warnings.append(f"PBR {pbr:.2f}배 — 자산 대비 비쌈")
+
+        if roe >= 15:   score += 15; reasons.append(f"ROE {roe}% — 수익성 우수")
+        elif roe >= 10: score += 10; reasons.append(f"ROE {roe}% — 수익성 양호")
+        elif roe >= 5:  score += 5
+        elif roe > 0:   warnings.append(f"ROE {roe}% — 수익성 낮음")
+
+        if div >= 4:   score += 10; reasons.append(f"배당수익률 {div}% — 고배당")
+        elif div >= 2: score += 6;  reasons.append(f"배당수익률 {div}% — 안정 배당")
+        elif div >= 1: score += 3
+
+        if rsi < 30:   score += 15; reasons.append(f"RSI {rsi} — 과매도 반등 가능")
+        elif rsi < 45: score += 10; reasons.append(f"RSI {rsi} — 저점 매수 구간")
+        elif rsi > 70: score -= 10; warnings.append(f"RSI {rsi} — 과매수 주의")
+
+        if macd_cross: score += 8; reasons.append("MACD 골든크로스")
+
+        if bb_pct < 20:   score += 10; reasons.append(f"볼린저밴드 하단 근처 ({bb_pct}%)")
+        elif bb_pct > 80: warnings.append(f"볼린저밴드 상단 근처 ({bb_pct}%)")
+
+        if pct_from_low <= 10:   score += 12; reasons.append(f"52주 최저가 근처 (+{pct_from_low}%)")
+        elif pct_from_low <= 20: score += 6;  reasons.append(f"52주 저점 구간 (+{pct_from_low}%)")
+
+        if pct_from_high < -30: score += 5; reasons.append(f"52주 고점 대비 {pct_from_high}%")
+
+        if vol_ratio >= 200:   score += 10; reasons.append(f"거래량 {vol_ratio:.0f}% — 강한 매수세")
+        elif vol_ratio >= 150: score += 6;  reasons.append(f"거래량 {vol_ratio:.0f}% — 활발한 거래")
+        elif vol_ratio < 50:   warnings.append("거래량 매우 적음")
+
+        if ret_1m < -15:  score -= 8; warnings.append(f"1달 {ret_1m}% 하락")
+        elif ret_1m < -5: score += 3; reasons.append(f"1달 {ret_1m}% 조정 — 눌림목")
+
+        if sr["near_support"]:    score += 8; reasons.append("지지선 근처 — 반등 가능")
+        if sr["near_resistance"]: score -= 5; warnings.append("저항선 근처 — 돌파 확인 필요")
+
+        if momentum_bad:        score -= 15; warnings.append("모멘텀 약화 — 추세 반전 확인 필요")
+        if manipulation_signal: score -= 20; warnings.append("가격 조작 의심 — 접근 금지")
+
+        buy_signal = (
+            score >= 60
+            and rsi < 65
+            and not manipulation_signal
+            and not momentum_bad
+            and not sr["near_resistance"]
+        )
+        buy_reason = ""
+        if buy_signal:
+            if sr["near_support"] and rsi < 45:
+                buy_reason = "지지선+과매도 = 최적 진입"
+            elif macd_cross and rsi < 55:
+                buy_reason = "MACD 반전+RSI 적정"
+            elif pct_from_low <= 15:
+                buy_reason = "52주 저점 근처"
+            else:
+                buy_reason = "종합 점수 양호"
+
+        dynamic_stop     = round(price - 2 * atr_val)
+        dynamic_stop_pct = round((price - dynamic_stop) / price * 100, 1)
+        buy_price  = round(price * 0.99)
+        stop_price = min(round(price * (1 - STOP_LOSS_PCT)), dynamic_stop)
+        target1    = round(price * (1 + TARGET1_PCT))
+        target2    = round(price * (1 + TARGET2_PCT))
+        target3    = round(price * (1 + TARGET3_PCT))
+        shares     = int(INVEST_PER_STOCK / buy_price) if buy_price > 0 else 0
+
+        if score >= 80 and len(warnings) <= 1:
+            risk = "🟢 낮음"; risk_desc = "안정적인 투자 기회"
+        elif score >= 60:
+            risk = "🟡 중간"; risk_desc = "적정 리스크"
+        else:
+            risk = "🔴 높음"; risk_desc = "신중하게 접근"
+
+        ticker = code + (".KS" if mkt == "KOSPI" else ".KQ")
+
+        return {
+            "ticker": ticker, "name": name, "period": "중기", "sector": "기타",
+            "price": price, "change": change, "currency": "KRW",
+            "per": per, "pbr": pbr, "roe": roe, "div": div, "debt": 0.0,
+            "low52": low52, "high52": high52,
+            "pct_from_low": pct_from_low, "pct_from_high": pct_from_high,
+            "rsi": rsi, "macd_cross": macd_cross, "bb_pct": bb_pct,
+            "vol_ratio": vol_ratio, "ret_1w": ret_1w, "ret_1m": ret_1m, "ret_3m": ret_3m,
+            "win_rate": 50, "score": score, "risk": risk, "risk_desc": risk_desc,
+            "reasons": reasons, "warnings": warnings,
+            "buy_signal": buy_signal, "buy_reason": buy_reason,
+            "buy_price": buy_price, "stop_price": stop_price,
+            "dynamic_stop": dynamic_stop, "dynamic_stop_pct": dynamic_stop_pct,
+            "target1": target1, "target2": target2, "target3": target3,
+            "shares": shares, "invest_real": shares * buy_price,
+            "profit1": shares * (target1 - buy_price),
+            "profit2": shares * (target2 - buy_price),
+            "profit3": shares * (target3 - buy_price),
+            "loss_amt": shares * (buy_price - stop_price),
+            "split1_shares": int(shares * 0.5),
+            "split2_price": round(price * 0.95),
+            "split2_shares": shares - int(shares * 0.5),
+            "period_strategy": f"1차 목표가({target1:,}) 도달 시 절반 매도",
+            "mktcap": mktcap, "revenue": 0,
+            "foreign_net": 0.0, "inst_net": 0.0,
+            "foreign_eok": 0.0, "inst_eok": 0.0,
+            "is_kr_kis": False, "inv_ok": False,
+            "dart_financials": {}, "dart_signals": {},
+            "support": sr["support"], "resistance": sr["resistance"],
+            "ma20": sr["ma20"], "ma60": sr["ma60"],
+            "atr": round(atr_val),
+            "news": {},
+            "from_market_scan": True,
+        }
+
+    except Exception as e:
+        print(f"  [{code}/{name}] 스캔 오류: {e}")
+        return None
+
+
+def run_market_scan(n: int = MARKET_SCAN_N):
+    """코스피/코스닥 시가총액 상위 n종목 분석 → 상위 50개를 market_scan_cache.json에 저장"""
+    print("=" * 60)
+    print(f"시장 전체 스캔 시작 -- 코스피/코스닥 상위 {n}종목")
+    print("=" * 60)
+
+    if not _PYKRX_OK:
+        print("[오류] pykrx 미설치 -- pip install pykrx")
+        return
+
+    stocks = fetch_top_market_stocks(n)
+    if not stocks:
+        print("[오류] 종목 목록 로드 실패")
+        return
+
+    kr_codes = {t.split(".")[0] for t in KR_STOCKS}
+
+    results = []
+    total   = len(stocks)
+    for i, (code, name, mkt) in enumerate(stocks):
+        if code in kr_codes:
+            continue
+        if (i + 1) % 100 == 0 or i == 0:
+            print(f"  진행: {i+1}/{total}")
+        r = analyze_market_stock(code, name, mkt)
+        if r:
+            results.append(r)
+        time.sleep(0.05)
+
+    results_sorted = sorted(results, key=lambda x: x["score"], reverse=True)
+    top50 = results_sorted[:50]
+
+    print(f"\n[스캔 완료] {len(results)}종목 분석 완료 / 상위 50개 캐시 저장")
+    for s in top50[:10]:
+        print(f"  {s['name']} ({s['ticker']}) -- {s['score']}점  buy={s['buy_signal']}")
+
+    cache = {
+        "updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "count":   len(top50),
+        "stocks":  top50,
+    }
+    with open(MARKET_SCAN_CACHE, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=2)
+
+    print(f"캐시 저장 완료: {MARKET_SCAN_CACHE}")
+
+
+# ════════════════════════════════════════════════
 # 메인 실행
 # ════════════════════════════════════════════════
 def run():
@@ -2964,12 +3298,27 @@ def run():
             us_results.append(r)
         time.sleep(0.8)
 
-    kr_sorted  = sorted(kr_results, key=lambda x: x["score"], reverse=True)
+    # 시장 스캔 캐시 병합 (새벽 2시 run_market_scan이 저장한 상위 50개)
+    scan_top = []
+    if os.path.exists(MARKET_SCAN_CACHE):
+        try:
+            with open(MARKET_SCAN_CACHE, "r", encoding="utf-8") as _f:
+                _scan = json.load(_f)
+            scan_top = _scan.get("stocks", [])
+            print(f"  → 시장 스캔 캐시 로드: {len(scan_top)}종목 (갱신: {_scan.get('updated','?')})")
+        except Exception as _e:
+            print(f"  → 시장 스캔 캐시 로드 실패: {_e}")
+
+    # KR_STOCKS 결과 우선, 캐시에서 중복 아닌 것만 추가
+    kr_tickers = {r["ticker"] for r in kr_results}
+    merged_kr  = kr_results + [s for s in scan_top if s["ticker"] not in kr_tickers]
+
+    kr_sorted  = sorted(merged_kr,  key=lambda x: x["score"], reverse=True)
     us_sorted  = sorted(us_results, key=lambda x: x["score"], reverse=True)
     kr_top5    = kr_sorted[:5]
     us_top5    = us_sorted[:5]
     avoid_list = sorted(
-        [s for s in kr_results + us_results if s["rsi"] > 70 or s["ret_1m"] < -15],
+        [s for s in merged_kr + us_results if s["rsi"] > 70 or s["ret_1m"] < -15],
         key=lambda x: x["ret_1m"],
     )[:5]
 
@@ -3053,5 +3402,7 @@ if __name__ == "__main__":
         run_premarket_briefing()
     elif mode == "--close":
         run_close_summary()
+    elif mode == "--marketscan":
+        run_market_scan()
     else:
         run()

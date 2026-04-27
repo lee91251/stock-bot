@@ -12,6 +12,8 @@ on:
     - cron: "35 6 * * 1-5"
     # 평일 오전 9시 5분 KST (UTC 00:05) — 장중 실시간 모니터링
     - cron: "5 0 * * 1-5"
+    # 평일 새벽 2시 KST (UTC 전날 17:00) — 코스피/코스닥 전체 스캔
+    - cron: "0 17 * * 0-4"
   workflow_dispatch:
     inputs:
       mode:
@@ -25,6 +27,7 @@ on:
           - "--premarket"
           - "--close"
           - "--monitor"
+          - "--marketscan"
 
 env:
   TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
@@ -138,3 +141,28 @@ jobs:
         run: pip install -r requirements.txt
       - name: 장중 모니터링 (20분)
         run: python -c "import stock; stock.run_monitor(duration_hours=0.33, interval_sec=120)"
+
+  # ── 코스피/코스닥 전체 스캔 (새벽 2시) ────────
+  market-scan:
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--marketscan') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 17 * * 0-4')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 시장 전체 스캔
+        run: python stock.py --marketscan
+      - name: 스캔 결과 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add market_scan_cache.json || true
+          git diff --staged --quiet || git commit -m "chore: 시장 스캔 캐시 업데이트 $(date '+%Y-%m-%d')"
+          git push || true
