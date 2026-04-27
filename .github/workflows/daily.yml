@@ -2,8 +2,8 @@ name: 투자 비서 v6.0 — AI 강화판
 
 on:
   schedule:
-    # 평일 아침 7시 KST (UTC 전날 22:30) — 일일 AI 리포트
-    - cron: "30 20 * * 1-5"
+    # 평일 아침 7시 30분 KST (UTC 전날 22:30) — 일일 AI 리포트
+    - cron: "30 22 * * 0-4"
     # 평일 새벽 6시 KST (UTC 전날 21:00) — 미국 시장 마감 브리핑
     - cron: "0 21 * * 0-4"
     # 평일 오전 8시 50분 KST (UTC 전날 23:50) — 장 시작 전 브리핑
@@ -39,8 +39,8 @@ jobs:
   # ── 일일 AI 리포트 (평일 7시) ────────────────────
   daily-report:
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'schedule' && github.event.schedule == '30 20 * * 1-5')
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.mode == 'daily' || github.event.inputs.mode == '')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '30 22 * * 0-4')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -69,7 +69,9 @@ jobs:
 
   # ── 미국 시장 마감 브리핑 (새벽 6시) ────────────
   us-briefing:
-    if: github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0-4'
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--usclose') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0-4')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -85,7 +87,9 @@ jobs:
 
   # ── 장 시작 전 브리핑 (8시 50분) ────────────────
   premarket-briefing:
-    if: github.event_name == 'schedule' && github.event.schedule == '50 23 * * 0-4'
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--premarket') ||
+      (github.event_name == 'schedule' && github.event.schedule == '50 23 * * 0-4')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -101,7 +105,9 @@ jobs:
 
   # ── 장 마감 결산 (3시 35분) ──────────────────────
   close-summary:
-    if: github.event_name == 'schedule' && github.event.schedule == '35 6 * * 1-5'
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--close') ||
+      (github.event_name == 'schedule' && github.event.schedule == '35 6 * * 1-5')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -117,7 +123,9 @@ jobs:
 
   # ── 장중 실시간 모니터링 (20분, 2분 간격) ────────
   intraday-monitor:
-    if: github.event_name == 'schedule' && github.event.schedule == '5 0 * * 1-5'
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--monitor') ||
+      (github.event_name == 'schedule' && github.event.schedule == '5 0 * * 1-5')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
