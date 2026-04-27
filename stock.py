@@ -100,6 +100,8 @@ class KisClient:
             self._token_exp = datetime.now() + timedelta(
                 seconds=int(d.get("expires_in", 86400)) - 600
             )
+            if not self._token:
+                print(f"  [KIS] 토큰 발급 오류: access_token 없음 — {d}")
         except Exception as e:
             print(f"  [KIS] 토큰 발급 실패: {e}")
 
@@ -108,6 +110,7 @@ class KisClient:
             return {}
         self._ensure_token()
         if not self._token:
+            print(f"  [KIS] {tr_id} 스킵: 유효한 토큰 없음")
             return {}
         try:
             r = requests.get(
@@ -150,11 +153,24 @@ class KisClient:
             return {}
         for key in ("output", "output1"):
             out = d.get(key)
-            if isinstance(out, list) and out:
-                return out[0]
             if isinstance(out, dict) and out:
                 return out
-        print(f"  [KIS] 투자자 데이터 없음 ({code}): keys={list(d.keys())}")
+            if isinstance(out, list) and out:
+                # 장 시작 전/후 out[0]이 당일 0-데이터일 수 있으므로
+                # 비(非)제로 수급이 있는 가장 최신 항목을 반환
+                for item in out:
+                    if not isinstance(item, dict):
+                        continue
+                    if (_safe_float(item.get("frgn_ntby_tr_pbmn")) != 0.0 or
+                            _safe_float(item.get("orgn_ntby_tr_pbmn")) != 0.0):
+                        return item
+                # 모든 항목이 0인 경우(당일 미개장 등) — 가장 최신 항목 반환
+                first = out[0] if isinstance(out[0], dict) else {}
+                if first:
+                    print(f"  [KIS] {code} 수급 전체 0 "
+                          f"(date={first.get('stck_bsop_date','?')})")
+                return first
+        print(f"  [KIS] {code} 투자자 응답에 output 키 없음: {list(d.keys())}")
         return {}
 
     def get_daily_chart(self, code: str, months: int = 5) -> list:
@@ -741,6 +757,12 @@ def analyze(
             foreign_net = _safe_float(inv.get("frgn_ntby_tr_pbmn"))
             inst_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))
             inv_ok      = bool(inv)
+            if inv_ok:
+                print(f"  [{name}] 수급 OK — 외국인 {foreign_net/1e8:+.1f}억 "
+                      f"기관 {inst_net/1e8:+.1f}억 "
+                      f"({inv.get('stck_bsop_date', '날짜?')})")
+            else:
+                print(f"  [{name}] 수급 조회 실패")
 
         else:
             stock = yf.Ticker(ticker)
@@ -2231,150 +2253,6 @@ def run_bot(kr_results: list, us_results: list, mood: dict,
                 tg_send(answer, chat_id)
 
     print("  [봇] 폴링 종료")
-
-
-# ════════════════════════════════════════════════
-# 메인 실행
-# ════════════════════════════════════════════════
-def run():
-    print("=" * 60)
-    print("투자 비서 v6.0 시작")
-    print(f"국내 {len(KR_STOCKS)}종목 + 해외 {len(US_STOCKS)}종목 분석 중...")
-    print(f"KIS API: {'연결됨' if _kis.available() else 'yfinance 폴백'}")
-    print(f"AI 분석: {'Claude 활성화' if (_ANTHROPIC_OK and ANTHROPIC_API_KEY) else '비활성화 (ANTHROPIC_API_KEY 없음)'}")
-    print("=" * 60)
-
-    # ── 월간 리포트 (매월 1일) ──────────────────
-    if datetime.now().day == 1:
-        monthly = make_monthly_report()
-        if monthly:
-            print("\n[월간 성과 리포트 전송]")
-            tg_send(monthly)
-
-    print("\n[1/7] 시장 분위기 파악 중...")
-    mood = get_market_mood()
-    fg   = get_fear_greed(mood)
-    print(f"  → 시장: {mood['status']} / VIX: {mood['vix']} / 코스피: {mood['kospi_chg']:+.2f}%")
-    print(f"  → 공포탐욕지수: {fg['score']} ({fg['label']})")
-
-    print("\n[2/7] 미국 경제지표 수집 중...")
-    macro = get_us_macro_indicators()
-    print(f"  → 10년물: {macro['tnx']}% / 단기금리: {macro['irx']}% / DXY: {macro['dxy']}")
-    print(f"  → CPI 전년비: {macro['cpi_yoy']}% / 연준: {macro['fed_direction']}")
-
-    print("\n[3/7] DART 공시 데이터 수집 중...")
-    all_dart = get_all_dart_data(KR_STOCKS)
-    sig_count = sum(1 for dd in all_dart.values() for items in dd["signals"].values() if items)
-    print(f"  → {len(all_dart)}개 수집 / 주요 공시 {sig_count}건")
-
-    print("\n[4/7] 국내 종목 분석 중...")
-    kr_results = []
-    for ticker, val in KR_STOCKS.items():
-        name, period, sector = val
-        print(f"  분석: {name}")
-        r = analyze(ticker, name, period, sector,
-                    dart_data=all_dart.get(ticker),
-                    with_sentiment=True)
-        if r:
-            kr_results.append(r)
-        time.sleep(0.8)
-
-    print("\n[5/7] 해외 종목 분석 중...")
-    us_results = []
-    for ticker, val in US_STOCKS.items():
-        name, period, sector = val
-        print(f"  분석: {name}")
-        r = analyze(ticker, name, period, sector)
-        if r:
-            us_results.append(r)
-        time.sleep(0.8)
-
-    kr_sorted = sorted(kr_results, key=lambda x: x["score"], reverse=True)
-    us_sorted = sorted(us_results, key=lambda x: x["score"], reverse=True)
-    kr_top5   = kr_sorted[:5]
-    us_top5   = us_sorted[:5]
-    avoid_list = sorted(
-        [s for s in kr_results + us_results if s["rsi"] > 70 or s["ret_1m"] < -15],
-        key=lambda x: x["ret_1m"],
-    )[:5]
-
-    # DART 알림 목록
-    dart_alerts = []
-    for ticker, dd in all_dart.items():
-        name, _, sector = KR_STOCKS[ticker]
-        for key, items in dd["signals"].items():
-            if items:
-                _, label, is_risk = SIGNAL_DEFS[key]
-                dart_alerts.append({
-                    "ticker": ticker, "name": name, "sector": sector,
-                    "key": key, "label": label, "is_risk": is_risk, "items": items,
-                })
-
-    print("\n[6/7] AI 분석 중...")
-    ai_summary = ai_market_summary(mood, kr_top5, us_top5, fg)
-    ai_sector  = ai_sector_rotation(mood)
-    ai_macro   = ai_us_macro_impact(macro, mood)
-
-    # 개별 종목 AI 인사이트 (TOP5 국내만)
-    ai_insights: dict = {}
-    for s in kr_top5:
-        insight = ai_stock_insight(s)
-        if insight:
-            ai_insights[s["ticker"]] = insight
-        time.sleep(0.3)
-
-    print("\n[7/7] 리포트 생성 및 전송 중...")
-    html = make_report(
-        kr_top5, us_top5, avoid_list, mood,
-        dart_alerts=dart_alerts,
-        ai_summary=ai_summary,
-        ai_sector=ai_sector,
-        fg=fg,
-        ai_insights=ai_insights,
-        macro=macro,
-        ai_macro=ai_macro,
-    )
-    text = make_telegram_message(
-        kr_top5, us_top5, avoid_list, mood,
-        dart_alerts=dart_alerts,
-        ai_summary=ai_summary,
-        fg=fg,
-        macro=macro,
-        ai_macro=ai_macro,
-    )
-
-    tg_send(text)
-    tg_send_document(html)
-
-    # 보유종목 알림
-    ha = check_holdings_alerts()
-    alert_msgs = [a["msg"] for a in ha if "msg" in a]
-    if alert_msgs:
-        print(f"\n[보유종목 알림 {len(alert_msgs)}건]")
-        tg_send("\n".join(["<b>📦 보유종목 알림</b>", ""] + alert_msgs))
-
-    # 성과 기록
-    record_recommendations(kr_top5, us_top5)
-
-    print("\n[결과 요약]")
-    print("국내 TOP 5:")
-    for s in kr_top5:
-        buy_tag = "✅YES" if s.get("buy_signal") else "❌NO"
-        print(f"  {s['name']} — {s['score']}점 / {s['risk']} / {s['period']} / 매수{buy_tag}")
-    print("해외 TOP 5:")
-    for s in us_top5:
-        buy_tag = "✅YES" if s.get("buy_signal") else "❌NO"
-        print(f"  {s['name']} — {s['score']}점 / {s['risk']} / {s['period']} / 매수{buy_tag}")
-
-    # 텔레그램 봇 (5분 폴링)
-    run_bot(
-        kr_results, us_results, mood,
-        kr_top5, us_top5, avoid_list,
-        dart_alerts, ai_summary, fg,
-        duration_sec=300,
-    )
-
-    print("\n완료! 텔레그램을 확인하세요.")
 
 
 # ════════════════════════════════════════════════
