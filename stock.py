@@ -160,26 +160,39 @@ class KisClient:
         )
         if not d:
             return {}
-        for key in ("output", "output1"):
+        zero_fallback = {}  # 모든 키에서 비-제로 수급을 못 찾으면 사용할 폴백
+        for key in ("output", "output1", "output2"):
             out = d.get(key)
+            if out is None:
+                continue
             if isinstance(out, dict) and out:
-                return out
-            if isinstance(out, list) and out:
-                # 장 시작 전/후 out[0]이 당일 0-데이터일 수 있으므로
-                # 비(非)제로 수급이 있는 가장 최신 항목을 반환
+                # 딕셔너리 응답: 수급 필드가 있을 때만 후보로 채택
+                if out.get("frgn_ntby_tr_pbmn") is not None or out.get("orgn_ntby_tr_pbmn") is not None:
+                    if (_safe_float(out.get("frgn_ntby_tr_pbmn")) != 0.0 or
+                            _safe_float(out.get("orgn_ntby_tr_pbmn")) != 0.0):
+                        return out
+                    if not zero_fallback:
+                        zero_fallback = out
+                continue
+            if isinstance(out, list):
+                if not out:
+                    continue
+                # 비(非)제로 수급이 있는 가장 최신 항목을 우선 반환
                 for item in out:
                     if not isinstance(item, dict):
                         continue
                     if (_safe_float(item.get("frgn_ntby_tr_pbmn")) != 0.0 or
                             _safe_float(item.get("orgn_ntby_tr_pbmn")) != 0.0):
                         return item
-                # 모든 항목이 0인 경우(당일 미개장 등) — 가장 최신 항목 반환
-                first = out[0] if isinstance(out[0], dict) else {}
-                if first:
-                    print(f"  [KIS] {code} 수급 전체 0 "
-                          f"(date={first.get('stck_bsop_date','?')})")
-                return first
-        print(f"  [KIS] {code} 투자자 응답에 output 키 없음: {list(d.keys())}")
+                # 전체 0이면 다음 키(output1/output2)도 시도하기 위해 fallback 보관 후 continue
+                if not zero_fallback and isinstance(out[0], dict):
+                    zero_fallback = out[0]
+                continue
+        if zero_fallback:
+            print(f"  [KIS] {code} 수급 전체 0 "
+                  f"(date={zero_fallback.get('stck_bsop_date','?')})")
+            return zero_fallback
+        print(f"  [KIS] {code} 투자자 데이터 파싱 실패 — 응답 키: {list(d.keys())}")
         return {}
 
     def get_daily_chart(self, code: str, months: int = 5) -> list:
@@ -2287,9 +2300,10 @@ def _check_monitor_signals(prev_scores: dict) -> list:
             pi = _kis.get_price(code)
             if not pi:
                 continue
-            price     = _safe_float(pi.get("stck_prpr"))
-            change    = _safe_float(pi.get("prdy_ctrt"))
-            vol_ratio = _safe_float(pi.get("acml_vol")) / max(_safe_float(pi.get("avg_vol", 0)), 1) * 100 if pi.get("avg_vol") else 0
+            price    = _safe_float(pi.get("stck_prpr"))
+            change   = _safe_float(pi.get("prdy_ctrt"))
+            # 전일 대비 거래량 비율(%): 100=동일, 300=3배 — KIS inquire-price 응답 필드
+            vol_rate = _safe_float(pi.get("prdy_vrss_vol_rate"))
 
             inv      = _kis.get_investor(code)
             f_net    = _safe_float(inv.get("frgn_ntby_tr_pbmn"))   # 외국인 순매수 (백만원)
@@ -2300,15 +2314,15 @@ def _check_monitor_signals(prev_scores: dict) -> list:
             prev = prev_scores.get(ticker, {})
             prev_score = prev.get("score", 0)
 
-            # 1. 급등 감지: 거래량 300%↑ + 주가 3%↑
+            # 1. 급등 감지: 전일 대비 거래량 300%↑ + 주가 3%↑
             key1 = _alert_key("surge", ticker, now_str)
-            if change >= 3.0 and vol_ratio >= 300 and key1 not in _sent_alerts:
+            if change >= 3.0 and vol_rate >= 300 and key1 not in _sent_alerts:
                 _sent_alerts.add(key1)
                 signals.append({
                     "type": "surge",
                     "msg": (
                         f"🚀 <b>[급등 감지]</b> {name}\n"
-                        f"주가 +{change:.1f}% / 거래량 평균대비 {vol_ratio:.0f}%\n"
+                        f"주가 +{change:.1f}% / 전일 대비 거래량 {vol_rate:.0f}%\n"
                         f"현재가: {price:,.0f}원\n"
                         f"💡 단기 모멘텀 급상승 — 추격 매수 시 손절 철저히"
                     ),
@@ -2404,7 +2418,7 @@ def _check_monitor_signals(prev_scores: dict) -> list:
                         f"🎯 <b>[1차 목표 달성]</b> {name}\n"
                         f"현재가 {curr_price:,.0f}원 (+{pct:.1f}%)\n"
                         f"1차 목표가: {target1:,.0f}원\n"
-                        f"💚 <b>지금 매수하세요!</b> — 절반 매도 or 트레일링 스탑 설정 권장"
+                        f"💚 <b>지금 매도하세요!</b> — 절반 매도 or 트레일링 스탑 설정 권장"
                     ),
                 })
 
@@ -3222,7 +3236,7 @@ def run_market_scan(n: int = MARKET_SCAN_N):
         r = analyze_market_stock(code, name, mkt)
         if r:
             results.append(r)
-        time.sleep(0.05)
+        time.sleep(0.2)  # KIS API rate limit: 초당 5건 이하 유지
 
     results_sorted = sorted(results, key=lambda x: x["score"], reverse=True)
     top50 = results_sorted[:50]
