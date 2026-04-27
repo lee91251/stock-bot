@@ -758,8 +758,8 @@ def analyze(
             inst_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))
             inv_ok      = bool(inv)
             if inv_ok:
-                print(f"  [{name}] 수급 OK — 외국인 {foreign_net/1e8:+.1f}억 "
-                      f"기관 {inst_net/1e8:+.1f}억 "
+                print(f"  [{name}] 수급 OK — 외국인 {foreign_net/1e2:+.1f}억 "
+                      f"기관 {inst_net/1e2:+.1f}억 "
                       f"({inv.get('stck_bsop_date', '날짜?')})")
             else:
                 print(f"  [{name}] 수급 조회 실패")
@@ -943,9 +943,9 @@ def analyze(
         sector_bonus = 10; reasons.append(f"{sector} 섹터 — {SECTOR_DESC.get(sector, '')}")
     score += sector_bonus
 
-    # 외국인/기관 수급
-    foreign_eok = foreign_net / 1e8
-    inst_eok    = inst_net    / 1e8
+    # 외국인/기관 수급 (KIS API frgn/orgn_ntby_tr_pbmn 단위: 백만원 → ÷100 = 억원)
+    foreign_eok = foreign_net / 1e2
+    inst_eok    = inst_net    / 1e2
     if is_kr and _kis.available():
         if foreign_eok >= 50:    score += 10; reasons.append(f"외국인 순매수 +{foreign_eok:.0f}억원 — 강한 외국인 매수세")
         elif foreign_eok >= 10:  score += 5;  reasons.append(f"외국인 순매수 +{foreign_eok:.0f}억원")
@@ -2283,10 +2283,10 @@ def _check_monitor_signals(prev_scores: dict) -> list:
             vol_ratio = _safe_float(pi.get("acml_vol")) / max(_safe_float(pi.get("avg_vol", 0)), 1) * 100 if pi.get("avg_vol") else 0
 
             inv      = _kis.get_investor(code)
-            f_net    = _safe_float(inv.get("frgn_ntby_tr_pbmn"))   # 외국인 순매수
-            i_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))    # 기관 순매수
-            f_eok    = f_net / 1e8
-            i_eok    = i_net / 1e8
+            f_net    = _safe_float(inv.get("frgn_ntby_tr_pbmn"))   # 외국인 순매수 (백만원)
+            i_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))    # 기관 순매수 (백만원)
+            f_eok    = f_net / 1e2   # 백만원 → 억원
+            i_eok    = i_net / 1e2   # 백만원 → 억원
 
             prev = prev_scores.get(ticker, {})
             prev_score = prev.get("score", 0)
