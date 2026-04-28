@@ -2,8 +2,8 @@ name: 투자 비서 v6.0 — AI 강화판
 
 on:
   schedule:
-    # 평일 아침 7시 30분 KST (UTC 전날 22:30) — 일일 AI 리포트
-    - cron: "30 22 * * 0-4"
+    # 평일 아침 8시 KST (UTC 전날 23:00) — 일일 AI 리포트
+    - cron: "0 23 * * 0-4"
     # 평일 새벽 6시 KST (UTC 전날 21:00) — 미국 시장 마감 브리핑
     - cron: "0 21 * * 0-4"
     # 평일 오전 8시 50분 KST (UTC 전날 23:50) — 장 시작 전 브리핑
@@ -43,7 +43,7 @@ jobs:
   daily-report:
     if: >
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.mode == 'daily' || github.event.inputs.mode == '')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '30 22 * * 0-4')
+      (github.event_name == 'schedule' && github.event.schedule == '0 23 * * 0-4')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

@@ -21,6 +21,17 @@ import numpy as np
 from datetime import datetime, timedelta
 from xml.etree import ElementTree as ET
 
+# ════════════════════════════════════════════════
+# 시간대 강제 설정 — GitHub Actions 러너는 기본 UTC.
+# 모든 datetime.now() 호출이 한국시간(KST)을 반환하도록 통일.
+# 윈도우/맥에서도 안전 (tzset 없으면 무시).
+# ════════════════════════════════════════════════
+os.environ["TZ"] = "Asia/Seoul"
+try:
+    time.tzset()
+except AttributeError:
+    pass  # Windows에는 tzset 없음 — 로컬 개발 시 무시
+
 try:
     import anthropic as _ant_lib
     _ANTHROPIC_OK = True
@@ -2137,28 +2148,65 @@ def _tg_base() -> str:
     return f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
 
+_HTML_TAG_RE = re.compile(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>")
+
+
+def _balance_html_tags(chunk: str) -> str:
+    """미닫힌/미열린 HTML 태그를 자동 보정해 텔레그램 400 오류 방지."""
+    open_stack = []
+    for m in _HTML_TAG_RE.finditer(chunk):
+        is_close, tag = m.group(1), m.group(2).lower()
+        if tag in ("br", "hr", "img"):
+            continue
+        if is_close:
+            if open_stack and open_stack[-1] == tag:
+                open_stack.pop()
+        else:
+            open_stack.append(tag)
+    # 미닫힌 태그를 chunk 끝에 닫아줌 (역순)
+    for tag in reversed(open_stack):
+        chunk += f"</{tag}>"
+    return chunk
+
+
 def tg_send(text: str, chat_id: str = ""):
     cid = chat_id or TELEGRAM_CHAT_ID
     if not TELEGRAM_TOKEN or not cid:
         return
-    MAX = 4096
+    MAX = 3800  # HTML 태그 보정 여유분 확보 (4096 한도 미만)
     buf = text
     while buf:
         if len(buf) <= MAX:
             chunk, buf = buf, ""
         else:
+            # 분할 우선순위: 빈 줄 > 줄바꿈 > 띄어쓰기 > 강제 컷
             cut = buf.rfind("\n\n", 0, MAX)
+            if cut == -1:
+                cut = buf.rfind("\n", 0, MAX)
+            if cut == -1:
+                cut = buf.rfind(" ", 0, MAX)
             if cut == -1:
                 cut = MAX
             chunk, buf = buf[:cut], buf[cut:].lstrip()
+        # HTML 태그 균형 보정 (분할 지점에서 깨진 태그 자동 닫기)
+        chunk = _balance_html_tags(chunk)
         try:
-            requests.post(
+            r = requests.post(
                 f"{_tg_base()}/sendMessage",
                 json={"chat_id": cid, "text": chunk, "parse_mode": "HTML"},
                 timeout=15,
             )
-        except Exception:
-            pass
+            if not r.ok:
+                # HTML 파싱 실패 시 plain text로 재시도 (잘림 방지)
+                print(f"  [텔레그램] HTML 전송 실패 ({r.status_code}) — plain text 재시도")
+                plain = re.sub(r"<[^>]+>", "", chunk)
+                requests.post(
+                    f"{_tg_base()}/sendMessage",
+                    json={"chat_id": cid, "text": plain},
+                    timeout=15,
+                )
+        except Exception as e:
+            print(f"  [텔레그램] 전송 오류: {e}")
 
 
 def tg_send_document(html: str, caption: str = ""):
@@ -2446,8 +2494,34 @@ def _check_monitor_signals(prev_scores: dict) -> list:
     return signals
 
 
+def _is_market_open(now: datetime) -> bool:
+    """한국 주식시장 정규 개장 시간(09:00~15:30 KST) 여부."""
+    hm = now.hour * 100 + now.minute
+    return 900 <= hm <= 1530
+
+
+def _is_after_market_close(now: datetime) -> bool:
+    """장 마감(15:35 이후) 여부 — 모니터 조기 종료 판정용."""
+    return now.hour > 15 or (now.hour == 15 and now.minute >= 35)
+
+
 def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
     """장중 실시간 모니터링 루프 (기본: 7시간, 5분 간격)"""
+    now = datetime.now()
+    # 장 마감 후 시작은 무의미 — 즉시 스킵
+    if _is_after_market_close(now):
+        msg = (
+            f"⏰ <b>[모니터링 스킵]</b>\n"
+            f"현재 {now.strftime('%H:%M')} KST — 한국 장 마감 후라 모니터링 의미 없음.\n"
+            f"<i>※ GitHub Actions cron 지연으로 추정. 다음 영업일 09:05 정상 실행 예정.</i>"
+        )
+        try:
+            tg_send(msg)
+        except Exception:
+            pass
+        print(f"[모니터] 장 마감 후 실행 — 스킵 ({now.strftime('%H:%M')})")
+        return
+
     print(f"[모니터] 실시간 모니터링 시작 — {duration_hours}시간, {interval_sec}초 간격")
     tg_send("📡 <b>실시간 모니터링 시작</b>\n장중 신호 감지 시 즉시 알림을 보내드립니다.")
 
@@ -2465,8 +2539,12 @@ def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
     while time.time() < deadline:
         cycle += 1
         now = datetime.now()
-        # 장 시간(09:00~15:30) 이외에는 대기
-        if not (9 <= now.hour < 15 or (now.hour == 15 and now.minute <= 35)):
+        # 장 마감 도달 시 즉시 종료 (의미 없는 대기 방지)
+        if _is_after_market_close(now):
+            print(f"  [모니터] 장 마감 — 조기 종료 ({now.strftime('%H:%M')})")
+            break
+        # 장 시작 전 대기
+        if not _is_market_open(now):
             print(f"  [모니터] 장 시간 외 대기 중 ({now.strftime('%H:%M')})")
             time.sleep(interval_sec)
             continue
@@ -3429,10 +3507,51 @@ def _notify_fatal(mode: str, exc: BaseException):
     print(f"\n[FATAL] {tb_full}", file=sys.stderr)
 
 
+# 모드별 예상 KST 실행 시각 (HH:MM) — 실제 실행이 이 시각 +허용 오차를 벗어나면 경고
+_MODE_SCHEDULE = {
+    "":             ("08:00", 60),   # run (기본 일일 리포트)
+    "--usclose":    ("06:00", 60),   # 미국 시장 마감 브리핑
+    "--premarket":  ("08:50", 30),   # 장 시작 전 브리핑
+    "--monitor":    ("09:05", 30),   # 장중 모니터링 시작
+    "--close":      ("15:35", 30),   # 장 마감 결산
+    "--marketscan": ("02:00", 90),   # 새벽 전체 스캔
+}
+
+
+def _check_schedule_drift(mode: str) -> None:
+    """현재 KST 시각이 예상 시각에서 크게 벗어나면 텔레그램으로 경고."""
+    info = _MODE_SCHEDULE.get(mode)
+    if not info:
+        return
+    expected_hm, tolerance_min = info
+    eh, em = map(int, expected_hm.split(":"))
+    now = datetime.now()
+    expected = now.replace(hour=eh, minute=em, second=0, microsecond=0)
+    diff_min = (now - expected).total_seconds() / 60
+    if abs(diff_min) <= tolerance_min:
+        return  # 정상 범위
+    direction = "지연" if diff_min > 0 else "조기"
+    msg = (
+        f"⏰ <b>[스케줄 어긋남 감지]</b>\n"
+        f"모드: <code>{mode or 'run (기본)'}</code>\n"
+        f"예상: {expected_hm} KST / 실제: {now.strftime('%H:%M')} KST\n"
+        f"차이: {abs(diff_min):.0f}분 {direction}\n\n"
+        f"<i>※ GitHub Actions 무료 cron은 수시간 지연 가능. "
+        f"정확한 시간이 중요하면 Railway 등 전용 서버 권장.</i>"
+    )
+    try:
+        tg_send(msg)
+    except Exception:
+        pass
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else ""
 
     try:
+        # 실행 시점이 예상 시각과 너무 다르면 사용자에게 알림
+        _check_schedule_drift(mode)
+
         if mode == "--monitor":
             run_monitor(duration_hours=7.0, interval_sec=300)
         elif mode == "--usclose":
