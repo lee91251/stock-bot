@@ -22,15 +22,37 @@ from datetime import datetime, timedelta
 from xml.etree import ElementTree as ET
 
 # ════════════════════════════════════════════════
-# 시간대 강제 설정 — GitHub Actions 러너는 기본 UTC.
-# 모든 datetime.now() 호출이 한국시간(KST)을 반환하도록 통일.
-# 윈도우/맥에서도 안전 (tzset 없으면 무시).
+# 시간대 강제 설정 (KST)
+#
+# 1단계: TZ 환경변수 + tzset() — Linux/Mac에서 _now_kst() 영향
+# 2단계: zoneinfo.ZoneInfo("Asia/Seoul")를 통한 명시적 KST — GitHub Actions
+#         Ubuntu에서 tzset이 datetime에 적용 안 되는 케이스 백업
+#
+# 모든 _now_kst() 호출은 _now_kst() 헬퍼 사용 (둘 다 안 먹혀도 작동 보장).
 # ════════════════════════════════════════════════
 os.environ["TZ"] = "Asia/Seoul"
 try:
     time.tzset()
 except AttributeError:
     pass  # Windows에는 tzset 없음 — 로컬 개발 시 무시
+
+try:
+    from zoneinfo import ZoneInfo  # Python 3.9+
+    _KST_TZ = ZoneInfo("Asia/Seoul")
+except Exception:
+    _KST_TZ = None
+
+
+def _now_kst() -> datetime:
+    """항상 한국시간(KST)을 timezone-naive datetime으로 반환.
+
+    GitHub Actions UTC 러너에서 tzset이 datetime에 적용 안 되는 문제 회피.
+    zoneinfo가 있으면 명시적 KST 변환 후 tzinfo 제거(naive로 통일).
+    없으면 _now_kst() 폴백 (이때는 TZ 환경변수에 의존).
+    """
+    if _KST_TZ is not None:
+        return datetime.now(_KST_TZ).replace(tzinfo=None)
+    return _now_kst()
 
 try:
     import anthropic as _ant_lib
@@ -109,7 +131,7 @@ class KisClient:
         return bool(KIS_APP_KEY and KIS_APP_SECRET)
 
     def _ensure_token(self):
-        if not self.available() or datetime.now() < self._token_exp:
+        if not self.available() or _now_kst() < self._token_exp:
             return
         try:
             r = requests.post(
@@ -120,7 +142,7 @@ class KisClient:
             )
             d = r.json()
             self._token     = d.get("access_token", "")
-            self._token_exp = datetime.now() + timedelta(
+            self._token_exp = _now_kst() + timedelta(
                 seconds=int(d.get("expires_in", 86400)) - 600
             )
             if not self._token:
@@ -210,8 +232,8 @@ class KisClient:
         return {}
 
     def get_daily_chart(self, code: str, months: int = 5) -> list:
-        end_dt   = datetime.now().strftime("%Y%m%d")
-        start_dt = (datetime.now() - timedelta(days=months * 31)).strftime("%Y%m%d")
+        end_dt   = _now_kst().strftime("%Y%m%d")
+        start_dt = (_now_kst() - timedelta(days=months * 31)).strftime("%Y%m%d")
         d = self._get(
             "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
             "FHKST03010100",
@@ -283,7 +305,7 @@ def dart_corp_code(stock_code: str) -> str:
 
 
 def dart_financials(corp_code: str) -> dict:
-    year = datetime.now().year - 1
+    year = _now_kst().year - 1
     d = {}
     fs_used = "CFS"
     for fs_div in ("CFS", "OFS"):
@@ -341,7 +363,7 @@ def dart_financials(corp_code: str) -> dict:
 
 
 def dart_disclosures(corp_code: str, days: int = 7) -> list:
-    today = datetime.now()
+    today = _now_kst()
     start = (today - timedelta(days=days)).strftime("%Y%m%d")
     end   = today.strftime("%Y%m%d")
     d = _dart_req("list.json", {
@@ -564,22 +586,39 @@ def get_us_macro_indicators() -> dict:
         macro["yield_spread"] = round(macro["tnx"] - macro["irx"], 3)
 
     # ── CPI: FRED 공개 CSV (API 키 없음) ─────────
+    # FRED는 미발표월에 "." 또는 빈 값을 반환 — 이를 걸러내고 유효한 숫자 행만 사용.
     try:
         r = requests.get(
             "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
             headers={"User-Agent": "Mozilla/5.0"},
             timeout=12,
         )
-        rows = [ln.split(",") for ln in r.text.strip().split("\n")[1:] if ln]
-        if len(rows) >= 13:
-            v_now  = float(rows[-1][1])
-            v_prev = float(rows[-2][1])
-            v_yr   = float(rows[-13][1])
-            macro["cpi_yoy"]   = round((v_now - v_yr)   / v_yr   * 100, 2)
-            macro["cpi_mom"]   = round((v_now - v_prev) / v_prev * 100, 2)
-            macro["cpi_month"] = rows[-1][0][:7]
-    except Exception:
-        pass
+        if r.status_code != 200:
+            print(f"  [CPI] FRED 응답 오류: status={r.status_code}")
+        else:
+            rows = [ln.split(",") for ln in r.text.strip().split("\n")[1:] if ln]
+            valid_rows = []
+            for row in rows:
+                if len(row) < 2:
+                    continue
+                try:
+                    float(row[1])  # "." 또는 빈 값이면 ValueError
+                    valid_rows.append(row)
+                except (ValueError, TypeError):
+                    continue
+            print(f"  [CPI] FRED 응답 {len(rows)}행, 유효 {len(valid_rows)}행")
+            if len(valid_rows) >= 13:
+                v_now  = float(valid_rows[-1][1])
+                v_prev = float(valid_rows[-2][1])
+                v_yr   = float(valid_rows[-13][1])
+                macro["cpi_yoy"]   = round((v_now - v_yr)   / v_yr   * 100, 2)
+                macro["cpi_mom"]   = round((v_now - v_prev) / v_prev * 100, 2)
+                macro["cpi_month"] = valid_rows[-1][0][:7]
+                print(f"  [CPI] {macro['cpi_month']} YoY {macro['cpi_yoy']}% / MoM {macro['cpi_mom']}%")
+            else:
+                print(f"  [CPI] 유효 행 부족 (13개 필요, 실제 {len(valid_rows)}개)")
+    except Exception as e:
+        print(f"  [CPI] 수집 실패: {e}")
 
     # ── 연준 기준금리 방향 감지 ───────────────────
     if macro["irx"] is not None and macro["irx_prev"] is not None:
@@ -1125,13 +1164,23 @@ def analyze(
 # Claude AI 분석
 # ════════════════════════════════════════════════
 _ai_client = None
-_AI_SYSTEM = (
-    "당신은 한국 주식 시장 전문 AI 투자 분석가입니다. "
-    "데이터를 바탕으로 간결하고 핵심적인 분석을 제공합니다. "
-    "섹터별 트렌드, 매크로 환경, 수급 동향을 종합적으로 고려합니다. "
-    "투자 조언은 참고용임을 명심하고, 불확실성을 솔직하게 표현합니다. "
-    "한국어로 답변하며, 핵심만 간결하게 작성합니다."
-)
+
+
+def _ai_system() -> str:
+    """AI 시스템 프롬프트 — 매번 호출 시점의 KST 날짜를 동적으로 포함.
+
+    Claude 학습 데이터 컷오프로 인한 잘못된 연도 표기(예: '2025') 방지.
+    """
+    today = _now_kst().strftime("%Y년 %m월 %d일")
+    return (
+        f"오늘 날짜: {today} (한국시간). 이 날짜를 기준으로 분석하세요. "
+        "당신은 한국 주식 시장 전문 AI 투자 분석가입니다. "
+        "데이터를 바탕으로 간결하고 핵심적인 분석을 제공합니다. "
+        "섹터별 트렌드, 매크로 환경, 수급 동향을 종합적으로 고려합니다. "
+        "투자 조언은 참고용임을 명심하고, 불확실성을 솔직하게 표현합니다. "
+        "한국어로 답변하며, 핵심만 간결하게 작성합니다. "
+        "절대로 다른 연도를 추측해서 표기하지 마세요."
+    )
 
 
 def _get_ai_client():
@@ -1171,7 +1220,7 @@ def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=400,
-            system=_AI_SYSTEM,
+            system=_ai_system(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -1201,7 +1250,7 @@ def ai_sector_rotation(mood: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=200,
-            system=_AI_SYSTEM,
+            system=_ai_system(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -1242,7 +1291,7 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=350,
-            system=_AI_SYSTEM,
+            system=_ai_system(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -1267,7 +1316,7 @@ def ai_stock_insight(s: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=100,
-            system=_AI_SYSTEM,
+            system=_ai_system(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -1309,7 +1358,7 @@ def ai_answer_query(query: str, kr_results: list, us_results: list, mood: dict) 
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=400,
-            system=_AI_SYSTEM,
+            system=_ai_system(),
             messages=[{
                 "role": "user",
                 "content": (
@@ -1347,8 +1396,8 @@ def save_performance(data: dict):
 
 def record_recommendations(kr_top: list, us_top: list):
     perf  = load_performance()
-    today = datetime.now().strftime("%Y-%m-%d")
-    month = datetime.now().strftime("%Y-%m")
+    today = _now_kst().strftime("%Y-%m-%d")
+    month = _now_kst().strftime("%Y-%m")
     recs  = [r for r in perf.get("recommendations", []) if r.get("date") != today]
     for s in (kr_top + us_top)[:10]:
         recs.append({
@@ -1368,7 +1417,7 @@ def record_recommendations(kr_top: list, us_top: list):
 
 def make_monthly_report() -> str:
     perf       = load_performance()
-    last_month = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    last_month = (_now_kst().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
     recs       = [r for r in perf.get("recommendations", []) if r.get("month") == last_month]
     if not recs:
         return ""
@@ -1918,8 +1967,8 @@ def make_report(
     macro: dict = None,
     ai_macro: str = "",
 ) -> str:
-    today     = datetime.now().strftime("%Y년 %m월 %d일 (%A)")
-    now       = datetime.now().strftime("%H:%M")
+    today     = _now_kst().strftime("%Y년 %m월 %d일 (%A)")
+    now       = _now_kst().strftime("%H:%M")
     fg        = fg or {"score": 50, "label": "중립"}
     ai_insights = ai_insights or {}
 
@@ -2055,8 +2104,8 @@ def make_telegram_message(
     macro: dict = None,
     ai_macro: str = "",
 ) -> str:
-    today  = datetime.now().strftime("%Y년 %m월 %d일")
-    now    = datetime.now().strftime("%H:%M")
+    today  = _now_kst().strftime("%Y년 %m월 %d일")
+    now    = _now_kst().strftime("%H:%M")
     medals = ["🥇", "🥈", "🥉", "4위", "5위"]
     fg     = fg or {"score": 50, "label": "중립"}
 
@@ -2212,13 +2261,13 @@ def tg_send(text: str, chat_id: str = ""):
 def tg_send_document(html: str, caption: str = ""):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         return
-    stamp = datetime.now().strftime("%m%d_%H%M")
+    stamp = _now_kst().strftime("%m%d_%H%M")
     try:
         r = requests.post(
             f"{_tg_base()}/sendDocument",
             data={
                 "chat_id": TELEGRAM_CHAT_ID,
-                "caption": caption or f"📊 투자 비서 리포트 ({datetime.now().strftime('%m/%d %H:%M')})",
+                "caption": caption or f"📊 투자 비서 리포트 ({_now_kst().strftime('%m/%d %H:%M')})",
             },
             files={"document": (f"report_{stamp}.html", html.encode("utf-8"), "text/html")},
             timeout=30,
@@ -2341,7 +2390,7 @@ def _alert_key(*args) -> str:
 def _check_monitor_signals(prev_scores: dict) -> list:
     """KR_STOCKS 전체 스캔 → 감지된 신호 목록 반환"""
     signals = []
-    now_str = datetime.now().strftime("%Y%m%d%H")
+    now_str = _now_kst().strftime("%Y%m%d%H")
 
     for ticker, (name, period, sector) in KR_STOCKS.items():
         if not _kis.available():
@@ -2507,7 +2556,7 @@ def _is_after_market_close(now: datetime) -> bool:
 
 def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
     """장중 실시간 모니터링 루프 (기본: 7시간, 5분 간격)"""
-    now = datetime.now()
+    now = _now_kst()
     # 장 마감 후 시작은 무의미 — 즉시 스킵
     if _is_after_market_close(now):
         msg = (
@@ -2530,7 +2579,7 @@ def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
 
     # 초기 점수 캐시 로드 (일일 리포트 결과가 있으면 활용)
     perf  = load_performance()
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = _now_kst().strftime("%Y-%m-%d")
     for rec in perf.get("recommendations", []):
         if rec.get("date") == today:
             prev_scores[rec["ticker"]] = {"score": rec.get("score", 0)}
@@ -2538,7 +2587,7 @@ def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
     cycle = 0
     while time.time() < deadline:
         cycle += 1
-        now = datetime.now()
+        now = _now_kst()
         # 장 마감 도달 시 즉시 종료 (의미 없는 대기 방지)
         if _is_after_market_close(now):
             print(f"  [모니터] 장 마감 — 조기 종료 ({now.strftime('%H:%M')})")
@@ -2604,7 +2653,7 @@ def run_us_briefing():
 
         lines = [
             f"<b>🌙 미국 시장 마감 브리핑</b>",
-            f"<i>{datetime.now().strftime('%Y-%m-%d')} 새벽 브리핑</i>",
+            f"<i>{_now_kst().strftime('%Y-%m-%d')} 새벽 브리핑</i>",
             "",
             f"S&P500  {arr(sp_chg)}{abs(sp_chg):.2f}%",
             f"나스닥   {arr(nq_chg)}{abs(nq_chg):.2f}%",
@@ -2628,7 +2677,7 @@ def run_us_briefing():
                 resp = client.messages.create(
                     model=CLAUDE_MODEL,
                     max_tokens=200,
-                    system=_AI_SYSTEM,
+                    system=_ai_system(),
                     messages=[{"role": "user", "content": prompt}],
                 )
                 lines += ["", f"🤖 {resp.content[0].text.strip()}"]
@@ -2679,7 +2728,7 @@ def run_premarket_briefing():
                 resp = client.messages.create(
                     model=CLAUDE_MODEL,
                     max_tokens=150,
-                    system=_AI_SYSTEM,
+                    system=_ai_system(),
                     messages=[{"role": "user", "content": prompt}],
                 )
                 lines += ["", f"🤖 AI: {resp.content[0].text.strip()}"]
@@ -2702,7 +2751,7 @@ def run_close_summary():
         kos_arr = "▲" if mood["kospi_chg"] >= 0 else "▼"
         lines = [
             "<b>📉 장 마감 결산 (15:35)</b>",
-            f"<i>{datetime.now().strftime('%Y-%m-%d')} 오늘의 결산</i>",
+            f"<i>{_now_kst().strftime('%Y-%m-%d')} 오늘의 결산</i>",
             "",
             f"코스피  {mood['kospi_price']:,.0f}  {kos_arr}{abs(mood['kospi_chg']):.2f}%",
             f"달러/원  {mood['usdkrw']:,.0f}원",
@@ -2733,7 +2782,7 @@ def run_close_summary():
                 resp = client.messages.create(
                     model=CLAUDE_MODEL,
                     max_tokens=200,
-                    system=_AI_SYSTEM,
+                    system=_ai_system(),
                     messages=[{"role": "user", "content": prompt}],
                 )
                 lines += [f"🤖 내일 전망: {resp.content[0].text.strip()}"]
@@ -2801,7 +2850,7 @@ def compare_stocks(name_a: str, name_b: str, all_stocks: list) -> str:
             resp = client.messages.create(
                 model=CLAUDE_MODEL,
                 max_tokens=200,
-                system=_AI_SYSTEM,
+                system=_ai_system(),
                 messages=[{"role": "user", "content": prompt}],
             )
             lines += ["", f"🤖 AI: {resp.content[0].text.strip()}"]
@@ -3021,7 +3070,7 @@ def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
         print("  [pykrx] 미설치 — 시장 스캔 불가")
         return []
 
-    date_obj = datetime.now() - timedelta(days=1)
+    date_obj = _now_kst() - timedelta(days=1)
     date_str = ""
     for _ in range(7):
         date_str = date_obj.strftime("%Y%m%d")
@@ -3066,7 +3115,7 @@ def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
 def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
     """pykrx OHLCV + 펀더멘털로 종목 분석 (KIS/DART/감성 없는 빠른 버전)"""
     try:
-        end_obj   = datetime.now()
+        end_obj   = _now_kst()
         start_obj = end_obj - timedelta(days=190)
         start_str = start_obj.strftime("%Y%m%d")
         end_str   = end_obj.strftime("%Y%m%d")
@@ -3327,7 +3376,7 @@ def run_market_scan(n: int = MARKET_SCAN_N):
         print(f"  {s['name']} ({s['ticker']}) -- {s['score']}점  buy={s['buy_signal']}")
 
     cache = {
-        "updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "updated": _now_kst().strftime("%Y-%m-%d %H:%M"),
         "count":   len(top50),
         "stocks":  top50,
     }
@@ -3349,7 +3398,7 @@ def run():
     print("=" * 60)
 
     # ── 월간 리포트 (매월 1일) ──────────────────
-    if datetime.now().day == 1:
+    if _now_kst().day == 1:
         monthly = make_monthly_report()
         if monthly:
             print("\n[월간 성과 리포트 전송]")
@@ -3495,7 +3544,7 @@ def _notify_fatal(mode: str, exc: BaseException):
     err_msg = (
         f"🚨 <b>[봇 실행 실패]</b>\n"
         f"모드: <code>{mode or 'run (기본)'}</code>\n"
-        f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        f"시간: {_now_kst().strftime('%Y-%m-%d %H:%M:%S')}\n"
         f"오류: <code>{type(exc).__name__}: {str(exc)[:300]}</code>\n\n"
         f"<b>트레이스백:</b>\n<pre>{tb_tail[:1500]}</pre>\n\n"
         f"<i>GitHub Actions 로그에서 전체 내용 확인 가능</i>"
@@ -3525,7 +3574,7 @@ def _check_schedule_drift(mode: str) -> None:
         return
     expected_hm, tolerance_min = info
     eh, em = map(int, expected_hm.split(":"))
-    now = datetime.now()
+    now = _now_kst()
     expected = now.replace(hour=eh, minute=em, second=0, microsecond=0)
     diff_min = (now - expected).total_seconds() / 60
     if abs(diff_min) <= tolerance_min:

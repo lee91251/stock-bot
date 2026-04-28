@@ -113,6 +113,12 @@ ANTHROPIC_API_KEY
   - 스케줄 어긋남 감지: `_check_schedule_drift` — cron 지연/조기 실행 시 텔레그램으로 경고
   - 모니터 조기 종료: 장 마감(15:35 KST) 후 시작 시 즉시 스킵, 장중 마감 도달 시 즉시 break
   - 일일 리포트 시간 변경: 07:30 → 08:00 KST (`30 22` → `0 23` UTC)
+- 시간대/CPI/AI 연도 정확도 보강 (완료 2026-04-29)
+  - **`time.tzset()`이 GitHub Actions Ubuntu에서 datetime에 적용 안 되는 문제 발견** (16:58 KST에 모니터링이 정상 시작됨 = 코드가 UTC 07:58로 인식)
+  - `zoneinfo.ZoneInfo("Asia/Seoul")` 기반 `_now_kst()` 헬퍼 추가 — 시스템 TZ 무관하게 항상 KST 반환
+  - `datetime.now()` 31곳 모두 `_now_kst()`로 교체 (KIS 토큰 비교/시간 검증/메시지 라벨 전부)
+  - CPI 파싱: FRED가 미발표월에 "." 반환하는 문제 — 유효 숫자 행만 필터링 + 디버그 로그 추가
+  - AI 시스템 프롬프트 동적화: `_ai_system()` 함수로 변경, 매 호출마다 현재 KST 날짜 주입 — 학습 컷오프로 인한 잘못된 연도(예: "2025") 표기 방지
 - 모의투자 시작 예정
 
 ---
