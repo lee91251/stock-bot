@@ -37,7 +37,12 @@ DART_API_KEY
 KIS_APP_KEY
 KIS_APP_SECRET
 ANTHROPIC_API_KEY
+HOLDINGS_JSON
 ```
+
+**선택적 환경변수** (workflow env에 추가 가능):
+- `CLAUDE_MODEL` — 모델 변경 시 (기본: `claude-sonnet-4-6`)
+- `KR_ONLY` — KR 전용 모드 (기본: `true`. `false`로 바꾸면 해외 종목 분석 재활성화)
 
 ---
 
@@ -129,7 +134,14 @@ ANTHROPIC_API_KEY
   - 저장소 public 전환 — workflow_dispatch는 private repo에선 `repo` scope 추가 필요했으나 public 전환으로 해결 (보너스: GitHub Actions 무료 분 무제한)
   - GitHub Actions `schedule:` 트리거 제거, 각 job `if:` 단순화 (workflow_dispatch + mode만 검증)
   - 결과: 4월 29일 기준 모든 메시지 ±1분 이내 정시 도착 검증 완료
-- 모의투자 시작 가능 (정시 트리거 확보 완료)
+- KR 전용 모드 도입 (완료 2026-04-29)
+  - 환경변수 `KR_ONLY` (기본 `true`)로 해외 종목 분석/추천 비활성화
+  - 해외 분석 루프 스킵 → 봇 실행 시간 ~30% 단축, Anthropic API 호출 감소
+  - 텔레그램/HTML 리포트의 해외 추천 섹션 조건부 (`if us_top:`) — 출력 안 됨
+  - "해외 뭐 사?" 명령 → KR 전용 안내 메시지로 응답
+  - AI 시장 요약 프롬프트 KR 집중으로 단순화 (해외 TOP3 라인 제거, "한국 섹터" 명시)
+  - 미국 매크로(금리/CPI/DXY) 및 06:00 미국 마감 브리핑은 유지 — KR 시장 영향 분석용
+- 모의투자 시작 가능 (정시 트리거 + KR 집중 분석)
 
 ---
 

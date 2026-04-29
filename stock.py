@@ -80,6 +80,10 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 # Claude AI 모델 — 모델 변경 시 이 값만 수정하면 됨
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
 
+# KR 전용 모드 — True면 해외 종목 분석/추천 비활성화 (미국 매크로/마감 브리핑은 유지).
+# 환경변수 KR_ONLY=false 로 설정하면 해외 종목도 다시 분석.
+KR_ONLY = os.environ.get("KR_ONLY", "true").lower() in ("true", "1", "yes", "on")
+
 INVEST_PER_STOCK = 2_000_000
 STOP_LOSS_PCT    = 0.07
 TARGET1_PCT      = 0.10
@@ -1197,10 +1201,18 @@ def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
         return ""
     try:
         kr_names = ", ".join(s["name"] for s in kr_top[:3])
-        us_names = ", ".join(s["name"] for s in us_top[:3])
+        us_names = ", ".join(s["name"] for s in us_top[:3]) if us_top else ""
         usdkrw   = mood.get("usdkrw", 1300)
         fx_note  = "고환율(수출주 유리)" if usdkrw >= 1380 else ("저환율(내수주 유리)" if usdkrw <= 1250 else "환율 중립")
         vix_note = "방어주 중심 권장" if mood.get("vix", 20) >= 30 else ("성장주 접근 가능" if mood.get("vix", 20) <= 18 else "균형 전략")
+
+        # KR 전용 모드: 해외 종목 라인 제외, 미국 매크로는 KR 영향 분석용으로 유지
+        kr_only_note = (
+            "(이 봇은 KR 종목 전용입니다. 해외 추천은 다루지 않으며, "
+            "미국 시장 데이터는 KR 시장에 미치는 영향만 분석하세요.)"
+            if not us_names else ""
+        )
+        us_line = f"- 해외 TOP3: {us_names}\n" if us_names else ""
 
         prompt = (
             f"오늘의 시장 데이터:\n"
@@ -1211,10 +1223,11 @@ def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
             f"- WTI: ${mood['wti']} / 금: ${mood['gold']:,.0f}\n"
             f"- 공포탐욕지수: {fg['score']} ({fg['label']})\n"
             f"- 국내 TOP3: {kr_names}\n"
-            f"- 해외 TOP3: {us_names}\n\n"
+            f"{us_line}\n"
+            f"{kr_only_note}\n"
             "다음 세 가지를 각각 한 문장으로 답해주세요:\n"
             "1. 오늘 주식을 사도 되는 시장인가? (YES/NO + 한줄 이유)\n"
-            "2. 오늘 주목해야 할 섹터와 그 이유\n"
+            "2. 오늘 주목해야 할 한국 섹터와 그 이유\n"
             "3. 오늘 가장 중요한 리스크 요인"
         )
         resp = client.messages.create(
@@ -1988,6 +2001,17 @@ def make_report(
     {"" if not ai_sector else f'<div style="margin-top:10px;padding:10px 14px;background:white;border-radius:8px;font-size:13px;color:#364fc7;"><b>섹터 로테이션:</b> {ai_sector}</div>'}
   </div>"""
 
+    # 해외 추천 섹션 — KR 전용 모드(또는 us_top 비어있음)면 출력 안 함
+    us_section = ""
+    if us_top:
+        us_section = f"""
+  <div style="padding:20px 16px 8px;">
+    <h2 style="color:#1a3a5c;font-size:20px;margin:0 0 16px;padding-bottom:10px;border-bottom:3px solid #e67700;">
+      🇺🇸 해외 추천 종목 TOP 5
+    </h2>
+    {"".join(card_html(i, s, ai_insights.get(s['ticker'], "")) for i, s in enumerate(us_top))}
+  </div>"""
+
     html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -2050,13 +2074,7 @@ def make_report(
     </h2>
     {"".join(card_html(i, s, ai_insights.get(s['ticker'], "")) for i, s in enumerate(kr_top))}
   </div>
-
-  <div style="padding:20px 16px 8px;">
-    <h2 style="color:#1a3a5c;font-size:20px;margin:0 0 16px;padding-bottom:10px;border-bottom:3px solid #e67700;">
-      🇺🇸 해외 추천 종목 TOP 5
-    </h2>
-    {"".join(card_html(i, s, ai_insights.get(s['ticker'], "")) for i, s in enumerate(us_top))}
-  </div>
+  {us_section}
 """
 
     if avoid:
@@ -2168,12 +2186,13 @@ def make_telegram_message(
             else:
                 lines.append("   외국인/기관 수급 조회불가")
 
-    lines += ["", "<b>🇺🇸 해외 추천 TOP 5</b>"]
-    for i, s in enumerate(us_top):
-        chg_arr = "▲" if s["change"] >= 0 else "▼"
-        buy_tag = " ✅매수YES" if s.get("buy_signal") else " ❌관망"
-        lines.append(f"{medals[i]} <b>{s['name']}</b> — {s['score']}점 {s['risk']} ({s['period']}){buy_tag}")
-        lines.append(f"   ${s['price']:,.2f} {chg_arr}{abs(s['change']):.2f}%")
+    if us_top:
+        lines += ["", "<b>🇺🇸 해외 추천 TOP 5</b>"]
+        for i, s in enumerate(us_top):
+            chg_arr = "▲" if s["change"] >= 0 else "▼"
+            buy_tag = " ✅매수YES" if s.get("buy_signal") else " ❌관망"
+            lines.append(f"{medals[i]} <b>{s['name']}</b> — {s['score']}점 {s['risk']} ({s['period']}){buy_tag}")
+            lines.append(f"   ${s['price']:,.2f} {chg_arr}{abs(s['change']):.2f}%")
 
     if avoid:
         lines += ["", "<b>🚫 오늘 피해야 할 종목</b>"]
@@ -3002,6 +3021,17 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
                 kr_buy = [s for s in kr_top if s.get("buy_signal")]
                 us_buy = [s for s in us_top if s.get("buy_signal")]
 
+                # KR 전용 모드일 때 해외 요청 → 안내 후 종료
+                if KR_ONLY and "해외" in text:
+                    tg_send(
+                        "🌐 <b>현재 국내 전용 봇으로 운영 중입니다.</b>\n"
+                        "해외 종목 추천은 비활성화 상태이며, "
+                        "미국 매크로(금리/달러/CPI)는 KR 시장 영향 분석에 반영됩니다.\n\n"
+                        "<i>국내 종목을 보시려면: 「국내 뭐 사?」 또는 「뭐 사?」</i>",
+                        chat_id,
+                    )
+                    continue
+
                 if "국내" in text:
                     pool   = kr_buy[:5]
                     header = "🇰🇷 국내 매수 신호 종목"
@@ -3010,6 +3040,10 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
                     pool   = us_buy[:5]
                     header = "🇺🇸 해외 매수 신호 종목"
                     flag   = "us_only"
+                elif KR_ONLY:
+                    pool   = kr_buy[:5]
+                    header = "💚 오늘 매수 신호 종목 (국내 TOP 5)"
+                    flag   = "kr_only"
                 else:
                     pool   = kr_buy[:3] + us_buy[:3]
                     header = "💚 오늘 매수 신호 종목 (국내 3 + 해외 3)"
@@ -3392,7 +3426,10 @@ def run_market_scan(n: int = MARKET_SCAN_N):
 def run():
     print("=" * 60)
     print("투자 비서 v6.0 시작")
-    print(f"국내 {len(KR_STOCKS)}종목 + 해외 {len(US_STOCKS)}종목 분석 중...")
+    if KR_ONLY:
+        print(f"🇰🇷 KR 전용 모드 — 국내 {len(KR_STOCKS)}종목 분석 (해외 분석 스킵)")
+    else:
+        print(f"국내 {len(KR_STOCKS)}종목 + 해외 {len(US_STOCKS)}종목 분석 중...")
     print(f"KIS API: {'연결됨' if _kis.available() else 'yfinance 폴백'}")
     print(f"AI 분석: {'Claude 활성화' if (_ANTHROPIC_OK and ANTHROPIC_API_KEY) else '비활성화 (ANTHROPIC_API_KEY 없음)'}")
     print("=" * 60)
@@ -3432,15 +3469,18 @@ def run():
             kr_results.append(r)
         time.sleep(0.8)
 
-    print("\n[5/7] 해외 종목 분석 중...")
     us_results = []
-    for ticker, val in US_STOCKS.items():
-        name, period, sector = val
-        print(f"  분석: {name}")
-        r = analyze(ticker, name, period, sector)
-        if r:
-            us_results.append(r)
-        time.sleep(0.8)
+    if KR_ONLY:
+        print("\n[5/7] 해외 종목 분석 — 스킵 (KR_ONLY 모드)")
+    else:
+        print("\n[5/7] 해외 종목 분석 중...")
+        for ticker, val in US_STOCKS.items():
+            name, period, sector = val
+            print(f"  분석: {name}")
+            r = analyze(ticker, name, period, sector)
+            if r:
+                us_results.append(r)
+            time.sleep(0.8)
 
     # 시장 스캔 캐시 병합 (새벽 2시 run_market_scan이 저장한 상위 50개)
     scan_top = []
