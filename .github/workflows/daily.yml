@@ -18,15 +18,23 @@ on:
           - "--close"
           - "--monitor"
           - "--marketscan"
+          - "--autobuy"
+          - "--autosell"
 
 env:
-  TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
-  TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
-  DART_API_KEY:      ${{ secrets.DART_API_KEY }}
-  KIS_APP_KEY:       ${{ secrets.KIS_APP_KEY }}
-  KIS_APP_SECRET:    ${{ secrets.KIS_APP_SECRET }}
-  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-  HOLDINGS_JSON:     ${{ secrets.HOLDINGS_JSON }}
+  TELEGRAM_TOKEN:       ${{ secrets.TELEGRAM_TOKEN }}
+  TELEGRAM_CHAT_ID:     ${{ secrets.TELEGRAM_CHAT_ID }}
+  DART_API_KEY:         ${{ secrets.DART_API_KEY }}
+  KIS_APP_KEY:          ${{ secrets.KIS_APP_KEY }}
+  KIS_APP_SECRET:       ${{ secrets.KIS_APP_SECRET }}
+  ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+  HOLDINGS_JSON:        ${{ secrets.HOLDINGS_JSON }}
+  # ── 자동매매 (스윙 모의투자) ──
+  PAPER_TRADING:        "true"   # ⚠️ 실전 전환 시 false로 (별도 KIS_REAL_ACCOUNT 필요)
+  AUTO_TRADE_ENABLED:   "true"   # 일시 차단 시 false
+  KIS_PAPER_APP_KEY:    ${{ secrets.KIS_PAPER_APP_KEY }}
+  KIS_PAPER_APP_SECRET: ${{ secrets.KIS_PAPER_APP_SECRET }}
+  KIS_PAPER_ACCOUNT:    ${{ secrets.KIS_PAPER_ACCOUNT }}
 
 jobs:
   # ── 일일 AI 리포트 (cron-job.org 평일 08:00 KST) ────
@@ -121,6 +129,52 @@ jobs:
         run: pip install -r requirements.txt
       - name: 장중 모니터링 (20분)
         run: python -c "import stock; stock.run_monitor(duration_hours=0.33, interval_sec=120)"
+
+  # ── 자동 매수 (cron-job.org 평일 09:10 KST, 1회/일) ────
+  auto-buy:
+    if: github.event.inputs.mode == '--autobuy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 자동 매수 (스윙)
+        run: python stock.py --autobuy
+      - name: 포지션 기록 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add positions.json || true
+          git diff --staged --quiet || git commit -m "chore: 자동매매 포지션 업데이트 $(date '+%Y-%m-%d %H:%M')"
+          git push || true
+
+  # ── 자동 매도 (cron-job.org 평일 09:30~15:30, 30분마다) ────
+  auto-sell:
+    if: github.event.inputs.mode == '--autosell'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 자동 매도 (조건 점검)
+        run: python stock.py --autosell
+      - name: 포지션 기록 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add positions.json || true
+          git diff --staged --quiet || git commit -m "chore: 자동매도 포지션 업데이트 $(date '+%Y-%m-%d %H:%M')"
+          git push || true
 
   # ── 코스피/코스닥 전체 스캔 (cron-job.org 평일 02:00 KST) ────
   market-scan:

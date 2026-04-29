@@ -99,9 +99,35 @@ except Exception:
 
 PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
 MARKET_SCAN_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
+POSITIONS_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "positions.json")
 MARKET_SCAN_N     = 1500
-KIS_BASE  = "https://openapi.koreainvestment.com:9443"
-DART_BASE = "https://opendart.fss.or.kr/api"
+KIS_BASE       = "https://openapi.koreainvestment.com:9443"
+KIS_PAPER_BASE = "https://openapivts.koreainvestment.com:29443"
+DART_BASE      = "https://opendart.fss.or.kr/api"
+
+# ════════════════════════════════════════════════
+# 자동매매 (스윙 모의투자) 설정
+# ════════════════════════════════════════════════
+# PAPER_TRADING=true 이면 모의투자 도메인 + 모의투자 키 사용.
+# 미설정 시 안전 기본값으로 매매 자체가 차단됨.
+PAPER_TRADING = os.environ.get("PAPER_TRADING", "").lower() in ("true", "1", "yes", "on")
+AUTO_TRADE_ENABLED = os.environ.get("AUTO_TRADE_ENABLED", "true").lower() in ("true", "1", "yes", "on")
+
+KIS_PAPER_APP_KEY    = os.environ.get("KIS_PAPER_APP_KEY",    "")
+KIS_PAPER_APP_SECRET = os.environ.get("KIS_PAPER_APP_SECRET", "")
+KIS_PAPER_ACCOUNT    = os.environ.get("KIS_PAPER_ACCOUNT",    "")  # 형식: 12345678-01
+
+# 스윙 자동매매 파라미터 (장기/가치 기반인 STOP_LOSS_PCT/TARGET*_PCT와는 별개)
+SWING_SCORE_MIN          = 70          # 매수 임계 스윙 점수
+SWING_TARGET1_PCT        = 0.06        # +6% 절반 매도
+SWING_TARGET2_PCT        = 0.10        # +10% 전량 매도
+SWING_STOP_LOSS_PCT      = 0.04        # -4% 손절
+SWING_MAX_HOLD_DAYS      = 5           # 5거래일 후 강제 매도
+SWING_MAX_DAILY_BUY      = 5           # 하루 최대 신규 매수 종목
+SWING_MAX_DAILY_AMT      = 10_000_000  # 하루 최대 매수 금액(원)
+SWING_LOSS_COOLDOWN_DAYS = 3           # 손절 후 같은 종목 재매수 금지 기간
+SWING_PRE_ALERT_SEC      = 30          # 매수 직전 사전 알림 + /취소 대기 시간
+SWING_DAILY_TRADE_CAP    = 20          # 일일 매매 횟수 한도 (폭주 차단)
 
 # ════════════════════════════════════════════════
 # 유틸
@@ -262,6 +288,224 @@ class KisClient:
 
 
 _kis = KisClient()
+
+
+# ════════════════════════════════════════════════
+# KIS 매매 클라이언트 (모의/실전 도메인 분기)
+# ════════════════════════════════════════════════
+class KisTradingClient:
+    """모의투자(VTS) / 실전투자 도메인 분기 매매 클라이언트.
+
+    PAPER_TRADING=true 일 때만 모의투자 도메인+키 사용. 키가 없으면 매매 자체가 차단됨.
+    안전 기본값: PAPER_TRADING 미설정 → available()=False → 모든 주문 거부.
+    """
+    def __init__(self):
+        self.paper      = PAPER_TRADING
+        self.base       = KIS_PAPER_BASE if self.paper else KIS_BASE
+        self.app_key    = KIS_PAPER_APP_KEY    if self.paper else KIS_APP_KEY
+        self.app_secret = KIS_PAPER_APP_SECRET if self.paper else KIS_APP_SECRET
+        self.account    = KIS_PAPER_ACCOUNT    if self.paper else os.environ.get("KIS_REAL_ACCOUNT", "")
+        self._token: str = ""
+        self._token_exp: datetime = datetime.min
+
+    def mode_tag(self) -> str:
+        return "[모의]" if self.paper else "[실전]"
+
+    def available(self) -> bool:
+        return bool(self.app_key and self.app_secret and self.account)
+
+    def _account_split(self) -> tuple:
+        s = self.account.replace("-", "").strip()
+        return s[:8], s[8:10] if len(s) >= 10 else "01"
+
+    def _ensure_token(self):
+        if not self.available() or _now_kst() < self._token_exp:
+            return
+        try:
+            r = requests.post(
+                f"{self.base}/oauth2/tokenP",
+                json={"grant_type": "client_credentials",
+                      "appkey": self.app_key, "appsecret": self.app_secret},
+                timeout=10,
+            )
+            d = r.json()
+            self._token     = d.get("access_token", "")
+            self._token_exp = _now_kst() + timedelta(
+                seconds=int(d.get("expires_in", 86400)) - 600
+            )
+            if not self._token:
+                print(f"  [매매{self.mode_tag()}] 토큰 발급 오류: {d.get('msg1','access_token 없음')}")
+        except Exception as e:
+            print(f"  [매매{self.mode_tag()}] 토큰 발급 실패: {e}")
+
+    def _order(self, code: str, qty: int, side: str) -> dict:
+        """side: 'buy' or 'sell'. 시장가 주문(ORD_DVSN=01)."""
+        self._ensure_token()
+        if not self._token:
+            return {"ok": False, "msg": "토큰 없음"}
+        cano, prdt = self._account_split()
+        if side == "buy":
+            tr_id = "VTTC0802U" if self.paper else "TTTC0802U"
+        else:
+            tr_id = "VTTC0801U" if self.paper else "TTTC0801U"
+        try:
+            r = requests.post(
+                f"{self.base}/uapi/domestic-stock/v1/trading/order-cash",
+                headers={
+                    "content-type":  "application/json; charset=utf-8",
+                    "authorization": f"Bearer {self._token}",
+                    "appkey":        self.app_key,
+                    "appsecret":     self.app_secret,
+                    "tr_id":         tr_id,
+                    "custtype":      "P",
+                },
+                json={
+                    "CANO":         cano,
+                    "ACNT_PRDT_CD": prdt,
+                    "PDNO":         code,
+                    "ORD_DVSN":     "01",   # 01: 시장가
+                    "ORD_QTY":      str(qty),
+                    "ORD_UNPR":     "0",
+                },
+                timeout=10,
+            )
+            d = r.json()
+            if d.get("rt_cd") == "0":
+                return {
+                    "ok":       True,
+                    "order_no": d.get("output", {}).get("ODNO", ""),
+                    "msg":      d.get("msg1", ""),
+                }
+            return {"ok": False, "msg": d.get("msg1", "주문 실패")}
+        except Exception as e:
+            return {"ok": False, "msg": str(e)}
+
+    def buy(self, code: str, qty: int) -> dict:
+        return self._order(code, qty, "buy")
+
+    def sell(self, code: str, qty: int) -> dict:
+        return self._order(code, qty, "sell")
+
+    def get_balance(self) -> dict:
+        """잔고 조회. 정상 시 {'cash': int, 'positions': [...], 'total_eval': int} 반환."""
+        self._ensure_token()
+        if not self._token:
+            return {}
+        cano, prdt = self._account_split()
+        tr_id = "VTTC8434R" if self.paper else "TTTC8434R"
+        try:
+            r = requests.get(
+                f"{self.base}/uapi/domestic-stock/v1/trading/inquire-balance",
+                headers={
+                    "content-type":  "application/json; charset=utf-8",
+                    "authorization": f"Bearer {self._token}",
+                    "appkey":        self.app_key,
+                    "appsecret":     self.app_secret,
+                    "tr_id":         tr_id,
+                    "custtype":      "P",
+                },
+                params={
+                    "CANO":                  cano,
+                    "ACNT_PRDT_CD":          prdt,
+                    "AFHR_FLPR_YN":          "N",
+                    "OFL_YN":                "",
+                    "INQR_DVSN":             "02",
+                    "UNPR_DVSN":             "01",
+                    "FUND_STTL_ICLD_YN":     "N",
+                    "FNCG_AMT_AUTO_RDPT_YN": "N",
+                    "PRCS_DVSN":             "01",
+                    "CTX_AREA_FK100":        "",
+                    "CTX_AREA_NK100":        "",
+                },
+                timeout=10,
+            )
+            d = r.json()
+            if d.get("rt_cd") != "0":
+                print(f"  [매매{self.mode_tag()}] 잔고조회 오류: {d.get('msg1','')}")
+                return {}
+            out2 = d.get("output2", [{}])
+            summary = out2[0] if isinstance(out2, list) and out2 else {}
+            return {
+                "cash":       int(_safe_float(summary.get("dnca_tot_amt"))),
+                "total_eval": int(_safe_float(summary.get("tot_evlu_amt"))),
+                "positions":  d.get("output1", []),
+            }
+        except Exception as e:
+            print(f"  [매매{self.mode_tag()}] 잔고조회 실패: {e}")
+            return {}
+
+
+_kis_trading: 'KisTradingClient | None' = None
+
+
+def get_trading_client() -> KisTradingClient:
+    global _kis_trading
+    if _kis_trading is None:
+        _kis_trading = KisTradingClient()
+    return _kis_trading
+
+
+# ════════════════════════════════════════════════
+# 자동매매 포지션 / 상태 관리 (positions.json)
+# ════════════════════════════════════════════════
+def load_positions() -> dict:
+    """현재 보유 포지션 + 거래 이력 + 일일 카운터 + 정지 상태."""
+    try:
+        if os.path.exists(POSITIONS_FILE):
+            with open(POSITIONS_FILE, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                d.setdefault("positions",     {})
+                d.setdefault("history",       [])
+                d.setdefault("daily",         {})
+                d.setdefault("loss_cooldown", {})
+                d.setdefault("halted",        False)
+                d.setdefault("pending_cancel", False)
+                return d
+    except Exception:
+        pass
+    return {
+        "positions":      {},
+        "history":        [],
+        "daily":          {},
+        "loss_cooldown":  {},
+        "halted":         False,
+        "pending_cancel": False,
+    }
+
+
+def save_positions(data: dict):
+    try:
+        with open(POSITIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2, default=str)
+    except Exception as e:
+        print(f"  [포지션] 저장 실패: {e}")
+
+
+def _today_str() -> str:
+    return _now_kst().strftime("%Y-%m-%d")
+
+
+def _ensure_daily(pos: dict, date: str) -> dict:
+    pos.setdefault("daily", {}).setdefault(
+        date, {"buy_count": 0, "buy_amount": 0, "trade_count": 0}
+    )
+    return pos["daily"][date]
+
+
+def _trading_days_between(start_iso: str, end_iso: str) -> int:
+    """시작일~종료일 사이 평일(월~금) 수 (시작일 제외, 종료일 포함)."""
+    try:
+        s = datetime.strptime(start_iso, "%Y-%m-%d")
+        e = datetime.strptime(end_iso,   "%Y-%m-%d")
+    except Exception:
+        return 0
+    days = 0
+    d = s + timedelta(days=1)
+    while d <= e:
+        if d.weekday() < 5:
+            days += 1
+        d += timedelta(days=1)
+    return days
 
 
 # ════════════════════════════════════════════════
@@ -1132,6 +1376,99 @@ def analyze(
     else:
         period_strategy = f"1~2차 목표에서 일부만 매도, 나머지는 장기 보유. 배당도 챙기세요."
 
+    # ── 스윙 전용 점수 (기존 'score'는 가치투자 점수, 그대로 유지) ──
+    # 스윙은 단기 모멘텀 위주: 기술적 35% / 거래량·모멘텀 25% / 수급 20% / 공시 10% / 가치 5% / 섹터 5%
+    sw_score = 0
+    sw_reasons = []
+
+    # 1) 기술적 (RSI, MACD, 볼린저, 52주 위치)
+    if rsi < 30:
+        sw_score += 15; sw_reasons.append(f"RSI {rsi} 과매도 반등 구간")
+    elif rsi < 45:
+        sw_score += 12; sw_reasons.append(f"RSI {rsi} 저점 매수권")
+    elif rsi > 65:
+        sw_score -= 10
+    if macd_cross:
+        sw_score += 10; sw_reasons.append("MACD 골든크로스")
+    if bb_pct < 20:
+        sw_score += 8;  sw_reasons.append("볼린저밴드 하단 (반등 통계)")
+    elif bb_pct > 80:
+        sw_score -= 5
+    if pct_from_low <= 10:
+        sw_score += 8;  sw_reasons.append(f"52주 저점 +{pct_from_low}%")
+    elif pct_from_low <= 20:
+        sw_score += 4
+
+    # 2) 거래량 / 모멘텀
+    if vol_ratio >= 200:
+        sw_score += 12; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 급증")
+    elif vol_ratio >= 150:
+        sw_score += 8;  sw_reasons.append(f"거래량 {vol_ratio:.0f}% 활발")
+    elif vol_ratio < 80:
+        sw_score -= 5
+    if 0 < ret_1w <= 5:
+        sw_score += 8;  sw_reasons.append(f"1주 +{ret_1w}% 가벼운 상승")
+    elif 5 < ret_1w <= 10:
+        sw_score += 4
+    elif ret_1w > 10:
+        sw_score -= 3   # 너무 오른 종목은 추격 매수 위험
+    elif ret_1w < -3:
+        sw_score -= 5
+    if -5 <= ret_1m <= 0:
+        sw_score += 5;  sw_reasons.append("1달 가벼운 조정 (눌림목)")
+    elif ret_1m < -15:
+        sw_score -= 10
+    if sr["near_support"]:
+        sw_score += 8;  sw_reasons.append("지지선 근처")
+
+    # 3) 수급 (외국인/기관)
+    if foreign_eok >= 50:
+        sw_score += 12; sw_reasons.append(f"외국인 +{foreign_eok:.0f}억")
+    elif foreign_eok >= 10:
+        sw_score += 6
+    elif foreign_eok <= -50:
+        sw_score -= 8
+    if inst_eok >= 50:
+        sw_score += 8;  sw_reasons.append(f"기관 +{inst_eok:.0f}억")
+    elif inst_eok >= 10:
+        sw_score += 4
+
+    # 4) 공시 (단기 호재 / 악재)
+    if dart_sigs.get("rights"):
+        sw_score -= 20  # 유증은 단기 치명적
+    if dart_sigs.get("buyback"):
+        sw_score += 6;  sw_reasons.append("자사주 매입")
+    if dart_sigs.get("order"):
+        sw_score += 8;  sw_reasons.append("신규 수주")
+    if dart_sigs.get("insider"):
+        sw_score -= 5
+
+    # 5) 가치 (스윙엔 비중 작음 — 너무 비싼 것만 거름)
+    if per and per > 30:
+        sw_score -= 5
+
+    # 6) 섹터 (약하게만)
+    if sector in ("조선", "방산", "원전", "전력", "바이오"):
+        sw_score += 5
+
+    # 가격 조작 / 모멘텀 약화는 강력 차단
+    if manipulation_signal:
+        sw_score -= 25
+    if momentum_bad:
+        sw_score -= 15
+
+    # 스윙 매수 시그널: 점수 + 안전 조건 6개
+    swing_signal = (
+        sw_score >= SWING_SCORE_MIN
+        and rsi < 65
+        and not manipulation_signal
+        and not momentum_bad
+        and not dart_sigs.get("rights")
+        and not sr["near_resistance"]
+        and vol_ratio >= 100
+        and ret_1m > -15
+    )
+
     return {
         "ticker": ticker, "name": name, "period": period, "sector": sector,
         "price": price, "change": change, "currency": currency,
@@ -1143,6 +1480,7 @@ def analyze(
         "win_rate": win_rate, "score": score, "risk": risk, "risk_desc": risk_desc,
         "reasons": reasons, "warnings": warnings,
         "buy_signal": buy_signal, "buy_reason": buy_reason,
+        "swing_score": sw_score, "swing_reasons": sw_reasons, "swing_signal": swing_signal,
         "buy_price": buy_price, "stop_price": stop_price,
         "dynamic_stop": dynamic_stop, "dynamic_stop_pct": dynamic_stop_pct,
         "target1": target1, "target2": target2, "target3": target3,
@@ -2350,7 +2688,11 @@ def run_bot(kr_results: list, us_results: list, mood: dict,
                 tg_send(
                     "<b>📌 투자 비서 명령어</b>\n\n"
                     "/리포트 — 오늘 전체 리포트\n"
-                    "/보유 — 보유종목 현황\n"
+                    "/보유 — 보유종목 현황 (수동 등록)\n"
+                    "/잔고 — 모의 계좌 잔고/손익 (자동매매)\n"
+                    "/정지 — 자동매매 즉시 OFF\n"
+                    "/재개 — 자동매매 다시 ON\n"
+                    "/취소 — 매수 사전 알림 30초 동안만 유효\n"
                     "/도움말 — 이 메시지\n\n"
                     "<b>자연어 질의 예시:</b>\n"
                     "현대로템 어때?\n"
@@ -2359,6 +2701,21 @@ def run_bot(kr_results: list, us_results: list, mood: dict,
                     "지금 시장 어때?",
                     chat_id,
                 )
+
+            elif text == "/잔고":
+                tg_send(run_balance_report(), chat_id)
+
+            elif text in ("/정지", "/halt", "/stop"):
+                pos = load_positions()
+                pos["halted"] = True
+                save_positions(pos)
+                tg_send("🛑 <b>자동매매 정지됨.</b>\n신규 매수/매도 모두 차단됩니다.\n해제: /재개", chat_id)
+
+            elif text in ("/재개", "/resume"):
+                pos = load_positions()
+                pos["halted"] = False
+                save_positions(pos)
+                tg_send("▶️ <b>자동매매 재개됨.</b>\n다음 트리거부터 정상 동작합니다.", chat_id)
 
             elif text == "/보유":
                 ha = check_holdings_alerts()
@@ -2815,6 +3172,359 @@ def run_close_summary():
 
 
 # ════════════════════════════════════════════════
+# 자동매매 — 텔레그램 제어 / 사전알림 / 매수 / 매도
+# ════════════════════════════════════════════════
+def _poll_cancel_during_sleep(seconds: int) -> bool:
+    """사전알림 동안 텔레그램 폴링 — '/취소' 메시지 수신 시 True 반환.
+
+    매수 직전 SWING_PRE_ALERT_SEC 동안 사용자가 취소할 기회를 줌.
+    텔레그램 토큰 없으면 그냥 sleep만.
+    """
+    if seconds <= 0:
+        return False
+    if not TELEGRAM_TOKEN:
+        time.sleep(seconds)
+        return False
+    deadline = time.time() + seconds
+    offset   = 0
+    cancelled = False
+    # 첫 폴링: 기존 미처리 업데이트 offset 갱신
+    try:
+        existing = tg_get_updates(0)
+        for upd in existing:
+            offset = max(offset, upd["update_id"] + 1)
+    except Exception:
+        pass
+    while time.time() < deadline:
+        try:
+            updates = tg_get_updates(offset)
+        except Exception:
+            updates = []
+        for upd in updates:
+            offset = upd["update_id"] + 1
+            text   = (upd.get("message", {}).get("text") or "").strip().lower()
+            if text in ("/취소", "/cancel"):
+                cancelled = True
+                break
+        if cancelled:
+            break
+        time.sleep(2)
+    return cancelled
+
+
+def run_auto_buy():
+    """매일 장 시작 후 자동 매수 (스윙).
+
+    스윙 점수 ≥ SWING_SCORE_MIN + swing_signal 통과 종목을 시장가 매수.
+    보유 중 / 손절 쿨다운 종목 제외, 시장 무드에 따라 매수량 축소.
+    PAPER_TRADING=true 일 때만 모의투자 도메인 사용. 키 없으면 차단.
+    """
+    _check_schedule_drift("--autobuy")
+    client = get_trading_client()
+    mode_tag = client.mode_tag()
+
+    if not AUTO_TRADE_ENABLED:
+        tg_send(f"⏸ <b>{mode_tag} 자동매매</b> AUTO_TRADE_ENABLED=false — 매수 스킵")
+        return
+
+    if not client.available():
+        tg_send(
+            f"🚨 <b>{mode_tag} 자동매매 차단</b>\n"
+            f"KIS 매매 키 미설정. PAPER_TRADING={PAPER_TRADING}, "
+            f"키 등록 여부: AppKey={'OK' if client.app_key else 'NO'} / "
+            f"Account={'OK' if client.account else 'NO'}"
+        )
+        return
+
+    pos = load_positions()
+    if pos.get("halted"):
+        tg_send(f"⏸ <b>{mode_tag} 자동매매 정지 중</b> — /재개 명령으로 해제")
+        return
+
+    today = _today_str()
+    daily = _ensure_daily(pos, today)
+
+    # 모드 헤더
+    tg_send(
+        f"🤖 <b>{mode_tag} 자동 매수 시작</b> ({today})\n"
+        f"기준: 스윙점수 {SWING_SCORE_MIN}+ / 종목당 {INVEST_PER_STOCK//10000}만원 / "
+        f"하루 한도 {SWING_MAX_DAILY_BUY}종목·{SWING_MAX_DAILY_AMT//10000}만원"
+    )
+
+    # 종목 분석 (KR_STOCKS만 빠르게)
+    print(f"\n[자동매수] {len(KR_STOCKS)}종목 분석 중...")
+    mood = get_market_mood()
+    all_dart = get_all_dart_data(KR_STOCKS)
+    candidates = []
+    for ticker, val in KR_STOCKS.items():
+        name, period, sector = val
+        r = analyze(ticker, name, period, sector,
+                    dart_data=all_dart.get(ticker), with_sentiment=False)
+        if r and r.get("swing_signal") and r.get("swing_score", 0) >= SWING_SCORE_MIN:
+            candidates.append(r)
+        time.sleep(0.4)
+
+    # 보유 / 쿨다운 / 일일 한도 적용
+    held = set(pos.get("positions", {}).keys())
+    cooldown = pos.get("loss_cooldown", {})
+    today_iso = today
+
+    candidates.sort(key=lambda x: x.get("swing_score", 0), reverse=True)
+
+    qty_factor = 1.0
+    if mood.get("status") in ("탐욕", "위험"):
+        qty_factor = 0.5
+        tg_send(f"⚠️ 시장 무드 '{mood['status']}' — 매수량 50% 축소")
+
+    selected = []
+    for s in candidates:
+        code = s["ticker"].split(".")[0]
+        if code in held:
+            continue
+        if cooldown.get(code) and today_iso < cooldown[code]:
+            continue
+        selected.append(s)
+        if len(selected) >= SWING_MAX_DAILY_BUY:
+            break
+
+    if not selected:
+        tg_send(f"🤖 {mode_tag} 매수할 종목 없음 (스윙 시그널 통과 종목 0개 또는 모두 보유 중)")
+        return
+
+    # 사전 알림 (30초 동안 /취소 가능)
+    preview_lines = [f"⏰ <b>{mode_tag} {SWING_PRE_ALERT_SEC}초 후 자동 매수</b>", "취소: /취소", ""]
+    for s in selected:
+        price = s["price"]
+        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        amt   = price * qty
+        preview_lines.append(f"• <b>{s['name']}</b> ({s['swing_score']}점) — {qty}주 약 {amt:,}원")
+    tg_send("\n".join(preview_lines))
+
+    if _poll_cancel_during_sleep(SWING_PRE_ALERT_SEC):
+        tg_send(f"🛑 {mode_tag} 사용자 /취소 — 자동 매수 중단")
+        # 취소 플래그 정리 (이번 회차 한정)
+        return
+
+    # 매수 실행
+    for s in selected:
+        # 정지 명령 중간 체크 (사용자가 /정지 보냈을 수도)
+        pos = load_positions()
+        if pos.get("halted"):
+            tg_send(f"🛑 {mode_tag} /정지 감지 — 잔여 매수 중단")
+            break
+        daily = _ensure_daily(pos, today)
+
+        code  = s["ticker"].split(".")[0]
+        price = s["price"]
+        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        amt   = price * qty
+
+        if daily["buy_amount"] + amt > SWING_MAX_DAILY_AMT:
+            tg_send(f"🛑 일일 매수 한도 도달 ({SWING_MAX_DAILY_AMT//10000}만원) — 추가 매수 중단")
+            break
+        if daily["buy_count"] >= SWING_MAX_DAILY_BUY:
+            tg_send(f"🛑 일일 종목 한도 도달 ({SWING_MAX_DAILY_BUY}개) — 추가 매수 중단")
+            break
+        if daily["trade_count"] >= SWING_DAILY_TRADE_CAP:
+            tg_send(f"🛑 일일 매매 횟수 한도 도달 ({SWING_DAILY_TRADE_CAP}건) — 비정상 폭주 차단")
+            break
+
+        result = client.buy(code, qty)
+        if result.get("ok"):
+            pos["positions"][code] = {
+                "name":          s["name"],
+                "qty":           qty,
+                "buy_price":     price,
+                "buy_date":      today,
+                "buy_amount":    amt,
+                "partial_sold":  False,
+                "score":         s.get("score", 0),
+                "swing_score":   s.get("swing_score", 0),
+                "order_no":      result.get("order_no", ""),
+            }
+            pos["history"].append({
+                "date": today, "side": "buy", "code": code, "name": s["name"],
+                "qty": qty, "price": price, "amount": amt,
+                "reason": f"swing_score {s.get('swing_score',0)}",
+            })
+            daily["buy_count"]   += 1
+            daily["buy_amount"]  += amt
+            daily["trade_count"] += 1
+            tg_send(
+                f"✅ {mode_tag} 매수 체결: <b>{s['name']}</b> {qty}주 @ 약 {price:,}원 "
+                f"(총 {amt:,}원 / 스윙점수 {s.get('swing_score',0)})"
+            )
+        else:
+            tg_send(f"❌ {mode_tag} 매수 실패: {s['name']} — {result.get('msg','')}")
+        save_positions(pos)
+        time.sleep(1)
+
+    # 종합 요약
+    daily = pos["daily"][today]
+    tg_send(
+        f"📊 <b>{mode_tag} 매수 요약</b>\n"
+        f"오늘 신규 매수: {daily['buy_count']}종목 / 총 {daily['buy_amount']:,}원\n"
+        f"현재 보유: {len(pos.get('positions', {}))}종목"
+    )
+
+
+def run_auto_sell():
+    """장중 30분 주기 매도 점검.
+
+    조건:
+      • +SWING_TARGET1_PCT 도달 (절반 미매도) → 절반 매도, partial_sold=True
+      • +SWING_TARGET2_PCT 도달 → 잔여 전량 매도 (수익 확정)
+      • -SWING_STOP_LOSS_PCT 도달 → 잔여 전량 매도 (손절) + 쿨다운 등록
+      • 보유 SWING_MAX_HOLD_DAYS 거래일 경과 → 잔여 전량 매도 (시간 정리)
+    """
+    _check_schedule_drift("--autosell")
+    client = get_trading_client()
+    mode_tag = client.mode_tag()
+
+    if not AUTO_TRADE_ENABLED:
+        print(f"  [자동매도] AUTO_TRADE_ENABLED=false — 스킵")
+        return
+    if not client.available():
+        print(f"  [자동매도] KIS 매매 키 미설정 — 스킵")
+        return
+
+    # 장중에만 매도 (장 시작 전/마감 후 스킵)
+    now = _now_kst()
+    if not _is_market_open(now):
+        print(f"  [자동매도] 장 시간 아님 — 스킵")
+        return
+
+    pos = load_positions()
+    if pos.get("halted"):
+        print(f"  [자동매도] /정지 상태 — 스킵")
+        return
+
+    if not pos.get("positions"):
+        print(f"  [자동매도] 보유 종목 없음 — 스킵")
+        return
+
+    today = _today_str()
+    daily = _ensure_daily(pos, today)
+    sold_msgs = []
+
+    for code in list(pos["positions"].keys()):
+        p = pos["positions"][code]
+        # 시세 조회 (실전 KIS API — 모의/실전 모두 동일 시세)
+        info = _kis.get_price(code) if _kis.available() else {}
+        cur_price = _safe_float(info.get("stck_prpr")) if info else 0
+        if cur_price <= 0:
+            print(f"  [자동매도] {p.get('name','?')}({code}) 시세 조회 실패")
+            continue
+
+        buy_price = p["buy_price"]
+        pct = (cur_price - buy_price) / buy_price * 100
+        held_qty = p["qty"]
+        partial = p.get("partial_sold", False)
+        days = _trading_days_between(p["buy_date"], today)
+
+        sell_qty = 0
+        sell_reason = ""
+        is_loss = False
+        is_force = False
+
+        if pct <= -SWING_STOP_LOSS_PCT * 100:
+            sell_qty = held_qty
+            sell_reason = f"손절 ({pct:.1f}%)"
+            is_loss = True
+        elif pct >= SWING_TARGET2_PCT * 100:
+            sell_qty = held_qty
+            sell_reason = f"+{pct:.1f}% 전량 익절"
+        elif pct >= SWING_TARGET1_PCT * 100 and not partial:
+            half = max(1, held_qty // 2)
+            sell_qty = half
+            sell_reason = f"+{pct:.1f}% 절반 익절"
+        elif days >= SWING_MAX_HOLD_DAYS:
+            sell_qty = held_qty
+            sell_reason = f"{days}거래일 경과 강제 매도 ({pct:+.1f}%)"
+            is_force = True
+
+        if sell_qty <= 0:
+            continue
+        if daily["trade_count"] >= SWING_DAILY_TRADE_CAP:
+            print(f"  [자동매도] 일일 매매 한도 도달")
+            break
+
+        result = client.sell(code, sell_qty)
+        if not result.get("ok"):
+            tg_send(f"❌ {mode_tag} 매도 실패: {p.get('name','?')} — {result.get('msg','')}")
+            continue
+
+        amt = cur_price * sell_qty
+        pos["history"].append({
+            "date": today, "side": "sell", "code": code, "name": p["name"],
+            "qty": sell_qty, "price": cur_price, "amount": amt,
+            "reason": sell_reason, "pct": round(pct, 2),
+        })
+        daily["trade_count"] += 1
+
+        if sell_qty == held_qty:
+            # 전량 매도 → 포지션 제거
+            del pos["positions"][code]
+            if is_loss:
+                cooldown_until = (datetime.strptime(today, "%Y-%m-%d")
+                                  + timedelta(days=SWING_LOSS_COOLDOWN_DAYS)).strftime("%Y-%m-%d")
+                pos.setdefault("loss_cooldown", {})[code] = cooldown_until
+        else:
+            # 절반 매도
+            pos["positions"][code]["qty"] = held_qty - sell_qty
+            pos["positions"][code]["partial_sold"] = True
+
+        emoji = "🔴" if is_loss else ("⏱️" if is_force else "🟢")
+        sold_msgs.append(
+            f"{emoji} <b>{p['name']}</b> {sell_qty}주 @ {cur_price:,}원 "
+            f"({pct:+.1f}%) — {sell_reason}"
+        )
+        save_positions(pos)
+        time.sleep(1)
+
+    if sold_msgs:
+        header = f"🤖 <b>{mode_tag} 자동 매도</b> ({_now_kst().strftime('%H:%M')})"
+        tg_send("\n".join([header, ""] + sold_msgs))
+    else:
+        print(f"  [자동매도] 매도 조건 충족 종목 없음")
+
+
+def run_balance_report() -> str:
+    """텔레그램 /잔고 응답용 — 모의 계좌 현황 요약."""
+    client = get_trading_client()
+    if not client.available():
+        return "🚨 KIS 매매 키 미설정"
+    bal = client.get_balance()
+    if not bal:
+        return "잔고 조회 실패"
+    pos = load_positions()
+    held = pos.get("positions", {})
+    lines = [
+        f"<b>📊 {client.mode_tag()} 모의 계좌 잔고</b>",
+        f"현금: {bal.get('cash', 0):,}원",
+        f"평가액: {bal.get('total_eval', 0):,}원",
+        f"보유: {len(held)}종목",
+        "",
+    ]
+    if held:
+        # 현재가 기반 손익 표시
+        for code, p in held.items():
+            info = _kis.get_price(code) if _kis.available() else {}
+            cur = _safe_float(info.get("stck_prpr")) if info else 0
+            if cur > 0:
+                pct = (cur - p["buy_price"]) / p["buy_price"] * 100
+                profit = (cur - p["buy_price"]) * p["qty"]
+                emoji = "🟢" if pct >= 0 else "🔴"
+                lines.append(
+                    f"{emoji} {p['name']}: {p['qty']}주 / {pct:+.1f}% / "
+                    f"{profit:+,.0f}원 (매수 {p['buy_date']})"
+                )
+            else:
+                lines.append(f"⚪ {p['name']}: {p['qty']}주 (시세조회실패)")
+    return "\n".join(lines)
+
+
+# ════════════════════════════════════════════════
 # 종목 비교 / 투자 시뮬레이션 (텔레그램 명령)
 # ════════════════════════════════════════════════
 def compare_stocks(name_a: str, name_b: str, all_stocks: list) -> str:
@@ -2964,8 +3674,13 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
                     "<b>📌 투자 비서 v6.0 명령어</b>\n\n"
                     "<b>기본</b>\n"
                     "/리포트 — 오늘 전체 리포트\n"
-                    "/보유 — 보유종목 현황\n"
+                    "/보유 — 보유종목 현황 (수동 등록)\n"
                     "/도움말 — 이 메시지\n\n"
+                    "<b>자동매매 (스윙)</b>\n"
+                    "/잔고 — 모의 계좌 잔고/손익\n"
+                    "/정지 — 자동매매 즉시 OFF\n"
+                    "/재개 — 자동매매 다시 ON\n"
+                    "/취소 — 매수 사전 알림 30초 동안만 유효\n\n"
                     "<b>종목 분석</b>\n"
                     "현대로템 어때? — AI 종목 분석\n"
                     "현대로템 vs 한화에어로스페이스 — 두 종목 비교\n\n"
@@ -2977,6 +3692,24 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
                     "오늘 뭐 사? — 오늘의 추천 종목",
                     chat_id,
                 )
+                continue
+
+            if text == "/잔고":
+                tg_send(run_balance_report(), chat_id)
+                continue
+
+            if text in ("/정지", "/halt", "/stop"):
+                pos_h = load_positions()
+                pos_h["halted"] = True
+                save_positions(pos_h)
+                tg_send("🛑 <b>자동매매 정지됨.</b>\n신규 매수/매도 모두 차단됩니다.\n해제: /재개", chat_id)
+                continue
+
+            if text in ("/재개", "/resume"):
+                pos_h = load_positions()
+                pos_h["halted"] = False
+                save_positions(pos_h)
+                tg_send("▶️ <b>자동매매 재개됨.</b>\n다음 트리거부터 정상 동작합니다.", chat_id)
                 continue
 
             if text == "/보유":
@@ -3604,6 +4337,8 @@ _MODE_SCHEDULE = {
     "--monitor":    ("09:05", 30),   # 장중 모니터링 시작
     "--close":      ("15:35", 30),   # 장 마감 결산
     "--marketscan": ("02:00", 90),   # 새벽 전체 스캔
+    "--autobuy":    ("09:10", 30),   # 자동 매수 (스윙, 1회/일)
+    # --autosell은 30분 주기라 단일 시각이 없음 → 드리프트 검사 생략
 }
 
 
@@ -3651,6 +4386,10 @@ if __name__ == "__main__":
             run_close_summary()
         elif mode == "--marketscan":
             run_market_scan()
+        elif mode == "--autobuy":
+            run_auto_buy()
+        elif mode == "--autosell":
+            run_auto_sell()
         else:
             run()
     except Exception as e:
