@@ -1,19 +1,9 @@
 name: 투자 비서 v6.0 — AI 강화판
 
 on:
-  schedule:
-    # 평일 아침 8시 KST (UTC 전날 23:00) — 일일 AI 리포트
-    - cron: "0 23 * * 0-4"
-    # 평일 새벽 6시 KST (UTC 전날 21:00) — 미국 시장 마감 브리핑
-    - cron: "0 21 * * 0-4"
-    # 평일 오전 8시 50분 KST (UTC 전날 23:50) — 장 시작 전 브리핑
-    - cron: "50 23 * * 0-4"
-    # 평일 오후 3시 35분 KST (UTC 06:35) — 장 마감 결산
-    - cron: "35 6 * * 1-5"
-    # 평일 오전 9시 5분 KST (UTC 00:05) — 장중 실시간 모니터링
-    - cron: "5 0 * * 1-5"
-    # 평일 새벽 2시 KST (UTC 전날 17:00) — 코스피/코스닥 전체 스캔
-    - cron: "0 17 * * 0-4"
+  # 정시 트리거는 cron-job.org가 담당 (KST 기준 정확한 시간 보장).
+  # GitHub Actions schedule은 무료 cron의 5분~수시간 지연 문제로 2026-04-29 제거.
+  # 외부 트리거는 workflow_dispatch (POST)로 호출 — cron-job.org 6개 Job이 mode별로 호출.
   workflow_dispatch:
     inputs:
       mode:
@@ -39,11 +29,9 @@ env:
   HOLDINGS_JSON:     ${{ secrets.HOLDINGS_JSON }}
 
 jobs:
-  # ── 일일 AI 리포트 (평일 7시) ────────────────────
+  # ── 일일 AI 리포트 (cron-job.org 평일 08:00 KST) ────
   daily-report:
-    if: >
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.mode == 'daily' || github.event.inputs.mode == '')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '0 23 * * 0-4')
+    if: github.event.inputs.mode == 'daily' || github.event.inputs.mode == ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -70,11 +58,9 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: 일일 성과 기록 $(date '+%Y-%m-%d')"
           git push || true
 
-  # ── 미국 시장 마감 브리핑 (새벽 6시) ────────────
+  # ── 미국 시장 마감 브리핑 (cron-job.org 평일 06:00 KST) ────
   us-briefing:
-    if: >
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--usclose') ||
-      (github.event_name == 'schedule' && github.event.schedule == '0 21 * * 0-4')
+    if: github.event.inputs.mode == '--usclose'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -88,11 +74,9 @@ jobs:
       - name: 미국 마감 브리핑
         run: python stock.py --usclose
 
-  # ── 장 시작 전 브리핑 (8시 50분) ────────────────
+  # ── 장 시작 전 브리핑 (cron-job.org 평일 08:50 KST) ────
   premarket-briefing:
-    if: >
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--premarket') ||
-      (github.event_name == 'schedule' && github.event.schedule == '50 23 * * 0-4')
+    if: github.event.inputs.mode == '--premarket'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -106,11 +90,9 @@ jobs:
       - name: 장전 브리핑
         run: python stock.py --premarket
 
-  # ── 장 마감 결산 (3시 35분) ──────────────────────
+  # ── 장 마감 결산 (cron-job.org 평일 15:35 KST) ────
   close-summary:
-    if: >
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--close') ||
-      (github.event_name == 'schedule' && github.event.schedule == '35 6 * * 1-5')
+    if: github.event.inputs.mode == '--close'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -124,11 +106,9 @@ jobs:
       - name: 마감 결산
         run: python stock.py --close
 
-  # ── 장중 실시간 모니터링 (20분, 2분 간격) ────────
+  # ── 장중 실시간 모니터링 (cron-job.org 평일 09:05 KST 시작, 20분) ────
   intraday-monitor:
-    if: >
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--monitor') ||
-      (github.event_name == 'schedule' && github.event.schedule == '5 0 * * 1-5')
+    if: github.event.inputs.mode == '--monitor'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -142,11 +122,9 @@ jobs:
       - name: 장중 모니터링 (20분)
         run: python -c "import stock; stock.run_monitor(duration_hours=0.33, interval_sec=120)"
 
-  # ── 코스피/코스닥 전체 스캔 (새벽 2시) ────────
+  # ── 코스피/코스닥 전체 스캔 (cron-job.org 평일 02:00 KST) ────
   market-scan:
-    if: >
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == '--marketscan') ||
-      (github.event_name == 'schedule' && github.event.schedule == '0 17 * * 0-4')
+    if: github.event.inputs.mode == '--marketscan'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

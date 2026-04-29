@@ -43,16 +43,19 @@ ANTHROPIC_API_KEY
 
 ## 4. 자동 실행 스케줄 (한국시간 KST 기준)
 
-| KST | UTC (cron) | 작업 |
-|---|---|---|
-| 새벽 02:00 | `0 17 * * 0-4` | 코스피/코스닥 1,500개 종목 전체 스캔 |
-| 새벽 06:00 | `0 21 * * 0-4` | 미국 시장 마감 브리핑 |
-| 오전 08:00 | `0 23 * * 0-4` | 전체 AI 투자 리포트 |
-| 오전 08:50 | `50 23 * * 0-4` | 장 시작 전 브리핑 |
-| 오전 09:05 | `5 0 * * 1-5` | 장중 모니터링 |
-| 오후 03:35 | `35 6 * * 1-5` | 장 마감 결산 |
+**트리거**: cron-job.org 외부 스케줄러 (Asia/Seoul 시간대) → GitHub API workflow_dispatch.
+**GitHub Actions schedule은 2026-04-29 제거** (무료 cron의 5~9시간 지연 문제).
 
-> UTC = KST − 9시간. 자정을 넘는 경우 DOW가 하루 당겨짐 (일~목 → 0-4).
+| KST | mode | 작업 |
+|---|---|---|
+| 새벽 02:00 | `--marketscan` | 코스피/코스닥 1,500개 종목 전체 스캔 |
+| 새벽 06:00 | `--usclose` | 미국 시장 마감 브리핑 |
+| 오전 08:00 | `daily` | 전체 AI 투자 리포트 |
+| 오전 08:50 | `--premarket` | 장 시작 전 브리핑 |
+| 오전 09:05 | `--monitor` | 장중 모니터링 (20분) |
+| 오후 03:35 | `--close` | 장 마감 결산 |
+
+> cron-job.org Job 관리: https://console.cron-job.org/jobs (평일 월~금 트리거)
 
 ---
 
@@ -119,7 +122,14 @@ ANTHROPIC_API_KEY
   - `datetime.now()` 31곳 모두 `_now_kst()`로 교체 (KIS 토큰 비교/시간 검증/메시지 라벨 전부)
   - CPI 파싱: FRED가 미발표월에 "." 반환하는 문제 — 유효 숫자 행만 필터링 + 디버그 로그 추가
   - AI 시스템 프롬프트 동적화: `_ai_system()` 함수로 변경, 매 호출마다 현재 KST 날짜 주입 — 학습 컷오프로 인한 잘못된 연도(예: "2025") 표기 방지
-- 모의투자 시작 예정
+- cron-job.org 외부 트리거 전환 (완료 2026-04-29)
+  - GitHub Actions cron 5~9시간 지연으로 모의투자 검증 어려움 → 정시 트리거 외부화
+  - cron-job.org에 6개 Job 자동 생성 (Asia/Seoul 시간대 직접 지정, jobId 7538004~7538009)
+  - GitHub PAT(workflow scope) → cron-job.org Job의 Authorization 헤더에 Bearer 토큰으로 주입
+  - 저장소 public 전환 — workflow_dispatch는 private repo에선 `repo` scope 추가 필요했으나 public 전환으로 해결 (보너스: GitHub Actions 무료 분 무제한)
+  - GitHub Actions `schedule:` 트리거 제거, 각 job `if:` 단순화 (workflow_dispatch + mode만 검증)
+  - 결과: 4월 29일 기준 모든 메시지 ±1분 이내 정시 도착 검증 완료
+- 모의투자 시작 가능 (정시 트리거 확보 완료)
 
 ---
 
