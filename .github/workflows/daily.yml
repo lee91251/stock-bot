@@ -20,6 +20,8 @@ on:
           - "--marketscan"
           - "--autobuy"
           - "--autosell"
+          - "--backtest"
+          - "--backtest12"
 
 env:
   TELEGRAM_TOKEN:       ${{ secrets.TELEGRAM_TOKEN }}
@@ -174,6 +176,34 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json || true
           git diff --staged --quiet || git commit -m "chore: 자동매도 포지션 업데이트 $(date '+%Y-%m-%d %H:%M')"
+          git push || true
+
+  # ── 백테스팅 (수동 / 주말 자동) ────
+  backtest:
+    if: github.event.inputs.mode == '--backtest' || github.event.inputs.mode == '--backtest12'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 백테스팅 실행
+        run: |
+          MONTHS=6
+          if [ "${{ github.event.inputs.mode }}" = "--backtest12" ]; then
+            MONTHS=12
+          fi
+          python backtest.py "$MONTHS"
+      - name: 결과 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backtest_results.json || true
+          git diff --staged --quiet || git commit -m "chore: 백테스팅 결과 업데이트 $(date '+%Y-%m-%d')"
           git push || true
 
   # ── 코스피/코스닥 전체 스캔 (cron-job.org 평일 02:00 KST) ────
