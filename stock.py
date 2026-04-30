@@ -2930,6 +2930,30 @@ def _is_after_market_close(now: datetime) -> bool:
     return now.hour > 15 or (now.hour == 15 and now.minute >= 35)
 
 
+# 한국 거래소(KRX) 휴장일. 주말 외 추가 휴장일만 등록.
+# ⚠️ 매년 12월 KRX 발표분으로 갱신 필요 (krx.co.kr 휴장일 안내).
+_KRX_HOLIDAYS = {
+    # 2026
+    "2026-01-01",  # 신정
+    "2026-02-16", "2026-02-17", "2026-02-18",  # 설날
+    "2026-03-02",  # 삼일절 대체휴일 (3/1 일요일)
+    "2026-05-01",  # 근로자의 날
+    "2026-05-05",  # 어린이날
+    "2026-05-25",  # 부처님오신날 대체 (5/24 일요일)
+    "2026-09-24", "2026-09-25",  # 추석 (9/26 토, 9/27 일)
+    "2026-10-09",  # 한글날
+    "2026-12-25",  # 크리스마스
+    "2026-12-31",  # 연말 종가일 휴장
+}
+
+
+def _is_trading_day(d: datetime) -> bool:
+    """한국 주식시장 영업일 여부 (주말 + KRX 휴장일 제외)."""
+    if d.weekday() >= 5:  # 토(5), 일(6)
+        return False
+    return d.strftime("%Y-%m-%d") not in _KRX_HOLIDAYS
+
+
 def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
     """장중 실시간 모니터링 루프 (기본: 7시간, 5분 간격)"""
     now = _now_kst()
@@ -3219,7 +3243,14 @@ def run_auto_buy():
     보유 중 / 손절 쿨다운 종목 제외, 시장 무드에 따라 매수량 축소.
     PAPER_TRADING=true 일 때만 모의투자 도메인 사용. 키 없으면 차단.
     """
-    _check_schedule_drift("--autobuy")
+    now = _now_kst()
+    if not _is_trading_day(now):
+        tg_send(
+            f"📅 <b>[자동매수 스킵]</b> {now.strftime('%m/%d (%a)')} 휴장일 — "
+            f"매수 시도 안 함."
+        )
+        return
+
     client = get_trading_client()
     mode_tag = client.mode_tag()
 
@@ -3377,7 +3408,6 @@ def run_auto_sell():
       • -SWING_STOP_LOSS_PCT 도달 → 잔여 전량 매도 (손절) + 쿨다운 등록
       • 보유 SWING_MAX_HOLD_DAYS 거래일 경과 → 잔여 전량 매도 (시간 정리)
     """
-    _check_schedule_drift("--autosell")
     client = get_trading_client()
     mode_tag = client.mode_tag()
 
@@ -3390,6 +3420,9 @@ def run_auto_sell():
 
     # 장중에만 매도 (장 시작 전/마감 후 스킵)
     now = _now_kst()
+    if not _is_trading_day(now):
+        print(f"  [자동매도] 휴장일 — 스킵 ({now.strftime('%Y-%m-%d %a')})")
+        return
     if not _is_market_open(now):
         print(f"  [자동매도] 장 시간 아님 — 스킵")
         return

@@ -286,7 +286,8 @@ def simulate(months: int = 6) -> dict:
         return {"error": "pykrx 미설치"}
 
     # 분석 기간 설정 (백테스트 + 분석에 필요한 30거래일 여유)
-    end_dt   = _now_kst().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    # pykrx 인덱스는 tznaive 이므로 비교 시 tzinfo 제거 (TypeError 방지)
+    end_dt   = _now_kst().replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
     start_dt = end_dt - timedelta(days=months * 31 + 60)  # 분석용 lookback 60일 추가
     sim_start = end_dt - timedelta(days=months * 31)       # 실제 시뮬레이션 시작
 
