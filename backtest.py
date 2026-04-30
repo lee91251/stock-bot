@@ -64,6 +64,12 @@ BACKTEST_RESULTS   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "b
 INITIAL_CAPITAL = 100_000_000  # 모의투자 1억
 RISK_FREE_RATE  = 0.035        # Sharpe 계산용 무위험 수익률 (한국 국채 3.5%)
 
+# 백테스트 전용 점수 임계치 — stock.py의 SWING_SCORE_MIN(70)과 분리.
+# 백테스트는 DART 공시(최대 ±20점) + 뉴스 감성(최대 ±10점)이 빠지므로
+# 같은 종목이라도 백테스트 점수가 실전 대비 10~15점 낮게 나옴.
+# 첫 실행 데이터 (평균 13.6 / 최고 64) 기준으로 55 설정.
+BACKTEST_SCORE_MIN = int(os.environ.get("BACKTEST_SCORE_MIN", "55"))
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -252,9 +258,9 @@ def calc_swing_score_at(
     if manipulation: sw -= 25
     if momentum_bad: sw -= 15
 
-    # 매수 시그널 (stock.py와 동일 로직)
+    # 매수 시그널 — 백테스트 전용 임계치 사용 (DART/뉴스 미반영 보정)
     signal = (
-        sw >= SWING_SCORE_MIN
+        sw >= BACKTEST_SCORE_MIN
         and rsi < 65
         and not manipulation
         and not momentum_bad
@@ -346,15 +352,21 @@ def simulate(months: int = 6) -> dict:
         "score_max": 0,
         "score_sum": 0.0,
         "score_buckets": {"<30": 0, "30-49": 0, "50-59": 0, "60-69": 0, "70-79": 0, "80+": 0},
+        "top_records": [],    # 최고 점수 5개 (code, name, date, score)
         # signal=False일 때 어디서 막혔는지
-        "rej_score":       0,  # sw < 70
-        "rej_rsi":         0,  # rsi >= 65
+        "rej_score":       0,
+        "rej_rsi":         0,
         "rej_manipulation":0,
         "rej_momentum_bad":0,
-        "rej_near_resist": 0,  # near_resistance
-        "rej_vol_ratio":   0,  # vol_ratio < 100
-        "rej_ret_1m":      0,  # ret_1m <= -15
+        "rej_near_resist": 0,
+        "rej_vol_ratio":   0,
+        "rej_ret_1m":      0,
         "signals_passed":  0,
+        # 데이터 품질 확인
+        "foreign_nonzero":  0,
+        "inst_nonzero":     0,
+        "foreign_eok_sum":  0.0,
+        "inst_eok_sum":     0.0,
     }
 
     print(f"[3/3] 시뮬레이션 실행...")
@@ -497,11 +509,27 @@ def simulate(months: int = 6) -> dict:
                 elif sw < 80:  diag["score_buckets"]["70-79"] += 1
                 else:          diag["score_buckets"]["80+"]   += 1
 
+                # 최고 점수 5개 추적 (sw 기준 정렬)
+                top_records = diag["top_records"]
+                top_records.append((sw, code, d["name"], today.strftime("%Y-%m-%d"), det["rsi"], det["foreign_eok"]))
+                top_records.sort(key=lambda x: -x[0])
+                diag["top_records"] = top_records[:5]
+
+                # 외국인/기관 데이터 품질
+                fe = det.get("foreign_eok", 0)
+                ie = det.get("inst_eok", 0)
+                if fe != 0:
+                    diag["foreign_nonzero"] += 1
+                    diag["foreign_eok_sum"] += abs(fe)
+                if ie != 0:
+                    diag["inst_nonzero"] += 1
+                    diag["inst_eok_sum"] += abs(ie)
+
                 if signal:
                     diag["signals_passed"] += 1
                 else:
                     # 어디서 막혔는지 (첫 실패 기준)
-                    if sw < SWING_SCORE_MIN:           diag["rej_score"] += 1
+                    if sw < BACKTEST_SCORE_MIN:        diag["rej_score"] += 1
                     elif det["rsi"] >= 65:              diag["rej_rsi"] += 1
                     elif det["manipulation"]:           diag["rej_manipulation"] += 1
                     elif det["momentum_bad"]:           diag["rej_momentum_bad"] += 1
@@ -580,8 +608,10 @@ def simulate(months: int = 6) -> dict:
     # 진단 요약 (왜 매수 신호가 적었는지)
     if diag["evals"] > 0:
         avg_score = diag["score_sum"] / diag["evals"]
+        avg_foreign = diag["foreign_eok_sum"] / diag["foreign_nonzero"] if diag["foreign_nonzero"] else 0
+        avg_inst    = diag["inst_eok_sum"]    / diag["inst_nonzero"]    if diag["inst_nonzero"]    else 0
         print(f"━━━━━━━━━━ 진단 (점수 분포 + 차단 원인) ━━━━━━━━━━")
-        print(f"총 평가: {diag['evals']:,}회 (종목×거래일)")
+        print(f"총 평가: {diag['evals']:,}회 (종목×거래일) / 임계치: {BACKTEST_SCORE_MIN}점")
         print(f"점수 — 평균 {avg_score:.1f} / 최고 {diag['score_max']}")
         print(f"점수 분포:")
         for k, v in diag["score_buckets"].items():
@@ -589,23 +619,31 @@ def simulate(months: int = 6) -> dict:
             print(f"  {k:>6}점: {v:>6,}회 ({pct:5.1f}%)")
         print(f"매수 신호 통과: {diag['signals_passed']}회")
         print(f"차단 사유 (첫 실패 기준):")
-        print(f"  점수 < {SWING_SCORE_MIN}:        {diag['rej_score']:,}")
+        print(f"  점수 < {BACKTEST_SCORE_MIN}:     {diag['rej_score']:,}")
         print(f"  RSI ≥ 65:        {diag['rej_rsi']:,}")
         print(f"  조작 의심:       {diag['rej_manipulation']:,}")
         print(f"  모멘텀 약화:     {diag['rej_momentum_bad']:,}")
         print(f"  저항선 근처:     {diag['rej_near_resist']:,}")
         print(f"  거래량 < 100%:   {diag['rej_vol_ratio']:,}")
         print(f"  1개월 < -15%:    {diag['rej_ret_1m']:,}")
+        print(f"데이터 품질:")
+        print(f"  외국인 데이터 있는 일: {diag['foreign_nonzero']:,} / {diag['evals']:,} (평균 |{avg_foreign:.1f}|억)")
+        print(f"  기관   데이터 있는 일: {diag['inst_nonzero']:,} / {diag['evals']:,} (평균 |{avg_inst:.1f}|억)")
+        print(f"최고 점수 5개:")
+        for sw, code, name, dt, rsi, fe in diag["top_records"]:
+            print(f"  {sw}점 — {name}({code}) {dt} (RSI {rsi}, 외국인 {fe}억)")
         print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
     # 메트릭 계산
     metrics = compute_metrics(daily_capital, closed_trades, INITIAL_CAPITAL)
     metrics["diagnostics"] = {
+        "threshold":       BACKTEST_SCORE_MIN,
         "evals":           diag["evals"],
         "score_avg":       round(diag["score_sum"] / diag["evals"], 1) if diag["evals"] else 0,
         "score_max":       diag["score_max"],
         "score_buckets":   diag["score_buckets"],
         "signals_passed":  diag["signals_passed"],
+        "top_records":     diag["top_records"],
         "rejections":      {
             "score":         diag["rej_score"],
             "rsi":           diag["rej_rsi"],
@@ -614,6 +652,12 @@ def simulate(months: int = 6) -> dict:
             "near_resist":   diag["rej_near_resist"],
             "vol_ratio":     diag["rej_vol_ratio"],
             "ret_1m":        diag["rej_ret_1m"],
+        },
+        "data_quality":    {
+            "foreign_nonzero": diag["foreign_nonzero"],
+            "inst_nonzero":    diag["inst_nonzero"],
+            "avg_foreign_eok": round(diag["foreign_eok_sum"] / diag["foreign_nonzero"], 1) if diag["foreign_nonzero"] else 0,
+            "avg_inst_eok":    round(diag["inst_eok_sum"] / diag["inst_nonzero"], 1) if diag["inst_nonzero"] else 0,
         },
     }
     metrics["months"]          = months
@@ -788,29 +832,45 @@ def telegram_summary(metrics: dict):
     # 매매 0건이면 진단 요약을 노출 (왜 신호가 안 나왔는지)
     diag = metrics.get("diagnostics", {})
     if metrics.get("total_trades", 0) == 0 and diag.get("evals", 0) > 0:
+        threshold = diag.get("threshold", BACKTEST_SCORE_MIN)
         lines.extend([
             "",
-            f"<b>🔍 진단 (매매 0건 사유)</b>",
-            f"평가 {diag['evals']:,}회 / 평균점수 {diag['score_avg']:.1f} / 최고 {diag['score_max']}",
-            f"신호 통과: <b>{diag['signals_passed']}회</b>",
+            f"🔍 <b>진단 (매매 0건 사유)</b>",
+            f"평가 {diag['evals']:,}회 / 임계치 {threshold}점",
+            f"평균 {diag['score_avg']:.1f} / 최고 {diag['score_max']} / 신호 통과 {diag['signals_passed']}회",
         ])
         rej = diag.get("rejections", {})
-        # 차단 사유 상위 3개만
         rej_sorted = sorted(rej.items(), key=lambda x: -x[1])[:3]
         if any(v > 0 for _, v in rej_sorted):
             lines.append("주요 차단:")
             for k, v in rej_sorted:
                 if v > 0:
                     label = {
-                        "score":        f"점수 < {SWING_SCORE_MIN}",
-                        "rsi":          "RSI ≥ 65",
+                        "score":        f"점수 미달",
+                        "rsi":          "RSI 65 이상",
                         "manipulation": "조작 의심",
                         "momentum_bad": "모멘텀 약화",
-                        "near_resist":  "저항선 근처(±3%)",
-                        "vol_ratio":    "거래량 < 100%",
-                        "ret_1m":       "1개월 < -15%",
+                        "near_resist":  "저항선 근처",
+                        "vol_ratio":    "거래량 부족",
+                        "ret_1m":       "1개월 -15% 이하",
                     }.get(k, k)
                     lines.append(f"  • {label}: {v:,}회")
+        # 데이터 품질
+        dq = diag.get("data_quality", {})
+        if dq:
+            lines.extend([
+                "",
+                f"데이터 품질:",
+                f"  외국인 수급 인식: {dq['foreign_nonzero']:,}/{diag['evals']:,}일 (평균 |{dq['avg_foreign_eok']}|억)",
+                f"  기관 수급 인식:   {dq['inst_nonzero']:,}/{diag['evals']:,}일 (평균 |{dq['avg_inst_eok']}|억)",
+            ])
+        # 최고 점수 종목 (어디까지 갔는지)
+        tops = diag.get("top_records", [])
+        if tops:
+            lines.append("최고 점수 (TOP 3):")
+            for rec in tops[:3]:
+                sw, code, name, dt, rsi, fe = rec
+                lines.append(f"  {sw}점 - {name} {dt}")
 
     lines.extend([
         "",
