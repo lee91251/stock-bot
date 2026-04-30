@@ -3236,6 +3236,49 @@ def _poll_cancel_during_sleep(seconds: int) -> bool:
     return cancelled
 
 
+def _load_auto_buy_pool() -> dict:
+    """자동매수 후보 종목 풀 — KR_STOCKS(고정 26개) + market_scan_cache(매일 02:00 갱신)."""
+    pool: dict = {}
+
+    # 1) KR_STOCKS — 핵심 관심 종목 (항상 포함)
+    for ticker, val in KR_STOCKS.items():
+        name, period, sector = val
+        pool[ticker] = (name, period, sector)
+
+    # 2) market_scan_cache — 시장 전체 스캔 결과 상위 50개 (가능하면 추가)
+    try:
+        if not os.path.exists(MARKET_SCAN_CACHE):
+            print(f"  [auto_buy] market_scan_cache 없음 — KR_STOCKS({len(pool)}개)만 사용")
+            return pool
+        with open(MARKET_SCAN_CACHE, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        # 캐시 신선도 체크 — 3영업일 이내만 유효 (휴장/주말 고려)
+        updated_str = cache.get("updated", "")
+        try:
+            updated_dt = datetime.strptime(updated_str.split()[0], "%Y-%m-%d").replace(
+                tzinfo=ZoneInfo("Asia/Seoul")
+            )
+            age_days = (_now_kst() - updated_dt).days
+            if age_days > 3:
+                print(f"  [auto_buy] market_scan_cache 오래됨({age_days}일) — KR_STOCKS만 사용")
+                return pool
+        except Exception:
+            pass
+
+        added = 0
+        for s in cache.get("stocks", []):
+            t = s.get("ticker")
+            if not t or t in pool:
+                continue
+            pool[t] = (s.get("name", t), "중기", s.get("sector", "기타"))
+            added += 1
+        print(f"  [auto_buy] 종목 풀 = KR_STOCKS {len(KR_STOCKS)}개 + 시장스캔 {added}개 = {len(pool)}개")
+    except Exception as e:
+        print(f"  [auto_buy] market_scan_cache 로드 실패: {e} — KR_STOCKS만 사용")
+
+    return pool
+
+
 def run_auto_buy():
     """매일 장 시작 후 자동 매수 (스윙).
 
@@ -3275,20 +3318,44 @@ def run_auto_buy():
     today = _today_str()
     daily = _ensure_daily(pos, today)
 
+    # ── 시장 무드 사전 점검 (폭락장/극도 공포 시 매수 중단) ──
+    mood = get_market_mood()
+    fg = get_fear_greed(mood) if mood else {"score": 50, "label": "중립"}
+    kospi_chg = mood.get("kospi_chg", 0) if mood else 0
+
+    # 폭락장 (KOSPI -2% 이상 급락) 또는 극도 공포 시 매수 중단
+    if kospi_chg <= -2.0:
+        tg_send(
+            f"🚨 <b>{mode_tag} 폭락장 감지 — 자동매수 중단</b>\n"
+            f"KOSPI {kospi_chg:+.2f}% (기준: -2% 이하)\n"
+            f"<i>다음 영업일 다시 시도. 헌법 §4 폭락장 전략 참고.</i>"
+        )
+        return
+    if fg.get("label") == "극도 공포":
+        tg_send(
+            f"🚨 <b>{mode_tag} 극도 공포 — 자동매수 중단</b>\n"
+            f"공포·탐욕 지수 {fg.get('score')}점 (극도 공포)\n"
+            f"<i>심리 회복 후 재개. 다음 영업일 자동 재시도.</i>"
+        )
+        return
+
+    # ── 종목 풀 구성 (KR_STOCKS + market_scan_cache) ──
+    pool = _load_auto_buy_pool()
+
     # 모드 헤더
     tg_send(
         f"🤖 <b>{mode_tag} 자동 매수 시작</b> ({today})\n"
         f"기준: 스윙점수 {SWING_SCORE_MIN}+ / 종목당 {INVEST_PER_STOCK//10000}만원 / "
-        f"하루 한도 {SWING_MAX_DAILY_BUY}종목·{SWING_MAX_DAILY_AMT//10000}만원"
+        f"하루 한도 {SWING_MAX_DAILY_BUY}종목·{SWING_MAX_DAILY_AMT//10000}만원\n"
+        f"종목 풀: {len(pool)}개 / 시장무드: {mood.get('status', '중립')} / 공포탐욕 {fg.get('score', 50)}({fg.get('label', '중립')})"
     )
 
-    # 종목 분석 (KR_STOCKS만 빠르게)
-    print(f"\n[자동매수] {len(KR_STOCKS)}종목 분석 중...")
-    mood = get_market_mood()
+    # 종목 분석
+    print(f"\n[자동매수] {len(pool)}종목 분석 중...")
+    # DART 데이터는 KR_STOCKS만 (market_scan 종목은 코드 정보 부족하여 스킵)
     all_dart = get_all_dart_data(KR_STOCKS)
     candidates = []
-    for ticker, val in KR_STOCKS.items():
-        name, period, sector = val
+    for ticker, (name, period, sector) in pool.items():
         r = analyze(ticker, name, period, sector,
                     dart_data=all_dart.get(ticker), with_sentiment=False)
         if r and r.get("swing_signal") and r.get("swing_score", 0) >= SWING_SCORE_MIN:
@@ -3306,6 +3373,10 @@ def run_auto_buy():
     if mood.get("status") in ("탐욕", "위험"):
         qty_factor = 0.5
         tg_send(f"⚠️ 시장 무드 '{mood['status']}' — 매수량 50% 축소")
+    elif fg.get("label") == "공포":
+        # 공포 단계는 신중 매수 — 50% 축소
+        qty_factor = 0.5
+        tg_send(f"⚠️ 공포 구간(공포탐욕 {fg.get('score')}) — 매수량 50% 축소")
 
     selected = []
     for s in candidates:
