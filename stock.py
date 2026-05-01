@@ -777,10 +777,10 @@ def get_market_mood() -> dict:
                 / sp500["Close"].iloc[-2] * 100, 2
             ) if len(sp500) >= 2 else 0
         )
-        mood["vix"]    = round(float(vix.get("regularMarketPrice") or 20), 1)
-        mood["usdkrw"] = round(float(usdkrw.get("regularMarketPrice") or 1300), 0)
-        mood["wti"]    = round(float(wti.get("regularMarketPrice") or 75), 1)
-        mood["gold"]   = round(float(gold.get("regularMarketPrice") or 2000), 0)
+        mood["vix"]    = round(float(vix.get("regularMarketPrice") or 20), 2)
+        mood["usdkrw"] = round(float(usdkrw.get("regularMarketPrice") or 1300), 2)
+        mood["wti"]    = round(float(wti.get("regularMarketPrice") or 75), 2)
+        mood["gold"]   = round(float(gold.get("regularMarketPrice") or 2000), 2)
 
         if mood["vix"] > 30:
             mood["status"] = "위험"
@@ -1270,13 +1270,13 @@ def analyze(
     foreign_eok = foreign_net / 1e2
     inst_eok    = inst_net    / 1e2
     if is_kr and _kis.available():
-        if foreign_eok >= 50:    score += 10; reasons.append(f"외국인 순매수 +{foreign_eok:.0f}억원 — 강한 외국인 매수세")
-        elif foreign_eok >= 10:  score += 5;  reasons.append(f"외국인 순매수 +{foreign_eok:.0f}억원")
-        elif foreign_eok <= -50: score -= 8;  warnings.append(f"외국인 순매도 {foreign_eok:.0f}억원 — 외국인 이탈 주의")
+        if foreign_eok >= 50:    score += 10; reasons.append(f"외국인 순매수 +{foreign_eok:.2f}억원 — 강한 외국인 매수세")
+        elif foreign_eok >= 10:  score += 5;  reasons.append(f"외국인 순매수 +{foreign_eok:.2f}억원")
+        elif foreign_eok <= -50: score -= 8;  warnings.append(f"외국인 순매도 {foreign_eok:.2f}억원 — 외국인 이탈 주의")
 
-        if inst_eok >= 50:    score += 8;  reasons.append(f"기관 순매수 +{inst_eok:.0f}억원 — 기관 집중 매수")
-        elif inst_eok >= 10:  score += 4;  reasons.append(f"기관 순매수 +{inst_eok:.0f}억원")
-        elif inst_eok <= -50: score -= 5;  warnings.append(f"기관 순매도 {inst_eok:.0f}억원")
+        if inst_eok >= 50:    score += 8;  reasons.append(f"기관 순매수 +{inst_eok:.2f}억원 — 기관 집중 매수")
+        elif inst_eok >= 10:  score += 4;  reasons.append(f"기관 순매수 +{inst_eok:.2f}억원")
+        elif inst_eok <= -50: score -= 5;  warnings.append(f"기관 순매도 {inst_eok:.2f}억원")
 
     # DART 공시
     dart_fin  = {}
@@ -1423,13 +1423,13 @@ def analyze(
 
     # 3) 수급 (외국인/기관)
     if foreign_eok >= 50:
-        sw_score += 12; sw_reasons.append(f"외국인 +{foreign_eok:.0f}억")
+        sw_score += 12; sw_reasons.append(f"외국인 +{foreign_eok:.2f}억")
     elif foreign_eok >= 10:
         sw_score += 6
     elif foreign_eok <= -50:
         sw_score -= 8
     if inst_eok >= 50:
-        sw_score += 8;  sw_reasons.append(f"기관 +{inst_eok:.0f}억")
+        sw_score += 8;  sw_reasons.append(f"기관 +{inst_eok:.2f}억")
     elif inst_eok >= 10:
         sw_score += 4
 
@@ -1554,11 +1554,11 @@ def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
 
         prompt = (
             f"오늘의 시장 데이터:\n"
-            f"- 코스피: {mood['kospi_price']:,.0f} ({mood['kospi_chg']:+.2f}%)\n"
+            f"- 코스피: {mood['kospi_price']:,.2f} ({mood['kospi_chg']:+.2f}%)\n"
             f"- S&P500: {mood['sp500_chg']:+.2f}%\n"
-            f"- VIX: {mood['vix']} → {vix_note}\n"
-            f"- 달러/원: {mood['usdkrw']:,.0f} → {fx_note}\n"
-            f"- WTI: ${mood['wti']} / 금: ${mood['gold']:,.0f}\n"
+            f"- VIX: {mood['vix']:.2f} → {vix_note}\n"
+            f"- 달러/원: {mood['usdkrw']:,.2f} → {fx_note}\n"
+            f"- WTI: ${mood['wti']:.2f} / 금: ${mood['gold']:,.2f}\n"
             f"- 공포탐욕지수: {fg['score']} ({fg['label']})\n"
             f"- 국내 TOP3: {kr_names}\n"
             f"{us_line}\n"
@@ -1591,9 +1591,9 @@ def ai_sector_rotation(mood: dict) -> str:
         wti    = mood.get("wti", 75)
         prompt = (
             f"현재 매크로 환경:\n"
-            f"- 달러/원 환율: {usdkrw:,.0f}원 (1380↑=수출유리, 1250↓=내수유리)\n"
+            f"- 달러/원 환율: {usdkrw:,.2f}원 (1380↑=수출유리, 1250↓=내수유리)\n"
             f"- VIX: {vix} (30↑=방어주, 18↓=성장주)\n"
-            f"- WTI 유가: ${wti} (80↑=에너지, 60↓=소비재)\n"
+            f"- WTI 유가: ${wti:.2f} (80↑=에너지, 60↓=소비재)\n"
             f"- 코스피: {mood['kospi_chg']:+.2f}%\n\n"
             "오늘 유망한 섹터 2개와 피해야 할 섹터 1개를 선택하고, 각각 이유를 1문장으로.\n"
             "형식: 유망: [섹터1] - 이유 / [섹터2] - 이유 | 주의: [섹터] - 이유"
@@ -1633,7 +1633,7 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
             f"- CPI 소비자물가: {cpi_str}\n"
             f"- 연준 기준금리 방향: {macro['fed_direction']} — {macro['fed_note']}\n"
             f"- 장단기 금리차(10Y-단기): {spd_str}\n"
-            f"- 달러/원 환율: {mood.get('usdkrw', 1300):,.0f}원\n\n"
+            f"- 달러/원 환율: {mood.get('usdkrw', 1300):,.2f}원\n\n"
             "위 지표가 오늘 한국 주식시장에 미치는 영향을 아래 3가지로 각각 1문장씩 분석:\n"
             "1. 금리·달러 환경이 수출주(조선·방산·반도체)에 미치는 영향\n"
             "2. 현재 매크로 환경에서 주목할 한국 섹터\n"
@@ -1702,7 +1702,7 @@ def ai_answer_query(query: str, kr_results: list, us_results: list, mood: dict) 
             )
         else:
             context = (
-                f"시장상태: {mood['status']} / VIX: {mood['vix']} "
+                f"시장상태: {mood['status']} / VIX: {mood['vix']:.2f} "
                 f"/ 코스피: {mood['kospi_chg']:+.2f}%"
             )
 
@@ -1992,8 +1992,8 @@ def card_html(rank: int, s: dict, ai_insight: str = "") -> str:
         if inv_ok:
             f_col = "#e03131" if f_eok >= 0 else "#1971c2"
             i_col = "#e03131" if i_eok >= 0 else "#1971c2"
-            f_str = f"{'▲' if f_eok >= 0 else '▼'} {abs(f_eok):.1f}억원"
-            i_str = f"{'▲' if i_eok >= 0 else '▼'} {abs(i_eok):.1f}억원"
+            f_str = f"{'▲' if f_eok >= 0 else '▼'} {abs(f_eok):.2f}억원"
+            i_str = f"{'▲' if i_eok >= 0 else '▼'} {abs(i_eok):.2f}억원"
         else:
             f_col = i_col = "#868e96"
             f_str = i_str = "조회불가"
@@ -2377,7 +2377,7 @@ def make_report(
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
       <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
         <div style="font-size:12px;color:#868e96;">코스피</div>
-        <div style="font-size:16px;font-weight:700;">{mood['kospi_price']:,.0f}</div>
+        <div style="font-size:16px;font-weight:700;">{mood['kospi_price']:,.2f}</div>
         <div style="font-size:13px;color:{kos_col};">{'▲' if mood['kospi_chg']>=0 else '▼'} {abs(mood['kospi_chg']):.2f}%</div>
       </div>
       <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
@@ -2387,16 +2387,16 @@ def make_report(
       </div>
       <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
         <div style="font-size:12px;color:#868e96;">공포지수 VIX</div>
-        <div style="font-size:16px;font-weight:700;">{mood['vix']}</div>
+        <div style="font-size:16px;font-weight:700;">{mood['vix']:.2f}</div>
         <div style="font-size:13px;color:{mood_color};">{mood['status']}</div>
       </div>
       <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
         <div style="font-size:12px;color:#868e96;">달러/원 환율</div>
-        <div style="font-size:16px;font-weight:700;">{mood['usdkrw']:,.0f}원</div>
+        <div style="font-size:16px;font-weight:700;">{mood['usdkrw']:,.2f}원</div>
       </div>
       <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
         <div style="font-size:12px;color:#868e96;">WTI 유가</div>
-        <div style="font-size:16px;font-weight:700;">${mood['wti']}</div>
+        <div style="font-size:16px;font-weight:700;">${mood['wti']:.2f}</div>
       </div>
       <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
         <div style="font-size:12px;color:#868e96;">공포탐욕지수</div>
@@ -2501,9 +2501,9 @@ def make_telegram_message(
 
     lines += [
         "<b>🌏 시장 브리핑</b>",
-        f"코스피 {mood['kospi_price']:,.0f} {kos_arr}{abs(mood['kospi_chg']):.2f}%  |  S&P500 {sp5_arr}{abs(mood['sp500_chg']):.2f}%",
-        f"VIX {mood['vix']} ({mood['status']})  |  달러/원 {mood['usdkrw']:,.0f}원",
-        f"WTI ${mood['wti']}  |  공포탐욕 {fg['score']} ({fg['label']})",
+        f"코스피 {mood['kospi_price']:,.2f} {kos_arr}{abs(mood['kospi_chg']):.2f}%  |  S&P500 {sp5_arr}{abs(mood['sp500_chg']):.2f}%",
+        f"VIX {mood['vix']:.2f} ({mood['status']})  |  달러/원 {mood['usdkrw']:,.2f}원",
+        f"WTI ${mood['wti']:.2f}  |  공포탐욕 {fg['score']} ({fg['label']})",
         mood["advice"],
         "",
         "<b>🇰🇷 국내 추천 TOP 5</b>",
@@ -2518,8 +2518,8 @@ def make_telegram_message(
                 f_eok = s.get("foreign_eok", 0.0)
                 i_eok = s.get("inst_eok",    0.0)
                 lines.append(
-                    f"   외국인 {'▲' if f_eok>=0 else '▼'}{abs(f_eok):.1f}억"
-                    f"  기관 {'▲' if i_eok>=0 else '▼'}{abs(i_eok):.1f}억"
+                    f"   외국인 {'▲' if f_eok>=0 else '▼'}{abs(f_eok):.2f}억"
+                    f"  기관 {'▲' if i_eok>=0 else '▼'}{abs(i_eok):.2f}억"
                 )
             else:
                 lines.append("   외국인/기관 수급 조회불가")
@@ -2812,7 +2812,7 @@ def _check_monitor_signals(prev_scores: dict) -> list:
                     "type": "dual_buy",
                     "msg": (
                         f"✅ <b>[외국인+기관 동시 매수]</b> {name}\n"
-                        f"외국인 +{f_eok:.1f}억 / 기관 +{i_eok:.1f}억\n"
+                        f"외국인 +{f_eok:.2f}억 / 기관 +{i_eok:.2f}억\n"
                         f"현재가: {price:,.0f}원 ({change:+.1f}%)\n"
                         f"💡 기관·외국인 동시 매수 = 강한 상승 신호"
                     ),
@@ -2826,7 +2826,7 @@ def _check_monitor_signals(prev_scores: dict) -> list:
                     "type": "frgn_sell",
                     "msg": (
                         f"⚠️ <b>[외국인 대량 매도 경고]</b> {name}\n"
-                        f"외국인 순매도 {f_eok:.1f}억원\n"
+                        f"외국인 순매도 {f_eok:.2f}억원\n"
                         f"현재가: {price:,.0f}원 ({change:+.1f}%)\n"
                         f"🔴 보유 중이라면 손절선 재확인 필요"
                     ),
@@ -3052,10 +3052,10 @@ def run_us_briefing():
         sp_chg  = chg(sp500)
         nq_chg  = chg(nasdaq)
         dj_chg  = chg(dow)
-        vix_val = round(float(vix.get("regularMarketPrice") or 20), 1)
-        fx_val  = round(float(usdkrw.get("regularMarketPrice") or 1300), 0)
-        gold_v  = round(float(gold.get("regularMarketPrice") or 2000), 0)
-        wti_v   = round(float(wti.get("regularMarketPrice") or 75), 1)
+        vix_val = round(float(vix.get("regularMarketPrice") or 20), 2)
+        fx_val  = round(float(usdkrw.get("regularMarketPrice") or 1300), 2)
+        gold_v  = round(float(gold.get("regularMarketPrice") or 2000), 2)
+        wti_v   = round(float(wti.get("regularMarketPrice") or 75), 2)
 
         def arr(v): return "▲" if v >= 0 else "▼"
 
@@ -3076,9 +3076,9 @@ def run_us_briefing():
             f"S&P500  {arr(sp_chg)}{abs(sp_chg):.2f}%",
             f"나스닥   {arr(nq_chg)}{abs(nq_chg):.2f}%",
             f"다우    {arr(dj_chg)}{abs(dj_chg):.2f}%",
-            f"VIX    {vix_val}",
-            f"달러/원 {fx_val:,.0f}원",
-            f"금      ${gold_v:,.0f}  /  WTI ${wti_v}",
+            f"VIX    {vix_val:.2f}",
+            f"달러/원 {fx_val:,.2f}원",
+            f"금      ${gold_v:,.2f}  /  WTI ${wti_v:.2f}",
             "",
             mood_txt,
         ]
@@ -3089,7 +3089,7 @@ def run_us_briefing():
             try:
                 prompt = (
                     f"미국 증시 마감 데이터: S&P500 {sp_chg:+.2f}%, 나스닥 {nq_chg:+.2f}%, "
-                    f"VIX {vix_val}, 달러/원 {fx_val:,.0f}원\n"
+                    f"VIX {vix_val:.2f}, 달러/원 {fx_val:,.2f}원\n"
                     "오늘 한국 증시 예상과 주목할 섹터를 2문장으로 요약해줘."
                 )
                 resp = client.messages.create(
@@ -3121,9 +3121,9 @@ def run_premarket_briefing():
             "<b>🔔 장 시작 전 브리핑 (8:50)</b>",
             f"<i>9시 개장 10분 전</i>",
             "",
-            f"코스피 야간선물: {mood['kospi_price']:,.0f} ({mood['kospi_chg']:+.2f}%)",
-            f"달러/원: {mood['usdkrw']:,.0f}원",
-            f"VIX: {mood['vix']} ({mood['status']})",
+            f"코스피 야간선물: {mood['kospi_price']:,.2f} ({mood['kospi_chg']:+.2f}%)",
+            f"달러/원: {mood['usdkrw']:,.2f}원",
+            f"VIX: {mood['vix']:.2f} ({mood['status']})",
             f"공포탐욕: {fg['score']} ({fg['label']})",
             "",
             mood["advice"],
@@ -3141,8 +3141,8 @@ def run_premarket_briefing():
         if client:
             try:
                 prompt = (
-                    f"코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']}, "
-                    f"달러/원 {mood['usdkrw']:,.0f}원 환경에서 "
+                    f"코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']:.2f}, "
+                    f"달러/원 {mood['usdkrw']:,.2f}원 환경에서 "
                     "오늘 장 초반 전략을 1~2문장으로 알려줘."
                 )
                 resp = client.messages.create(
@@ -3175,9 +3175,9 @@ def run_close_summary():
             "<b>📉 장 마감 결산 (15:35)</b>",
             f"<i>{_now_kst().strftime('%Y-%m-%d')} 오늘의 결산</i>",
             "",
-            f"코스피  {mood['kospi_price']:,.0f}  {kos_arr}{abs(mood['kospi_chg']):.2f}%",
-            f"달러/원  {mood['usdkrw']:,.0f}원",
-            f"VIX     {mood['vix']}  ({mood['status']})",
+            f"코스피  {mood['kospi_price']:,.2f}  {kos_arr}{abs(mood['kospi_chg']):.2f}%",
+            f"달러/원  {mood['usdkrw']:,.2f}원",
+            f"VIX     {mood['vix']:.2f}  ({mood['status']})",
             f"공포탐욕  {fg['score']} ({fg['label']})",
             "",
         ]
@@ -3198,7 +3198,7 @@ def run_close_summary():
         if client:
             try:
                 prompt = (
-                    f"오늘 코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']} 마감.\n"
+                    f"오늘 코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']:.2f} 마감.\n"
                     "내일 장 전망과 주목할 포인트를 2문장으로 요약해줘."
                 )
                 resp = client.messages.create(
@@ -4308,7 +4308,7 @@ def run():
     print("\n[1/7] 시장 분위기 파악 중...")
     mood = get_market_mood()
     fg   = get_fear_greed(mood)
-    print(f"  → 시장: {mood['status']} / VIX: {mood['vix']} / 코스피: {mood['kospi_chg']:+.2f}%")
+    print(f"  → 시장: {mood['status']} / VIX: {mood['vix']:.2f} / 코스피: {mood['kospi_chg']:+.2f}%")
     print(f"  → 공포탐욕지수: {fg['score']} ({fg['label']})")
 
     print("\n[2/7] 미국 경제지표 수집 중...")
