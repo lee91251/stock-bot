@@ -99,6 +99,10 @@ except Exception:
 
 PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
 MARKET_SCAN_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
+
+# 대시보드 URL (GitHub Pages). 사용자가 활성화 후 자동으로 노출됨.
+DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "https://lee91251.github.io/stock-bot/")
+DASHBOARD_HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "index.html")
 POSITIONS_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "positions.json")
 MARKET_SCAN_N     = 1500
 KIS_BASE       = "https://openapi.koreainvestment.com:9443"
@@ -2305,6 +2309,128 @@ def _make_macro_html(macro: dict, ai_macro: str) -> str:
   </div>"""
 
 
+def build_and_save_dashboard(
+    mood: dict = None,
+    fg: dict = None,
+    kr_top: list = None,
+    us_top: list = None,
+    avoid: list = None,
+    dart_alerts: list = None,
+    ai_summary: str = "",
+    ai_sector: str = "",
+    ai_insights: dict = None,
+    macro: dict = None,
+    ai_macro: str = "",
+    holdings_alerts: list = None,
+) -> str:
+    """대시보드 HTML 생성 + docs/index.html 저장.
+
+    부분 데이터로 호출 가능 (누락된 건 캐시에서 보충). 매 모드 실행 후 호출됨.
+    GitHub Pages가 docs/index.html을 자동 노출 — 사용자는 URL 하나로 모든 정보 확인.
+    """
+    try:
+        # 누락 보충: market_scan_cache에서 가치 TOP 5 / 자동매매 보유 / 마지막 갱신 시각
+        if not kr_top:
+            kr_top = _load_value_top5() or []
+        if mood is None:
+            try:
+                mood = get_market_mood()
+            except Exception:
+                mood = {"kospi_chg": 0, "kospi_price": 0, "sp500_chg": 0, "vix": 20,
+                        "usdkrw": 1300, "wti": 75, "gold": 2000, "status": "확인불가",
+                        "advice": "데이터 수집 실패"}
+        if fg is None:
+            try:
+                fg = get_fear_greed(mood)
+            except Exception:
+                fg = {"score": 50, "label": "중립"}
+        # 자동매매 보유 종목 (positions.json)
+        auto_positions = []
+        try:
+            pos = load_positions()
+            for code, p in pos.get("positions", {}).items():
+                auto_positions.append({
+                    "code": code, "name": p.get("name", code),
+                    "qty": p.get("qty", 0), "buy_price": p.get("buy_price", 0),
+                    "buy_date": p.get("buy_date", ""), "score": p.get("score", 0),
+                    "sector": p.get("sector", ""),
+                    "partial_sold": p.get("partial_sold", False),
+                })
+        except Exception:
+            pass
+
+        # HTML 생성 (기존 make_report 활용 + 자동매매 보유 섹션 추가)
+        html = make_report(
+            kr_top=kr_top or [], us_top=us_top or [], avoid=avoid or [],
+            mood=mood,
+            dart_alerts=dart_alerts or [],
+            ai_summary=ai_summary, ai_sector=ai_sector,
+            fg=fg, ai_insights=ai_insights or {},
+            macro=macro, ai_macro=ai_macro,
+        )
+
+        # 자동매매 보유 종목 섹션을 HTML 상단에 삽입
+        if auto_positions:
+            pos_rows = []
+            try:
+                # 현재가 조회 (KIS or yfinance)
+                for p in auto_positions:
+                    curr = 0
+                    try:
+                        if _kis.available():
+                            pi = _kis.get_price(p["code"])
+                            curr = _safe_float(pi.get("stck_prpr")) if pi else 0
+                    except Exception:
+                        pass
+                    pct = ((curr - p["buy_price"]) / p["buy_price"] * 100) if (curr and p["buy_price"]) else 0
+                    color = "#e03131" if pct < 0 else "#2f9e44"
+                    pos_rows.append(
+                        f"<tr><td style='padding:6px 8px;'><b>{p['name']}</b> ({p['code']})</td>"
+                        f"<td style='padding:6px 8px;text-align:right;'>{p['qty']:,}주</td>"
+                        f"<td style='padding:6px 8px;text-align:right;'>{p['buy_price']:,.0f}원</td>"
+                        f"<td style='padding:6px 8px;text-align:right;'>{curr:,.0f}원</td>"
+                        f"<td style='padding:6px 8px;text-align:right;color:{color};font-weight:600;'>{pct:+.2f}%</td></tr>"
+                    )
+            except Exception:
+                pass
+            pos_section = (
+                "<div style='padding:18px 24px;background:#fff9db;border-bottom:1px solid #dee2e6;'>"
+                "<div style='font-weight:700;font-size:15px;color:#5c4400;margin-bottom:10px;'>"
+                f"🤖 자동매매 보유 ({len(auto_positions)}종목)</div>"
+                "<table style='width:100%;border-collapse:collapse;font-size:13px;'>"
+                "<thead><tr style='background:#fff3bf;'>"
+                "<th style='padding:6px 8px;text-align:left;'>종목</th>"
+                "<th style='padding:6px 8px;text-align:right;'>수량</th>"
+                "<th style='padding:6px 8px;text-align:right;'>매수가</th>"
+                "<th style='padding:6px 8px;text-align:right;'>현재가</th>"
+                "<th style='padding:6px 8px;text-align:right;'>손익</th></tr></thead>"
+                f"<tbody>{''.join(pos_rows)}</tbody></table></div>"
+            )
+            # body 직후에 삽입
+            html = html.replace("<body", "<body data-mod='1'", 1)
+            # AI 섹션 앞에 자동매매 보유 섹션 삽입 (간단히: 첫 <div 전에 삽입)
+            insert_pos = html.find("<div style=\"padding")
+            if insert_pos > 0:
+                html = html[:insert_pos] + pos_section + html[insert_pos:]
+
+        # 자동 새로고침 메타 추가 (5분마다)
+        html = html.replace(
+            "<head>",
+            "<head>\n<meta http-equiv=\"refresh\" content=\"300\">",
+            1,
+        )
+
+        # 저장
+        os.makedirs(os.path.dirname(DASHBOARD_HTML_PATH), exist_ok=True)
+        with open(DASHBOARD_HTML_PATH, "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"  [대시보드] 갱신 완료 → {DASHBOARD_HTML_PATH}")
+        return html
+    except Exception as e:
+        print(f"  [대시보드] 생성 오류: {e}")
+        return ""
+
+
 def make_report(
     kr_top: list,
     us_top: list,
@@ -2764,7 +2890,15 @@ def _alert_key(*args) -> str:
 
 
 def _check_monitor_signals(prev_scores: dict) -> list:
-    """KR_STOCKS 전체 스캔 → 감지된 신호 목록 반환"""
+    """KR_STOCKS 전체 스캔 → 감지된 신호 목록 반환.
+
+    가치주 트랙 다이어트 (2026-05-01) 이후:
+      - 단기 스윙 신호(급등/외국인+기관 매수/외국인 대량 매도) 삭제
+      - 보유 종목 단기 손절/익절 신호 삭제 (스윙 룰이라 가치주 모순)
+      - 자동매매 스윙 보유 종목은 run_auto_sell()이 처리
+      - 가치주 적합한 알림은 §C에서 별도 재설계 예정
+    유지: 4번 눌림목 (고점수 우량주 -3% 하락 = 가치주 추매 기회).
+    """
     signals = []
     now_str = _now_kst().strftime("%Y%m%d%H")
 
@@ -2778,61 +2912,11 @@ def _check_monitor_signals(prev_scores: dict) -> list:
                 continue
             price    = _safe_float(pi.get("stck_prpr"))
             change   = _safe_float(pi.get("prdy_ctrt"))
-            # 전일 대비 거래량 비율(%): 100=동일, 300=3배 — KIS inquire-price 응답 필드
-            vol_rate = _safe_float(pi.get("prdy_vrss_vol_rate"))
-
-            inv      = _kis.get_investor(code)
-            f_net    = _safe_float(inv.get("frgn_ntby_tr_pbmn"))   # 외국인 순매수 (백만원)
-            i_net    = _safe_float(inv.get("orgn_ntby_tr_pbmn"))    # 기관 순매수 (백만원)
-            f_eok    = f_net / 1e2   # 백만원 → 억원
-            i_eok    = i_net / 1e2   # 백만원 → 억원
 
             prev = prev_scores.get(ticker, {})
             prev_score = prev.get("score", 0)
 
-            # 1. 급등 감지: 전일 대비 거래량 300%↑ + 주가 3%↑
-            key1 = _alert_key("surge", ticker, now_str)
-            if change >= 3.0 and vol_rate >= 300 and key1 not in _sent_alerts:
-                _sent_alerts.add(key1)
-                signals.append({
-                    "type": "surge",
-                    "msg": (
-                        f"🚀 <b>[급등 감지]</b> {name}\n"
-                        f"주가 +{change:.1f}% / 전일 대비 거래량 {vol_rate:.0f}%\n"
-                        f"현재가: {price:,.0f}원\n"
-                        f"💡 단기 모멘텀 급상승 — 추격 매수 시 손절 철저히"
-                    ),
-                })
-
-            # 2. 외국인+기관 동시 순매수
-            key2 = _alert_key("dual_buy", ticker, now_str)
-            if f_eok >= 20 and i_eok >= 20 and key2 not in _sent_alerts:
-                _sent_alerts.add(key2)
-                signals.append({
-                    "type": "dual_buy",
-                    "msg": (
-                        f"✅ <b>[외국인+기관 동시 매수]</b> {name}\n"
-                        f"외국인 +{f_eok:.2f}억 / 기관 +{i_eok:.2f}억\n"
-                        f"현재가: {price:,.0f}원 ({change:+.1f}%)\n"
-                        f"💡 기관·외국인 동시 매수 = 강한 상승 신호"
-                    ),
-                })
-
-            # 3. 수급 급변 — 외국인 대량 순매도
-            key3 = _alert_key("frgn_sell", ticker, now_str)
-            if f_eok <= -100 and key3 not in _sent_alerts:
-                _sent_alerts.add(key3)
-                signals.append({
-                    "type": "frgn_sell",
-                    "msg": (
-                        f"⚠️ <b>[외국인 대량 매도 경고]</b> {name}\n"
-                        f"외국인 순매도 {f_eok:.2f}억원\n"
-                        f"현재가: {price:,.0f}원 ({change:+.1f}%)\n"
-                        f"🔴 보유 중이라면 손절선 재확인 필요"
-                    ),
-                })
-
-            # 4. 눌림목 감지 — 고점수 종목 -3% 이상 하락
+            # 4. 눌림목 감지 — 고점수 종목 -3% 이상 하락 (가치주 추매 기회)
             key4 = _alert_key("pullback", ticker, now_str)
             if prev_score >= 70 and change <= -3.0 and key4 not in _sent_alerts:
                 _sent_alerts.add(key4)
@@ -2840,7 +2924,7 @@ def _check_monitor_signals(prev_scores: dict) -> list:
                     "type": "pullback",
                     "msg": (
                         f"💎 <b>[눌림목 매수 기회]</b> {name} ({sector})\n"
-                        f"종합점수 {prev_score}점 우량주 / 오늘 {change:.1f}% 하락\n"
+                        f"종합점수 {prev_score}점 우량주 / 오늘 {change:.2f}% 하락\n"
                         f"현재가: {price:,.0f}원\n"
                         f"💡 고점수 우량주 일시 조정 — 분할매수 검토"
                     ),
@@ -2849,72 +2933,6 @@ def _check_monitor_signals(prev_scores: dict) -> list:
         except Exception as e:
             print(f"  [모니터] {name} 조회 오류: {e}")
         time.sleep(0.3)
-
-    # 5. 보유종목 손절/목표 감지
-    for h in HOLDINGS:
-        code      = h.get("code", "")
-        name      = h.get("name", code)
-        qty       = h.get("qty", 0)
-        avg_price = h.get("avg_price", 0)
-        if not (code and qty and avg_price):
-            continue
-        try:
-            pi         = _kis.get_price(code) if _kis.available() else {}
-            curr_price = _safe_float(pi.get("stck_prpr")) if pi else float(
-                yf.Ticker(f"{code}.KS").info.get("regularMarketPrice", 0)
-            )
-            if curr_price <= 0:
-                continue
-            pct        = (curr_price - avg_price) / avg_price * 100
-            stop_price = avg_price * (1 - STOP_LOSS_PCT)
-            target1    = avg_price * (1 + TARGET1_PCT)
-            target2    = avg_price * (1 + TARGET2_PCT)
-
-            # 손절가 1% 이내 근접
-            key_s = _alert_key("near_stop", code, now_str)
-            if curr_price <= stop_price * 1.01 and key_s not in _sent_alerts:
-                _sent_alerts.add(key_s)
-                signals.append({
-                    "type": "near_stop",
-                    "msg": (
-                        f"🚨 <b>[손절 경고]</b> {name}\n"
-                        f"현재가 {curr_price:,.0f}원 / 손절가 {stop_price:,.0f}원\n"
-                        f"손실률: {pct:.1f}%\n"
-                        f"🔴 <b>지금 매도하세요!</b> 손절가 {stop_price:,.0f}원 도달 임박"
-                    ),
-                })
-
-            # 1차 목표 도달
-            key_t1 = _alert_key("target1", code, now_str[:8])   # 하루에 한 번만
-            if curr_price >= target1 and key_t1 not in _sent_alerts:
-                _sent_alerts.add(key_t1)
-                signals.append({
-                    "type": "target1",
-                    "msg": (
-                        f"🎯 <b>[1차 목표 달성]</b> {name}\n"
-                        f"현재가 {curr_price:,.0f}원 (+{pct:.1f}%)\n"
-                        f"1차 목표가: {target1:,.0f}원\n"
-                        f"💚 <b>지금 매도하세요!</b> — 절반 매도 or 트레일링 스탑 설정 권장"
-                    ),
-                })
-
-            # 2차 목표 도달
-            key_t2 = _alert_key("target2", code, now_str[:8])
-            if curr_price >= target2 and key_t2 not in _sent_alerts:
-                _sent_alerts.add(key_t2)
-                signals.append({
-                    "type": "target2",
-                    "msg": (
-                        f"🎯🎯 <b>[2차 목표 달성]</b> {name}\n"
-                        f"현재가 {curr_price:,.0f}원 (+{pct:.1f}%)\n"
-                        f"2차 목표가: {target2:,.0f}원\n"
-                        f"💚 <b>지금 매도하세요!</b> — 수익 실현 강력 권장"
-                    ),
-                })
-
-        except Exception as e:
-            print(f"  [모니터] 보유종목 {name} 오류: {e}")
-        time.sleep(0.2)
 
     return signals
 
@@ -2990,7 +3008,7 @@ def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
         return
 
     print(f"[모니터] 실시간 모니터링 시작 — {duration_hours}시간, {interval_sec}초 간격")
-    tg_send("📡 <b>실시간 모니터링 시작</b>\n장중 신호 감지 시 즉시 알림을 보내드립니다.")
+    # 텔레그램 다이어트: 시작 알림 제거. 신호 감지 시에만 알림.
 
     deadline    = time.time() + duration_hours * 3600
     prev_scores = {}   # {ticker: {score, price}}
@@ -3069,47 +3087,51 @@ def run_us_briefing():
         else:
             mood_txt = "📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
 
+        # 텔레그램 다이어트: 핵심 지표 3줄만. AI/상세는 대시보드.
         lines = [
-            f"<b>🌙 미국 시장 마감 브리핑</b>",
-            f"<i>{_now_kst().strftime('%Y-%m-%d')} 새벽 브리핑</i>",
-            "",
-            f"S&P500  {arr(sp_chg)}{abs(sp_chg):.2f}%",
-            f"나스닥   {arr(nq_chg)}{abs(nq_chg):.2f}%",
-            f"다우    {arr(dj_chg)}{abs(dj_chg):.2f}%",
-            f"VIX    {vix_val:.2f}",
-            f"달러/원 {fx_val:,.2f}원",
-            f"금      ${gold_v:,.2f}  /  WTI ${wti_v:.2f}",
-            "",
+            f"<b>🌙 미국 마감</b> {_now_kst().strftime('%m/%d')}",
+            f"S&P {arr(sp_chg)}{abs(sp_chg):.2f}% / 나스닥 {arr(nq_chg)}{abs(nq_chg):.2f}% / "
+            f"VIX {vix_val:.2f} / 환율 {fx_val:,.2f}원",
             mood_txt,
+            f"📊 {DASHBOARD_URL}",
         ]
-
-        # AI 분석 추가
-        client = _get_ai_client()
-        if client:
-            try:
-                prompt = (
-                    f"미국 증시 마감 데이터: S&P500 {sp_chg:+.2f}%, 나스닥 {nq_chg:+.2f}%, "
-                    f"VIX {vix_val:.2f}, 달러/원 {fx_val:,.2f}원\n"
-                    "오늘 한국 증시 예상과 주목할 섹터를 2문장으로 요약해줘."
-                )
-                resp = client.messages.create(
-                    model=CLAUDE_MODEL,
-                    max_tokens=200,
-                    system=_ai_system(),
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                lines += ["", f"🤖 {resp.content[0].text.strip()}"]
-            except Exception:
-                pass
-
         tg_send("\n".join(lines))
+
+        # 대시보드 갱신 (미국 데이터 반영)
+        try:
+            build_and_save_dashboard()
+        except Exception as e:
+            print(f"  [브리핑] 대시보드 갱신 오류: {e}")
     except Exception as e:
         print(f"  [브리핑] 미국 브리핑 오류: {e}")
         tg_send(f"⚠️ 미국 시장 브리핑 수집 실패: {e}")
 
 
+def _load_value_top5() -> list:
+    """market_scan_cache에서 가치 점수 상위 5종목 로드 (다이어트 텔레그램 메시지용)."""
+    try:
+        if not os.path.exists(MARKET_SCAN_CACHE):
+            return []
+        with open(MARKET_SCAN_CACHE, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        stocks = cache.get("stocks", [])
+        # score 기준 내림차순, buy_signal 통과한 종목 우선
+        sorted_stocks = sorted(stocks, key=lambda s: (-int(s.get("buy_signal", False)), -s.get("score", 0)))
+        return sorted_stocks[:5]
+    except Exception as e:
+        print(f"  [premarket] market_scan_cache 로드 실패: {e}")
+        return []
+
+
 def run_premarket_briefing():
-    """8시 50분 — 장 시작 전 10분 브리핑"""
+    """8시 50분 — 장 시작 전 통합 브리핑 (텔레그램 다이어트).
+
+    포함:
+      - 시장 지표 핵심 (코스피 / VIX / 환율 / 공포탐욕)
+      - 가치주 TOP 5 (market_scan_cache 기반)
+      - AI 한 줄 코멘트
+      - 대시보드 링크
+    """
     if _skip_if_holiday("장 시작 전 브리핑"):
         return
     print("[브리핑] 장 시작 전 브리핑")
@@ -3117,104 +3139,91 @@ def run_premarket_briefing():
         mood = get_market_mood()
         fg   = get_fear_greed(mood)
 
+        kos_arr = "▲" if mood["kospi_chg"] >= 0 else "▼"
         lines = [
-            "<b>🔔 장 시작 전 브리핑 (8:50)</b>",
-            f"<i>9시 개장 10분 전</i>",
+            "<b>🔔 장 시작 전 (08:50)</b>",
             "",
-            f"코스피 야간선물: {mood['kospi_price']:,.2f} ({mood['kospi_chg']:+.2f}%)",
-            f"달러/원: {mood['usdkrw']:,.2f}원",
-            f"VIX: {mood['vix']:.2f} ({mood['status']})",
-            f"공포탐욕: {fg['score']} ({fg['label']})",
-            "",
-            mood["advice"],
+            f"📊 코스피 {mood['kospi_price']:,.2f} {kos_arr}{abs(mood['kospi_chg']):.2f}% / "
+            f"VIX {mood['vix']:.2f} / 환율 {mood['usdkrw']:,.2f}원 / "
+            f"공포탐욕 {fg['score']}({fg['label']})",
             "",
         ]
 
-        # 오늘 주목 종목 (보유종목 + 고점수 종목)
-        watch_list = []
-        for h in HOLDINGS:
-            watch_list.append(f"📦 보유: {h.get('name', h.get('code', ''))}")
-        if watch_list:
-            lines += ["<b>📋 오늘 체크할 보유종목</b>"] + watch_list[:5]
+        # 가치주 TOP 5 (market_scan_cache에서)
+        top5 = _load_value_top5()
+        if top5:
+            lines.append("<b>🎯 오늘 가치주 TOP 5</b>")
+            for i, s in enumerate(top5, 1):
+                name  = s.get("name", "?")
+                score = s.get("score", 0)
+                price = s.get("price", 0)
+                sector = s.get("sector", "")
+                buy_ok = "✅" if s.get("buy_signal") else "🔍"
+                lines.append(f"{i}. {buy_ok} {name} ({sector}) — {score}점, {price:,.0f}원")
+            lines.append("")
+        else:
+            lines.append("<i>⚠️ 가치주 캐시 없음 — 새벽 시장스캔 확인 필요</i>")
+            lines.append("")
 
+        # AI 한 줄
         client = _get_ai_client()
         if client:
             try:
                 prompt = (
                     f"코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']:.2f}, "
-                    f"달러/원 {mood['usdkrw']:,.2f}원 환경에서 "
-                    "오늘 장 초반 전략을 1~2문장으로 알려줘."
+                    f"환율 {mood['usdkrw']:,.2f}원. "
+                    "오늘 장 초반 전략을 1문장으로."
                 )
                 resp = client.messages.create(
                     model=CLAUDE_MODEL,
-                    max_tokens=150,
+                    max_tokens=120,
                     system=_ai_system(),
                     messages=[{"role": "user", "content": prompt}],
                 )
-                lines += ["", f"🤖 AI: {resp.content[0].text.strip()}"]
+                lines.append(f"🤖 {resp.content[0].text.strip()}")
+                lines.append("")
             except Exception:
                 pass
 
+        # 대시보드 링크
+        lines.append(f"📊 대시보드: {DASHBOARD_URL}")
+
         tg_send("\n".join(lines))
+
+        # 대시보드 갱신
+        try:
+            build_and_save_dashboard(mood=mood, fg=fg, kr_top=top5)
+        except Exception as e:
+            print(f"  [브리핑] 대시보드 갱신 오류: {e}")
     except Exception as e:
         print(f"  [브리핑] 장전 브리핑 오류: {e}")
         tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
 
 
 def run_close_summary():
-    """3시 35분 — 장 마감 결산"""
+    """3시 35분 — 장 마감 결산.
+
+    텔레그램 다이어트 후: 텔레그램 발송 안 함. 데이터는 대시보드 갱신용.
+    """
     if _skip_if_holiday("장 마감 결산"):
         return
-    print("[브리핑] 장 마감 결산")
+    print("[브리핑] 장 마감 결산 (대시보드 갱신용)")
     try:
         mood = get_market_mood()
         fg   = get_fear_greed(mood)
-
-        kos_arr = "▲" if mood["kospi_chg"] >= 0 else "▼"
-        lines = [
-            "<b>📉 장 마감 결산 (15:35)</b>",
-            f"<i>{_now_kst().strftime('%Y-%m-%d')} 오늘의 결산</i>",
-            "",
-            f"코스피  {mood['kospi_price']:,.2f}  {kos_arr}{abs(mood['kospi_chg']):.2f}%",
-            f"달러/원  {mood['usdkrw']:,.2f}원",
-            f"VIX     {mood['vix']:.2f}  ({mood['status']})",
-            f"공포탐욕  {fg['score']} ({fg['label']})",
-            "",
-        ]
-
-        # 보유종목 오늘 성과
+        # 보유종목 알림 데이터 수집 (대시보드용)
         ha = check_holdings_alerts()
-        if ha:
-            lines.append("<b>📦 보유종목 오늘 성과</b>")
-            for a in ha:
-                emoji = "🔴" if a["type"] == "손절" else ("🟢" if "목표" in a["type"] else "⚪")
-                lines.append(
-                    f"{emoji} {a['name']}: {a['pct']:+.1f}%"
-                    f" / 수익 {a['profit']:+,.0f}원"
-                )
-            lines.append("")
 
-        client = _get_ai_client()
-        if client:
-            try:
-                prompt = (
-                    f"오늘 코스피 {mood['kospi_chg']:+.2f}%, VIX {mood['vix']:.2f} 마감.\n"
-                    "내일 장 전망과 주목할 포인트를 2문장으로 요약해줘."
-                )
-                resp = client.messages.create(
-                    model=CLAUDE_MODEL,
-                    max_tokens=200,
-                    system=_ai_system(),
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                lines += [f"🤖 내일 전망: {resp.content[0].text.strip()}"]
-            except Exception:
-                pass
+        # 대시보드 갱신
+        try:
+            build_and_save_dashboard(mood=mood, fg=fg, holdings_alerts=ha)
+        except Exception as e:
+            print(f"  [브리핑] 대시보드 갱신 오류: {e}")
 
-        tg_send("\n".join(lines))
+        # 텔레그램 발송 X — 대시보드에서 확인
+        print(f"  [브리핑] 코스피 {mood['kospi_chg']:+.2f}% 마감. 대시보드 갱신 완료.")
     except Exception as e:
         print(f"  [브리핑] 마감 결산 오류: {e}")
-        tg_send(f"⚠️ 마감 결산 수집 실패: {e}")
 
 
 # ════════════════════════════════════════════════
@@ -3364,13 +3373,9 @@ def run_auto_buy():
     # ── 종목 풀 구성 (KR_STOCKS + market_scan_cache) ──
     pool = _load_auto_buy_pool()
 
-    # 모드 헤더
-    tg_send(
-        f"🤖 <b>{mode_tag} 자동 매수 시작</b> ({today})\n"
-        f"기준: 스윙점수 {SWING_SCORE_MIN}+ / 종목당 {INVEST_PER_STOCK//10000}만원 / "
-        f"하루 한도 {SWING_MAX_DAILY_BUY}종목·{SWING_MAX_DAILY_AMT//10000}만원\n"
-        f"종목 풀: {len(pool)}개 / 시장무드: {mood.get('status', '중립')} / 공포탐욕 {fg.get('score', 50)}({fg.get('label', '중립')})"
-    )
+    # 텔레그램 다이어트: 시작 헤더 제거. 사전 알림 + 결과만 전송.
+    print(f"[자동매수] 시작 — 풀 {len(pool)}개 / 무드 {mood.get('status', '중립')} / "
+          f"공포탐욕 {fg.get('score', 50)}({fg.get('label', '중립')})")
 
     # 종목 분석
     print(f"\n[자동매수] {len(pool)}종목 분석 중...")
@@ -3482,6 +3487,12 @@ def run_auto_buy():
             tg_send(f"❌ {mode_tag} 매수 실패: {s['name']} — {result.get('msg','')}")
         save_positions(pos)
         time.sleep(1)
+
+    # 대시보드 갱신 (보유 종목 변경 반영)
+    try:
+        build_and_save_dashboard()
+    except Exception as e:
+        print(f"  [자동매수] 대시보드 갱신 오류: {e}")
 
     # 종합 요약
     daily = pos["daily"][today]
@@ -3611,6 +3622,11 @@ def run_auto_sell():
     if sold_msgs:
         header = f"🤖 <b>{mode_tag} 자동 매도</b> ({_now_kst().strftime('%H:%M')})"
         tg_send("\n".join([header, ""] + sold_msgs))
+        # 대시보드 갱신 (보유 변경 반영)
+        try:
+            build_and_save_dashboard()
+        except Exception as e:
+            print(f"  [자동매도] 대시보드 갱신 오류: {e}")
     else:
         print(f"  [자동매도] 매도 조건 충족 종목 없음")
 
@@ -4280,6 +4296,12 @@ def run_market_scan(n: int = MARKET_SCAN_N):
 
     print(f"캐시 저장 완료: {MARKET_SCAN_CACHE}")
 
+    # 대시보드 갱신 (스캔 결과 반영)
+    try:
+        build_and_save_dashboard()
+    except Exception as e:
+        print(f"  [스캔] 대시보드 갱신 오류: {e}")
+
 
 # ════════════════════════════════════════════════
 # 메인 실행
@@ -4393,35 +4415,26 @@ def run():
             ai_insights[s["ticker"]] = insight
         time.sleep(0.3)
 
-    print("\n[7/7] 리포트 생성 및 전송 중...")
-    html = make_report(
-        kr_top5, us_top5, avoid_list, mood,
-        dart_alerts=dart_alerts,
-        ai_summary=ai_summary,
-        ai_sector=ai_sector,
-        fg=fg,
-        ai_insights=ai_insights,
-        macro=macro,
-        ai_macro=ai_macro,
-    )
-    text = make_telegram_message(
-        kr_top5, us_top5, avoid_list, mood,
-        dart_alerts=dart_alerts,
-        ai_summary=ai_summary,
-        fg=fg,
-        macro=macro,
-        ai_macro=ai_macro,
-    )
-    tg_send(text)
-    tg_send_document(html)
+    print("\n[7/7] 리포트 생성 (대시보드만 갱신)...")
+    # 텔레그램 다이어트: 일일 리포트 텔레그램 발송 제거. 대시보드에서 확인.
+    # 단, 데이터(kr_top5, dart_alerts, ai_summary 등)는 모두 수집해서 대시보드에 반영.
 
     ha = check_holdings_alerts()
-    alert_msgs = [a["msg"] for a in ha if "msg" in a]
-    if alert_msgs:
-        print(f"\n[보유종목 알림 {len(alert_msgs)}건]")
-        tg_send("\n".join(["<b>📦 보유종목 알림</b>", ""] + alert_msgs))
-
     record_recommendations(kr_top5, us_top5)
+
+    # 대시보드 갱신
+    try:
+        build_and_save_dashboard(
+            mood=mood, fg=fg,
+            kr_top=kr_top5, us_top=us_top5, avoid=avoid_list,
+            dart_alerts=dart_alerts,
+            ai_summary=ai_summary, ai_sector=ai_sector,
+            ai_insights=ai_insights,
+            macro=macro, ai_macro=ai_macro,
+            holdings_alerts=ha,
+        )
+    except Exception as e:
+        print(f"  [run] 대시보드 갱신 오류: {e}")
 
     print("\n[결과 요약]")
     for s in kr_top5:
