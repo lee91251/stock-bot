@@ -2932,18 +2932,20 @@ def _is_after_market_close(now: datetime) -> bool:
 
 # 한국 거래소(KRX) 휴장일. 주말 외 추가 휴장일만 등록.
 # ⚠️ 매년 12월 KRX 발표분으로 갱신 필요 (krx.co.kr 휴장일 안내).
+# 6/6 현충일(토), 8/15 광복절(토), 10/3 개천절(토)은 자연 토요일 휴장이라 등록 X.
 _KRX_HOLIDAYS = {
-    # 2026
-    "2026-01-01",  # 신정
-    "2026-02-16", "2026-02-17", "2026-02-18",  # 설날
+    # 2026 (제10회 지방선거 6/3 포함)
+    "2026-01-01",  # 신정 (목)
+    "2026-02-16", "2026-02-17", "2026-02-18",  # 설날 연휴 (월화수)
     "2026-03-02",  # 삼일절 대체휴일 (3/1 일요일)
-    "2026-05-01",  # 근로자의 날
-    "2026-05-05",  # 어린이날
+    "2026-05-01",  # 근로자의 날 (금)
+    "2026-05-05",  # 어린이날 (화)
     "2026-05-25",  # 부처님오신날 대체 (5/24 일요일)
-    "2026-09-24", "2026-09-25",  # 추석 (9/26 토, 9/27 일)
-    "2026-10-09",  # 한글날
-    "2026-12-25",  # 크리스마스
-    "2026-12-31",  # 연말 종가일 휴장
+    "2026-06-03",  # 제10회 전국동시지방선거 (수)
+    "2026-09-24", "2026-09-25",  # 추석 연휴 (목금) — 9/26 토, 9/27 일
+    "2026-10-09",  # 한글날 (금)
+    "2026-12-25",  # 크리스마스 (금)
+    "2026-12-31",  # 연말 종가일 휴장 (목)
 }
 
 
@@ -2954,8 +2956,24 @@ def _is_trading_day(d: datetime) -> bool:
     return d.strftime("%Y-%m-%d") not in _KRX_HOLIDAYS
 
 
+def _skip_if_holiday(mode_label: str) -> bool:
+    """한국 휴장일이면 콘솔 로그만 남기고 True 반환.
+
+    호출자는 True가 반환되면 즉시 return 해야 함 (분석/리포트 스킵).
+    텔레그램 알림은 보내지 않음 — 사용자가 휴장일 메시지를 원치 않음.
+    매매(autobuy/autosell)는 별도로 텔레그램 알림 (안전 확인용).
+    """
+    now = _now_kst()
+    if _is_trading_day(now):
+        return False
+    print(f"[{mode_label}] 한국 휴장일 — 스킵 ({now.strftime('%Y-%m-%d %a')})")
+    return True
+
+
 def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
     """장중 실시간 모니터링 루프 (기본: 7시간, 5분 간격)"""
+    if _skip_if_holiday("모니터링"):
+        return
     now = _now_kst()
     # 장 마감 후 시작은 무의미 — 즉시 스킵
     if _is_after_market_close(now):
@@ -3092,6 +3110,8 @@ def run_us_briefing():
 
 def run_premarket_briefing():
     """8시 50분 — 장 시작 전 10분 브리핑"""
+    if _skip_if_holiday("장 시작 전 브리핑"):
+        return
     print("[브리핑] 장 시작 전 브리핑")
     try:
         mood = get_market_mood()
@@ -3143,6 +3163,8 @@ def run_premarket_briefing():
 
 def run_close_summary():
     """3시 35분 — 장 마감 결산"""
+    if _skip_if_holiday("장 마감 결산"):
+        return
     print("[브리핑] 장 마감 결산")
     try:
         mood = get_market_mood()
@@ -4212,6 +4234,8 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
 
 def run_market_scan(n: int = MARKET_SCAN_N):
     """코스피/코스닥 시가총액 상위 n종목 분석 → 상위 50개를 market_scan_cache.json에 저장"""
+    if _skip_if_holiday("시장 스캔"):
+        return
     print("=" * 60)
     print(f"시장 전체 스캔 시작 -- 코스피/코스닥 상위 {n}종목")
     print("=" * 60)
@@ -4261,6 +4285,9 @@ def run_market_scan(n: int = MARKET_SCAN_N):
 # 메인 실행
 # ════════════════════════════════════════════════
 def run():
+    # 한국 휴장일이면 일일 리포트 스킵 (휴장일 데이터로 분석하면 노이즈)
+    if _skip_if_holiday("일일 리포트"):
+        return
     print("=" * 60)
     print("투자 비서 v6.0 시작")
     if KR_ONLY:
