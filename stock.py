@@ -2313,157 +2313,344 @@ def _make_macro_html(macro: dict, ai_macro: str) -> str:
 
 
 def _dashboard_css() -> str:
-    """대시보드 디자인 시스템 — CSS 변수, 다크모드 자동 감지, 카드 스타일."""
+    """풀 대시보드 디자인 시스템 — 사이드바 + Hero 헤더 + 카드 그리드 + 다크모드."""
     return """
 <style>
 :root {
-  --bg: #f5f6f8;
+  --bg: #f5f6fa;
   --surface: #ffffff;
-  --surface-2: #f8f9fa;
+  --surface-2: #f8f9fb;
+  --sidebar-bg: #0f1729;
+  --sidebar-text: #cbd5e1;
+  --sidebar-active: #5f6dff;
+  --sidebar-hover: rgba(255,255,255,0.06);
   --text-1: #0a0e1a;
-  --text-2: #495057;
-  --text-3: #868e96;
-  --border: #e9ecef;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+  --border: #e5e7eb;
   --up: #e03131;
   --down: #1971c2;
-  --neutral: #495057;
-  --accent-value: #1a3a5c;
-  --accent-auto: #0c8a8a;
-  --shadow: 0 1px 3px rgba(10,14,26,0.04), 0 4px 16px rgba(10,14,26,0.05);
+  --neutral: #475569;
+  --accent: #5f6dff;
+  --accent-value: #5f6dff;
+  --accent-auto: #14b8a6;
+  --shadow-sm: 0 1px 2px rgba(15,23,41,0.04);
+  --shadow: 0 1px 3px rgba(15,23,41,0.05), 0 8px 24px rgba(15,23,41,0.06);
+  --shadow-lg: 0 4px 8px rgba(15,23,41,0.06), 0 24px 48px rgba(15,23,41,0.12);
+  --hero-grad: linear-gradient(135deg, #5f6dff 0%, #7c3aed 50%, #ec4899 100%);
   --radius: 16px;
   --radius-sm: 10px;
+  --radius-lg: 24px;
+  --sidebar-w: 240px;
+  --gap: 20px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0a0e1a;
     --surface: #131826;
     --surface-2: #1a1f2e;
+    --sidebar-bg: #050811;
+    --sidebar-text: #cbd5e1;
+    --sidebar-hover: rgba(255,255,255,0.04);
     --text-1: #e9ecef;
-    --text-2: #adb5bd;
-    --text-3: #6c757d;
+    --text-2: #cbd5e1;
+    --text-3: #94a3b8;
     --border: #2a3142;
     --up: #ff6b6b;
     --down: #4dabf7;
-    --neutral: #adb5bd;
+    --neutral: #cbd5e1;
+    --accent: #748ffc;
     --accent-value: #748ffc;
-    --accent-auto: #38d9a9;
-    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.4);
+    --accent-auto: #2dd4bf;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 4px 8px rgba(0,0,0,0.4), 0 24px 48px rgba(0,0,0,0.6);
   }
 }
 [data-theme="dark"] {
   --bg: #0a0e1a;
   --surface: #131826;
   --surface-2: #1a1f2e;
+  --sidebar-bg: #050811;
+  --sidebar-text: #cbd5e1;
+  --sidebar-hover: rgba(255,255,255,0.04);
   --text-1: #e9ecef;
-  --text-2: #adb5bd;
-  --text-3: #6c757d;
+  --text-2: #cbd5e1;
+  --text-3: #94a3b8;
   --border: #2a3142;
   --up: #ff6b6b;
   --down: #4dabf7;
-  --neutral: #adb5bd;
+  --neutral: #cbd5e1;
+  --accent: #748ffc;
   --accent-value: #748ffc;
-  --accent-auto: #38d9a9;
-  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.4);
+  --accent-auto: #2dd4bf;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,0.4), 0 24px 48px rgba(0,0,0,0.6);
 }
-body { background: var(--bg) !important; color: var(--text-1) !important;
-       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Pretendard",
-       "Apple SD Gothic Neo", "맑은 고딕", sans-serif !important;
-       -webkit-font-smoothing: antialiased; margin: 0; padding-bottom: 40px; }
-.dash-wrap { max-width: 720px; margin: 0 auto; padding: 12px 0; }
-.theme-toggle { position: fixed; top: 12px; right: 12px; width: 40px; height: 40px;
-                border-radius: 50%; background: var(--surface); color: var(--text-1);
-                border: 1px solid var(--border); box-shadow: var(--shadow);
-                cursor: pointer; font-size: 16px; line-height: 38px; text-align: center;
-                z-index: 100; transition: transform 0.2s; }
-.theme-toggle:hover { transform: scale(1.05); }
 
-.summary { background: var(--surface); margin: 12px; padding: 24px 20px;
-           border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
-.summary__label { color: var(--text-3); font-size: 13px; font-weight: 500; letter-spacing: 0.2px; }
-.summary__total { font-size: 34px; font-weight: 700; margin-top: 6px;
-                  letter-spacing: -0.8px; color: var(--text-1); }
-.summary__pnl { font-size: 16px; font-weight: 600; margin-top: 6px; }
-.summary__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; }
-.summary__pnl.up { color: var(--up); }
-.summary__pnl.down { color: var(--down); }
-.summary__pnl.flat { color: var(--neutral); }
-.summary__split { display: flex; gap: 16px; justify-content: center; margin-top: 18px;
-                  padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-.summary__chip { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
-.summary__chip small { color: var(--text-3); margin-left: 2px; font-weight: 500; }
-.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-.dot--value { background: var(--accent-value); }
-.dot--auto { background: var(--accent-auto); }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
+             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Pretendard",
+             "Apple SD Gothic Neo", "맑은 고딕", sans-serif;
+             -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-.holdings { background: var(--surface); margin: 12px; border-radius: var(--radius);
-            box-shadow: var(--shadow); overflow: hidden; }
-.holdings--value::before { content: ""; display: block; height: 3px; background: var(--accent-value); }
-.holdings--auto::before { content: ""; display: block; height: 3px; background: var(--accent-auto); }
-.holdings__head { padding: 16px 20px 14px; border-bottom: 1px solid var(--border); }
-.holdings__title { display: flex; align-items: center; gap: 10px; }
-.holdings__title h2 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
-.holdings__badge { padding: 3px 9px; background: var(--surface-2); border-radius: 99px;
-                   font-size: 11px; color: var(--text-3); font-weight: 500; }
-.holdings__count { margin-left: auto; font-size: 12px; color: var(--text-3); font-weight: 500; }
-.holdings__totals { display: flex; align-items: baseline; gap: 12px; margin-top: 12px; }
-.holdings__amount { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.5px; }
-.holdings__pnl { font-size: 14px; font-weight: 600; }
-.holdings__pnl.up { color: var(--up); }
-.holdings__pnl.down { color: var(--down); }
-.holdings__pnl.flat { color: var(--neutral); }
-.holdings__list { display: flex; flex-direction: column; }
-.holding-row { display: flex; justify-content: space-between; align-items: center;
-               padding: 13px 20px; border-bottom: 1px solid var(--border); gap: 12px; }
-.holding-row:last-child { border-bottom: none; }
-.holding-row__main { flex: 1; min-width: 0; }
-.holding-row__name { font-weight: 600; font-size: 15px; color: var(--text-1);
-                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.holding-row__sub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
-.holding-row__price { text-align: right; flex-shrink: 0; }
-.holding-row__current { font-weight: 600; font-size: 15px; color: var(--text-1); }
-.holding-row__pnl { font-size: 13px; font-weight: 600; margin-top: 3px; white-space: nowrap; }
-.holding-row__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; font-size: 12px; }
-.holding-row__pnl.up { color: var(--up); }
-.holding-row__pnl.down { color: var(--down); }
-.holding-row__pnl.flat { color: var(--neutral); }
-.holding-row__alert { display: inline-block; padding: 2px 8px; margin-left: 6px;
-                      border-radius: 6px; font-size: 11px; font-weight: 600; vertical-align: middle; }
-.holding-row__alert--cut { background: rgba(224,49,49,0.12); color: var(--up); }
-.holding-row__alert--t1 { background: rgba(224,49,49,0.12); color: var(--up); }
-.holding-row__alert--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
+/* ── 앱 레이아웃 ──────────────────────────── */
+.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
 
-.holdings__empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 14px; }
+/* ── 사이드바 ──────────────────────────── */
+.sidebar { background: var(--sidebar-bg); color: var(--sidebar-text);
+           position: sticky; top: 0; height: 100vh; overflow-y: auto;
+           padding: 20px 14px; display: flex; flex-direction: column; }
+.sidebar__brand { display: flex; align-items: center; gap: 10px; padding: 4px 12px 24px;
+                  font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; }
+.sidebar__brand-icon { width: 32px; height: 32px; border-radius: 9px;
+                       background: var(--hero-grad); display: flex; align-items: center;
+                       justify-content: center; font-size: 16px; }
+.sidebar__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.sidebar__link { display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+                 border-radius: 10px; color: var(--sidebar-text);
+                 text-decoration: none; font-size: 14px; font-weight: 500;
+                 transition: all 0.15s; cursor: pointer; }
+.sidebar__link:hover { background: var(--sidebar-hover); color: white; }
+.sidebar__link.is-active { background: var(--sidebar-active); color: white; box-shadow: 0 4px 12px rgba(95,109,255,0.4); }
+.sidebar__link.is-disabled { opacity: 0.4; cursor: not-allowed; }
+.sidebar__link.is-disabled:hover { background: transparent; color: var(--sidebar-text); }
+.sidebar__link-icon { font-size: 16px; flex-shrink: 0; }
+.sidebar__link-label { flex: 1; }
+.sidebar__link-badge { padding: 1px 6px; background: rgba(255,255,255,0.08);
+                       border-radius: 6px; font-size: 10px; font-weight: 600; }
+.sidebar__section-title { padding: 16px 12px 6px; font-size: 11px; color: rgba(255,255,255,0.4);
+                          font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+.sidebar__footer { padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+                   display: flex; align-items: center; gap: 8px; font-size: 11px;
+                   color: rgba(255,255,255,0.4); }
 
+/* ── 메인 영역 ──────────────────────────── */
+.main { padding: 24px 28px 60px; max-width: 1100px; margin: 0; min-width: 0; }
+
+/* ── Hero 헤더 ──────────────────────────── */
+.hero { background: var(--hero-grad); border-radius: var(--radius-lg);
+        padding: 28px 28px 26px; margin-bottom: 20px; color: white;
+        box-shadow: 0 12px 32px rgba(95,109,255,0.25); position: relative; overflow: hidden; }
+.hero::before { content: ""; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px;
+                background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); pointer-events: none; }
+.hero__top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;
+             gap: 14px; margin-bottom: 18px; }
+.hero__greeting { font-size: 13px; font-weight: 500; opacity: 0.85; }
+.hero__title { margin: 4px 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.8px; }
+.hero__date { font-size: 12px; opacity: 0.75; margin-top: 6px; }
+.hero__advice { display: inline-block; padding: 8px 14px; background: rgba(255,255,255,0.18);
+                border-radius: 99px; font-size: 13px; backdrop-filter: blur(8px); }
+.hero__kpi-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 18px; margin-top: 6px; }
+.hero__kpi { background: rgba(255,255,255,0.12); border-radius: 14px; padding: 16px 18px;
+             backdrop-filter: blur(12px); }
+.hero__kpi-label { font-size: 11px; font-weight: 600; opacity: 0.8; letter-spacing: 0.3px;
+                   text-transform: uppercase; }
+.hero__kpi-value { font-size: 28px; font-weight: 700; margin-top: 6px; letter-spacing: -0.6px; line-height: 1.1; }
+.hero__kpi-pnl { font-size: 13px; font-weight: 600; margin-top: 4px; }
+.hero__kpi-pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; }
+.hero__kpi--small .hero__kpi-value { font-size: 19px; }
+
+/* ── 섹션 카드 (공통) ──────────────────────────── */
+.section { background: var(--surface); border-radius: var(--radius);
+           box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden;
+           transition: box-shadow 0.2s, transform 0.2s; scroll-margin-top: 20px; }
+.section:hover { box-shadow: var(--shadow-lg); }
+.section__head { padding: 18px 22px 16px; border-bottom: 1px solid var(--border); }
+.section__title { display: flex; align-items: center; gap: 10px; }
+.section__icon { width: 32px; height: 32px; border-radius: 9px; display: flex;
+                 align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.section__icon--value { background: rgba(95,109,255,0.12); }
+.section__icon--auto { background: rgba(20,184,166,0.12); }
+.section__icon--market { background: rgba(245,158,11,0.12); }
+.section__icon--ai { background: rgba(168,85,247,0.12); }
+.section__icon--rec { background: rgba(34,197,94,0.12); }
+.section__icon--alert { background: rgba(239,68,68,0.12); }
+.section__icon--macro { background: rgba(59,130,246,0.12); }
+.section__title h2 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+.section__badge { padding: 3px 10px; background: var(--surface-2); border-radius: 99px;
+                  font-size: 11px; color: var(--text-3); font-weight: 600; border: 1px solid var(--border); }
+.section__count { margin-left: auto; font-size: 12px; color: var(--text-3); font-weight: 500; }
+.section__subtitle { display: flex; align-items: baseline; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
+.section__amount { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.4px; }
+.section__pnl { font-size: 14px; font-weight: 600; }
+.section__pnl.up { color: var(--up); }
+.section__pnl.down { color: var(--down); }
+.section__pnl.flat { color: var(--neutral); }
+.section__body { padding: 4px 0; }
+
+/* 종목 행 */
+.row { display: flex; justify-content: space-between; align-items: center;
+       padding: 13px 22px; border-bottom: 1px solid var(--border); gap: 12px;
+       transition: background 0.15s; }
+.row:last-child { border-bottom: none; }
+.row:hover { background: var(--surface-2); }
+.row__main { flex: 1; min-width: 0; }
+.row__name { font-weight: 600; font-size: 15px; color: var(--text-1); display: flex; align-items: center; gap: 6px; }
+.row__sub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+.row__price { text-align: right; flex-shrink: 0; }
+.row__current { font-weight: 600; font-size: 15px; color: var(--text-1); }
+.row__pnl { font-size: 13px; font-weight: 600; margin-top: 3px; white-space: nowrap; }
+.row__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; font-size: 12px; }
+.row__pnl.up { color: var(--up); }
+.row__pnl.down { color: var(--down); }
+.row__pnl.flat { color: var(--neutral); }
+.row__badge { display: inline-block; padding: 2px 7px; border-radius: 6px;
+              font-size: 10px; font-weight: 700; vertical-align: middle; }
+.row__badge--cut { background: rgba(224,49,49,0.12); color: var(--up); }
+.row__badge--t1 { background: rgba(224,49,49,0.12); color: var(--up); }
+.row__badge--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
+
+/* 자산 배분 카드 */
+.allocation { padding: 18px 22px; }
+.allocation__bar { height: 14px; background: var(--surface-2); border-radius: 99px;
+                   overflow: hidden; display: flex; }
+.allocation__seg { height: 100%; transition: width 0.4s; }
+.allocation__seg--value { background: var(--accent-value); }
+.allocation__seg--auto { background: var(--accent-auto); }
+.allocation__legend { display: flex; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
+.allocation__item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.allocation__dot { width: 10px; height: 10px; border-radius: 3px; }
+.allocation__dot--value { background: var(--accent-value); }
+.allocation__dot--auto { background: var(--accent-auto); }
+.allocation__name { color: var(--text-2); font-weight: 600; }
+.allocation__pct { color: var(--text-3); font-weight: 500; margin-left: 4px; }
+.allocation__amount { color: var(--text-1); font-weight: 600; margin-left: 6px; }
+
+/* 시장 브리핑 카드 그리드 */
+.market-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 22px; }
+.market-card { background: var(--surface-2); border-radius: var(--radius-sm);
+               padding: 14px 16px; border: 1px solid var(--border); }
+.market-card__label { font-size: 11px; color: var(--text-3); font-weight: 600;
+                      text-transform: uppercase; letter-spacing: 0.3px; }
+.market-card__value { font-size: 18px; font-weight: 700; margin-top: 6px; color: var(--text-1); }
+.market-card__chg { font-size: 12px; font-weight: 600; margin-top: 4px; }
+.market-card__chg.up { color: var(--up); }
+.market-card__chg.down { color: var(--down); }
+
+/* 매크로 / AI / 추천 영역 — wrapper로 감쌈 */
+.embed-wrap { padding: 4px 22px 18px; }
+.embed-wrap > div:first-child { margin: 0; padding: 0; background: transparent !important; border: none !important; }
+
+/* 빈 상태 */
+.empty { padding: 36px 22px; text-align: center; color: var(--text-3); font-size: 13px; }
+.empty__icon { font-size: 28px; margin-bottom: 10px; opacity: 0.5; }
+.empty__title { font-weight: 600; color: var(--text-2); font-size: 14px; margin-bottom: 4px; }
+.empty__desc { font-size: 12px; line-height: 1.6; }
+
+/* 다크모드 토글 + 햄버거 */
+.toolbar { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 100; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px;
+            background: var(--surface); color: var(--text-1);
+            border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+            cursor: pointer; font-size: 16px; display: inline-flex;
+            align-items: center; justify-content: center;
+            transition: transform 0.15s, box-shadow 0.15s; }
+.icon-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.hamburger { display: none; }
+
+/* 푸터 */
+.footer { padding: 22px; text-align: center; color: var(--text-3); font-size: 11px; line-height: 1.7; }
+
+/* ── 모바일 반응형 ──────────────────────────── */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%);
+             width: 280px; z-index: 200; transition: transform 0.25s ease;
+             box-shadow: 8px 0 32px rgba(0,0,0,0.2); }
+  .sidebar.is-open { transform: translateX(0); }
+  .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+                      z-index: 150; backdrop-filter: blur(2px); }
+  .sidebar-backdrop.is-open { display: block; }
+  .hamburger { display: inline-flex; }
+  .main { padding: 70px 16px 40px; }
+  .hero { padding: 22px 20px; }
+  .hero__title { font-size: 22px; }
+  .hero__kpi-grid { grid-template-columns: 1fr; gap: 10px; }
+  .hero__kpi-value { font-size: 22px; }
+  .hero__kpi--small .hero__kpi-value { font-size: 17px; }
+  .market-grid { grid-template-columns: repeat(2, 1fr); padding: 14px 16px; gap: 8px; }
+  .section__head { padding: 16px 18px 14px; }
+  .row { padding: 12px 18px; }
+  .row__name { font-size: 14px; }
+  .toolbar { top: 12px; right: 12px; }
+  .embed-wrap { padding: 4px 16px 14px; }
+}
 @media (max-width: 480px) {
-  .summary__total { font-size: 28px; }
-  .holdings__amount { font-size: 19px; }
-  .holding-row { padding: 12px 16px; }
-  .holding-row__name { font-size: 14px; }
+  .market-grid { grid-template-columns: 1fr; }
+  .section__amount { font-size: 19px; }
+  .hero__kpi-value { font-size: 20px; }
 }
 </style>
 <script>
 (function () {
+  // 다크모드 즉시 적용 (FOUC 방지)
   try {
     var saved = localStorage.getItem('dash-theme');
     if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
   } catch (e) {}
+
   document.addEventListener('DOMContentLoaded', function () {
-    var btn = document.createElement('button');
-    btn.className = 'theme-toggle'; btn.title = '테마 전환';
-    function sync() {
-      var dark = document.documentElement.getAttribute('data-theme') === 'dark'
-        || (!document.documentElement.getAttribute('data-theme') &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches);
-      btn.textContent = dark ? '☀' : '☾';
+    // ── 다크모드 토글 + 햄버거 ──
+    var themeBtn = document.querySelector('.theme-toggle');
+    if (themeBtn) {
+      function syncTheme() {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+          || (!document.documentElement.getAttribute('data-theme') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+        themeBtn.textContent = dark ? '☀' : '☾';
+      }
+      themeBtn.onclick = function () {
+        var cur = document.documentElement.getAttribute('data-theme');
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('dash-theme', next); } catch (e) {}
+        syncTheme();
+      };
+      syncTheme();
     }
-    btn.onclick = function () {
-      var cur = document.documentElement.getAttribute('data-theme');
-      var next = cur === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem('dash-theme', next); } catch (e) {}
-      sync();
-    };
-    document.body.appendChild(btn); sync();
+
+    var ham = document.querySelector('.hamburger');
+    var sidebar = document.querySelector('.sidebar');
+    var backdrop = document.querySelector('.sidebar-backdrop');
+    function toggle() {
+      if (!sidebar) return;
+      sidebar.classList.toggle('is-open');
+      if (backdrop) backdrop.classList.toggle('is-open');
+    }
+    if (ham) ham.onclick = toggle;
+    if (backdrop) backdrop.onclick = toggle;
+
+    // ── 사이드바 활성 링크 추적 ──
+    var links = document.querySelectorAll('.sidebar__link[data-target]');
+    var sections = [];
+    links.forEach(function (l) {
+      var t = l.getAttribute('data-target');
+      var s = t ? document.getElementById(t) : null;
+      if (s) sections.push({ link: l, section: s });
+    });
+    function setActive() {
+      var y = window.scrollY + 100;
+      var current = sections[0];
+      sections.forEach(function (e) {
+        if (e.section.offsetTop <= y) current = e;
+      });
+      links.forEach(function (l) { l.classList.remove('is-active'); });
+      if (current) current.link.classList.add('is-active');
+    }
+    window.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+
+    // 사이드바 링크 클릭 시 모바일에서 사이드바 닫기
+    links.forEach(function (l) {
+      l.addEventListener('click', function () {
+        if (window.innerWidth <= 900 && sidebar) {
+          sidebar.classList.remove('is-open');
+          if (backdrop) backdrop.classList.remove('is-open');
+        }
+      });
+    });
   });
 })();
 </script>
@@ -2548,8 +2735,9 @@ def _make_total_summary_section(value_holdings: list, auto_positions: list) -> s
 def _make_value_holdings_section(value_holdings: list) -> str:
     """가치주 보유 섹션 — 미래에셋증권 (HOLDINGS_JSON 기반)."""
     if not value_holdings:
-        return ""
-    # 손익액 큰 순 정렬
+        return _empty_section("value", "💼", "section__icon--value", "가치주 보유",
+                              "미래에셋증권", "등록된 가치주가 없습니다",
+                              "채팅창에서 '한화에어로 10주 180000원에 샀어' 같이 등록하면 표시됩니다.")
     items = sorted(value_holdings, key=lambda h: h.get("profit", 0), reverse=True)
     total_value = sum(h.get("value", 0) for h in items)
     total_cost  = sum(h.get("cost", 0) for h in items)
@@ -2568,41 +2756,41 @@ def _make_value_holdings_section(value_holdings: list) -> str:
         profit = h.get("profit", 0)
         cls = _pnl_class(pct)
         sign = "+" if profit >= 0 else ""
-        # 손절/목표 알림 배지
-        alert_badge = ""
         atype = h.get("type", "")
+        badge = ""
         if atype == "손절":
-            alert_badge = '<span class="holding-row__alert holding-row__alert--cut">손절 경고</span>'
+            badge = '<span class="row__badge row__badge--cut">손절</span>'
         elif atype == "목표1":
-            alert_badge = '<span class="holding-row__alert holding-row__alert--t1">+10%</span>'
+            badge = '<span class="row__badge row__badge--t1">+10%</span>'
         elif atype == "목표2":
-            alert_badge = '<span class="holding-row__alert holding-row__alert--t2">+20%</span>'
+            badge = '<span class="row__badge row__badge--t2">+20%</span>'
         rows.append(f"""
-    <div class="holding-row">
-      <div class="holding-row__main">
-        <div class="holding-row__name">{name}{alert_badge}</div>
-        <div class="holding-row__sub">{qty:,}주 · 평단 {avg:,.0f}원</div>
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">{name}{badge}</div>
+        <div class="row__sub">{qty:,}주 · 평단 {avg:,.0f}원</div>
       </div>
-      <div class="holding-row__price">
-        <div class="holding-row__current">{curr:,.0f}원</div>
-        <div class="holding-row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      <div class="row__price">
+        <div class="row__current">{curr:,.0f}원</div>
+        <div class="row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
       </div>
     </div>""")
 
     return f"""
-<section class="holdings holdings--value" aria-label="가치주 보유">
-  <div class="holdings__head">
-    <div class="holdings__title">
-      <h2>💼 가치주 보유</h2>
-      <span class="holdings__badge">미래에셋증권</span>
-      <span class="holdings__count">{len(items)}종목</span>
+<section class="section" id="value" aria-label="가치주 보유">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--value">💼</span>
+      <h2>가치주 보유</h2>
+      <span class="section__badge">미래에셋증권</span>
+      <span class="section__count">{len(items)}종목</span>
     </div>
-    <div class="holdings__totals">
-      <div class="holdings__amount">{int(round(total_value)):,}원</div>
-      <div class="holdings__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    <div class="section__subtitle">
+      <div class="section__amount">{int(round(total_value)):,}원</div>
+      <div class="section__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
     </div>
   </div>
-  <div class="holdings__list">{"".join(rows)}
+  <div class="section__body">{"".join(rows)}
   </div>
 </section>
 """
@@ -2611,8 +2799,9 @@ def _make_value_holdings_section(value_holdings: list) -> str:
 def _make_auto_positions_section(auto_positions: list) -> str:
     """자동매매 보유 섹션 — 한국투자증권 모의투자 (positions.json 기반)."""
     if not auto_positions:
-        return ""
-    # 현재가/평가 계산
+        return _empty_section("auto", "🤖", "section__icon--auto", "자동매매 보유",
+                              "한국투자증권 (모의)", "아직 매수된 종목이 없습니다",
+                              "평일 09:10 첫 자동매수 후 표시됩니다. 보유 풀 = KR_STOCKS 26종목 + 시장 스캔 상위 50종목.")
     enriched = []
     for p in auto_positions:
         bp = p.get("buy_price", 0); qty = p.get("qty", 0)
@@ -2648,33 +2837,359 @@ def _make_auto_positions_section(auto_positions: list) -> str:
         sign = "+" if profit >= 0 else ""
         partial = " · 1차매도완료" if e.get("partial_sold") else ""
         rows.append(f"""
-    <div class="holding-row">
-      <div class="holding-row__main">
-        <div class="holding-row__name">{name}</div>
-        <div class="holding-row__sub">{qty:,}주 · 매수 {bp:,.0f}원{partial}</div>
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">{name}</div>
+        <div class="row__sub">{qty:,}주 · 매수 {bp:,.0f}원{partial}</div>
       </div>
-      <div class="holding-row__price">
-        <div class="holding-row__current">{cp:,.0f}원</div>
-        <div class="holding-row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      <div class="row__price">
+        <div class="row__current">{cp:,.0f}원</div>
+        <div class="row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
       </div>
     </div>""")
 
     return f"""
-<section class="holdings holdings--auto" aria-label="자동매매 보유">
-  <div class="holdings__head">
-    <div class="holdings__title">
-      <h2>🤖 자동매매 보유</h2>
-      <span class="holdings__badge">한국투자증권 (모의)</span>
-      <span class="holdings__count">{len(enriched)}종목</span>
+<section class="section" id="auto" aria-label="자동매매 보유">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🤖</span>
+      <h2>자동매매 보유</h2>
+      <span class="section__badge">한국투자증권 모의</span>
+      <span class="section__count">{len(enriched)}종목</span>
     </div>
-    <div class="holdings__totals">
-      <div class="holdings__amount">{int(round(total_value)):,}원</div>
-      <div class="holdings__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    <div class="section__subtitle">
+      <div class="section__amount">{int(round(total_value)):,}원</div>
+      <div class="section__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
     </div>
   </div>
-  <div class="holdings__list">{"".join(rows)}
+  <div class="section__body">{"".join(rows)}
   </div>
 </section>
+"""
+
+
+def _empty_section(sid: str, icon: str, icon_cls: str, title: str, badge: str,
+                   empty_title: str, empty_desc: str) -> str:
+    """데이터가 없을 때 안내 메시지를 띄우는 빈 섹션."""
+    return f"""
+<section class="section" id="{sid}" aria-label="{title}">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon {icon_cls}">{icon}</span>
+      <h2>{title}</h2>
+      <span class="section__badge">{badge}</span>
+    </div>
+  </div>
+  <div class="empty">
+    <div class="empty__icon">{icon}</div>
+    <div class="empty__title">{empty_title}</div>
+    <div class="empty__desc">{empty_desc}</div>
+  </div>
+</section>
+"""
+
+
+def _make_hero_header(today: str, time_str: str, mood: dict, fg: dict,
+                      total_value: float, total_pnl: float, total_pct: float) -> str:
+    """대시보드 상단 Hero 헤더 — 그라데이션 배경 + 핵심 KPI."""
+    pnl_cls = _pnl_class(total_pct)
+    sign = "+" if total_pnl >= 0 else ""
+    advice = (mood or {}).get("advice", "") or ""
+    advice_html = f'<div class="hero__advice">{advice}</div>' if advice else ""
+
+    kospi_chg = (mood or {}).get("kospi_chg", 0)
+    kospi_arr = "▲" if kospi_chg >= 0 else "▼"
+    fg_score = (fg or {}).get("score", 50)
+    fg_label = (fg or {}).get("label", "중립")
+
+    if total_value > 0:
+        kpi_main = f"""
+    <div class="hero__kpi">
+      <div class="hero__kpi-label">💼 총 평가 자산</div>
+      <div class="hero__kpi-value">{int(round(total_value)):,}원</div>
+      <div class="hero__kpi-pnl">{sign}{int(round(total_pnl)):,}원<small>({sign}{total_pct:.2f}%)</small></div>
+    </div>"""
+    else:
+        kpi_main = """
+    <div class="hero__kpi">
+      <div class="hero__kpi-label">💼 총 평가 자산</div>
+      <div class="hero__kpi-value">데이터 준비 중</div>
+      <div class="hero__kpi-pnl"><small>봇 첫 실행 후 표시</small></div>
+    </div>"""
+
+    return f"""
+<header class="hero" id="overview">
+  <div class="hero__top">
+    <div>
+      <div class="hero__greeting">투자 비서 v6.0</div>
+      <h1 class="hero__title">대시보드</h1>
+      <div class="hero__date">{today} · {time_str} KST</div>
+    </div>
+    {advice_html}
+  </div>
+  <div class="hero__kpi-grid">
+    {kpi_main}
+    <div class="hero__kpi hero__kpi--small">
+      <div class="hero__kpi-label">코스피</div>
+      <div class="hero__kpi-value">{(mood or {{}}).get('kospi_price', 0):,.2f}</div>
+      <div class="hero__kpi-pnl">{kospi_arr} {abs(kospi_chg):.2f}%</div>
+    </div>
+    <div class="hero__kpi hero__kpi--small">
+      <div class="hero__kpi-label">공포탐욕</div>
+      <div class="hero__kpi-value">{fg_score}</div>
+      <div class="hero__kpi-pnl"><small>{fg_label}</small></div>
+    </div>
+  </div>
+</header>
+"""
+
+
+def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
+    """자산 배분 카드 — 가치주 vs 자동매매 비중 (progress bar)."""
+    v_value = sum(h.get("value", 0) for h in (value_holdings or []))
+    a_value = sum((p.get("curr_price", 0) * p.get("qty", 0)) for p in (auto_positions or []))
+    total = v_value + a_value
+    if total <= 0:
+        return ""
+    v_pct = v_value / total * 100
+    a_pct = a_value / total * 100
+
+    return f"""
+<section class="section" id="allocation" aria-label="자산 배분">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--macro">📊</span>
+      <h2>자산 배분</h2>
+      <span class="section__count">총 {int(round(total)):,}원</span>
+    </div>
+  </div>
+  <div class="allocation">
+    <div class="allocation__bar">
+      <div class="allocation__seg allocation__seg--value" style="width:{v_pct:.1f}%"></div>
+      <div class="allocation__seg allocation__seg--auto" style="width:{a_pct:.1f}%"></div>
+    </div>
+    <div class="allocation__legend">
+      <div class="allocation__item">
+        <span class="allocation__dot allocation__dot--value"></span>
+        <span class="allocation__name">가치주</span>
+        <span class="allocation__pct">{v_pct:.1f}%</span>
+        <span class="allocation__amount">{int(round(v_value)):,}원</span>
+      </div>
+      <div class="allocation__item">
+        <span class="allocation__dot allocation__dot--auto"></span>
+        <span class="allocation__name">자동매매</span>
+        <span class="allocation__pct">{a_pct:.1f}%</span>
+        <span class="allocation__amount">{int(round(a_value)):,}원</span>
+      </div>
+    </div>
+  </div>
+</section>
+"""
+
+
+def _make_market_briefing_card(mood: dict, fg: dict) -> str:
+    """시장 브리핑 카드 — 코스피/S&P500/VIX/달러/유가/공포탐욕."""
+    mood = mood or {}
+    fg = fg or {"score": 50, "label": "중립"}
+    if not mood.get("kospi_price") and not mood.get("vix"):
+        return _empty_section("market", "🌏", "section__icon--market", "시장 브리핑",
+                              "실시간 지표", "데이터 수집 중",
+                              "다음 봇 실행 시 갱신됩니다.")
+
+    def _card(label, value, chg=None, chg_label=None):
+        chg_html = ""
+        if chg is not None:
+            cls = "up" if chg >= 0 else "down"
+            arr = "▲" if chg >= 0 else "▼"
+            chg_html = f'<div class="market-card__chg {cls}">{arr} {abs(chg):.2f}%</div>'
+        elif chg_label:
+            chg_html = f'<div class="market-card__chg" style="color:var(--text-3)">{chg_label}</div>'
+        return f'<div class="market-card"><div class="market-card__label">{label}</div><div class="market-card__value">{value}</div>{chg_html}</div>'
+
+    cards = [
+        _card("코스피", f"{mood.get('kospi_price',0):,.2f}", mood.get("kospi_chg")),
+        _card("S&P 500", "전일 대비", mood.get("sp500_chg")),
+        _card("VIX", f"{mood.get('vix',0):.2f}", chg_label=mood.get("status","")),
+        _card("달러/원", f"{mood.get('usdkrw',0):,.2f}원"),
+        _card("WTI 유가", f"${mood.get('wti',0):.2f}"),
+        _card("공포탐욕", f"{fg.get('score',50)}", chg_label=fg.get("label","중립")),
+    ]
+
+    return f"""
+<section class="section" id="market" aria-label="시장 브리핑">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--market">🌏</span>
+      <h2>시장 브리핑</h2>
+      <span class="section__badge">실시간 지표</span>
+    </div>
+  </div>
+  <div class="market-grid">{"".join(cards)}</div>
+</section>
+"""
+
+
+def _make_ai_card(ai_summary: str, ai_sector: str) -> str:
+    """AI 시장 판단 카드."""
+    if not ai_summary:
+        return _empty_section("ai", "🤖", "section__icon--ai", "AI 시장 판단",
+                              "Claude 분석", "AI 분석이 없습니다",
+                              "08:50 장 시작 전 또는 02:00 시장 스캔 시 갱신됩니다.")
+    sector_html = ""
+    if ai_sector:
+        sector_html = (f'<div style="margin:14px 22px 18px;padding:12px 16px;background:var(--surface-2);'
+                       f'border-radius:10px;font-size:13px;color:var(--text-2);border-left:3px solid var(--accent);">'
+                       f'<b style="color:var(--accent);">섹터 로테이션:</b> {ai_sector}</div>')
+    return f"""
+<section class="section" id="ai" aria-label="AI 시장 판단">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--ai">🤖</span>
+      <h2>AI 시장 판단</h2>
+      <span class="section__badge">Claude</span>
+    </div>
+  </div>
+  <div style="padding:16px 22px;font-size:14px;line-height:1.8;color:var(--text-1);white-space:pre-line;">{ai_summary}</div>
+  {sector_html}
+</section>
+"""
+
+
+def _make_macro_card(macro: dict, ai_macro: str) -> str:
+    """매크로 지표 카드 — 기존 _make_macro_html 출력을 wrapping."""
+    if not macro:
+        return _empty_section("macro", "📈", "section__icon--macro", "미국 경제지표",
+                              "TNX/CPI/DXY", "매크로 데이터 수집 중",
+                              "06:00 미국 마감 또는 08:50 장 시작 전 갱신됩니다.")
+    inner = _make_macro_html(macro, ai_macro)
+    return f"""
+<section class="section" id="macro" aria-label="미국 경제지표">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--macro">📈</span>
+      <h2>미국 경제지표</h2>
+      <span class="section__badge">FRED · Yahoo</span>
+    </div>
+  </div>
+  <div class="embed-wrap">{inner}</div>
+</section>
+"""
+
+
+def _make_recommend_card(kr_top: list, ai_insights: dict) -> str:
+    """가치주 추천 TOP 5 카드 — 기존 card_html 활용."""
+    if not kr_top:
+        return _empty_section("recommend", "🇰🇷", "section__icon--rec", "가치주 추천 TOP 5",
+                              "오늘의 매수 후보", "추천 데이터 준비 중",
+                              "평일 02:00 시장 스캔 + 08:50 장 시작 전 분석 후 표시됩니다.")
+    cards = "".join(card_html(i, s, (ai_insights or {}).get(s.get('ticker',''), "")) for i, s in enumerate(kr_top))
+    return f"""
+<section class="section" id="recommend" aria-label="가치주 추천 TOP 5">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--rec">🇰🇷</span>
+      <h2>가치주 추천 TOP 5</h2>
+      <span class="section__badge">오늘의 매수 후보</span>
+    </div>
+  </div>
+  <div class="embed-wrap">{cards}</div>
+</section>
+"""
+
+
+def _make_avoid_card(avoid: list) -> str:
+    """오늘 피해야 할 종목 카드."""
+    if not avoid:
+        return ""
+    items = "".join(
+        f'<div class="row"><div class="row__main">'
+        f'<div class="row__name">{a["name"]} <span style="color:var(--text-3);font-weight:400;font-size:12px;">({a.get("ticker","")})</span></div>'
+        f'<div class="row__sub">RSI {a.get("rsi","-")} · 1달 {a.get("ret_1m",0):+.1f}% · 거래량 {a.get("vol_ratio",0):.0f}%</div>'
+        f'</div></div>'
+        for a in avoid[:5]
+    )
+    return f"""
+<section class="section" id="avoid" aria-label="피해야 할 종목">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--alert">🚫</span>
+      <h2>오늘 피해야 할 종목</h2>
+      <span class="section__badge">관망 권장</span>
+      <span class="section__count">{len(avoid[:5])}종목</span>
+    </div>
+  </div>
+  <div class="section__body">{items}</div>
+</section>
+"""
+
+
+def _make_dart_card(dart_alerts: list) -> str:
+    """DART 공시 알림 카드 — 기존 dart_alerts_section_html 활용."""
+    if not dart_alerts:
+        return ""
+    inner = dart_alerts_section_html(dart_alerts)
+    return f"""
+<section class="section" id="dart" aria-label="DART 공시 알림">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--alert">📢</span>
+      <h2>DART 공시 알림</h2>
+      <span class="section__badge">금융감독원</span>
+      <span class="section__count">{len(dart_alerts)}건</span>
+    </div>
+  </div>
+  <div class="embed-wrap">{inner}</div>
+</section>
+"""
+
+
+def _make_sidebar(sections_status: dict, last_update: str) -> str:
+    """좌측 사이드바 — 섹션 네비게이션 (활성/비활성 표시)."""
+    items = [
+        ("overview", "🏠", "개요", True),
+        ("value", "💼", "가치주", sections_status.get("value", False)),
+        ("auto", "🤖", "자동매매", sections_status.get("auto", False)),
+        ("allocation", "📊", "자산 배분", sections_status.get("allocation", False)),
+        ("market", "🌏", "시장", sections_status.get("market", False)),
+        ("macro", "📈", "매크로", sections_status.get("macro", False)),
+        ("ai", "🤖", "AI 분석", sections_status.get("ai", False)),
+        ("recommend", "🇰🇷", "추천", sections_status.get("recommend", False)),
+        ("avoid", "🚫", "회피", sections_status.get("avoid", False)),
+        ("dart", "📢", "공시", sections_status.get("dart", False)),
+    ]
+    badge_html = '<span class="sidebar__link-badge">대기</span>'
+    links = []
+    for sid, icon, label, active in items:
+        cls = "sidebar__link"
+        attr = f'data-target="{sid}" href="#{sid}"'
+        if not active:
+            cls += " is-disabled"
+            attr = ''  # 클릭 비활성
+        suffix = "" if active else badge_html
+        links.append(
+            f'<a class="{cls}" {attr}>'
+            f'<span class="sidebar__link-icon">{icon}</span>'
+            f'<span class="sidebar__link-label">{label}</span>'
+            f'{suffix}'
+            f'</a>'
+        )
+
+    return f"""
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <span class="sidebar__brand-icon">📊</span>
+    <span>투자 비서</span>
+  </div>
+  <nav class="sidebar__nav">
+    <div class="sidebar__section-title">대시보드</div>
+    {"".join(links)}
+  </nav>
+  <div class="sidebar__footer">
+    <span>마지막 갱신</span>
+    <span style="color:rgba(255,255,255,0.7);font-weight:600;">{last_update}</span>
+  </div>
+</aside>
+<div class="sidebar-backdrop"></div>
 """
 
 
@@ -2694,10 +3209,9 @@ def build_and_save_dashboard(
 ) -> str:
     """대시보드 HTML 생성 + docs/index.html 저장.
 
-    부분 데이터로 호출 가능 (누락된 건 캐시에서 보충). 매 모드 실행 후 호출됨.
-    GitHub Pages가 docs/index.html을 자동 노출 — 사용자는 URL 하나로 모든 정보 확인.
-
-    레이아웃: 헤더 → 총 자산 요약 → 가치주(미래에셋) → 자동매매(한국투자) → AI/시장/추천/공시 → 푸터
+    풀 대시보드 디자인: 좌측 사이드바 (섹션 네비) + Hero 헤더 (KPI) + 카드 그리드.
+    부분 데이터로 호출 가능 (누락된 건 캐시에서 보충).
+    GitHub Pages가 docs/index.html을 자동 노출 — staticrypt로 비밀번호 보호.
     """
     try:
         # ── 데이터 누락 보충 ─────────────────────
@@ -2707,21 +3221,17 @@ def build_and_save_dashboard(
             try:
                 mood = get_market_mood()
             except Exception:
-                mood = {"kospi_chg": 0, "kospi_price": 0, "sp500_chg": 0, "vix": 20,
-                        "usdkrw": 1300, "wti": 75, "gold": 2000, "status": "확인불가",
-                        "advice": "데이터 수집 실패"}
+                mood = {}
         if fg is None:
             try:
-                fg = get_fear_greed(mood)
+                fg = get_fear_greed(mood) if mood else {"score": 50, "label": "중립"}
             except Exception:
                 fg = {"score": 50, "label": "중립"}
-        # 가치주 보유 (HOLDINGS_JSON → check_holdings_alerts 결과 활용)
         if holdings_alerts is None:
             try:
                 holdings_alerts = check_holdings_alerts()
             except Exception:
                 holdings_alerts = []
-        # 자동매매 보유 (positions.json)
         auto_positions = []
         try:
             pos = load_positions()
@@ -2736,42 +3246,98 @@ def build_and_save_dashboard(
         except Exception:
             pass
 
-        # ── base HTML (기존 make_report 활용 — 시장/AI/추천/공시) ─────
-        html = make_report(
-            kr_top=kr_top or [], us_top=us_top or [], avoid=avoid or [],
-            mood=mood,
-            dart_alerts=dart_alerts or [],
-            ai_summary=ai_summary, ai_sector=ai_sector,
-            fg=fg, ai_insights=ai_insights or {},
-            macro=macro, ai_macro=ai_macro,
-        )
+        # ── 합계 계산 (Hero 헤더용) ─────────────
+        v_value = sum(h.get("value", 0) for h in (holdings_alerts or []))
+        v_cost  = sum(h.get("cost", 0) for h in (holdings_alerts or []))
+        a_value, a_cost = 0.0, 0.0
+        for p in auto_positions:
+            bp = p.get("buy_price", 0); qty = p.get("qty", 0)
+            cp = p.get("curr_price", 0)
+            if cp <= 0:
+                try:
+                    if _kis.available():
+                        pi = _kis.get_price(p.get("code", ""))
+                        cp = _safe_float(pi.get("stck_prpr")) if pi else 0
+                except Exception:
+                    cp = 0
+                p["curr_price"] = cp  # 캐시
+            a_value += cp * qty
+            a_cost  += bp * qty
+        total_value = v_value + a_value
+        total_cost  = v_cost + a_cost
+        total_pnl   = total_value - total_cost
+        total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
 
-        # ── 디자인 시스템 CSS + 다크모드 토글 주입 ─────
-        html = html.replace("<head>", "<head>\n" + _dashboard_css(), 1)
+        # ── 섹션별 데이터 존재 여부 (사이드바 활성 표시) ─────
+        sections_status = {
+            "value": bool(holdings_alerts),
+            "auto": bool(auto_positions),
+            "allocation": (v_value > 0 or a_value > 0),
+            "market": bool(mood and (mood.get("kospi_price") or mood.get("vix"))),
+            "macro": bool(macro),
+            "ai": bool(ai_summary),
+            "recommend": bool(kr_top),
+            "avoid": bool(avoid),
+            "dart": bool(dart_alerts),
+        }
 
-        # ── 새 섹션들 (총자산 / 가치주 / 자동매매) — 헤더 직후 삽입 ─────
-        summary_html = _make_total_summary_section(holdings_alerts or [], auto_positions)
-        value_html   = _make_value_holdings_section(holdings_alerts or [])
-        auto_html    = _make_auto_positions_section(auto_positions)
+        # ── 날짜/시간 ─────
+        today = _now_kst().strftime("%Y년 %m월 %d일 (%a)")
+        time_str = _now_kst().strftime("%H:%M")
+        last_update = _now_kst().strftime("%m/%d %H:%M")
 
-        # 헤더 그라데이션 div가 끝나는 직후에 새 섹션 삽입
-        # make_report의 헤더는 "</div>" + "{ai_section}" 패턴
-        marker = "</div>\n\n  "  # 헤더 div 닫는 부분
-        idx = html.find(marker)
-        if idx > 0:
-            after_header = idx + len(marker)
-            html = html[:after_header] + summary_html + value_html + auto_html + html[after_header:]
-        else:
-            # fallback: body 직후에 삽입
-            html = html.replace("<body>", "<body>\n" + summary_html + value_html + auto_html, 1)
+        # ── 섹션 HTML 생성 ─────
+        hero_html = _make_hero_header(today, time_str, mood, fg, total_value, total_pnl, total_pct)
+        value_html = _make_value_holdings_section(holdings_alerts or [])
+        auto_html = _make_auto_positions_section(auto_positions)
+        allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
+        market_html = _make_market_briefing_card(mood, fg)
+        macro_html = _make_macro_card(macro, ai_macro)
+        ai_html = _make_ai_card(ai_summary, ai_sector)
+        recommend_html = _make_recommend_card(kr_top, ai_insights)
+        avoid_html = _make_avoid_card(avoid or [])
+        dart_html = _make_dart_card(dart_alerts or [])
+        sidebar_html = _make_sidebar(sections_status, last_update)
 
-        # ── 자동 새로고침 (5분) + 다크모드 메타 ─────
-        html = html.replace(
-            "<head>",
-            "<head>\n<meta http-equiv=\"refresh\" content=\"300\">"
-            "\n<meta name=\"color-scheme\" content=\"light dark\">",
-            1,
-        )
+        # ── 풀 HTML 조립 ─────
+        html = f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="300">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<title>투자 비서 — 대시보드</title>
+{_dashboard_css()}
+</head>
+<body>
+<div class="toolbar">
+  <button class="icon-btn hamburger" aria-label="메뉴">☰</button>
+  <button class="icon-btn theme-toggle" aria-label="테마 전환">☾</button>
+</div>
+<div class="app">
+{sidebar_html}
+<main class="main">
+{hero_html}
+{allocation_html}
+{value_html}
+{auto_html}
+{market_html}
+{macro_html}
+{ai_html}
+{recommend_html}
+{avoid_html}
+{dart_html}
+<div class="footer">
+  ⚠️ 본 대시보드는 자동 분석된 참고 정보입니다. 최종 투자 판단은 본인이 직접 하세요.<br>
+  투자 손익의 책임은 전적으로 투자자 본인에게 있으며 어떤 수익도 보장하지 않습니다.<br>
+  5분마다 자동 새로고침
+</div>
+</main>
+</div>
+</body>
+</html>"""
 
         # 저장
         os.makedirs(os.path.dirname(DASHBOARD_HTML_PATH), exist_ok=True)
@@ -2781,6 +3347,8 @@ def build_and_save_dashboard(
         return html
     except Exception as e:
         print(f"  [대시보드] 생성 오류: {e}")
+        import traceback
+        traceback.print_exc()
         return ""
 
 
