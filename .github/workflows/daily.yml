@@ -64,7 +64,16 @@ jobs:
             python stock.py "$MODE"
           fi
       - name: 성과 기록 + 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add performance.json docs/ || true
@@ -87,7 +96,16 @@ jobs:
       - name: 미국 마감 브리핑
         run: python stock.py --usclose
       - name: 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ || true
@@ -110,7 +128,16 @@ jobs:
       - name: 장전 브리핑
         run: python stock.py --premarket
       - name: 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ || true
@@ -133,7 +160,16 @@ jobs:
       - name: 마감 결산
         run: python stock.py --close
       - name: 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ || true
@@ -172,7 +208,16 @@ jobs:
       - name: 자동 매수 (스윙)
         run: python stock.py --autobuy
       - name: 포지션 + 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json docs/ || true
@@ -195,7 +240,16 @@ jobs:
       - name: 자동 매도 (조건 점검)
         run: python stock.py --autosell
       - name: 포지션 + 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json docs/ || true
@@ -223,7 +277,16 @@ jobs:
           fi
           python backtest.py "$MONTHS"
       - name: 결과 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add backtest_results.json || true
@@ -246,7 +309,16 @@ jobs:
       - name: 시장 전체 스캔
         run: python stock.py --marketscan
       - name: 스캔 결과 + 대시보드 커밋
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
+          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
+          if [ -f docs/index.html ]; then
+            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
+              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
+              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            fi
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add market_scan_cache.json docs/ || true
