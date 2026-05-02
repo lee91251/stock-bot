@@ -1,3 +1,8 @@
 .claude/
 test_kis.py
 .backtest_cache/
+
+# 보유종목 (저장소 외부에 두지만 안전망)
+holdings_local.json
+holdings_user.json
+

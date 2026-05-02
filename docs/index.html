@@ -2,26 +2,304 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="60">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="300">
+<meta name="color-scheme" content="light dark">
 <title>AI 투자 비서 — 대시보드</title>
+
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
-         max-width: 720px; margin: 40px auto; padding: 24px; background: #f8f9fa; color: #1a1a1a; }
-  .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  h1 { font-size: 22px; margin: 0 0 8px; }
-  p { line-height: 1.6; color: #495057; }
-  code { background: #f1f3f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f8f9fa;
+  --text-1: #0a0e1a;
+  --text-2: #495057;
+  --text-3: #868e96;
+  --border: #e9ecef;
+  --up: #e03131;
+  --down: #1971c2;
+  --neutral: #495057;
+  --accent-value: #1a3a5c;
+  --accent-auto: #0c8a8a;
+  --shadow: 0 1px 3px rgba(10,14,26,0.04), 0 4px 16px rgba(10,14,26,0.05);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0e1a;
+    --surface: #131826;
+    --surface-2: #1a1f2e;
+    --text-1: #e9ecef;
+    --text-2: #adb5bd;
+    --text-3: #6c757d;
+    --border: #2a3142;
+    --up: #ff6b6b;
+    --down: #4dabf7;
+    --neutral: #adb5bd;
+    --accent-value: #748ffc;
+    --accent-auto: #38d9a9;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.4);
+  }
+}
+[data-theme="dark"] {
+  --bg: #0a0e1a;
+  --surface: #131826;
+  --surface-2: #1a1f2e;
+  --text-1: #e9ecef;
+  --text-2: #adb5bd;
+  --text-3: #6c757d;
+  --border: #2a3142;
+  --up: #ff6b6b;
+  --down: #4dabf7;
+  --neutral: #adb5bd;
+  --accent-value: #748ffc;
+  --accent-auto: #38d9a9;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.4);
+}
+body { background: var(--bg) !important; color: var(--text-1) !important;
+       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Pretendard",
+       "Apple SD Gothic Neo", "맑은 고딕", sans-serif !important;
+       -webkit-font-smoothing: antialiased; margin: 0; padding-bottom: 40px; }
+.dash-wrap { max-width: 720px; margin: 0 auto; padding: 12px 0; }
+.theme-toggle { position: fixed; top: 12px; right: 12px; width: 40px; height: 40px;
+                border-radius: 50%; background: var(--surface); color: var(--text-1);
+                border: 1px solid var(--border); box-shadow: var(--shadow);
+                cursor: pointer; font-size: 16px; line-height: 38px; text-align: center;
+                z-index: 100; transition: transform 0.2s; }
+.theme-toggle:hover { transform: scale(1.05); }
+
+.summary { background: var(--surface); margin: 12px; padding: 24px 20px;
+           border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
+.summary__label { color: var(--text-3); font-size: 13px; font-weight: 500; letter-spacing: 0.2px; }
+.summary__total { font-size: 34px; font-weight: 700; margin-top: 6px;
+                  letter-spacing: -0.8px; color: var(--text-1); }
+.summary__pnl { font-size: 16px; font-weight: 600; margin-top: 6px; }
+.summary__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; }
+.summary__pnl.up { color: var(--up); }
+.summary__pnl.down { color: var(--down); }
+.summary__pnl.flat { color: var(--neutral); }
+.summary__split { display: flex; gap: 16px; justify-content: center; margin-top: 18px;
+                  padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.summary__chip { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+.summary__chip small { color: var(--text-3); margin-left: 2px; font-weight: 500; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot--value { background: var(--accent-value); }
+.dot--auto { background: var(--accent-auto); }
+
+.holdings { background: var(--surface); margin: 12px; border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden; }
+.holdings--value::before { content: ""; display: block; height: 3px; background: var(--accent-value); }
+.holdings--auto::before { content: ""; display: block; height: 3px; background: var(--accent-auto); }
+.holdings__head { padding: 16px 20px 14px; border-bottom: 1px solid var(--border); }
+.holdings__title { display: flex; align-items: center; gap: 10px; }
+.holdings__title h2 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+.holdings__badge { padding: 3px 9px; background: var(--surface-2); border-radius: 99px;
+                   font-size: 11px; color: var(--text-3); font-weight: 500; }
+.holdings__count { margin-left: auto; font-size: 12px; color: var(--text-3); font-weight: 500; }
+.holdings__totals { display: flex; align-items: baseline; gap: 12px; margin-top: 12px; }
+.holdings__amount { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.5px; }
+.holdings__pnl { font-size: 14px; font-weight: 600; }
+.holdings__pnl.up { color: var(--up); }
+.holdings__pnl.down { color: var(--down); }
+.holdings__pnl.flat { color: var(--neutral); }
+.holdings__list { display: flex; flex-direction: column; }
+.holding-row { display: flex; justify-content: space-between; align-items: center;
+               padding: 13px 20px; border-bottom: 1px solid var(--border); gap: 12px; }
+.holding-row:last-child { border-bottom: none; }
+.holding-row__main { flex: 1; min-width: 0; }
+.holding-row__name { font-weight: 600; font-size: 15px; color: var(--text-1);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.holding-row__sub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+.holding-row__price { text-align: right; flex-shrink: 0; }
+.holding-row__current { font-weight: 600; font-size: 15px; color: var(--text-1); }
+.holding-row__pnl { font-size: 13px; font-weight: 600; margin-top: 3px; white-space: nowrap; }
+.holding-row__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; font-size: 12px; }
+.holding-row__pnl.up { color: var(--up); }
+.holding-row__pnl.down { color: var(--down); }
+.holding-row__pnl.flat { color: var(--neutral); }
+.holding-row__alert { display: inline-block; padding: 2px 8px; margin-left: 6px;
+                      border-radius: 6px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+.holding-row__alert--cut { background: rgba(224,49,49,0.12); color: var(--up); }
+.holding-row__alert--t1 { background: rgba(224,49,49,0.12); color: var(--up); }
+.holding-row__alert--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
+
+.holdings__empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 14px; }
+
+@media (max-width: 480px) {
+  .summary__total { font-size: 28px; }
+  .holdings__amount { font-size: 19px; }
+  .holding-row { padding: 12px 16px; }
+  .holding-row__name { font-size: 14px; }
+}
 </style>
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem('dash-theme');
+    if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) {}
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.createElement('button');
+    btn.className = 'theme-toggle'; btn.title = '테마 전환';
+    function sync() {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+        || (!document.documentElement.getAttribute('data-theme') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+      btn.textContent = dark ? '☀' : '☾';
+    }
+    btn.onclick = function () {
+      var cur = document.documentElement.getAttribute('data-theme');
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('dash-theme', next); } catch (e) {}
+      sync();
+    };
+    document.body.appendChild(btn); sync();
+  });
+})();
+</script>
+
 </head>
 <body>
-<div class="card">
-  <h1>📊 AI 투자 비서 — 대시보드</h1>
-  <p>봇이 처음 실행되면 이 페이지가 자동으로 갱신됩니다.</p>
-  <p>다음 봇 실행 (예: 평일 06:00 미국 마감 / 08:50 장 시작 전 / 09:10 자동매수) 후 새로고침하면 최신 정보가 표시됩니다.</p>
-  <p style="color:#868e96; font-size: 13px; margin-top: 24px;">
-    이 페이지는 1분마다 자동 새로고침됩니다.
-  </p>
+<div class="dash-wrap">
+<header style="text-align:center;padding:24px 16px 8px;">
+<div style="font-size:13px;color:var(--text-3);font-weight:500;">AI 투자 비서</div>
+<h1 style="margin:6px 0 4px;font-size:22px;font-weight:700;letter-spacing:-0.3px;">대시보드</h1>
+<div style="font-size:12px;color:var(--text-3);">미리보기 — 봇 첫 가동(5/4 월) 후 실시간 데이터로 자동 갱신</div>
+</header>
+
+<section class="summary" aria-label="총 평가 자산">
+  <div class="summary__label">💼 총 평가 자산</div>
+  <div class="summary__total">31,346,150원</div>
+  <div class="summary__pnl up">+9,679,247원
+    <small>(+44.67%)</small></div>
+  
+</section>
+
+
+<section class="holdings holdings--value" aria-label="가치주 보유">
+  <div class="holdings__head">
+    <div class="holdings__title">
+      <h2>💼 가치주 보유</h2>
+      <span class="holdings__badge">미래에셋증권</span>
+      <span class="holdings__count">10종목</span>
+    </div>
+    <div class="holdings__totals">
+      <div class="holdings__amount">31,346,150원</div>
+      <div class="holdings__pnl up">+9,679,247원 (+44.67%)</div>
+    </div>
+  </div>
+  <div class="holdings__list">
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">두산에너빌리티</div>
+        <div class="holding-row__sub">80주 · 평단 65,364원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">127,100원</div>
+        <div class="holding-row__pnl up">+4,938,852원<small>(+94.83%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">롯데에너지머티리얼즈</div>
+        <div class="holding-row__sub">48주 · 평단 42,139원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">67,500원</div>
+        <div class="holding-row__pnl up">+1,217,330원<small>(+60.38%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">GS건설</div>
+        <div class="holding-row__sub">73주 · 평단 27,146원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">38,350원</div>
+        <div class="holding-row__pnl up">+817,889원<small>(+41.39%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">한화솔루션</div>
+        <div class="holding-row__sub">52주 · 평단 37,579원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">50,500원</div>
+        <div class="holding-row__pnl up">+671,900원<small>(+34.48%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">LG화학</div>
+        <div class="holding-row__sub">6주 · 평단 305,819원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">398,000원</div>
+        <div class="holding-row__pnl up">+553,089원<small>(+30.22%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">SK이노베이션</div>
+        <div class="holding-row__sub">17주 · 평단 115,102원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">146,800원</div>
+        <div class="holding-row__pnl up">+538,868원<small>(+27.61%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">SKC</div>
+        <div class="holding-row__sub">20주 · 평단 96,244원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">118,100원</div>
+        <div class="holding-row__pnl up">+437,121원<small>(+22.77%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">HD한국조선해양</div>
+        <div class="holding-row__sub">5주 · 평단 388,957원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">465,000원</div>
+        <div class="holding-row__pnl up">+380,214원<small>(+19.60%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">삼성전자</div>
+        <div class="holding-row__sub">4주 · 평단 203,458원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">222,500원</div>
+        <div class="holding-row__pnl up">+76,167원<small>(+9.38%)</small></div>
+      </div>
+    </div>
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">보령</div>
+        <div class="holding-row__sub">200주 · 평단 10,021원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">10,260원</div>
+        <div class="holding-row__pnl up">+47,767원<small>(+2.39%)</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<div style="text-align:center;color:var(--text-3);font-size:12px;margin:24px 16px;line-height:1.7;">
+🤖 자동매매 보유는 5/4(월) 09:10 첫 매수 후 표시됩니다.<br>
+시장 브리핑/AI 판단/추천 종목은 다음 봇 실행 시 추가됩니다.<br>
+<span style="color:var(--text-3);opacity:0.7;">⚠️ 본 페이지는 참고용입니다. 투자 판단은 본인이 직접.</span>
+</div>
 </div>
 </body>
 </html>

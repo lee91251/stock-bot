@@ -1824,6 +1824,9 @@ def check_holdings_alerts() -> list:
                 "name": name, "code": code, "type": "정상",
                 "pct": pct, "curr_price": curr_price,
                 "avg_price": avg_price, "profit": profit,
+                "qty": qty,
+                "value": curr_price * qty,
+                "cost": avg_price * qty,
             }
             if pct <= -7:
                 entry["type"] = "손절"
@@ -2309,6 +2312,372 @@ def _make_macro_html(macro: dict, ai_macro: str) -> str:
   </div>"""
 
 
+def _dashboard_css() -> str:
+    """대시보드 디자인 시스템 — CSS 변수, 다크모드 자동 감지, 카드 스타일."""
+    return """
+<style>
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f8f9fa;
+  --text-1: #0a0e1a;
+  --text-2: #495057;
+  --text-3: #868e96;
+  --border: #e9ecef;
+  --up: #e03131;
+  --down: #1971c2;
+  --neutral: #495057;
+  --accent-value: #1a3a5c;
+  --accent-auto: #0c8a8a;
+  --shadow: 0 1px 3px rgba(10,14,26,0.04), 0 4px 16px rgba(10,14,26,0.05);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0e1a;
+    --surface: #131826;
+    --surface-2: #1a1f2e;
+    --text-1: #e9ecef;
+    --text-2: #adb5bd;
+    --text-3: #6c757d;
+    --border: #2a3142;
+    --up: #ff6b6b;
+    --down: #4dabf7;
+    --neutral: #adb5bd;
+    --accent-value: #748ffc;
+    --accent-auto: #38d9a9;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.4);
+  }
+}
+[data-theme="dark"] {
+  --bg: #0a0e1a;
+  --surface: #131826;
+  --surface-2: #1a1f2e;
+  --text-1: #e9ecef;
+  --text-2: #adb5bd;
+  --text-3: #6c757d;
+  --border: #2a3142;
+  --up: #ff6b6b;
+  --down: #4dabf7;
+  --neutral: #adb5bd;
+  --accent-value: #748ffc;
+  --accent-auto: #38d9a9;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.4);
+}
+body { background: var(--bg) !important; color: var(--text-1) !important;
+       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Pretendard",
+       "Apple SD Gothic Neo", "맑은 고딕", sans-serif !important;
+       -webkit-font-smoothing: antialiased; margin: 0; padding-bottom: 40px; }
+.dash-wrap { max-width: 720px; margin: 0 auto; padding: 12px 0; }
+.theme-toggle { position: fixed; top: 12px; right: 12px; width: 40px; height: 40px;
+                border-radius: 50%; background: var(--surface); color: var(--text-1);
+                border: 1px solid var(--border); box-shadow: var(--shadow);
+                cursor: pointer; font-size: 16px; line-height: 38px; text-align: center;
+                z-index: 100; transition: transform 0.2s; }
+.theme-toggle:hover { transform: scale(1.05); }
+
+.summary { background: var(--surface); margin: 12px; padding: 24px 20px;
+           border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
+.summary__label { color: var(--text-3); font-size: 13px; font-weight: 500; letter-spacing: 0.2px; }
+.summary__total { font-size: 34px; font-weight: 700; margin-top: 6px;
+                  letter-spacing: -0.8px; color: var(--text-1); }
+.summary__pnl { font-size: 16px; font-weight: 600; margin-top: 6px; }
+.summary__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; }
+.summary__pnl.up { color: var(--up); }
+.summary__pnl.down { color: var(--down); }
+.summary__pnl.flat { color: var(--neutral); }
+.summary__split { display: flex; gap: 16px; justify-content: center; margin-top: 18px;
+                  padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.summary__chip { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+.summary__chip small { color: var(--text-3); margin-left: 2px; font-weight: 500; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot--value { background: var(--accent-value); }
+.dot--auto { background: var(--accent-auto); }
+
+.holdings { background: var(--surface); margin: 12px; border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden; }
+.holdings--value::before { content: ""; display: block; height: 3px; background: var(--accent-value); }
+.holdings--auto::before { content: ""; display: block; height: 3px; background: var(--accent-auto); }
+.holdings__head { padding: 16px 20px 14px; border-bottom: 1px solid var(--border); }
+.holdings__title { display: flex; align-items: center; gap: 10px; }
+.holdings__title h2 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
+.holdings__badge { padding: 3px 9px; background: var(--surface-2); border-radius: 99px;
+                   font-size: 11px; color: var(--text-3); font-weight: 500; }
+.holdings__count { margin-left: auto; font-size: 12px; color: var(--text-3); font-weight: 500; }
+.holdings__totals { display: flex; align-items: baseline; gap: 12px; margin-top: 12px; }
+.holdings__amount { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.5px; }
+.holdings__pnl { font-size: 14px; font-weight: 600; }
+.holdings__pnl.up { color: var(--up); }
+.holdings__pnl.down { color: var(--down); }
+.holdings__pnl.flat { color: var(--neutral); }
+.holdings__list { display: flex; flex-direction: column; }
+.holding-row { display: flex; justify-content: space-between; align-items: center;
+               padding: 13px 20px; border-bottom: 1px solid var(--border); gap: 12px; }
+.holding-row:last-child { border-bottom: none; }
+.holding-row__main { flex: 1; min-width: 0; }
+.holding-row__name { font-weight: 600; font-size: 15px; color: var(--text-1);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.holding-row__sub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+.holding-row__price { text-align: right; flex-shrink: 0; }
+.holding-row__current { font-weight: 600; font-size: 15px; color: var(--text-1); }
+.holding-row__pnl { font-size: 13px; font-weight: 600; margin-top: 3px; white-space: nowrap; }
+.holding-row__pnl small { font-weight: 500; opacity: 0.85; margin-left: 4px; font-size: 12px; }
+.holding-row__pnl.up { color: var(--up); }
+.holding-row__pnl.down { color: var(--down); }
+.holding-row__pnl.flat { color: var(--neutral); }
+.holding-row__alert { display: inline-block; padding: 2px 8px; margin-left: 6px;
+                      border-radius: 6px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+.holding-row__alert--cut { background: rgba(224,49,49,0.12); color: var(--up); }
+.holding-row__alert--t1 { background: rgba(224,49,49,0.12); color: var(--up); }
+.holding-row__alert--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
+
+.holdings__empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 14px; }
+
+@media (max-width: 480px) {
+  .summary__total { font-size: 28px; }
+  .holdings__amount { font-size: 19px; }
+  .holding-row { padding: 12px 16px; }
+  .holding-row__name { font-size: 14px; }
+}
+</style>
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem('dash-theme');
+    if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) {}
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.createElement('button');
+    btn.className = 'theme-toggle'; btn.title = '테마 전환';
+    function sync() {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+        || (!document.documentElement.getAttribute('data-theme') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+      btn.textContent = dark ? '☀' : '☾';
+    }
+    btn.onclick = function () {
+      var cur = document.documentElement.getAttribute('data-theme');
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('dash-theme', next); } catch (e) {}
+      sync();
+    };
+    document.body.appendChild(btn); sync();
+  });
+})();
+</script>
+"""
+
+
+def _fmt_money_kr(v: float) -> str:
+    """금액 한국어 포맷. 음수도 처리."""
+    try:
+        return f"{int(round(v)):+,}" if v < 0 else f"{int(round(v)):,}"
+    except Exception:
+        return "0"
+
+
+def _pnl_class(pct: float) -> str:
+    """손익률 → CSS 클래스 (한국식: 빨강 상승, 파랑 하락)."""
+    if pct > 0.01:
+        return "up"
+    if pct < -0.01:
+        return "down"
+    return "flat"
+
+
+def _make_total_summary_section(value_holdings: list, auto_positions: list) -> str:
+    """총 자산 요약 섹션 — 가치주+자동매매 합계."""
+    v_value = sum(h.get("value", 0) for h in (value_holdings or []))
+    v_cost  = sum(h.get("cost", 0) for h in (value_holdings or []))
+    v_pnl   = v_value - v_cost
+    v_pct   = (v_pnl / v_cost * 100) if v_cost > 0 else 0
+
+    a_value, a_cost = 0.0, 0.0
+    for p in (auto_positions or []):
+        bp = p.get("buy_price", 0); qty = p.get("qty", 0)
+        cp = p.get("curr_price", 0)
+        a_value += cp * qty
+        a_cost  += bp * qty
+    a_pnl = a_value - a_cost
+    a_pct = (a_pnl / a_cost * 100) if a_cost > 0 else 0
+
+    total_value = v_value + a_value
+    total_cost  = v_cost + a_cost
+    total_pnl   = total_value - total_cost
+    total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+
+    if total_cost <= 0:
+        return ""
+
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    chips = []
+    if v_cost > 0:
+        v_cls = _pnl_class(v_pct)
+        chips.append(
+            f'<div class="summary__chip"><span class="dot dot--value"></span>'
+            f'가치주 {int(round(v_value)):,}원 '
+            f'<small class="{v_cls}">({"+" if v_pct>=0 else ""}{v_pct:.2f}%)</small></div>'
+        )
+    if a_cost > 0:
+        a_cls = _pnl_class(a_pct)
+        chips.append(
+            f'<div class="summary__chip"><span class="dot dot--auto"></span>'
+            f'자동매매 {int(round(a_value)):,}원 '
+            f'<small class="{a_cls}">({"+" if a_pct>=0 else ""}{a_pct:.2f}%)</small></div>'
+        )
+    split_html = (
+        f'<div class="summary__split">{"".join(chips)}</div>'
+        if len(chips) >= 2 else ""
+    )
+
+    return f"""
+<section class="summary" aria-label="총 평가 자산">
+  <div class="summary__label">💼 총 평가 자산</div>
+  <div class="summary__total">{int(round(total_value)):,}원</div>
+  <div class="summary__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원
+    <small>({pnl_sign}{total_pct:.2f}%)</small></div>
+  {split_html}
+</section>
+"""
+
+
+def _make_value_holdings_section(value_holdings: list) -> str:
+    """가치주 보유 섹션 — 미래에셋증권 (HOLDINGS_JSON 기반)."""
+    if not value_holdings:
+        return ""
+    # 손익액 큰 순 정렬
+    items = sorted(value_holdings, key=lambda h: h.get("profit", 0), reverse=True)
+    total_value = sum(h.get("value", 0) for h in items)
+    total_cost  = sum(h.get("cost", 0) for h in items)
+    total_pnl   = total_value - total_cost
+    total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    rows = []
+    for h in items:
+        name = h.get("name", h.get("code", ""))
+        qty = int(h.get("qty", 0))
+        avg = h.get("avg_price", 0)
+        curr = h.get("curr_price", 0)
+        pct = h.get("pct", 0)
+        profit = h.get("profit", 0)
+        cls = _pnl_class(pct)
+        sign = "+" if profit >= 0 else ""
+        # 손절/목표 알림 배지
+        alert_badge = ""
+        atype = h.get("type", "")
+        if atype == "손절":
+            alert_badge = '<span class="holding-row__alert holding-row__alert--cut">손절 경고</span>'
+        elif atype == "목표1":
+            alert_badge = '<span class="holding-row__alert holding-row__alert--t1">+10%</span>'
+        elif atype == "목표2":
+            alert_badge = '<span class="holding-row__alert holding-row__alert--t2">+20%</span>'
+        rows.append(f"""
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">{name}{alert_badge}</div>
+        <div class="holding-row__sub">{qty:,}주 · 평단 {avg:,.0f}원</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">{curr:,.0f}원</div>
+        <div class="holding-row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      </div>
+    </div>""")
+
+    return f"""
+<section class="holdings holdings--value" aria-label="가치주 보유">
+  <div class="holdings__head">
+    <div class="holdings__title">
+      <h2>💼 가치주 보유</h2>
+      <span class="holdings__badge">미래에셋증권</span>
+      <span class="holdings__count">{len(items)}종목</span>
+    </div>
+    <div class="holdings__totals">
+      <div class="holdings__amount">{int(round(total_value)):,}원</div>
+      <div class="holdings__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    </div>
+  </div>
+  <div class="holdings__list">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
+def _make_auto_positions_section(auto_positions: list) -> str:
+    """자동매매 보유 섹션 — 한국투자증권 모의투자 (positions.json 기반)."""
+    if not auto_positions:
+        return ""
+    # 현재가/평가 계산
+    enriched = []
+    for p in auto_positions:
+        bp = p.get("buy_price", 0); qty = p.get("qty", 0)
+        cp = p.get("curr_price", 0)
+        if cp <= 0:
+            try:
+                if _kis.available():
+                    pi = _kis.get_price(p.get("code", ""))
+                    cp = _safe_float(pi.get("stck_prpr")) if pi else 0
+            except Exception:
+                cp = 0
+        pct = ((cp - bp) / bp * 100) if (cp and bp) else 0
+        profit = (cp - bp) * qty if (cp and bp and qty) else 0
+        enriched.append({**p, "curr_price": cp, "pct": pct, "profit": profit,
+                         "value": cp * qty, "cost": bp * qty})
+    enriched.sort(key=lambda x: x["profit"], reverse=True)
+    total_value = sum(e["value"] for e in enriched)
+    total_cost  = sum(e["cost"] for e in enriched)
+    total_pnl   = total_value - total_cost
+    total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    rows = []
+    for e in enriched:
+        name = e.get("name", e.get("code", ""))
+        qty = int(e.get("qty", 0))
+        bp = e.get("buy_price", 0)
+        cp = e.get("curr_price", 0)
+        pct = e.get("pct", 0)
+        profit = e.get("profit", 0)
+        cls = _pnl_class(pct)
+        sign = "+" if profit >= 0 else ""
+        partial = " · 1차매도완료" if e.get("partial_sold") else ""
+        rows.append(f"""
+    <div class="holding-row">
+      <div class="holding-row__main">
+        <div class="holding-row__name">{name}</div>
+        <div class="holding-row__sub">{qty:,}주 · 매수 {bp:,.0f}원{partial}</div>
+      </div>
+      <div class="holding-row__price">
+        <div class="holding-row__current">{cp:,.0f}원</div>
+        <div class="holding-row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      </div>
+    </div>""")
+
+    return f"""
+<section class="holdings holdings--auto" aria-label="자동매매 보유">
+  <div class="holdings__head">
+    <div class="holdings__title">
+      <h2>🤖 자동매매 보유</h2>
+      <span class="holdings__badge">한국투자증권 (모의)</span>
+      <span class="holdings__count">{len(enriched)}종목</span>
+    </div>
+    <div class="holdings__totals">
+      <div class="holdings__amount">{int(round(total_value)):,}원</div>
+      <div class="holdings__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    </div>
+  </div>
+  <div class="holdings__list">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
 def build_and_save_dashboard(
     mood: dict = None,
     fg: dict = None,
@@ -2327,9 +2696,11 @@ def build_and_save_dashboard(
 
     부분 데이터로 호출 가능 (누락된 건 캐시에서 보충). 매 모드 실행 후 호출됨.
     GitHub Pages가 docs/index.html을 자동 노출 — 사용자는 URL 하나로 모든 정보 확인.
+
+    레이아웃: 헤더 → 총 자산 요약 → 가치주(미래에셋) → 자동매매(한국투자) → AI/시장/추천/공시 → 푸터
     """
     try:
-        # 누락 보충: market_scan_cache에서 가치 TOP 5 / 자동매매 보유 / 마지막 갱신 시각
+        # ── 데이터 누락 보충 ─────────────────────
         if not kr_top:
             kr_top = _load_value_top5() or []
         if mood is None:
@@ -2344,7 +2715,13 @@ def build_and_save_dashboard(
                 fg = get_fear_greed(mood)
             except Exception:
                 fg = {"score": 50, "label": "중립"}
-        # 자동매매 보유 종목 (positions.json)
+        # 가치주 보유 (HOLDINGS_JSON → check_holdings_alerts 결과 활용)
+        if holdings_alerts is None:
+            try:
+                holdings_alerts = check_holdings_alerts()
+            except Exception:
+                holdings_alerts = []
+        # 자동매매 보유 (positions.json)
         auto_positions = []
         try:
             pos = load_positions()
@@ -2359,7 +2736,7 @@ def build_and_save_dashboard(
         except Exception:
             pass
 
-        # HTML 생성 (기존 make_report 활용 + 자동매매 보유 섹션 추가)
+        # ── base HTML (기존 make_report 활용 — 시장/AI/추천/공시) ─────
         html = make_report(
             kr_top=kr_top or [], us_top=us_top or [], avoid=avoid or [],
             mood=mood,
@@ -2369,54 +2746,30 @@ def build_and_save_dashboard(
             macro=macro, ai_macro=ai_macro,
         )
 
-        # 자동매매 보유 종목 섹션을 HTML 상단에 삽입
-        if auto_positions:
-            pos_rows = []
-            try:
-                # 현재가 조회 (KIS or yfinance)
-                for p in auto_positions:
-                    curr = 0
-                    try:
-                        if _kis.available():
-                            pi = _kis.get_price(p["code"])
-                            curr = _safe_float(pi.get("stck_prpr")) if pi else 0
-                    except Exception:
-                        pass
-                    pct = ((curr - p["buy_price"]) / p["buy_price"] * 100) if (curr and p["buy_price"]) else 0
-                    color = "#e03131" if pct < 0 else "#2f9e44"
-                    pos_rows.append(
-                        f"<tr><td style='padding:6px 8px;'><b>{p['name']}</b> ({p['code']})</td>"
-                        f"<td style='padding:6px 8px;text-align:right;'>{p['qty']:,}주</td>"
-                        f"<td style='padding:6px 8px;text-align:right;'>{p['buy_price']:,.0f}원</td>"
-                        f"<td style='padding:6px 8px;text-align:right;'>{curr:,.0f}원</td>"
-                        f"<td style='padding:6px 8px;text-align:right;color:{color};font-weight:600;'>{pct:+.2f}%</td></tr>"
-                    )
-            except Exception:
-                pass
-            pos_section = (
-                "<div style='padding:18px 24px;background:#fff9db;border-bottom:1px solid #dee2e6;'>"
-                "<div style='font-weight:700;font-size:15px;color:#5c4400;margin-bottom:10px;'>"
-                f"🤖 자동매매 보유 ({len(auto_positions)}종목)</div>"
-                "<table style='width:100%;border-collapse:collapse;font-size:13px;'>"
-                "<thead><tr style='background:#fff3bf;'>"
-                "<th style='padding:6px 8px;text-align:left;'>종목</th>"
-                "<th style='padding:6px 8px;text-align:right;'>수량</th>"
-                "<th style='padding:6px 8px;text-align:right;'>매수가</th>"
-                "<th style='padding:6px 8px;text-align:right;'>현재가</th>"
-                "<th style='padding:6px 8px;text-align:right;'>손익</th></tr></thead>"
-                f"<tbody>{''.join(pos_rows)}</tbody></table></div>"
-            )
-            # body 직후에 삽입
-            html = html.replace("<body", "<body data-mod='1'", 1)
-            # AI 섹션 앞에 자동매매 보유 섹션 삽입 (간단히: 첫 <div 전에 삽입)
-            insert_pos = html.find("<div style=\"padding")
-            if insert_pos > 0:
-                html = html[:insert_pos] + pos_section + html[insert_pos:]
+        # ── 디자인 시스템 CSS + 다크모드 토글 주입 ─────
+        html = html.replace("<head>", "<head>\n" + _dashboard_css(), 1)
 
-        # 자동 새로고침 메타 추가 (5분마다)
+        # ── 새 섹션들 (총자산 / 가치주 / 자동매매) — 헤더 직후 삽입 ─────
+        summary_html = _make_total_summary_section(holdings_alerts or [], auto_positions)
+        value_html   = _make_value_holdings_section(holdings_alerts or [])
+        auto_html    = _make_auto_positions_section(auto_positions)
+
+        # 헤더 그라데이션 div가 끝나는 직후에 새 섹션 삽입
+        # make_report의 헤더는 "</div>" + "{ai_section}" 패턴
+        marker = "</div>\n\n  "  # 헤더 div 닫는 부분
+        idx = html.find(marker)
+        if idx > 0:
+            after_header = idx + len(marker)
+            html = html[:after_header] + summary_html + value_html + auto_html + html[after_header:]
+        else:
+            # fallback: body 직후에 삽입
+            html = html.replace("<body>", "<body>\n" + summary_html + value_html + auto_html, 1)
+
+        # ── 자동 새로고침 (5분) + 다크모드 메타 ─────
         html = html.replace(
             "<head>",
-            "<head>\n<meta http-equiv=\"refresh\" content=\"300\">",
+            "<head>\n<meta http-equiv=\"refresh\" content=\"300\">"
+            "\n<meta name=\"color-scheme\" content=\"light dark\">",
             1,
         )
 
