@@ -72,6 +72,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -104,6 +106,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -136,6 +140,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -168,6 +174,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -216,6 +224,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -248,6 +258,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -285,6 +297,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"
@@ -317,6 +331,8 @@ jobs:
             if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
               echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
               git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+            else
+              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
             fi
           fi
           git config user.name "github-actions[bot]"

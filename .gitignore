@@ -6,3 +6,6 @@ test_kis.py
 holdings_local.json
 holdings_user.json
 
+# 시계열 캐시 (실시간 시세, GitHub Actions에서 매번 새로 생성)
+history_cache.json
+

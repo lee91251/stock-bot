@@ -1,0 +1,20 @@
+{
+  "name": "AI 투자 비서",
+  "short_name": "투자 비서",
+  "description": "AI 기반 자동 투자 비서 — 가치주 + 자동매매 통합 대시보드",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f1729",
+  "theme_color": "#5f6dff",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

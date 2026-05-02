@@ -2395,13 +2395,14 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
              "Apple SD Gothic Neo", "맑은 고딕", sans-serif;
              -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-/* ── 앱 레이아웃 ──────────────────────────── */
-.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+/* ── 앱 레이아웃 (fixed sidebar + margin main) ──────────── */
+.app { min-height: 100vh; }
 
 /* ── 사이드바 ──────────────────────────── */
 .sidebar { background: var(--sidebar-bg); color: var(--sidebar-text);
-           position: sticky; top: 0; height: 100vh; overflow-y: auto;
-           padding: 20px 14px; display: flex; flex-direction: column; }
+           position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w);
+           overflow-y: auto;
+           padding: 20px 14px; display: flex; flex-direction: column; z-index: 50; }
 .sidebar__brand { display: flex; align-items: center; gap: 10px; padding: 4px 12px 24px;
                   font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; }
 .sidebar__brand-icon { width: 32px; height: 32px; border-radius: 9px;
@@ -2426,8 +2427,8 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
                    display: flex; align-items: center; gap: 8px; font-size: 11px;
                    color: rgba(255,255,255,0.4); }
 
-/* ── 메인 영역 ──────────────────────────── */
-.main { padding: 24px 28px 60px; max-width: 1100px; margin: 0; min-width: 0; }
+/* ── 메인 영역 (사이드바 옆) ──────────────────────────── */
+.main { margin-left: var(--sidebar-w); padding: 24px 32px 60px; max-width: 1400px; min-width: 0; }
 
 /* ── Hero 헤더 ──────────────────────────── */
 .hero { background: var(--hero-grad); border-radius: var(--radius-lg);
@@ -2503,31 +2504,103 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
 .row__badge--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
 
 /* 자산 배분 카드 */
-.allocation { padding: 18px 22px; }
-.allocation__bar { height: 14px; background: var(--surface-2); border-radius: 99px;
+.allocation { padding: 22px; display: grid; grid-template-columns: 200px 1fr; gap: 28px;
+              align-items: center; }
+.allocation__chart-wrap { position: relative; width: 200px; height: 200px; }
+.allocation__chart-center { position: absolute; inset: 0; display: flex; flex-direction: column;
+                            justify-content: center; align-items: center; pointer-events: none; }
+.allocation__chart-label { font-size: 11px; color: var(--text-3); font-weight: 600;
+                           text-transform: uppercase; letter-spacing: 0.3px; }
+.allocation__chart-total { font-size: 18px; font-weight: 700; color: var(--text-1); margin-top: 4px; letter-spacing: -0.3px; }
+.allocation__chart-pct { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.allocation__bar { height: 12px; background: var(--surface-2); border-radius: 99px;
                    overflow: hidden; display: flex; }
 .allocation__seg { height: 100%; transition: width 0.4s; }
 .allocation__seg--value { background: var(--accent-value); }
 .allocation__seg--auto { background: var(--accent-auto); }
-.allocation__legend { display: flex; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
-.allocation__item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.allocation__dot { width: 10px; height: 10px; border-radius: 3px; }
+.allocation__legend { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.allocation__item { display: flex; align-items: center; justify-content: space-between;
+                    padding: 10px 14px; background: var(--surface-2); border-radius: 10px; }
+.allocation__item-left { display: flex; align-items: center; gap: 10px; }
+.allocation__dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
 .allocation__dot--value { background: var(--accent-value); }
 .allocation__dot--auto { background: var(--accent-auto); }
-.allocation__name { color: var(--text-2); font-weight: 600; }
-.allocation__pct { color: var(--text-3); font-weight: 500; margin-left: 4px; }
-.allocation__amount { color: var(--text-1); font-weight: 600; margin-left: 6px; }
+.allocation__name { color: var(--text-1); font-weight: 600; font-size: 14px; }
+.allocation__pct { color: var(--text-3); font-weight: 500; font-size: 12px; margin-left: 4px; }
+.allocation__amount { color: var(--text-1); font-weight: 700; font-size: 14px; }
+@media (max-width: 700px) {
+  .allocation { grid-template-columns: 1fr; }
+  .allocation__chart-wrap { margin: 0 auto; }
+}
 
 /* 시장 브리핑 카드 그리드 */
 .market-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 22px; }
 .market-card { background: var(--surface-2); border-radius: var(--radius-sm);
-               padding: 14px 16px; border: 1px solid var(--border); }
+               padding: 14px 16px; border: 1px solid var(--border);
+               transition: transform 0.15s, box-shadow 0.15s; }
+.market-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.market-card__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.market-card__main { flex: 1; min-width: 0; }
+.market-card__chart { width: 80px; height: 40px; flex-shrink: 0; }
 .market-card__label { font-size: 11px; color: var(--text-3); font-weight: 600;
                       text-transform: uppercase; letter-spacing: 0.3px; }
-.market-card__value { font-size: 18px; font-weight: 700; margin-top: 6px; color: var(--text-1); }
-.market-card__chg { font-size: 12px; font-weight: 600; margin-top: 4px; }
+.market-card__value { font-size: 18px; font-weight: 700; margin-top: 4px; color: var(--text-1); }
+.market-card__chg { font-size: 12px; font-weight: 600; margin-top: 3px; }
 .market-card__chg.up { color: var(--up); }
 .market-card__chg.down { color: var(--down); }
+.market-card__chg.flat { color: var(--text-3); }
+
+/* 매크로 차트 카드 */
+.macro-chart-wrap { padding: 10px 22px 22px; }
+.macro-chart { width: 100%; height: 240px; }
+.macro-legend { display: flex; gap: 14px; padding: 0 22px 14px; flex-wrap: wrap; font-size: 12px; }
+.macro-legend__item { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
+.macro-legend__dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* 차트 모달 (시장 브리핑 카드 클릭 시) */
+.market-card { cursor: pointer; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+                 z-index: 300; display: none; align-items: center; justify-content: center;
+                 backdrop-filter: blur(4px); animation: fadein 0.15s ease; padding: 20px; }
+.modal-overlay.is-open { display: flex; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scalein { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal { background: var(--surface); border-radius: 20px; max-width: 820px; width: 100%;
+         max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+         animation: scalein 0.2s ease; }
+.modal__head { padding: 22px 24px 18px; border-bottom: 1px solid var(--border);
+               display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.modal__title { display: flex; align-items: center; gap: 10px; }
+.modal__title h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--text-1); }
+.modal__title-badge { padding: 3px 9px; background: var(--surface-2); border-radius: 99px;
+                      font-size: 11px; color: var(--text-3); font-weight: 600; }
+.modal__close { background: var(--surface-2); border: none; font-size: 18px; cursor: pointer;
+                color: var(--text-2); width: 36px; height: 36px; border-radius: 10px;
+                display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.modal__close:hover { background: var(--up); color: white; }
+.modal__body { padding: 22px 24px; }
+.modal__chart-wrap { height: 320px; margin-bottom: 22px; }
+.modal__chart { width: 100%; height: 100%; }
+.modal__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+.modal__stat { padding: 12px 14px; background: var(--surface-2); border-radius: 12px; }
+.modal__stat-label { font-size: 10px; color: var(--text-3); text-transform: uppercase;
+                     font-weight: 600; letter-spacing: 0.3px; }
+.modal__stat-value { font-size: 16px; font-weight: 700; margin-top: 4px; color: var(--text-1); }
+.modal__stat-value.up { color: var(--up); }
+.modal__stat-value.down { color: var(--down); }
+.modal__external { display: flex; gap: 10px; flex-wrap: wrap; }
+.modal__btn { padding: 11px 16px; border-radius: 11px; border: 1px solid var(--border);
+              background: var(--surface-2); color: var(--text-1); text-align: center;
+              text-decoration: none; font-weight: 600; font-size: 13px; flex: 1; min-width: 140px;
+              transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.modal__btn:hover { background: var(--accent); color: white; border-color: var(--accent);
+                    transform: translateY(-1px); }
+.modal__btn::after { content: "↗"; font-size: 12px; opacity: 0.7; }
+@media (max-width: 600px) {
+  .modal { border-radius: 16px; }
+  .modal__stats { grid-template-columns: repeat(2, 1fr); }
+  .modal__chart-wrap { height: 240px; }
+}
 
 /* 매크로 / AI / 추천 영역 — wrapper로 감쌈 */
 .embed-wrap { padding: 4px 22px 18px; }
@@ -2555,11 +2628,11 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
 
 /* ── 모바일 반응형 ──────────────────────────── */
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%);
-             width: 280px; z-index: 200; transition: transform 0.25s ease;
+  .sidebar { transform: translateX(-100%); width: 280px; z-index: 200;
+             transition: transform 0.25s ease;
              box-shadow: 8px 0 32px rgba(0,0,0,0.2); }
   .sidebar.is-open { transform: translateX(0); }
+  .main { margin-left: 0; }
   .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
                       z-index: 150; backdrop-filter: blur(2px); }
   .sidebar-backdrop.is-open { display: block; }
@@ -2583,6 +2656,7 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
   .hero__kpi-value { font-size: 20px; }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 (function () {
   // 다크모드 즉시 적용 (FOUC 방지)
@@ -2651,6 +2725,325 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
         }
       });
     });
+
+    // ── 자산 배분 도넛 차트 (Chart.js) ──
+    function drawAllocChart() {
+      var canvas = document.getElementById('alloc-chart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      var v = parseFloat(canvas.dataset.value || 0);
+      var a = parseFloat(canvas.dataset.auto || 0);
+      if (v + a <= 0) return;
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+        || (!document.documentElement.getAttribute('data-theme') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var colorValue = dark ? '#748ffc' : '#5f6dff';
+      var colorAuto = dark ? '#2dd4bf' : '#14b8a6';
+      var colorBg = dark ? '#131826' : '#ffffff';
+      try {
+        if (canvas._chart) canvas._chart.destroy();
+        canvas._chart = new Chart(canvas.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: ['가치주', '자동매매'],
+            datasets: [{
+              data: [v, a],
+              backgroundColor: [colorValue, colorAuto],
+              borderColor: colorBg,
+              borderWidth: 3,
+              hoverOffset: 6,
+            }]
+          },
+          options: {
+            responsive: false,
+            cutout: '72%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: dark ? '#1a1f2e' : '#0a0e1a',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                padding: 10,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function(c) {
+                    var t = c.dataset.data.reduce(function(s,x){return s+x;}, 0);
+                    var pct = t > 0 ? (c.parsed / t * 100).toFixed(1) : 0;
+                    return c.label + ': ' + Math.round(c.parsed).toLocaleString() + '원 (' + pct + '%)';
+                  }
+                }
+              }
+            },
+            animation: { animateRotate: true, animateScale: true, duration: 600 },
+          }
+        });
+      } catch (e) { console.warn('alloc chart error', e); }
+    }
+    drawAllocChart();
+
+    // ── 시장 브리핑 sparkline (각 카드 7일 추세) ──
+    function drawSparklines() {
+      if (typeof Chart === 'undefined') return;
+      var data = window._chartData || {};
+      var canvases = document.querySelectorAll('.spark-chart');
+      canvases.forEach(function (canvas) {
+        var key = canvas.dataset.key;
+        var d = data[key];
+        if (!d || !d.values || d.values.length < 2) return;
+        var first = d.values[0], last = d.values[d.values.length - 1];
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+          || (!document.documentElement.getAttribute('data-theme') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var rising = last >= first;
+        // VIX는 반대 의미: 올라가면 위험 (파랑 X 빨강 O 반대로)
+        var color;
+        if (key === 'vix') {
+          color = rising ? (dark ? '#ff6b6b' : '#e03131') : (dark ? '#4dabf7' : '#1971c2');
+        } else {
+          color = rising ? (dark ? '#ff6b6b' : '#e03131') : (dark ? '#4dabf7' : '#1971c2');
+        }
+        try {
+          if (canvas._chart) canvas._chart.destroy();
+          canvas._chart = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+              labels: d.labels,
+              datasets: [{
+                data: d.values,
+                borderColor: color,
+                backgroundColor: color + '22',
+                borderWidth: 1.8,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                tension: 0.35,
+                fill: true,
+              }]
+            },
+            options: {
+              responsive: false,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: dark ? '#1a1f2e' : '#0a0e1a',
+                  titleColor: '#ffffff', bodyColor: '#ffffff',
+                  padding: 8, cornerRadius: 6, displayColors: false,
+                  callbacks: { label: function(c){ return c.parsed.y.toLocaleString(); } }
+                }
+              },
+              scales: { x: { display: false }, y: { display: false } },
+              animation: { duration: 0 },
+              interaction: { intersect: false, mode: 'index' },
+            }
+          });
+        } catch (e) { console.warn('spark error', key, e); }
+      });
+    }
+    drawSparklines();
+
+    // ── 매크로 라인 차트 (TNX/IRX/DXY 30일) ──
+    function drawMacroChart() {
+      if (typeof Chart === 'undefined') return;
+      var canvas = document.getElementById('macro-chart');
+      if (!canvas) return;
+      var data = window._chartData || {};
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+        || (!document.documentElement.getAttribute('data-theme') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+      var textColor = dark ? '#94a3b8' : '#94a3b8';
+      var datasets = [];
+      function add(key, label, color, axis) {
+        var d = data[key];
+        if (d && d.values && d.values.length > 1) {
+          datasets.push({
+            label: label, data: d.values,
+            borderColor: color, backgroundColor: color + '15',
+            borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
+            tension: 0.3, yAxisID: axis,
+          });
+        }
+      }
+      add('tnx', '10년물 금리 (TNX)', '#5f6dff', 'y');
+      add('irx', '단기 금리 (IRX)', '#14b8a6', 'y');
+      add('dxy', '달러인덱스 (DXY)', '#f59e0b', 'y2');
+      if (datasets.length === 0) return;
+      var labels = (data.tnx && data.tnx.labels) || (data.irx && data.irx.labels) || (data.dxy && data.dxy.labels) || [];
+      try {
+        if (canvas._chart) canvas._chart.destroy();
+        canvas._chart = new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: { labels: labels, datasets: datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: dark ? '#1a1f2e' : '#0a0e1a',
+                titleColor: '#ffffff', bodyColor: '#ffffff',
+                padding: 10, cornerRadius: 8,
+              }
+            },
+            scales: {
+              x: { ticks: { color: textColor, font: { size: 10 }, maxTicksLimit: 8 },
+                   grid: { color: gridColor, drawBorder: false } },
+              y: { position: 'left', ticks: { color: textColor, font: { size: 10 } },
+                   grid: { color: gridColor, drawBorder: false },
+                   title: { display: true, text: '금리 (%)', color: textColor, font: { size: 10 } } },
+              y2: { position: 'right', ticks: { color: textColor, font: { size: 10 } },
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'DXY', color: textColor, font: { size: 10 } } },
+            },
+            interaction: { intersect: false, mode: 'index' },
+          }
+        });
+      } catch (e) { console.warn('macro chart error', e); }
+    }
+    drawMacroChart();
+
+    // ── 차트 상세 모달 (시장 브리핑 카드 클릭) ──
+    var marketInfo = {
+      kospi:  { name:'코스피', unit:'', urls:[
+        {label:'네이버 증권', url:'https://finance.naver.com/sise/sise_index.naver?code=KOSPI'},
+        {label:'TradingView', url:'https://www.tradingview.com/symbols/KRX-KOSPI/'}
+      ]},
+      sp500:  { name:'S&P 500', unit:'', urls:[
+        {label:'Yahoo Finance', url:'https://finance.yahoo.com/quote/%5EGSPC'},
+        {label:'TradingView', url:'https://www.tradingview.com/symbols/SP-SPX/'}
+      ]},
+      vix:    { name:'VIX (변동성지수)', unit:'', urls:[
+        {label:'Yahoo Finance', url:'https://finance.yahoo.com/quote/%5EVIX'},
+        {label:'TradingView', url:'https://www.tradingview.com/symbols/CBOE-VIX/'}
+      ]},
+      usdkrw: { name:'달러/원 환율', unit:'원', urls:[
+        {label:'네이버 증권', url:'https://finance.naver.com/marketindex/exchangeDetail.naver?marketindexCd=FX_USDKRW'},
+        {label:'Investing.com', url:'https://kr.investing.com/currencies/usd-krw'}
+      ]},
+      wti:    { name:'WTI 유가', unit:'$', urls:[
+        {label:'네이버 증권', url:'https://finance.naver.com/marketindex/worldOilDetail.naver?marketindexCd=OIL_CL'},
+        {label:'Yahoo Finance', url:'https://finance.yahoo.com/quote/CL=F'}
+      ]},
+      tnx:    { name:'미국 10년물 금리 (TNX)', unit:'%', urls:[
+        {label:'Yahoo Finance', url:'https://finance.yahoo.com/quote/%5ETNX'},
+        {label:'TradingView', url:'https://www.tradingview.com/symbols/TVC-US10Y/'}
+      ]},
+      irx:    { name:'미국 단기금리 (IRX)', unit:'%', urls:[
+        {label:'Yahoo Finance', url:'https://finance.yahoo.com/quote/%5EIRX'},
+        {label:'TradingView', url:'https://www.tradingview.com/symbols/TVC-US03MY/'}
+      ]},
+      dxy:    { name:'달러인덱스 (DXY)', unit:'', urls:[
+        {label:'Yahoo Finance', url:'https://finance.yahoo.com/quote/DX-Y.NYB'},
+        {label:'TradingView', url:'https://www.tradingview.com/symbols/TVC-DXY/'}
+      ]}
+    };
+    var modalChartInst = null;
+    function openChartModal(key) {
+      var info = marketInfo[key];
+      var d = (window._chartData || {})[key];
+      if (!info || !d || !d.values || d.values.length < 2) return;
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+        || (!document.documentElement.getAttribute('data-theme') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var values = d.values;
+      var first = values[0], last = values[values.length - 1];
+      var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+      var avg = values.reduce(function(s,x){return s+x;}, 0) / values.length;
+      var chg = first !== 0 ? (last - first) / first * 100 : 0;
+      var chgCls = chg >= 0 ? 'up' : 'down';
+      var sign = chg >= 0 ? '+' : '';
+      function fmt(v) {
+        var n = Math.abs(v) >= 1000 ? Math.round(v).toLocaleString()
+              : Math.abs(v) >= 10 ? v.toFixed(2)
+              : v.toFixed(3);
+        return n + info.unit;
+      }
+      document.getElementById('modal-title').textContent = info.name;
+      document.getElementById('modal-period').textContent = d.values.length + '일 추이';
+      document.getElementById('modal-stats').innerHTML =
+        '<div class="modal__stat"><div class="modal__stat-label">현재</div><div class="modal__stat-value">' + fmt(last) + '</div></div>' +
+        '<div class="modal__stat"><div class="modal__stat-label">기간 변동</div><div class="modal__stat-value ' + chgCls + '">' + sign + chg.toFixed(2) + '%</div></div>' +
+        '<div class="modal__stat"><div class="modal__stat-label">최고</div><div class="modal__stat-value">' + fmt(max) + '</div></div>' +
+        '<div class="modal__stat"><div class="modal__stat-label">최저</div><div class="modal__stat-value">' + fmt(min) + '</div></div>';
+      document.getElementById('modal-external').innerHTML =
+        info.urls.map(function(u){
+          return '<a class="modal__btn" href="' + u.url + '" target="_blank" rel="noopener noreferrer">' + u.label + '</a>';
+        }).join('') +
+        '<div style="flex-basis:100%;font-size:11px;color:var(--text-3);margin-top:6px;">' +
+        '봇 데이터: ' + d.values.length + '일 (1시간마다 캐시 갱신) · 실시간 차트는 위 외부 링크 클릭' +
+        '</div>';
+      // 차트 그리기
+      var canvas = document.getElementById('modal-chart');
+      try { if (modalChartInst) modalChartInst.destroy(); } catch (e) {}
+      var color = chg >= 0 ? (dark ? '#ff6b6b' : '#e03131') : (dark ? '#4dabf7' : '#1971c2');
+      var gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+      var textColor = dark ? '#94a3b8' : '#94a3b8';
+      modalChartInst = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: d.labels,
+          datasets: [{
+            label: info.name,
+            data: values,
+            borderColor: color, backgroundColor: color + '20',
+            borderWidth: 2.2, pointRadius: 0, pointHoverRadius: 5,
+            tension: 0.3, fill: true,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: dark ? '#1a1f2e' : '#0a0e1a',
+              titleColor: '#ffffff', bodyColor: '#ffffff',
+              padding: 12, cornerRadius: 8, displayColors: false,
+              callbacks: { label: function(c){ return fmt(c.parsed.y); } }
+            }
+          },
+          scales: {
+            x: { ticks: { color: textColor, font: { size: 10 }, maxTicksLimit: 8 },
+                 grid: { color: gridColor, drawBorder: false } },
+            y: { ticks: { color: textColor, font: { size: 10 } },
+                 grid: { color: gridColor, drawBorder: false } },
+          },
+          interaction: { intersect: false, mode: 'index' },
+        }
+      });
+      document.getElementById('chart-modal').classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeChartModal() {
+      document.getElementById('chart-modal').classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+    // 카드 클릭 핸들러
+    document.querySelectorAll('.market-card').forEach(function(card){
+      var canvas = card.querySelector('.spark-chart');
+      var key = canvas && canvas.dataset.key;
+      if (!key || !marketInfo[key]) {
+        card.style.cursor = 'default';
+        return;
+      }
+      card.addEventListener('click', function(){ openChartModal(key); });
+    });
+    document.getElementById('modal-close').addEventListener('click', closeChartModal);
+    document.getElementById('chart-modal').addEventListener('click', function(e){
+      if (e.target === this) closeChartModal();
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeChartModal();
+    });
+
+    // 다크모드 토글 시 차트 색상 갱신
+    if (themeBtn) {
+      var origClick = themeBtn.onclick;
+      themeBtn.onclick = function() {
+        origClick();
+        drawAllocChart();
+        drawSparklines();
+        drawMacroChart();
+      };
+    }
   });
 })();
 </script>
@@ -2894,13 +3287,16 @@ def _make_hero_header(today: str, time_str: str, mood: dict, fg: dict,
     """대시보드 상단 Hero 헤더 — 그라데이션 배경 + 핵심 KPI."""
     pnl_cls = _pnl_class(total_pct)
     sign = "+" if total_pnl >= 0 else ""
-    advice = (mood or {}).get("advice", "") or ""
+    m = mood or {}
+    f = fg or {"score": 50, "label": "중립"}
+    advice = m.get("advice", "") or ""
     advice_html = f'<div class="hero__advice">{advice}</div>' if advice else ""
 
-    kospi_chg = (mood or {}).get("kospi_chg", 0)
+    kospi_price = m.get("kospi_price", 0)
+    kospi_chg = m.get("kospi_chg", 0)
     kospi_arr = "▲" if kospi_chg >= 0 else "▼"
-    fg_score = (fg or {}).get("score", 50)
-    fg_label = (fg or {}).get("label", "중립")
+    fg_score = f.get("score", 50)
+    fg_label = f.get("label", "중립")
 
     if total_value > 0:
         kpi_main = f"""
@@ -2931,7 +3327,7 @@ def _make_hero_header(today: str, time_str: str, mood: dict, fg: dict,
     {kpi_main}
     <div class="hero__kpi hero__kpi--small">
       <div class="hero__kpi-label">코스피</div>
-      <div class="hero__kpi-value">{(mood or {{}}).get('kospi_price', 0):,.2f}</div>
+      <div class="hero__kpi-value">{kospi_price:,.2f}</div>
       <div class="hero__kpi-pnl">{kospi_arr} {abs(kospi_chg):.2f}%</div>
     </div>
     <div class="hero__kpi hero__kpi--small">
@@ -2945,7 +3341,7 @@ def _make_hero_header(today: str, time_str: str, mood: dict, fg: dict,
 
 
 def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
-    """자산 배분 카드 — 가치주 vs 자동매매 비중 (progress bar)."""
+    """자산 배분 카드 — 가치주 vs 자동매매 비중 (도넛 차트 + progress bar)."""
     v_value = sum(h.get("value", 0) for h in (value_holdings or []))
     a_value = sum((p.get("curr_price", 0) * p.get("qty", 0)) for p in (auto_positions or []))
     total = v_value + a_value
@@ -2953,6 +3349,7 @@ def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
         return ""
     v_pct = v_value / total * 100
     a_pct = a_value / total * 100
+    total_man = total / 10000  # 만원 단위
 
     return f"""
 <section class="section" id="allocation" aria-label="자산 배분">
@@ -2964,22 +3361,34 @@ def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
     </div>
   </div>
   <div class="allocation">
-    <div class="allocation__bar">
-      <div class="allocation__seg allocation__seg--value" style="width:{v_pct:.1f}%"></div>
-      <div class="allocation__seg allocation__seg--auto" style="width:{a_pct:.1f}%"></div>
-    </div>
-    <div class="allocation__legend">
-      <div class="allocation__item">
-        <span class="allocation__dot allocation__dot--value"></span>
-        <span class="allocation__name">가치주</span>
-        <span class="allocation__pct">{v_pct:.1f}%</span>
-        <span class="allocation__amount">{int(round(v_value)):,}원</span>
+    <div class="allocation__chart-wrap">
+      <canvas id="alloc-chart" width="200" height="200"
+        data-value="{v_value:.0f}" data-auto="{a_value:.0f}"></canvas>
+      <div class="allocation__chart-center">
+        <div class="allocation__chart-label">총 자산</div>
+        <div class="allocation__chart-total">{total_man:,.0f}만원</div>
       </div>
-      <div class="allocation__item">
-        <span class="allocation__dot allocation__dot--auto"></span>
-        <span class="allocation__name">자동매매</span>
-        <span class="allocation__pct">{a_pct:.1f}%</span>
-        <span class="allocation__amount">{int(round(a_value)):,}원</span>
+    </div>
+    <div class="allocation__detail">
+      <div class="allocation__bar">
+        <div class="allocation__seg allocation__seg--value" style="width:{v_pct:.1f}%"></div>
+        <div class="allocation__seg allocation__seg--auto" style="width:{a_pct:.1f}%"></div>
+      </div>
+      <div class="allocation__legend">
+        <div class="allocation__item">
+          <div class="allocation__item-left">
+            <span class="allocation__dot allocation__dot--value"></span>
+            <span class="allocation__name">가치주<span class="allocation__pct">{v_pct:.1f}%</span></span>
+          </div>
+          <span class="allocation__amount">{int(round(v_value)):,}원</span>
+        </div>
+        <div class="allocation__item">
+          <div class="allocation__item-left">
+            <span class="allocation__dot allocation__dot--auto"></span>
+            <span class="allocation__name">자동매매<span class="allocation__pct">{a_pct:.1f}%</span></span>
+          </div>
+          <span class="allocation__amount">{int(round(a_value)):,}원</span>
+        </div>
       </div>
     </div>
   </div>
@@ -2987,31 +3396,109 @@ def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
 """
 
 
-def _make_market_briefing_card(mood: dict, fg: dict) -> str:
-    """시장 브리핑 카드 — 코스피/S&P500/VIX/달러/유가/공포탐욕."""
+_HISTORY_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history_cache.json")
+
+
+def _fetch_market_history(period_days: int = 30) -> dict:
+    """시장 지표 시계열 — sparkline/라인 차트용 (yfinance batch)."""
+    tickers = {
+        "kospi":  "^KS11",
+        "sp500":  "^GSPC",
+        "vix":    "^VIX",
+        "usdkrw": "USDKRW=X",
+        "wti":    "CL=F",
+        "tnx":    "^TNX",
+        "irx":    "^IRX",
+        "dxy":    "DX-Y.NYB",
+    }
+    history = {}
+    try:
+        symbols = list(tickers.values())
+        data = yf.download(symbols, period=f"{period_days}d", interval="1d",
+                           progress=False, group_by="ticker", threads=True)
+        for name, sym in tickers.items():
+            try:
+                if isinstance(data.columns, pd.MultiIndex):
+                    if sym in data.columns.get_level_values(0):
+                        series = data[sym]["Close"].dropna()
+                    else:
+                        continue
+                else:
+                    series = data["Close"].dropna()
+                if series.empty:
+                    continue
+                pts = series[-period_days:]
+                history[name] = {
+                    "labels": [d.strftime("%m/%d") for d in pts.index],
+                    "values": [round(float(v), 4) for v in pts.values],
+                }
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"  [history] fetch 실패: {e}")
+    return history
+
+
+def _load_market_history(max_age_hours: int = 1) -> dict:
+    """캐시 우선 — 오래되면 재 fetch + 캐시 갱신."""
+    try:
+        if os.path.exists(_HISTORY_CACHE_PATH):
+            age_h = (time.time() - os.path.getmtime(_HISTORY_CACHE_PATH)) / 3600
+            if age_h < max_age_hours:
+                with open(_HISTORY_CACHE_PATH, encoding="utf-8") as f:
+                    return json.load(f)
+    except Exception:
+        pass
+    history = _fetch_market_history()
+    if history:
+        try:
+            with open(_HISTORY_CACHE_PATH, "w", encoding="utf-8") as f:
+                json.dump(history, f, ensure_ascii=False)
+        except Exception:
+            pass
+    return history
+
+
+def _make_market_briefing_card(mood: dict, fg: dict, history: dict = None) -> str:
+    """시장 브리핑 카드 — 코스피/S&P500/VIX/달러/유가/공포탐욕 + 7일 sparkline."""
     mood = mood or {}
     fg = fg or {"score": 50, "label": "중립"}
+    history = history or {}
     if not mood.get("kospi_price") and not mood.get("vix"):
         return _empty_section("market", "🌏", "section__icon--market", "시장 브리핑",
                               "실시간 지표", "데이터 수집 중",
                               "다음 봇 실행 시 갱신됩니다.")
 
-    def _card(label, value, chg=None, chg_label=None):
+    def _card(label, value, chg=None, chg_label=None, spark_key=""):
         chg_html = ""
         if chg is not None:
-            cls = "up" if chg >= 0 else "down"
+            cls = "up" if chg >= 0 else ("down" if chg < 0 else "flat")
             arr = "▲" if chg >= 0 else "▼"
             chg_html = f'<div class="market-card__chg {cls}">{arr} {abs(chg):.2f}%</div>'
         elif chg_label:
-            chg_html = f'<div class="market-card__chg" style="color:var(--text-3)">{chg_label}</div>'
-        return f'<div class="market-card"><div class="market-card__label">{label}</div><div class="market-card__value">{value}</div>{chg_html}</div>'
+            chg_html = f'<div class="market-card__chg flat">{chg_label}</div>'
+        spark_html = ""
+        if spark_key and history.get(spark_key, {}).get("values"):
+            spark_html = f'<canvas class="market-card__chart spark-chart" data-key="{spark_key}" width="80" height="40"></canvas>'
+        return (
+            f'<div class="market-card">'
+            f'  <div class="market-card__top">'
+            f'    <div class="market-card__main">'
+            f'      <div class="market-card__label">{label}</div>'
+            f'      <div class="market-card__value">{value}</div>'
+            f'      {chg_html}'
+            f'    </div>'
+            f'    {spark_html}'
+            f'  </div>'
+            f'</div>'
+        )
 
     cards = [
-        _card("코스피", f"{mood.get('kospi_price',0):,.2f}", mood.get("kospi_chg")),
-        _card("S&P 500", "전일 대비", mood.get("sp500_chg")),
-        _card("VIX", f"{mood.get('vix',0):.2f}", chg_label=mood.get("status","")),
-        _card("달러/원", f"{mood.get('usdkrw',0):,.2f}원"),
-        _card("WTI 유가", f"${mood.get('wti',0):.2f}"),
+        _card("코스피", f"{mood.get('kospi_price',0):,.2f}", mood.get("kospi_chg"), spark_key="kospi"),
+        _card("S&P 500", "전일 대비", mood.get("sp500_chg"), spark_key="sp500"),
+        _card("VIX", f"{mood.get('vix',0):.2f}", chg_label=mood.get("status",""), spark_key="vix"),
+        _card("달러/원 (시장가)", f"{mood.get('usdkrw',0):,.2f}원", spark_key="usdkrw"),
+        _card("WTI 유가", f"${mood.get('wti',0):.2f}", spark_key="wti"),
         _card("공포탐욕", f"{fg.get('score',50)}", chg_label=fg.get("label","중립")),
     ]
 
@@ -3021,7 +3508,7 @@ def _make_market_briefing_card(mood: dict, fg: dict) -> str:
     <div class="section__title">
       <span class="section__icon section__icon--market">🌏</span>
       <h2>시장 브리핑</h2>
-      <span class="section__badge">실시간 지표</span>
+      <span class="section__badge">실시간 지표 · 7일 추세</span>
     </div>
   </div>
   <div class="market-grid">{"".join(cards)}</div>
@@ -3055,23 +3542,38 @@ def _make_ai_card(ai_summary: str, ai_sector: str) -> str:
 """
 
 
-def _make_macro_card(macro: dict, ai_macro: str) -> str:
-    """매크로 지표 카드 — 기존 _make_macro_html 출력을 wrapping."""
+def _make_macro_card(macro: dict, ai_macro: str, history: dict = None) -> str:
+    """매크로 지표 카드 — 기존 _make_macro_html + 30일 라인 차트 (TNX/IRX/DXY)."""
     if not macro:
         return _empty_section("macro", "📈", "section__icon--macro", "미국 경제지표",
                               "TNX/CPI/DXY", "매크로 데이터 수집 중",
                               "06:00 미국 마감 또는 08:50 장 시작 전 갱신됩니다.")
     inner = _make_macro_html(macro, ai_macro)
+    history = history or {}
+    chart_html = ""
+    has_chart = any(history.get(k, {}).get("values") for k in ("tnx", "irx", "dxy"))
+    if has_chart:
+        chart_html = (
+            '<div class="macro-legend">'
+            '  <span class="macro-legend__item"><span class="macro-legend__dot" style="background:#5f6dff"></span>10년물 금리 (TNX)</span>'
+            '  <span class="macro-legend__item"><span class="macro-legend__dot" style="background:#14b8a6"></span>단기 금리 (IRX)</span>'
+            '  <span class="macro-legend__item"><span class="macro-legend__dot" style="background:#f59e0b"></span>달러인덱스 (DXY)</span>'
+            '</div>'
+            '<div class="macro-chart-wrap">'
+            '  <canvas id="macro-chart" class="macro-chart"></canvas>'
+            '</div>'
+        )
     return f"""
 <section class="section" id="macro" aria-label="미국 경제지표">
   <div class="section__head">
     <div class="section__title">
       <span class="section__icon section__icon--macro">📈</span>
       <h2>미국 경제지표</h2>
-      <span class="section__badge">FRED · Yahoo</span>
+      <span class="section__badge">FRED · Yahoo · 30일 추이</span>
     </div>
   </div>
   <div class="embed-wrap">{inner}</div>
+  {chart_html}
 </section>
 """
 
@@ -3286,18 +3788,30 @@ def build_and_save_dashboard(
         time_str = _now_kst().strftime("%H:%M")
         last_update = _now_kst().strftime("%m/%d %H:%M")
 
+        # ── 시계열 데이터 (캐시 우선) ─────
+        try:
+            history = _load_market_history(max_age_hours=1)
+        except Exception:
+            history = {}
+
         # ── 섹션 HTML 생성 ─────
         hero_html = _make_hero_header(today, time_str, mood, fg, total_value, total_pnl, total_pct)
         value_html = _make_value_holdings_section(holdings_alerts or [])
         auto_html = _make_auto_positions_section(auto_positions)
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
-        market_html = _make_market_briefing_card(mood, fg)
-        macro_html = _make_macro_card(macro, ai_macro)
+        market_html = _make_market_briefing_card(mood, fg, history)
+        macro_html = _make_macro_card(macro, ai_macro, history)
         ai_html = _make_ai_card(ai_summary, ai_sector)
         recommend_html = _make_recommend_card(kr_top, ai_insights)
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
         sidebar_html = _make_sidebar(sections_status, last_update)
+
+        # ── 차트 데이터 JSON inject ─────
+        try:
+            history_json = json.dumps(history, ensure_ascii=False)
+        except Exception:
+            history_json = "{}"
 
         # ── 풀 HTML 조립 ─────
         html = f"""<!DOCTYPE html>
@@ -3307,8 +3821,16 @@ def build_and_save_dashboard(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="300">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#5f6dff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="투자 비서">
 <meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>투자 비서 — 대시보드</title>
+<script>window._chartData = {history_json};</script>
 {_dashboard_css()}
 </head>
 <body>
@@ -3336,6 +3858,27 @@ def build_and_save_dashboard(
 </div>
 </main>
 </div>
+
+<!-- 차트 상세 모달 -->
+<div class="modal-overlay" id="chart-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal__head">
+      <div class="modal__title">
+        <h3 id="modal-title">차트</h3>
+        <span class="modal__title-badge" id="modal-period">30일 추이</span>
+      </div>
+      <button class="modal__close" id="modal-close" aria-label="닫기">×</button>
+    </div>
+    <div class="modal__body">
+      <div class="modal__chart-wrap">
+        <canvas id="modal-chart" class="modal__chart"></canvas>
+      </div>
+      <div class="modal__stats" id="modal-stats"></div>
+      <div class="modal__external" id="modal-external"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>"""
 
