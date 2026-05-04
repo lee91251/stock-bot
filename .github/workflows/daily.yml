@@ -78,7 +78,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add performance.json docs/ || true
+          git add performance.json docs/ dashboard_cache.json || true
           git diff --staged --quiet || git commit -m "chore: 일일 리포트 + 대시보드 $(date '+%Y-%m-%d')"
           git push || true
 

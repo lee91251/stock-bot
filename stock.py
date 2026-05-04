@@ -103,6 +103,7 @@ MARKET_SCAN_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ma
 # 대시보드 URL (GitHub Pages). 사용자가 활성화 후 자동으로 노출됨.
 DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "https://lee91251.github.io/stock-bot/")
 DASHBOARD_HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "index.html")
+DASHBOARD_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard_cache.json")
 POSITIONS_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "positions.json")
 MARKET_SCAN_N     = 1500
 KIS_BASE       = "https://openapi.koreainvestment.com:9443"
@@ -3802,6 +3803,46 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
 """
 
 
+def _save_dashboard_cache(payload: dict) -> None:
+    """daily(08:00) / marketscan(16:00) 후 풀 데이터(macro/AI/추천)를 캐시 파일로 저장.
+
+    이후 호출(autobuy/autosell/premarket/close 등)에서 빈 인자로 build_and_save_dashboard()를
+    호출해도 _load_dashboard_cache()가 None인 인자만 채워서 대시보드가 풀로 유지됨.
+    """
+    try:
+        payload = dict(payload)
+        payload["updated"] = _now_kst().strftime("%Y-%m-%d %H:%M:%S")
+        with open(DASHBOARD_CACHE, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2, default=str)
+    except Exception as e:
+        print(f"  [dashboard_cache] 저장 실패: {e}")
+
+
+def _load_dashboard_cache() -> dict:
+    """dashboard_cache.json 로드 (3영업일 신선도 체크). 없으면 빈 dict."""
+    try:
+        if not os.path.exists(DASHBOARD_CACHE):
+            return {}
+        with open(DASHBOARD_CACHE, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        # 신선도: 3영업일 이내 데이터만 유효 (휴장/주말 고려)
+        updated_str = cache.get("updated", "")
+        try:
+            updated_dt = datetime.strptime(updated_str.split()[0], "%Y-%m-%d").replace(
+                tzinfo=ZoneInfo("Asia/Seoul")
+            )
+            age_days = (_now_kst() - updated_dt).days
+            if age_days > 3:
+                print(f"  [dashboard_cache] 오래됨({age_days}일) — 무시")
+                return {}
+        except Exception:
+            pass
+        return cache
+    except Exception as e:
+        print(f"  [dashboard_cache] 로드 실패: {e}")
+        return {}
+
+
 def build_and_save_dashboard(
     mood: dict = None,
     fg: dict = None,
@@ -3819,11 +3860,23 @@ def build_and_save_dashboard(
     """대시보드 HTML 생성 + docs/index.html 저장.
 
     풀 대시보드 디자인: 좌측 사이드바 (섹션 네비) + Hero 헤더 (KPI) + 카드 그리드.
-    부분 데이터로 호출 가능 (누락된 건 캐시에서 보충).
+    부분 데이터로 호출 가능 (누락된 건 dashboard_cache.json 또는 market_scan_cache에서 보충).
     GitHub Pages가 docs/index.html을 자동 노출 — staticrypt로 비밀번호 보호.
     """
     try:
-        # ── 데이터 누락 보충 ─────────────────────
+        # ── dashboard_cache 보충 (autobuy 14번 빈 호출 등이 풀 dashboard 덮어쓰지 않게) ─
+        _dc = _load_dashboard_cache()
+        if macro is None:       macro       = _dc.get("macro")
+        if not ai_summary:      ai_summary  = _dc.get("ai_summary", "") or ""
+        if not ai_sector:       ai_sector   = _dc.get("ai_sector", "") or ""
+        if not ai_macro:        ai_macro    = _dc.get("ai_macro", "") or ""
+        if ai_insights is None: ai_insights = _dc.get("ai_insights")
+        if avoid is None:       avoid       = _dc.get("avoid")
+        if dart_alerts is None: dart_alerts = _dc.get("dart_alerts")
+        if not us_top:          us_top      = _dc.get("us_top") or []
+        if not kr_top:          kr_top      = _dc.get("kr_top") or []
+
+        # ── 데이터 누락 보충 (kr_top은 캐시에 없으면 market_scan_cache에서 직접 로드) ─
         if not kr_top:
             kr_top = _load_value_top5() or []
         if mood is None:
@@ -6046,6 +6099,17 @@ def run():
 
     ha = check_holdings_alerts()
     record_recommendations(kr_top5, us_top5)
+
+    # 풀 데이터 캐시 저장 — 이후 호출(autobuy 14번, premarket, close 등)에서 보충용
+    try:
+        _save_dashboard_cache({
+            "macro": macro, "ai_summary": ai_summary, "ai_sector": ai_sector,
+            "ai_macro": ai_macro, "ai_insights": ai_insights,
+            "kr_top": kr_top5, "us_top": us_top5,
+            "avoid": avoid_list, "dart_alerts": dart_alerts,
+        })
+    except Exception as e:
+        print(f"  [run] dashboard_cache 저장 오류: {e}")
 
     # 대시보드 갱신
     try:

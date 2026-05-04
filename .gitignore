@@ -9,3 +9,7 @@ holdings_user.json
 # 시계열 캐시 (실시간 시세, GitHub Actions에서 매번 새로 생성)
 history_cache.json
 
+# 주의: dashboard_cache.json은 git commit (.gitignore X)
+# GitHub Actions runner가 stateless라 commit 안 하면 캐시가 매번 사라짐.
+# daily(08:00)가 만든 풀 데이터를 이후 autobuy 14번 등이 읽어 dashboard 보충 → commit 필수.
+
