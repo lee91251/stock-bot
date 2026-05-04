@@ -698,6 +698,64 @@ def _disclosure_emoji(title: str) -> str:
     return "📰"
 
 
+def fetch_today_disclosures_for_dashboard(days: int = 1) -> list:
+    """대시보드용 — 보유 종목 + KR_STOCKS의 최근 N일 공시 전체 (seen 무관).
+
+    텔레그램용 collect_new_disclosures와 분리:
+    - collect_new_disclosures = seen 차단 (한 번만 알림)
+    - fetch_today_disclosures_for_dashboard = seen 무관 (대시보드는 항상 최신 list 표시)
+    """
+    if not DART_API_KEY:
+        return []
+
+    target = set()
+    held_codes = set()
+    try:
+        for h in (check_holdings_alerts() or []):
+            c = h.get("code", "")
+            if c:
+                target.add(c); held_codes.add(c)
+    except Exception:
+        pass
+    try:
+        for c in load_positions().get("positions", {}).keys():
+            target.add(c); held_codes.add(c)
+    except Exception:
+        pass
+    for ticker in KR_STOCKS.keys():
+        target.add(ticker.split(".")[0])
+    if not target:
+        return []
+
+    items = fetch_recent_disclosures_by_stock_codes(target, days=days)
+    if not items:
+        return []
+
+    # 보유 우선 + 최신순
+    items.sort(key=lambda it: (
+        0 if it.get("stock_code", "") in held_codes else 1,
+        -int(it.get("rcept_dt", "0") or "0"),
+        -int(it.get("rcept_no", "0") or "0"),
+    ))
+
+    enriched = []
+    for it in items[:100]:  # 최대 100건
+        title = it.get("report_nm", "")
+        code  = it.get("stock_code", "")
+        rno   = it.get("rcept_no", "")
+        enriched.append({
+            "name": it.get("corp_name", ""),
+            "code": code,
+            "title": title,
+            "rcept_dt": it.get("rcept_dt", ""),
+            "rcept_no": rno,
+            "url": f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rno}",
+            "emoji": _disclosure_emoji(title),
+            "is_held": code in held_codes,
+        })
+    return enriched
+
+
 def collect_new_disclosures(context_label: str = "") -> list:
     """보유 종목 + KR_STOCKS 새 공시 수집 (중복 차단 캐시).
 
@@ -6578,24 +6636,22 @@ def run_auto_sell():
     else:
         print(f"  [자동매도] 매도 조건 충족 종목 없음")
 
-    # DART 공시 새 수집 — 30분마다 폴링, 텔레그램은 핵심만, 대시보드 캐시 누적
+    # DART 공시 — 30분마다: 텔레그램(새것만 핵심) + 대시보드(오늘 전체 갱신)
     try:
-        new_disc = collect_new_disclosures(context_label=f"{_now_kst().strftime('%H:%M')} 자동매도")
-        if new_disc:
-            # dashboard_cache의 disclosures에 prepend (최신순) — 최대 100건 유지
+        # 1) 텔레그램용: 새 공시만 (보유종목/⚠️/✅ 키워드만 발송)
+        collect_new_disclosures(context_label=f"{_now_kst().strftime('%H:%M')} 자동매도")
+        # 2) 대시보드용: 오늘 전체 공시 새로 받아서 캐시 갱신
+        all_today = fetch_today_disclosures_for_dashboard(days=1)
+        if all_today:
             try:
                 _dc = _load_dashboard_cache()
-                existing = _dc.get("disclosures") or []
-                existing_ids = {d.get("rcept_no") for d in existing}
-                merged = [d for d in new_disc if d.get("rcept_no") not in existing_ids] + existing
-                merged = merged[:100]
-                _dc["disclosures"] = merged
+                _dc["disclosures"] = all_today
                 _save_dashboard_cache(_dc)
-                print(f"  [자동매도] 새 공시 {len(new_disc)}건 → 대시보드 누적 {len(merged)}건")
+                print(f"  [자동매도] 대시보드 공시 {len(all_today)}건 갱신")
             except Exception as e:
                 print(f"  [자동매도] 공시 캐시 갱신 오류: {e}")
     except Exception as e:
-        print(f"  [자동매도] 공시 수집 오류: {e}")
+        print(f"  [자동매도] 공시 처리 오류: {e}")
 
     # ── Phase 3: 매도 임박 알림 (먼저 말 거는 비서) ─────────────────────
     # 익절(+5~+5.9%) / 손절(-3~-3.9%) 임박 종목 — 등급 변화 시에만 1회 알림.
@@ -7500,14 +7556,19 @@ def run():
     except Exception as e:
         print(f"  [이벤트] 알림 오류: {e}")
 
-    # DART 공시 새 수집 — 보유 종목 + KR_STOCKS, 캐시 중복 차단
-    # 텔레그램은 보유 종목 + ⚠️/✅ 키워드만 (다이어트), 전체 공시는 대시보드 카드로
+    # DART 공시 — 텔레그램(새것만 핵심) + 대시보드(오늘 전체)
     try:
-        disclosures_data = collect_new_disclosures(context_label="08:00 일일 점검")
+        # 1) 텔레그램용: 새 공시만 (seen 차단), 보유종목/⚠️✅ 키워드만 발송
+        new_count = len(collect_new_disclosures(context_label="08:00 일일 점검"))
+        if new_count:
+            print(f"  [DART] 새 공시 {new_count}건 (중요만 텔레그램)")
+        # 2) 대시보드용: 오늘 모든 공시 (seen 무관)
+        disclosures_data = fetch_today_disclosures_for_dashboard(days=1)
         if disclosures_data:
-            print(f"  [DART] 새 공시 {len(disclosures_data)}건 수집 → 대시보드 표시")
+            held_n = sum(1 for d in disclosures_data if d.get("is_held"))
+            print(f"  [DART] 대시보드용 오늘 공시 {len(disclosures_data)}건 (보유 {held_n}건)")
     except Exception as e:
-        print(f"  [DART] 공시 수집 오류: {e}")
+        print(f"  [DART] 공시 처리 오류: {e}")
         disclosures_data = []
 
     # 자산 일별 스냅샷 저장 — portfolio_history.json 누적 (자산 추이 차트용)
