@@ -122,7 +122,7 @@ KIS_PAPER_APP_SECRET = os.environ.get("KIS_PAPER_APP_SECRET", "")
 KIS_PAPER_ACCOUNT    = os.environ.get("KIS_PAPER_ACCOUNT",    "")  # 형식: 12345678-01
 
 # 스윙 자동매매 파라미터 (장기/가치 기반인 STOP_LOSS_PCT/TARGET*_PCT와는 별개)
-SWING_SCORE_MIN          = 70          # 매수 임계 스윙 점수
+SWING_SCORE_MIN          = 65          # 매수 임계 스윙 점수 (5/4: 70→65, 100종목 전체 70+ 통과 0개 확인 후 완화)
 SWING_TARGET1_PCT        = 0.06        # +6% 절반 매도
 SWING_TARGET2_PCT        = 0.10        # +10% 전량 매도
 SWING_STOP_LOSS_PCT      = 0.04        # -4% 손절
