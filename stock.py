@@ -104,6 +104,8 @@ MARKET_SCAN_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ma
 DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "https://lee91251.github.io/stock-bot/")
 DASHBOARD_HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "index.html")
 DASHBOARD_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard_cache.json")
+PORTFOLIO_HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portfolio_history.json")
+DART_SEEN_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dart_seen.json")
 POSITIONS_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "positions.json")
 MARKET_SCAN_N     = 1500
 KIS_BASE       = "https://openapi.koreainvestment.com:9443"
@@ -626,6 +628,156 @@ def dart_disclosures(corp_code: str, days: int = 7) -> list:
         "page_count": "40",
     })
     return d.get("list", [])
+
+
+def fetch_recent_disclosures_by_stock_codes(stock_codes: set, days: int = 1) -> list:
+    """주식 코드 set에 매칭되는 최근 N일 공시 fetch (DART list.json 전체 → stock_code 필터).
+
+    daily / autosell 끝에 호출되어 보유 종목 + KR_STOCKS 새 공시 알림용.
+    """
+    if not DART_API_KEY or not stock_codes:
+        return []
+    today = _now_kst()
+    start = (today - timedelta(days=days)).strftime("%Y%m%d")
+    end   = today.strftime("%Y%m%d")
+    all_items = []
+    # 최대 300건 (3페이지 × 100)
+    for page in range(1, 4):
+        d = _dart_req("list.json", {
+            "bgn_de": start, "end_de": end,
+            "page_no": str(page), "page_count": "100",
+        })
+        items = d.get("list", []) if d else []
+        if not items:
+            break
+        all_items.extend(items)
+        if len(items) < 100:
+            break
+    # stock_codes 필터
+    out = []
+    for item in all_items:
+        sc = item.get("stock_code", "")
+        if sc and sc in stock_codes:
+            out.append(item)
+    return out
+
+
+def _load_seen_disclosures() -> set:
+    """본 공시 ID 캐시 로드. 어제 이전은 자동 정리."""
+    try:
+        if not os.path.exists(DART_SEEN_FILE):
+            return set()
+        with open(DART_SEEN_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # 최근 3일 이내만 유지 (메모리 누수 방지)
+        cutoff = (_now_kst() - timedelta(days=3)).strftime("%Y%m%d")
+        return set(rid for rid in data.get("seen_ids", []) if rid >= cutoff)
+    except Exception:
+        return set()
+
+
+def _save_seen_disclosures(seen: set) -> None:
+    try:
+        with open(DART_SEEN_FILE, "w", encoding="utf-8") as f:
+            json.dump({
+                "seen_ids": sorted(seen),
+                "updated": _now_kst().strftime("%Y-%m-%d %H:%M:%S"),
+            }, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [DART] dart_seen 저장 실패: {e}")
+
+
+def notify_new_disclosures(context_label: str = "") -> int:
+    """보유 종목 + KR_STOCKS 새 공시 텔레그램 알림 (중복 차단 캐시).
+
+    daily / autosell 끝에 호출. 같은 공시는 1회만 알림.
+    반환: 발송한 새 공시 수.
+    """
+    if not DART_API_KEY:
+        return 0
+
+    # 1) 대상 종목 코드 set
+    target = set()
+    # 가치주
+    try:
+        ha = check_holdings_alerts() or []
+        for h in ha:
+            code = h.get("code", "")
+            if code:
+                target.add(code)
+    except Exception:
+        pass
+    # 자동매매 보유
+    try:
+        for code in load_positions().get("positions", {}).keys():
+            target.add(code)
+    except Exception:
+        pass
+    # KR_STOCKS
+    for ticker in KR_STOCKS.keys():
+        target.add(ticker.split(".")[0])
+
+    if not target:
+        return 0
+
+    # 2) 새 공시 fetch
+    items = fetch_recent_disclosures_by_stock_codes(target, days=1)
+    if not items:
+        return 0
+
+    # 3) 중복 제외
+    seen = _load_seen_disclosures()
+    new_items = [it for it in items if it.get("rcept_no") and it["rcept_no"] not in seen]
+    if not new_items:
+        return 0
+
+    # 4) 보유 종목 우선 정렬 + 키워드 분류
+    held_codes = set()
+    try:
+        held_codes |= {h.get("code", "") for h in (check_holdings_alerts() or [])}
+    except Exception:
+        pass
+    try:
+        held_codes |= set(load_positions().get("positions", {}).keys())
+    except Exception:
+        pass
+
+    BAD = ("유증", "유상증자", "감자", "공시정정", "정정신고", "임원변경", "감사보고서거절", "관리종목")
+    GOOD = ("수주", "공급계약", "투자결정", "자사주취득", "배당", "신규시설투자", "분할합병")
+    def _emoji(title: str) -> str:
+        if any(k in title for k in BAD):  return "⚠️"
+        if any(k in title for k in GOOD): return "✅"
+        return "📰"
+
+    # 보유 종목 우선
+    new_items.sort(key=lambda it: (0 if it.get("stock_code", "") in held_codes else 1,
+                                    it.get("rcept_dt", ""), it.get("rcept_no", "")))
+
+    # 5) 메시지 작성 (최대 10건)
+    header = f"📢 <b>DART 공시 알림</b>"
+    if context_label:
+        header += f" <i>({context_label})</i>"
+    lines = [header, ""]
+    for it in new_items[:10]:
+        title = it.get("report_nm", "")
+        name  = it.get("corp_name", "")
+        code  = it.get("stock_code", "")
+        rno   = it.get("rcept_no", "")
+        is_held = code in held_codes
+        held_mark = " 🏠" if is_held else ""
+        em = _emoji(title)
+        url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rno}"
+        lines.append(f'{em} <b>{name}</b>{held_mark}')
+        lines.append(f'   <a href="{url}">{title}</a>')
+    if len(new_items) > 10:
+        lines.append(f"\n…외 {len(new_items) - 10}건 더")
+
+    tg_send("\n".join(lines))
+
+    # 6) 캐시 갱신
+    seen.update(it["rcept_no"] for it in new_items if it.get("rcept_no"))
+    _save_seen_disclosures(seen)
+    return len(new_items)
 
 
 def detect_signals(disclosures: list) -> dict:
@@ -1861,6 +2013,87 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
         return {"trades": 0, "summary": f"분석 오류: {e}"}
 
 
+_MARKET_EVENTS = [
+    # 2026 주요 매크로 이벤트 (한국 시간 기준 결과 발표일)
+    # ── FOMC (미국 기준금리 결정, 한국시간 익일 03:00 발표) ──
+    {"date": "2026-06-18", "name": "FOMC 6월 회의 결과", "type": "FOMC", "impact": "high",
+     "note": "동결/인상/인하 + 점도표 변화 → 한국 시장 변동성 확대 가능"},
+    {"date": "2026-07-30", "name": "FOMC 7월 회의 결과", "type": "FOMC", "impact": "high"},
+    {"date": "2026-09-17", "name": "FOMC 9월 회의 결과", "type": "FOMC", "impact": "high"},
+    {"date": "2026-11-05", "name": "FOMC 11월 회의 결과", "type": "FOMC", "impact": "high"},
+    {"date": "2026-12-17", "name": "FOMC 12월 회의 결과", "type": "FOMC", "impact": "high"},
+    # ── 미국 CPI (한국시간 21:30 발표) ──
+    {"date": "2026-05-13", "name": "미국 4월 CPI 발표", "type": "CPI", "impact": "high",
+     "note": "전월비·전년비. 인플레이션 둔화/심화 신호"},
+    {"date": "2026-06-11", "name": "미국 5월 CPI", "type": "CPI", "impact": "high"},
+    {"date": "2026-07-15", "name": "미국 6월 CPI", "type": "CPI", "impact": "high"},
+    {"date": "2026-08-12", "name": "미국 7월 CPI", "type": "CPI", "impact": "high"},
+    {"date": "2026-09-11", "name": "미국 8월 CPI", "type": "CPI", "impact": "high"},
+    {"date": "2026-10-15", "name": "미국 9월 CPI", "type": "CPI", "impact": "high"},
+    {"date": "2026-11-13", "name": "미국 10월 CPI", "type": "CPI", "impact": "high"},
+    {"date": "2026-12-10", "name": "미국 11월 CPI", "type": "CPI", "impact": "high"},
+    # ── 한국 GDP (분기말 익월 24일 전후) ──
+    {"date": "2026-07-24", "name": "한국 2분기 GDP 발표", "type": "GDP", "impact": "medium"},
+    {"date": "2026-10-24", "name": "한국 3분기 GDP 발표", "type": "GDP", "impact": "medium"},
+    # ── 한국 금통위 기준금리 결정 ──
+    {"date": "2026-05-29", "name": "한국 금통위 기준금리 결정", "type": "BOK", "impact": "high",
+     "note": "한국 기준금리 동결/인하 결정. 코스피·환율 직접 영향"},
+    {"date": "2026-07-10", "name": "한국 금통위", "type": "BOK", "impact": "high"},
+    {"date": "2026-08-28", "name": "한국 금통위", "type": "BOK", "impact": "high"},
+    {"date": "2026-10-23", "name": "한국 금통위", "type": "BOK", "impact": "high"},
+    {"date": "2026-11-27", "name": "한국 금통위", "type": "BOK", "impact": "high"},
+]
+
+
+def get_upcoming_events(days_ahead: int = 7) -> list:
+    """오늘 ~ N일 이내 매크로 이벤트 반환 (D-day 포함)."""
+    today = _now_kst().date()
+    end = today + timedelta(days=days_ahead)
+    out = []
+    for e in _MARKET_EVENTS:
+        try:
+            d = datetime.strptime(e["date"], "%Y-%m-%d").date()
+            if today <= d <= end:
+                days_to = (d - today).days
+                out.append({**e, "days_to": days_to})
+        except Exception:
+            continue
+    return sorted(out, key=lambda x: x.get("days_to", 99))
+
+
+def notify_imminent_events() -> int:
+    """D-day(오늘) / D-1(내일) 이벤트 텔레그램 알림. daily 08:00 1회 호출.
+
+    반환: 발송한 이벤트 수.
+    """
+    upcoming = [e for e in get_upcoming_events(days_ahead=1) if e.get("days_to", -1) in (0, 1)]
+    if not upcoming:
+        return 0
+    EMOJI = {"FOMC": "🇺🇸", "CPI": "📊", "GDP": "📈", "BOK": "🇰🇷"}
+    lines = ["📅 <b>경제 이벤트 알림</b>", ""]
+    today_evts = [e for e in upcoming if e.get("days_to") == 0]
+    tmrw_evts  = [e for e in upcoming if e.get("days_to") == 1]
+    if today_evts:
+        lines.append("<b>🔔 오늘 (D-day)</b>")
+        for e in today_evts:
+            em = EMOJI.get(e.get("type"), "📌")
+            lines.append(f"{em} <b>{e['name']}</b> <i>({e.get('type')})</i>")
+            if e.get("note"):
+                lines.append(f"   <i>{e['note']}</i>")
+        lines.append("")
+    if tmrw_evts:
+        lines.append("<b>⏰ 내일 (D-1)</b>")
+        for e in tmrw_evts:
+            em = EMOJI.get(e.get("type"), "📌")
+            lines.append(f"{em} <b>{e['name']}</b> <i>({e.get('type')})</i>")
+            if e.get("note"):
+                lines.append(f"   <i>{e['note']}</i>")
+        lines.append("")
+    lines.append("<i>※ 발표 직후 변동성 확대 가능. 자동매매 한도 자동 축소.</i>")
+    tg_send("\n".join(lines))
+    return len(upcoming)
+
+
 def calculate_market_risk(mood: dict, fg: dict) -> dict:
     """시장 위험 지수 0~100 — VIX/공포탐욕/코스피 변동률 종합. (Phase 1.5)
 
@@ -1923,6 +2156,24 @@ def calculate_market_risk(mood: dict, fg: dict) -> dict:
             if prev_vix > 0 and (vix - prev_vix) / prev_vix >= 0.20:
                 score += 10
                 reasons.append(f"VIX 24h +{(vix - prev_vix) / prev_vix * 100:.0f}% 급등")
+    except Exception:
+        pass
+
+    # 5) 매크로 이벤트 D-day / D-1 (Phase 1.5 확장)
+    try:
+        upcoming = get_upcoming_events(days_ahead=1)
+        for e in upcoming:
+            d = e.get("days_to", -1)
+            impact = e.get("impact", "low")
+            if d == 0 and impact == "high":
+                score += 20
+                reasons.append(f"오늘 {e.get('name', '')} 발표 (D-day)")
+            elif d == 0 and impact == "medium":
+                score += 10
+                reasons.append(f"오늘 {e.get('name', '')}")
+            elif d == 1 and impact == "high":
+                score += 10
+                reasons.append(f"내일 {e.get('name', '')} (D-1)")
     except Exception:
         pass
 
@@ -3021,6 +3272,14 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
 .row__badge--cut { background: rgba(224,49,49,0.12); color: var(--up); }
 .row__badge--t1 { background: rgba(224,49,49,0.12); color: var(--up); }
 .row__badge--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
+.row__sparkline { display: flex; flex-direction: column; align-items: flex-end;
+                  flex-shrink: 0; min-width: 78px; }
+.row__sparkline-label { font-size: 10px; font-weight: 700; margin-top: 1px;
+                        letter-spacing: 0.2px; }
+@media (max-width: 600px) {
+  .row__sparkline { min-width: 60px; }
+  .row__sparkline svg { width: 50px !important; height: 20px !important; }
+}
 
 /* 자산 배분 카드 */
 .allocation { padding: 22px; display: grid; grid-template-columns: 200px 1fr; gap: 28px;
@@ -3644,12 +3903,16 @@ def _make_total_summary_section(value_holdings: list, auto_positions: list) -> s
 """
 
 
-def _make_value_holdings_section(value_holdings: list) -> str:
-    """가치주 보유 섹션 — 미래에셋증권 (HOLDINGS_JSON 기반)."""
+def _make_value_holdings_section(value_holdings: list, sparklines: dict = None) -> str:
+    """가치주 보유 섹션 — 미래에셋증권 (HOLDINGS_JSON 기반).
+
+    sparklines: {code: {values, labels, change_pct}} — 종목별 7일 종가 추세선 데이터.
+    """
     if not value_holdings:
         return _empty_section("value", "💼", "section__icon--value", "가치주 보유",
                               "미래에셋증권", "등록된 가치주가 없습니다",
                               "채팅창에서 '한화에어로 10주 180000원에 샀어' 같이 등록하면 표시됩니다.")
+    sparklines = sparklines or {}
     items = sorted(value_holdings, key=lambda h: h.get("profit", 0), reverse=True)
     total_value = sum(h.get("value", 0) for h in items)
     total_cost  = sum(h.get("cost", 0) for h in items)
@@ -3661,6 +3924,7 @@ def _make_value_holdings_section(value_holdings: list) -> str:
     rows = []
     for h in items:
         name = h.get("name", h.get("code", ""))
+        code = h.get("code", "")
         qty = int(h.get("qty", 0))
         avg = h.get("avg_price", 0)
         curr = h.get("curr_price", 0)
@@ -3676,11 +3940,27 @@ def _make_value_holdings_section(value_holdings: list) -> str:
             badge = '<span class="row__badge row__badge--t1">+10%</span>'
         elif atype == "목표2":
             badge = '<span class="row__badge row__badge--t2">+20%</span>'
+        # 7일 sparkline
+        spark = sparklines.get(code, {})
+        spark_svg = _make_sparkline_svg(
+            spark.get("values", []),
+            change_pct=spark.get("change_pct", 0),
+        ) if spark else ""
+        spark_label = ""
+        if spark.get("change_pct") is not None:
+            chg = spark.get("change_pct", 0)
+            chg_color = "#10b981" if chg > 0 else ("#ef4444" if chg < 0 else "#94a3b8")
+            spark_label = f'<div class="row__sparkline-label" style="color:{chg_color};">7일 {chg:+.1f}%</div>'
+
         rows.append(f"""
     <div class="row">
       <div class="row__main">
         <div class="row__name">{name}{badge}</div>
         <div class="row__sub">{qty:,}주 · 평단 {avg:,.0f}원</div>
+      </div>
+      <div class="row__sparkline">
+        {spark_svg}
+        {spark_label}
       </div>
       <div class="row__price">
         <div class="row__current">{curr:,.0f}원</div>
@@ -3958,6 +4238,82 @@ def _fetch_market_history(period_days: int = 30) -> dict:
     return history
 
 
+def _fetch_holdings_sparklines(holdings: list, days: int = 7) -> dict:
+    """가치주 보유 종목별 N일 종가 시계열. 반환: {code: {values, labels, change_pct}}.
+
+    각 종목 KS/KQ 자동 시도. 가치주 ~10종목이라 batch 호출보다 개별 호출이 안정적.
+    daily 08:00에 1회 호출 → dashboard_cache.json에 저장 → 30분마다 호출은 캐시 재사용.
+    """
+    out = {}
+    if not holdings:
+        return out
+
+    for h in holdings:
+        code = h.get("code", "")
+        if not code:
+            continue
+        # KS 먼저 시도, 실패 시 KQ
+        for suffix in (".KS", ".KQ"):
+            try:
+                ticker = yf.Ticker(f"{code}{suffix}")
+                hist = ticker.history(period=f"{days+5}d", interval="1d")
+                if hist.empty or "Close" not in hist.columns:
+                    continue
+                series = hist["Close"].dropna()
+                if len(series) < 2:
+                    continue
+                pts = series[-days:]
+                values = [round(float(v), 2) for v in pts.values]
+                if not values:
+                    continue
+                change_pct = (values[-1] - values[0]) / values[0] * 100 if values[0] > 0 else 0
+                out[code] = {
+                    "values": values,
+                    "labels": [d.strftime("%m/%d") for d in pts.index],
+                    "change_pct": round(change_pct, 2),
+                }
+                break  # KS 성공 시 KQ 시도 X
+            except Exception:
+                continue
+    return out
+
+
+def _make_sparkline_svg(values: list, width: int = 70, height: int = 24,
+                        change_pct: float = 0) -> str:
+    """SVG sparkline — 7일 종가 추세선. 양수 녹색/음수 빨강/0 회색."""
+    if not values or len(values) < 2:
+        return '<span style="color:var(--text-3);font-size:11px;">—</span>'
+    vmin, vmax = min(values), max(values)
+    if vmax == vmin:
+        return '<span style="color:var(--text-3);font-size:11px;">—</span>'
+    n = len(values)
+    points = []
+    for i, v in enumerate(values):
+        x = (i / (n - 1)) * (width - 2) + 1
+        y = height - 2 - ((v - vmin) / (vmax - vmin)) * (height - 4)
+        points.append(f"{x:.1f},{y:.1f}")
+    polyline = " ".join(points)
+    # 추세 색상 (시작값 vs 끝값)
+    if change_pct > 0.5:
+        color, fill = "#10b981", "rgba(16,185,129,0.12)"
+    elif change_pct < -0.5:
+        color, fill = "#ef4444", "rgba(239,68,68,0.12)"
+    else:
+        color, fill = "#94a3b8", "rgba(148,163,184,0.10)"
+    # 영역 채우기 (마지막 점에서 바닥까지)
+    last_x = points[-1].split(",")[0]
+    first_x = points[0].split(",")[0]
+    fill_path = f"M {first_x},{height} L " + " L ".join(points) + f" L {last_x},{height} Z"
+    return (
+        f'<svg width="{width}" height="{height}" '
+        f'style="display:block;margin-left:auto;" viewBox="0 0 {width} {height}">'
+        f'<path d="{fill_path}" fill="{fill}"/>'
+        f'<polyline points="{polyline}" fill="none" stroke="{color}" stroke-width="1.5" '
+        f'stroke-linecap="round" stroke-linejoin="round"/>'
+        f'</svg>'
+    )
+
+
 def _load_market_history(max_age_hours: int = 1) -> dict:
     """캐시 우선 — 오래되면 재 fetch + 캐시 갱신."""
     try:
@@ -4193,6 +4549,101 @@ def _make_risk_gauge_html(risk: dict) -> str:
 """
 
 
+def _make_portfolio_history_card(history: list) -> str:
+    """자산 일별 추이 차트 (Chart.js 라인 차트). 가치주+자동매매 합계 + 손익.
+
+    history: [{date, value_total, auto_total, total, total_pnl, value_pct}, ...]
+    """
+    if not history or len(history) < 2:
+        return _empty_section("history", "📈", "section__icon--macro", "자산 추이",
+                              "일별 시계열", "데이터 누적 중",
+                              "매일 08:00 daily 가동마다 1건씩 누적. 7일 이상이면 차트 표시.")
+
+    labels = [h.get("date", "")[5:] for h in history]  # MM-DD
+    total_data = [h.get("total", 0) for h in history]
+    value_data = [h.get("value_total", 0) for h in history]
+    auto_data  = [h.get("auto_total", 0) for h in history]
+    pnl_data   = [h.get("total_pnl", 0) for h in history]
+
+    last = history[-1]
+    first = history[0]
+    period_change = last.get("total", 0) - first.get("total", 0)
+    period_pct = (period_change / first.get("total", 1) * 100) if first.get("total", 0) > 0 else 0
+    period_color = "#10b981" if period_change > 0 else ("#ef4444" if period_change < 0 else "#94a3b8")
+    period_sign = "+" if period_change >= 0 else ""
+
+    return f"""
+<section class="section" id="history" aria-label="자산 추이">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--macro">📈</span>
+      <h2>자산 추이</h2>
+      <span class="section__badge">최근 {len(history)}일</span>
+      <span class="section__count" style="color:{period_color};font-weight:700;">
+        {period_sign}{period_change:,}원 ({period_sign}{period_pct:.2f}%)
+      </span>
+    </div>
+  </div>
+  <div style="padding:18px 22px;">
+    <div style="position:relative;height:280px;">
+      <canvas id="portfolio-history-chart"></canvas>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--text-2);">
+      <div><span style="color:#7c3aed;">●</span> 총 자산</div>
+      <div><span style="color:#10b981;">●</span> 가치주 (미래에셋)</div>
+      <div><span style="color:#f59e0b;">●</span> 자동매매 (모의)</div>
+      <div><span style="color:#3b82f6;">●</span> 누적 손익</div>
+    </div>
+  </div>
+  <script>
+  (function() {{
+    const ctx = document.getElementById('portfolio-history-chart');
+    if (!ctx || !window.Chart) return;
+    new Chart(ctx, {{
+      type: 'line',
+      data: {{
+        labels: {json.dumps(labels)},
+        datasets: [
+          {{ label: '총 자산', data: {json.dumps(total_data)},
+             borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.10)',
+             borderWidth: 2.5, tension: 0.3, fill: true, yAxisID: 'y' }},
+          {{ label: '가치주', data: {json.dumps(value_data)},
+             borderColor: '#10b981', borderWidth: 1.5, tension: 0.3, fill: false, yAxisID: 'y' }},
+          {{ label: '자동매매', data: {json.dumps(auto_data)},
+             borderColor: '#f59e0b', borderWidth: 1.5, tension: 0.3, fill: false, yAxisID: 'y' }},
+          {{ label: '누적 손익', data: {json.dumps(pnl_data)},
+             borderColor: '#3b82f6', borderWidth: 1.5, borderDash: [4, 4],
+             tension: 0.3, fill: false, yAxisID: 'y1' }}
+        ]
+      }},
+      options: {{
+        responsive: true, maintainAspectRatio: false,
+        interaction: {{ mode: 'index', intersect: false }},
+        plugins: {{
+          legend: {{ display: false }},
+          tooltip: {{
+            callbacks: {{
+              label: (ctx) => ctx.dataset.label + ': ' + Number(ctx.parsed.y).toLocaleString() + '원'
+            }}
+          }}
+        }},
+        scales: {{
+          x: {{ grid: {{ display: false }}, ticks: {{ color: 'var(--text-3)', maxTicksLimit: 8 }} }},
+          y: {{ position: 'left', grid: {{ color: 'rgba(148,163,184,0.15)' }},
+                ticks: {{ color: 'var(--text-3)',
+                  callback: (v) => (v / 10000).toFixed(0) + '만' }} }},
+          y1: {{ position: 'right', grid: {{ display: false }},
+                 ticks: {{ color: 'var(--text-3)',
+                   callback: (v) => (v / 10000).toFixed(0) + '만' }} }}
+        }}
+      }}
+    }});
+  }})();
+  </script>
+</section>
+"""
+
+
 def _make_personal_coach_card(personal_brief: str, risk: dict = None) -> str:
     """🦾 AI 맞춤 비서 카드 — 마크다운→HTML 변환 + 위험 지수 게이지."""
     if not personal_brief:
@@ -4354,6 +4805,7 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
     items = [
         ("overview", "🏠", "개요", True),
         ("coach", "🦾", "AI 비서", sections_status.get("coach", False)),
+        ("history", "📈", "자산 추이", sections_status.get("history", False)),
         ("value", "💼", "가치주", sections_status.get("value", False)),
         ("auto", "🤖", "자동매매", sections_status.get("auto", False)),
         ("allocation", "📊", "자산 배분", sections_status.get("allocation", False)),
@@ -4398,6 +4850,59 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
 </aside>
 <div class="sidebar-backdrop"></div>
 """
+
+
+def _record_portfolio_value(value_total: float, value_cost: float,
+                             auto_total: float, auto_cost: float) -> None:
+    """오늘 자산 스냅샷을 portfolio_history.json에 누적 저장 (daily 08:00 1회).
+
+    같은 날짜 호출은 덮어쓰기. 자산 일별 추세 차트의 데이터 원천.
+    """
+    try:
+        today = _today_str()
+        history = []
+        if os.path.exists(PORTFOLIO_HISTORY):
+            with open(PORTFOLIO_HISTORY, "r", encoding="utf-8") as f:
+                history = json.load(f).get("history", [])
+        # 같은 날짜 기존 항목 제거
+        history = [h for h in history if h.get("date") != today]
+        v_pnl = value_total - value_cost
+        a_pnl = auto_total - auto_cost
+        history.append({
+            "date": today,
+            "value_total": round(value_total),
+            "value_cost":  round(value_cost),
+            "value_pnl":   round(v_pnl),
+            "value_pct":   round((v_pnl / value_cost * 100) if value_cost > 0 else 0, 2),
+            "auto_total":  round(auto_total),
+            "auto_cost":   round(auto_cost),
+            "auto_pnl":    round(a_pnl),
+            "total":       round(value_total + auto_total),
+            "total_pnl":   round(v_pnl + a_pnl),
+        })
+        # 날짜순 정렬 + 최근 730일(2년)만 유지
+        history.sort(key=lambda h: h.get("date", ""))
+        if len(history) > 730:
+            history = history[-730:]
+        with open(PORTFOLIO_HISTORY, "w", encoding="utf-8") as f:
+            json.dump({"history": history, "updated": _now_kst().strftime("%Y-%m-%d %H:%M:%S")},
+                      f, ensure_ascii=False, indent=2)
+        print(f"  [portfolio_history] {today} 스냅샷 저장 (누적 {len(history)}건)")
+    except Exception as e:
+        print(f"  [portfolio_history] 저장 실패: {e}")
+
+
+def _load_portfolio_history(days: int = 90) -> list:
+    """최근 N일 자산 추이 로드. 차트 데이터용."""
+    try:
+        if not os.path.exists(PORTFOLIO_HISTORY):
+            return []
+        with open(PORTFOLIO_HISTORY, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        history = data.get("history", [])
+        return history[-days:] if len(history) > days else history
+    except Exception:
+        return []
 
 
 def _save_dashboard_cache(payload: dict) -> None:
@@ -4455,6 +4960,8 @@ def build_and_save_dashboard(
     holdings_alerts: list = None,
     personal_brief: str = "",
     risk: dict = None,
+    holdings_sparklines: dict = None,
+    portfolio_history: list = None,
 ) -> str:
     """대시보드 HTML 생성 + docs/index.html 저장.
 
@@ -4471,6 +4978,12 @@ def build_and_save_dashboard(
         if not ai_macro:        ai_macro    = _dc.get("ai_macro", "") or ""
         if not personal_brief:  personal_brief = _dc.get("personal_brief", "") or ""
         if risk is None:        risk        = _dc.get("risk")
+        if holdings_sparklines is None: holdings_sparklines = _dc.get("holdings_sparklines")
+        if portfolio_history is None:
+            try:
+                portfolio_history = _load_portfolio_history(days=90)
+            except Exception:
+                portfolio_history = []
         if ai_insights is None: ai_insights = _dc.get("ai_insights")
         if avoid is None:       avoid       = _dc.get("avoid")
         if dart_alerts is None: dart_alerts = _dc.get("dart_alerts")
@@ -4540,6 +5053,7 @@ def build_and_save_dashboard(
             "macro": bool(macro),
             "ai": bool(ai_summary),
             "coach": bool(personal_brief),
+            "history": bool(portfolio_history and len(portfolio_history) >= 2),
             "recommend": bool(kr_top),
             "avoid": bool(avoid),
             "dart": bool(dart_alerts),
@@ -4558,13 +5072,14 @@ def build_and_save_dashboard(
 
         # ── 섹션 HTML 생성 ─────
         hero_html = _make_hero_header(today, time_str, mood, fg, total_value, total_pnl, total_pct)
-        value_html = _make_value_holdings_section(holdings_alerts or [])
+        value_html = _make_value_holdings_section(holdings_alerts or [], holdings_sparklines or {})
         auto_html = _make_auto_positions_section(auto_positions)
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
         ai_html = _make_ai_card(ai_summary, ai_sector)
         coach_html = _make_personal_coach_card(personal_brief, risk)
+        history_html = _make_portfolio_history_card(portfolio_history or [])
         recommend_html = _make_recommend_card(kr_top, ai_insights)
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
@@ -4606,6 +5121,7 @@ def build_and_save_dashboard(
 <main class="main">
 {hero_html}
 {coach_html}
+{history_html}
 {allocation_html}
 {value_html}
 {auto_html}
@@ -5937,6 +6453,14 @@ def run_auto_sell():
     else:
         print(f"  [자동매도] 매도 조건 충족 종목 없음")
 
+    # DART 공시 새 알림 (보유 종목 + KR_STOCKS) — 30분마다 폴링, 캐시로 중복 차단
+    try:
+        new_count = notify_new_disclosures(context_label=f"{_now_kst().strftime('%H:%M')} 자동매도")
+        if new_count:
+            print(f"  [자동매도] 새 공시 {new_count}건 알림 발송")
+    except Exception as e:
+        print(f"  [자동매도] 공시 알림 오류: {e}")
+
     # ── Phase 3: 매도 임박 알림 (먼저 말 거는 비서) ─────────────────────
     # 익절(+5~+5.9%) / 손절(-3~-3.9%) 임박 종목 — 등급 변화 시에만 1회 알림.
     pos = load_positions()
@@ -6832,6 +7356,50 @@ def run():
     ha = check_holdings_alerts()
     record_recommendations(kr_top5, us_top5)
 
+    # 매크로 이벤트 D-day / D-1 알림 (Phase 4)
+    try:
+        evt_count = notify_imminent_events()
+        if evt_count:
+            print(f"  [이벤트] D-day/D-1 {evt_count}건 알림 발송")
+    except Exception as e:
+        print(f"  [이벤트] 알림 오류: {e}")
+
+    # DART 공시 새 알림 (보유 종목 + KR_STOCKS) — daily 첫 발송, 캐시로 중복 차단
+    try:
+        new_dart = notify_new_disclosures(context_label="08:00 일일 점검")
+        if new_dart:
+            print(f"  [DART] 새 공시 {new_dart}건 알림")
+    except Exception as e:
+        print(f"  [DART] 공시 알림 오류: {e}")
+
+    # 자산 일별 스냅샷 저장 — portfolio_history.json 누적 (자산 추이 차트용)
+    try:
+        v_value = sum(h.get("value", 0) for h in (ha or []))
+        v_cost  = sum(h.get("cost", 0)  for h in (ha or []))
+        a_value = a_cost = 0.0
+        for code, p in load_positions().get("positions", {}).items():
+            bp = p.get("buy_price", 0); qty = p.get("qty", 0)
+            if _kis.available():
+                pi = _kis.get_price(code)
+                cp = _safe_float(pi.get("stck_prpr")) if pi else 0
+            else:
+                cp = bp  # 폴백
+            a_value += cp * qty
+            a_cost  += bp * qty
+        _record_portfolio_value(v_value, v_cost, a_value, a_cost)
+    except Exception as e:
+        print(f"  [run] portfolio_history 기록 오류: {e}")
+
+    # 가치주 보유 종목별 7일 sparkline 데이터 수집 (대시보드 row 옆 추세선용)
+    try:
+        print("\n[7.3/7] 가치주 보유 종목 7일 sparkline 수집...")
+        holdings_sparklines = _fetch_holdings_sparklines(ha or [], days=7)
+        if holdings_sparklines:
+            print(f"  → {len(holdings_sparklines)}개 종목 sparkline 생성")
+    except Exception as e:
+        print(f"  [run] sparkline 수집 오류: {e}")
+        holdings_sparklines = {}
+
     # 시장 위험 지수 계산 (Phase 1.5) — daily 시점 기준 dashboard 게이지용
     try:
         risk = calculate_market_risk(mood, fg)
@@ -6866,6 +7434,7 @@ def run():
             "avoid": avoid_list, "dart_alerts": dart_alerts,
             "personal_brief": personal_brief,
             "risk": risk,
+            "holdings_sparklines": holdings_sparklines,
         })
     except Exception as e:
         print(f"  [run] dashboard_cache 저장 오류: {e}")
@@ -6882,6 +7451,7 @@ def run():
             holdings_alerts=ha,
             personal_brief=personal_brief,
             risk=risk,
+            holdings_sparklines=holdings_sparklines,
         )
     except Exception as e:
         print(f"  [run] 대시보드 갱신 오류: {e}")
