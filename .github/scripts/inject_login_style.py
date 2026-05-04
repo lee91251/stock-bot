@@ -19,16 +19,20 @@ CUSTOM_CSS = """
   --jv-pink:   #ec4899;
 }
 * { box-sizing: border-box; }
-html, body {
+html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class] {
   margin: 0 !important; padding: 0 !important;
-  height: 100%; width: 100%;
+  height: 100% !important; width: 100% !important;
   background: #03060f !important;
-  color: #fff;
+  background-color: #03060f !important;
+  background-image: none !important;
+  color: #fff !important;
   overflow-x: hidden;
 }
 .staticrypt-html, .staticrypt-body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Apple SD Gothic Neo", sans-serif;
   background: #03060f !important;
+  background-color: #03060f !important;
+  background-image: none !important;
   min-height: 100vh;
   color: #fff;
   position: relative;
@@ -272,6 +276,29 @@ html, body {
   .staticrypt-title { font-size: 22px !important; }
 }
 </style>
+<script id="jarvis-login-bg-script">
+(function(){
+  // staticrypt가 inline style로 색상 주입한 경우를 강제 제거 (다크 배경 보장)
+  function fixBg(){
+    try {
+      var d = document.documentElement, b = document.body;
+      d.style.setProperty('background', '#03060f', 'important');
+      d.style.setProperty('background-color', '#03060f', 'important');
+      if (b) {
+        b.style.setProperty('background', '#03060f', 'important');
+        b.style.setProperty('background-color', '#03060f', 'important');
+      }
+    } catch(e){}
+  }
+  fixBg();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixBg);
+  }
+  // staticrypt 폼 렌더 후 한 번 더
+  setTimeout(fixBg, 50);
+  setTimeout(fixBg, 300);
+})();
+</script>
 """
 
 
@@ -294,9 +321,10 @@ def main():
         print("  [login_style] </head> 없음 — 스킵")
         return 0
 
-    # 기존 jarvis-login-style 제거 후 새로 주입 (디자인 갱신 대응)
+    # 기존 jarvis-login-style/script 제거 후 새로 주입 (디자인 갱신 대응)
     import re
     html = re.sub(r'<style id="jarvis-login-style">.*?</style>\s*', '', html, flags=re.DOTALL)
+    html = re.sub(r'<script id="jarvis-login-bg-script">.*?</script>\s*', '', html, flags=re.DOTALL)
     new_html = html.replace("</head>", CUSTOM_CSS + "\n</head>", 1)
     with open(path, "w", encoding="utf-8") as f:
         f.write(new_html)

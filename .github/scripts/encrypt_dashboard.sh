@@ -12,6 +12,8 @@ STATICRYPT_OPTS=(
   --password "${DASHBOARD_PASSWORD:-changeme}"
   --short
   -d docs/
+  --template-color-primary "#03060f"
+  --template-color-secondary "#0a0e1a"
   --template-page-title "AI 투자 비서"
   --template-title "🦾 AI 투자 비서"
   --template-instructions "이제훈님 전용 대시보드입니다. 비밀번호를 입력하세요."
