@@ -114,26 +114,41 @@ html, body {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* 카드 모서리 cyan 코너 액센트 */
+/* 카드 모서리 cyan 코너 액센트 — 좌상단 ㄱ + 우하단 ㄴ (대칭) */
 .staticrypt-form::before {
   content: ""; position: absolute; top: 12px; left: 12px;
   width: 28px; height: 28px;
   border-top: 2px solid var(--jv-cyan);
   border-left: 2px solid var(--jv-cyan);
-  opacity: 0.7;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
+  pointer-events: none;
 }
-/* 스캔 라인 애니메이션 */
 .staticrypt-form::after {
+  content: ""; position: absolute; bottom: 12px; right: 12px;
+  width: 28px; height: 28px;
+  border-bottom: 2px solid var(--jv-cyan);
+  border-right: 2px solid var(--jv-cyan);
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
+  pointer-events: none;
+}
+/* 스캔 라인 애니메이션 — staticrypt-content 안쪽에 배치 */
+#staticrypt_content {
+  position: relative;
+}
+#staticrypt_content::after {
   content: ""; position: absolute; left: 0; right: 0; top: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(6,182,212,0.6), transparent);
-  animation: jv-scan 3.5s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, rgba(6,182,212,0.55), transparent);
+  animation: jv-scan 4s ease-in-out infinite;
   pointer-events: none;
+  z-index: 2;
 }
 @keyframes jv-scan {
   0%, 100% { transform: translateY(0); opacity: 0; }
   10%      { opacity: 1; }
-  50%      { transform: translateY(420px); opacity: 1; }
+  50%      { transform: translateY(380px); opacity: 1; }
   60%      { opacity: 0; }
 }
 
@@ -165,33 +180,37 @@ html, body {
 /* ── 6. 입력창 ── */
 .staticrypt-password-container { position: relative; margin-bottom: 18px !important; }
 #staticrypt-password {
-  background: rgba(0,0,0,0.4) !important;
-  border: 1.5px solid rgba(6,182,212,0.30) !important;
+  background: rgba(255,255,255,0.95) !important;
+  border: 1.5px solid rgba(6,182,212,0.40) !important;
   border-radius: 10px !important;
   padding: 14px 48px 14px 18px !important;
-  color: #ffffff !important;
+  color: #0f172a !important;
   font-size: 16px !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.5px !important;
   width: 100%;
   outline: none !important;
   caret-color: var(--jv-cyan) !important;
   transition: all 0.2s ease;
-  -webkit-text-fill-color: #ffffff !important;
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 2px 12px rgba(6,182,212,0.10) !important;
 }
 #staticrypt-password::placeholder {
-  color: rgba(186,230,253,0.45) !important;
-  font-weight: 400 !important;
-  -webkit-text-fill-color: rgba(186,230,253,0.45) !important;
+  color: rgba(15,23,42,0.45) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  -webkit-text-fill-color: rgba(15,23,42,0.45) !important;
+}
+#staticrypt-password:focus {
+  border-color: var(--jv-cyan) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(6,182,212,0.25),
+              0 0 25px rgba(6,182,212,0.30) !important;
 }
 /* staticrypt 동작 안 막음 — display 클래스 보존 */
 .hidden { display: none !important; }
 #staticrypt-form, #staticrypt_content { pointer-events: auto !important; }
-#staticrypt-password:focus {
-  border-color: var(--jv-cyan) !important;
-  background: rgba(6,182,212,0.06) !important;
-  box-shadow: 0 0 0 3px rgba(6,182,212,0.15),
-              0 0 25px rgba(6,182,212,0.25) !important;
-}
+/* focus 스타일은 위쪽 input 정의에서 처리 */
 .staticrypt-toggle-password-visibility {
   position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
   background: transparent !important; border: none; cursor: pointer;
