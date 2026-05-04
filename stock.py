@@ -687,97 +687,115 @@ def _save_seen_disclosures(seen: set) -> None:
         print(f"  [DART] dart_seen 저장 실패: {e}")
 
 
-def notify_new_disclosures(context_label: str = "") -> int:
-    """보유 종목 + KR_STOCKS 새 공시 텔레그램 알림 (중복 차단 캐시).
+_DART_BAD_KEYWORDS = ("유증", "유상증자", "감자", "공시정정", "정정신고",
+                      "감사보고서거절", "관리종목", "거래정지", "상장폐지")
+_DART_GOOD_KEYWORDS = ("수주", "공급계약", "투자결정", "자사주취득",
+                       "배당", "신규시설투자", "분할합병")
 
-    daily / autosell 끝에 호출. 같은 공시는 1회만 알림.
-    반환: 발송한 새 공시 수.
+def _disclosure_emoji(title: str) -> str:
+    if any(k in title for k in _DART_BAD_KEYWORDS):  return "⚠️"
+    if any(k in title for k in _DART_GOOD_KEYWORDS): return "✅"
+    return "📰"
+
+
+def collect_new_disclosures(context_label: str = "") -> list:
+    """보유 종목 + KR_STOCKS 새 공시 수집 (중복 차단 캐시).
+
+    텔레그램은 **보유 종목 + ⚠️/✅ 키워드 공시만** (중요한 것만 알림).
+    전체 공시 list는 반환 → 대시보드에서 표시.
     """
     if not DART_API_KEY:
-        return 0
+        return []
 
-    # 1) 대상 종목 코드 set
+    # 1) 대상 종목
     target = set()
-    # 가치주
+    held_codes = set()
     try:
-        ha = check_holdings_alerts() or []
-        for h in ha:
-            code = h.get("code", "")
-            if code:
-                target.add(code)
+        for h in (check_holdings_alerts() or []):
+            c = h.get("code", "")
+            if c:
+                target.add(c); held_codes.add(c)
     except Exception:
         pass
-    # 자동매매 보유
     try:
-        for code in load_positions().get("positions", {}).keys():
-            target.add(code)
+        for c in load_positions().get("positions", {}).keys():
+            target.add(c); held_codes.add(c)
     except Exception:
         pass
-    # KR_STOCKS
     for ticker in KR_STOCKS.keys():
         target.add(ticker.split(".")[0])
-
     if not target:
-        return 0
+        return []
 
-    # 2) 새 공시 fetch
+    # 2) Fetch + 중복 제외
     items = fetch_recent_disclosures_by_stock_codes(target, days=1)
     if not items:
-        return 0
-
-    # 3) 중복 제외
+        return []
     seen = _load_seen_disclosures()
     new_items = [it for it in items if it.get("rcept_no") and it["rcept_no"] not in seen]
     if not new_items:
-        return 0
+        return []
 
-    # 4) 보유 종목 우선 정렬 + 키워드 분류
-    held_codes = set()
-    try:
-        held_codes |= {h.get("code", "") for h in (check_holdings_alerts() or [])}
-    except Exception:
-        pass
-    try:
-        held_codes |= set(load_positions().get("positions", {}).keys())
-    except Exception:
-        pass
+    # 3) 보유 종목 우선 정렬
+    new_items.sort(key=lambda it: (
+        0 if it.get("stock_code", "") in held_codes else 1,
+        it.get("rcept_dt", ""), it.get("rcept_no", "")
+    ))
 
-    BAD = ("유증", "유상증자", "감자", "공시정정", "정정신고", "임원변경", "감사보고서거절", "관리종목")
-    GOOD = ("수주", "공급계약", "투자결정", "자사주취득", "배당", "신규시설투자", "분할합병")
-    def _emoji(title: str) -> str:
-        if any(k in title for k in BAD):  return "⚠️"
-        if any(k in title for k in GOOD): return "✅"
-        return "📰"
-
-    # 보유 종목 우선
-    new_items.sort(key=lambda it: (0 if it.get("stock_code", "") in held_codes else 1,
-                                    it.get("rcept_dt", ""), it.get("rcept_no", "")))
-
-    # 5) 메시지 작성 (최대 10건)
-    header = f"📢 <b>DART 공시 알림</b>"
-    if context_label:
-        header += f" <i>({context_label})</i>"
-    lines = [header, ""]
-    for it in new_items[:10]:
+    # 4) 텔레그램은 핵심만 — 보유 종목 OR ⚠️/✅ 키워드
+    critical = []
+    for it in new_items:
         title = it.get("report_nm", "")
-        name  = it.get("corp_name", "")
         code  = it.get("stock_code", "")
-        rno   = it.get("rcept_no", "")
+        em    = _disclosure_emoji(title)
         is_held = code in held_codes
-        held_mark = " 🏠" if is_held else ""
-        em = _emoji(title)
-        url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rno}"
-        lines.append(f'{em} <b>{name}</b>{held_mark}')
-        lines.append(f'   <a href="{url}">{title}</a>')
-    if len(new_items) > 10:
-        lines.append(f"\n…외 {len(new_items) - 10}건 더")
+        if is_held or em in ("⚠️", "✅"):
+            critical.append((it, em, is_held))
 
-    tg_send("\n".join(lines))
+    if critical:
+        header = "📢 <b>DART 공시 (중요)</b>"
+        if context_label:
+            header += f" <i>({context_label})</i>"
+        lines = [header, ""]
+        for it, em, is_held in critical[:10]:
+            title = it.get("report_nm", "")
+            name  = it.get("corp_name", "")
+            rno   = it.get("rcept_no", "")
+            held_mark = " 🏠" if is_held else ""
+            url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rno}"
+            lines.append(f'{em} <b>{name}</b>{held_mark}')
+            lines.append(f'   <a href="{url}">{title}</a>')
+        if len(critical) > 10:
+            lines.append(f"\n…외 중요 공시 {len(critical) - 10}건 더 (대시보드에서 확인)")
+        lines.append(f"\n📊 전체 새 공시 {len(new_items)}건은 대시보드 '공시' 섹션에서.")
+        tg_send("\n".join(lines))
 
-    # 6) 캐시 갱신
+    # 5) 캐시 갱신 (모든 새 공시)
     seen.update(it["rcept_no"] for it in new_items if it.get("rcept_no"))
     _save_seen_disclosures(seen)
-    return len(new_items)
+
+    # 6) 대시보드용 가공 데이터 반환
+    enriched = []
+    for it in new_items:
+        title = it.get("report_nm", "")
+        code  = it.get("stock_code", "")
+        rno   = it.get("rcept_no", "")
+        enriched.append({
+            "name": it.get("corp_name", ""),
+            "code": code,
+            "title": title,
+            "rcept_dt": it.get("rcept_dt", ""),
+            "rcept_no": rno,
+            "url": f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rno}",
+            "emoji": _disclosure_emoji(title),
+            "is_held": code in held_codes,
+        })
+    return enriched
+
+
+# 과거 호출 호환용 별칭 (이전 코드에서 호출 시 동작 유지 — 알림은 핵심만)
+def notify_new_disclosures(context_label: str = "") -> int:
+    return len(collect_new_disclosures(context_label=context_label))
 
 
 def detect_signals(disclosures: list) -> dict:
@@ -3272,6 +3290,32 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
 .row__badge--cut { background: rgba(224,49,49,0.12); color: var(--up); }
 .row__badge--t1 { background: rgba(224,49,49,0.12); color: var(--up); }
 .row__badge--t2 { background: rgba(224,49,49,0.18); color: var(--up); }
+/* ── 📢 최근 공시 카드 ── */
+.disc-list { padding: 6px 0; }
+.disc-row { display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 22px; border-bottom: 1px solid var(--border);
+            text-decoration: none; color: inherit; transition: background 0.15s; }
+.disc-row:last-child { border-bottom: none; }
+.disc-row:hover { background: var(--surface-2); }
+.disc-row--held { background: rgba(124,58,237,0.04); }
+.disc-row--held:hover { background: rgba(124,58,237,0.08); }
+.disc-row__emoji { font-size: 18px; line-height: 1.2; flex-shrink: 0; padding-top: 1px; }
+.disc-row__emoji--bad { filter: drop-shadow(0 0 6px rgba(239,68,68,0.5)); }
+.disc-row__emoji--good { filter: drop-shadow(0 0 6px rgba(16,185,129,0.5)); }
+.disc-row__main { flex: 1; min-width: 0; }
+.disc-row__head { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.disc-row__name { font-weight: 700; font-size: 14px; color: var(--text-1); }
+.disc-row__badge { padding: 2px 7px; border-radius: 5px;
+                   font-size: 10px; font-weight: 700; }
+.disc-row__badge--held { background: rgba(124,58,237,0.15); color: var(--accent); }
+.disc-row__title { font-size: 13px; color: var(--text-2); line-height: 1.4;
+                   overflow: hidden; text-overflow: ellipsis;
+                   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.disc-row__date { font-size: 11px; color: var(--text-3); flex-shrink: 0;
+                  font-variant-numeric: tabular-nums; padding-top: 3px; }
+.disc-more { padding: 12px 22px; font-size: 12px; color: var(--text-3); text-align: center;
+             border-top: 1px dashed var(--border); }
+
 .row__sparkline { display: flex; flex-direction: column; align-items: flex-end;
                   flex-shrink: 0; min-width: 78px; }
 .row__sparkline-label { font-size: 10px; font-weight: 700; margin-top: 1px;
@@ -4549,6 +4593,75 @@ def _make_risk_gauge_html(risk: dict) -> str:
 """
 
 
+def _make_disclosures_card(disclosures: list) -> str:
+    """📢 최근 공시 카드 — 보유 종목 + KR_STOCKS 24시간 새 공시.
+
+    disclosures: [{name, code, title, rcept_dt, url, emoji, is_held}, ...]
+    """
+    if not disclosures:
+        return _empty_section("disclosures", "📢", "section__icon--alert", "최근 공시",
+                              "DART 24시간", "새 공시가 없습니다",
+                              "보유 종목 + 관심종목 100개의 새 공시를 30분마다 자동 수집합니다.")
+
+    held_count = sum(1 for d in disclosures if d.get("is_held"))
+    bad_count  = sum(1 for d in disclosures if d.get("emoji") == "⚠️")
+    good_count = sum(1 for d in disclosures if d.get("emoji") == "✅")
+
+    rows = []
+    for d in disclosures[:30]:  # 최대 30건
+        em = d.get("emoji", "📰")
+        name = d.get("name", "")
+        title = d.get("title", "")
+        url = d.get("url", "#")
+        is_held = d.get("is_held", False)
+        rcept_dt = d.get("rcept_dt", "")
+        # 시간 표시 (YYYYMMDD → MM/DD)
+        time_str = ""
+        if len(rcept_dt) >= 8:
+            time_str = f"{rcept_dt[4:6]}/{rcept_dt[6:8]}"
+        held_badge = '<span class="disc-row__badge disc-row__badge--held">보유</span>' if is_held else ""
+        # 키워드별 색상
+        em_class = ""
+        if em == "⚠️": em_class = "disc-row__emoji--bad"
+        elif em == "✅": em_class = "disc-row__emoji--good"
+
+        rows.append(f"""
+    <a href="{url}" target="_blank" rel="noopener" class="disc-row {'disc-row--held' if is_held else ''}">
+      <span class="disc-row__emoji {em_class}">{em}</span>
+      <div class="disc-row__main">
+        <div class="disc-row__head">
+          <span class="disc-row__name">{name}</span>
+          {held_badge}
+        </div>
+        <div class="disc-row__title">{title}</div>
+      </div>
+      <span class="disc-row__date">{time_str}</span>
+    </a>""")
+
+    more_html = ""
+    if len(disclosures) > 30:
+        more_html = f'<div class="disc-more">외 {len(disclosures) - 30}건 더 — DART 사이트에서 확인</div>'
+
+    return f"""
+<section class="section" id="disclosures" aria-label="최근 공시">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--alert">📢</span>
+      <h2>최근 공시</h2>
+      <span class="section__badge">DART 24h</span>
+      <span class="section__count">{len(disclosures)}건</span>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--text-3);flex-wrap:wrap;">
+      <span>🏠 보유 종목 <b style="color:var(--text-1);">{held_count}</b></span>
+      <span>⚠️ 주의 <b style="color:#ef4444;">{bad_count}</b></span>
+      <span>✅ 호재성 <b style="color:#10b981;">{good_count}</b></span>
+    </div>
+  </div>
+  <div class="disc-list">{"".join(rows)}{more_html}</div>
+</section>
+"""
+
+
 def _make_portfolio_history_card(history: list) -> str:
     """자산 일별 추이 차트 (Chart.js 라인 차트). 가치주+자동매매 합계 + 손익.
 
@@ -4820,7 +4933,8 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
         ("ai", "🤖", "AI 분석", sections_status.get("ai", False)),
         ("recommend", "🇰🇷", "추천", sections_status.get("recommend", False)),
         ("avoid", "🚫", "회피", sections_status.get("avoid", False)),
-        ("dart", "📢", "공시", sections_status.get("dart", False)),
+        ("disclosures", "📢", "공시", sections_status.get("disclosures", False)),
+        ("dart", "🚨", "보유 공시", sections_status.get("dart", False)),
     ]
     badge_html = '<span class="sidebar__link-badge">대기</span>'
     links = []
@@ -4968,6 +5082,7 @@ def build_and_save_dashboard(
     risk: dict = None,
     holdings_sparklines: dict = None,
     portfolio_history: list = None,
+    disclosures: list = None,
 ) -> str:
     """대시보드 HTML 생성 + docs/index.html 저장.
 
@@ -4985,6 +5100,7 @@ def build_and_save_dashboard(
         if not personal_brief:  personal_brief = _dc.get("personal_brief", "") or ""
         if risk is None:        risk        = _dc.get("risk")
         if holdings_sparklines is None: holdings_sparklines = _dc.get("holdings_sparklines")
+        if disclosures is None:         disclosures = _dc.get("disclosures") or []
         if portfolio_history is None:
             try:
                 portfolio_history = _load_portfolio_history(days=90)
@@ -5060,6 +5176,7 @@ def build_and_save_dashboard(
             "ai": bool(ai_summary),
             "coach": bool(personal_brief),
             "history": bool(portfolio_history and len(portfolio_history) >= 2),
+            "disclosures": bool(disclosures),
             "recommend": bool(kr_top),
             "avoid": bool(avoid),
             "dart": bool(dart_alerts),
@@ -5086,6 +5203,7 @@ def build_and_save_dashboard(
         ai_html = _make_ai_card(ai_summary, ai_sector)
         coach_html = _make_personal_coach_card(personal_brief, risk)
         history_html = _make_portfolio_history_card(portfolio_history or [])
+        disclosures_html = _make_disclosures_card(disclosures or [])
         recommend_html = _make_recommend_card(kr_top, ai_insights)
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
@@ -5136,6 +5254,7 @@ def build_and_save_dashboard(
 {ai_html}
 {recommend_html}
 {avoid_html}
+{disclosures_html}
 {dart_html}
 <div class="footer">
   ⚠️ 본 대시보드는 자동 분석된 참고 정보입니다. 최종 투자 판단은 본인이 직접 하세요.<br>
@@ -6459,13 +6578,24 @@ def run_auto_sell():
     else:
         print(f"  [자동매도] 매도 조건 충족 종목 없음")
 
-    # DART 공시 새 알림 (보유 종목 + KR_STOCKS) — 30분마다 폴링, 캐시로 중복 차단
+    # DART 공시 새 수집 — 30분마다 폴링, 텔레그램은 핵심만, 대시보드 캐시 누적
     try:
-        new_count = notify_new_disclosures(context_label=f"{_now_kst().strftime('%H:%M')} 자동매도")
-        if new_count:
-            print(f"  [자동매도] 새 공시 {new_count}건 알림 발송")
+        new_disc = collect_new_disclosures(context_label=f"{_now_kst().strftime('%H:%M')} 자동매도")
+        if new_disc:
+            # dashboard_cache의 disclosures에 prepend (최신순) — 최대 100건 유지
+            try:
+                _dc = _load_dashboard_cache()
+                existing = _dc.get("disclosures") or []
+                existing_ids = {d.get("rcept_no") for d in existing}
+                merged = [d for d in new_disc if d.get("rcept_no") not in existing_ids] + existing
+                merged = merged[:100]
+                _dc["disclosures"] = merged
+                _save_dashboard_cache(_dc)
+                print(f"  [자동매도] 새 공시 {len(new_disc)}건 → 대시보드 누적 {len(merged)}건")
+            except Exception as e:
+                print(f"  [자동매도] 공시 캐시 갱신 오류: {e}")
     except Exception as e:
-        print(f"  [자동매도] 공시 알림 오류: {e}")
+        print(f"  [자동매도] 공시 수집 오류: {e}")
 
     # ── Phase 3: 매도 임박 알림 (먼저 말 거는 비서) ─────────────────────
     # 익절(+5~+5.9%) / 손절(-3~-3.9%) 임박 종목 — 등급 변화 시에만 1회 알림.
@@ -7370,13 +7500,15 @@ def run():
     except Exception as e:
         print(f"  [이벤트] 알림 오류: {e}")
 
-    # DART 공시 새 알림 (보유 종목 + KR_STOCKS) — daily 첫 발송, 캐시로 중복 차단
+    # DART 공시 새 수집 — 보유 종목 + KR_STOCKS, 캐시 중복 차단
+    # 텔레그램은 보유 종목 + ⚠️/✅ 키워드만 (다이어트), 전체 공시는 대시보드 카드로
     try:
-        new_dart = notify_new_disclosures(context_label="08:00 일일 점검")
-        if new_dart:
-            print(f"  [DART] 새 공시 {new_dart}건 알림")
+        disclosures_data = collect_new_disclosures(context_label="08:00 일일 점검")
+        if disclosures_data:
+            print(f"  [DART] 새 공시 {len(disclosures_data)}건 수집 → 대시보드 표시")
     except Exception as e:
-        print(f"  [DART] 공시 알림 오류: {e}")
+        print(f"  [DART] 공시 수집 오류: {e}")
+        disclosures_data = []
 
     # 자산 일별 스냅샷 저장 — portfolio_history.json 누적 (자산 추이 차트용)
     try:
@@ -7441,6 +7573,7 @@ def run():
             "personal_brief": personal_brief,
             "risk": risk,
             "holdings_sparklines": holdings_sparklines,
+            "disclosures": disclosures_data,
         })
     except Exception as e:
         print(f"  [run] dashboard_cache 저장 오류: {e}")
@@ -7458,6 +7591,7 @@ def run():
             personal_brief=personal_brief,
             risk=risk,
             holdings_sparklines=holdings_sparklines,
+            disclosures=disclosures_data,
         )
     except Exception as e:
         print(f"  [run] 대시보드 갱신 오류: {e}")
