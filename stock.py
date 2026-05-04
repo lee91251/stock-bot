@@ -4672,16 +4672,22 @@ def _make_personal_coach_card(personal_brief: str, risk: dict = None) -> str:
 
 
 def _make_ai_card(ai_summary: str, ai_sector: str) -> str:
-    """AI 시장 판단 카드."""
+    """AI 시장 판단 카드 — 마크다운→HTML 변환 적용 (5/5 가독성 개선)."""
     if not ai_summary:
         return _empty_section("ai", "🤖", "section__icon--ai", "AI 시장 판단",
                               "Claude 분석", "AI 분석이 없습니다",
                               "08:50 장 시작 전 또는 02:00 시장 스캔 시 갱신됩니다.")
+    summary_html = _md_to_html(ai_summary)
     sector_html = ""
     if ai_sector:
-        sector_html = (f'<div style="margin:14px 22px 18px;padding:12px 16px;background:var(--surface-2);'
-                       f'border-radius:10px;font-size:13px;color:var(--text-2);border-left:3px solid var(--accent);">'
-                       f'<b style="color:var(--accent);">섹터 로테이션:</b> {ai_sector}</div>')
+        sector_inner_html = _md_to_html(ai_sector)
+        sector_html = (
+            '<div style="margin:14px 22px 22px;padding:14px 18px;background:var(--surface-2);'
+            'border-radius:10px;color:var(--text-1);border-left:3px solid var(--accent);">'
+            '<div style="font-weight:700;color:var(--accent);margin-bottom:8px;font-size:13px;'
+            'text-transform:uppercase;letter-spacing:0.5px;">섹터 로테이션</div>'
+            f'{sector_inner_html}</div>'
+        )
     return f"""
 <section class="section" id="ai" aria-label="AI 시장 판단">
   <div class="section__head">
@@ -4691,7 +4697,7 @@ def _make_ai_card(ai_summary: str, ai_sector: str) -> str:
       <span class="section__badge">Claude</span>
     </div>
   </div>
-  <div style="padding:16px 22px;font-size:14px;line-height:1.8;color:var(--text-1);white-space:pre-line;">{ai_summary}</div>
+  <div class="coach-body">{summary_html}</div>
   {sector_html}
 </section>
 """

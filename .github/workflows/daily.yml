@@ -67,15 +67,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add performance.json docs/ dashboard_cache.json portfolio_history.json dart_seen.json || true
@@ -101,15 +93,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ || true
@@ -135,15 +119,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ || true
@@ -169,15 +145,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ || true
@@ -219,15 +187,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json docs/ || true
@@ -253,15 +213,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json docs/ dart_seen.json || true
@@ -292,15 +244,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add backtest_results.json || true
@@ -326,15 +270,7 @@ jobs:
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
-          # 대시보드 비밀번호 보호 (staticrypt) — 실패 시 docs 변경 폐기 (평문 노출 방지)
-          if [ -f docs/index.html ]; then
-            if ! npx -y staticrypt docs/index.html --password "$DASHBOARD_PASSWORD" --short -d docs/; then
-              echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-              git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-            else
-              python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
-            fi
-          fi
+          bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add market_scan_cache.json docs/ || true
