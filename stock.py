@@ -1753,13 +1753,175 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
         )
         resp = client.messages.create(
             model=CLAUDE_MODEL,
-            max_tokens=350,
+            max_tokens=700,  # 5/4: 350→700 (3가지 항목 답변이 한국어로 잘리는 문제)
             system=_ai_system(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
     except Exception as e:
         print(f"  [AI] 매크로 분석 실패: {e}")
+        return ""
+
+
+def _build_user_portfolio_context() -> str:
+    """이제훈님 보유 + 자금 + 섹터 분포를 텍스트로 요약 (AI 프롬프트용).
+
+    반환 예시:
+        가치주(미래에셋, 10종목, 평가액 +967만원/+44.81%):
+          - 두산에너빌리티 80주 @65,364 → 127,100 (+94.8%, 원전)
+          - ...
+        자동매매(한국투자증권 모의, 0/5 슬롯, 잔여 1,000만원/일):
+          - 보유 없음
+        섹터 분포:
+          - 방산 30% / 신재생 25% / 바이오 20% / 기타 25%
+    """
+    lines = []
+
+    # 가치주 (HOLDINGS_JSON)
+    try:
+        ha = check_holdings_alerts()
+    except Exception:
+        ha = []
+    if ha:
+        v_value = sum(h.get("value", 0) for h in ha)
+        v_cost  = sum(h.get("cost", 0) for h in ha)
+        v_pnl   = v_value - v_cost
+        v_pct   = (v_pnl / v_cost * 100) if v_cost > 0 else 0
+        lines.append(
+            f"가치주(미래에셋, {len(ha)}종목, 평가 {v_value:,.0f}원 / 매입 {v_cost:,.0f}원 / "
+            f"손익 {v_pnl:+,.0f}원/{v_pct:+.2f}%):"
+        )
+        for h in ha[:15]:  # 최대 15종목
+            sec = h.get("sector", "")
+            sec_str = f", {sec}" if sec else ""
+            lines.append(
+                f"  - {h.get('name')} {h.get('qty')}주 @{h.get('avg_price', 0):,.0f} "
+                f"→ {h.get('curr_price', 0):,.0f} ({h.get('pnl_pct', 0):+.1f}%{sec_str})"
+            )
+    else:
+        lines.append("가치주: 보유 없음")
+
+    # 자동매매 (positions.json)
+    try:
+        pos = load_positions()
+    except Exception:
+        pos = {}
+    auto_positions = pos.get("positions", {})
+    today = _today_str()
+    daily = pos.get("daily", {}).get(today, {"buy_count": 0, "buy_amount": 0})
+    remaining_slots = SWING_MAX_DAILY_BUY - daily.get("buy_count", 0)
+    remaining_amt   = SWING_MAX_DAILY_AMT - daily.get("buy_amount", 0)
+    if auto_positions:
+        lines.append(
+            f"\n자동매매(한국투자증권 모의, {len(auto_positions)}종목 보유, "
+            f"오늘 잔여 {remaining_slots}슬롯/{remaining_amt:,}원):"
+        )
+        for code, p in list(auto_positions.items())[:10]:
+            lines.append(
+                f"  - {p.get('name', code)} {p.get('qty', 0)}주 @{p.get('buy_price', 0):,.0f} "
+                f"({p.get('buy_date', '')} 매수, 점수 {p.get('swing_score', 0)})"
+            )
+    else:
+        lines.append(
+            f"\n자동매매: 보유 없음. 오늘 잔여 {remaining_slots}슬롯/{remaining_amt:,}원"
+        )
+
+    # 섹터 분포 (가치주만 — 자동매매는 빈번히 변하므로 가치주 위주)
+    if ha:
+        sec_value = {}
+        for h in ha:
+            sec = h.get("sector") or "기타"
+            sec_value[sec] = sec_value.get(sec, 0) + h.get("value", 0)
+        total = sum(sec_value.values())
+        if total > 0:
+            lines.append("\n가치주 섹터 분포:")
+            for sec, v in sorted(sec_value.items(), key=lambda x: -x[1]):
+                pct = v / total * 100
+                lines.append(f"  - {sec}: {pct:.0f}%")
+
+    return "\n".join(lines)
+
+
+def ai_personal_coach(query: str = "지금 뭐 사야 할까?",
+                      mood: dict = None, fg: dict = None,
+                      kr_top: list = None, ai_macro: str = "",
+                      max_tokens: int = 1200) -> str:
+    """이제훈님 맞춤 AI 비서 — 보유종목+자금+섹터+시장+매크로 종합해서 답변.
+
+    텔레그램 명령어 (/추천, /진단, /오늘) + 대시보드 데일리 브리핑 카드에서 사용.
+    Phase 1: 자비스 진화 1단계 — 단순 점수 리스트가 아닌 개인화 코칭.
+    """
+    client = _get_ai_client()
+    if not client:
+        return ""
+
+    try:
+        # 1) 사용자 컨텍스트 수집 (보유 + 자금 + 섹터)
+        user_ctx = _build_user_portfolio_context()
+
+        # 2) 시장 데이터
+        if mood is None:
+            try:
+                mood = get_market_mood()
+            except Exception:
+                mood = {}
+        if fg is None:
+            try:
+                fg = get_fear_greed(mood) if mood else {"score": 50, "label": "중립"}
+            except Exception:
+                fg = {"score": 50, "label": "중립"}
+
+        market_lines = []
+        if mood:
+            market_lines.append(
+                f"코스피 {mood.get('kospi_chg', 0):+.2f}% / VIX {mood.get('vix', 0):.2f} / "
+                f"환율 {mood.get('usdkrw', 0):,.0f}원 / WTI ${mood.get('wti', 0):.2f}"
+            )
+            market_lines.append(
+                f"공포·탐욕 {fg.get('score', 50)} ({fg.get('label', '중립')})"
+            )
+        if ai_macro:
+            market_lines.append(f"매크로 분석: {ai_macro[:300]}")
+
+        # 3) 추천 후보 (가치주 TOP5)
+        if not kr_top:
+            try:
+                kr_top = _load_value_top5() or []
+            except Exception:
+                kr_top = []
+        cand_lines = []
+        for s in (kr_top or [])[:5]:
+            cand_lines.append(
+                f"  - {s.get('name', '?')} ({s.get('sector', '')}) — {s.get('score', 0)}점, "
+                f"{s.get('price', 0):,.0f}원, "
+                f"{'매수신호 ✅' if s.get('buy_signal') else '관찰 🔍'}"
+            )
+
+        prompt = (
+            f"이제훈님(비개발자, 한국 거주, 두 계좌 분리: 가치주=미래에셋, 자동매매=한국투자증권 모의)의 "
+            f"맞춤 투자 비서로서 답변하세요. 점수 나열이 아니라 **그의 현재 포트폴리오와 자금 상황을 고려한** 조언.\n\n"
+            f"[그의 현재 상태]\n{user_ctx}\n\n"
+            f"[시장 상황]\n" + ("\n".join(market_lines) if market_lines else "데이터 없음") + "\n\n"
+            f"[봇이 발굴한 후보 종목]\n" + ("\n".join(cand_lines) if cand_lines else "  (마켓스캔 캐시 없음)") + "\n\n"
+            f"[질문]\n{query}\n\n"
+            f"답변 가이드:\n"
+            f"- 한국어, 비개발자 친화 (전문 용어는 풀어서)\n"
+            f"- 그의 보유 종목과 섹터 분포를 반드시 고려 (예: 이미 방산 30%면 추가 방산 매수 비추)\n"
+            f"- 자동매매 잔여 슬롯/금액 안에서만 추천\n"
+            f"- '사세요/팔지 마세요' 단정 X. '이 조건이면 권장, 저 위험은 주의' 형식\n"
+            f"- 너무 길지 않게 (텔레그램 한 화면). 핵심 3~5가지로 정리\n"
+            f"- 마지막에 '오늘 행동 제안 1줄' 추가"
+        )
+
+        resp = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=max_tokens,
+            system=_ai_system(),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp.content[0].text.strip()
+    except Exception as e:
+        print(f"  [AI] 개인 코칭 실패: {e}")
         return ""
 
 
@@ -3624,6 +3786,27 @@ def _make_market_briefing_card(mood: dict, fg: dict, history: dict = None) -> st
 """
 
 
+def _make_personal_coach_card(personal_brief: str) -> str:
+    """🦾 AI 맞춤 비서 카드 — 이제훈님 보유+자금+섹터 종합 코칭 (daily 08:00 생성)."""
+    if not personal_brief:
+        return _empty_section("coach", "🦾", "section__icon--ai", "AI 맞춤 비서",
+                              "이제훈님 전용", "맞춤 코칭이 없습니다",
+                              "08:00 daily 갱신 또는 텔레그램 /추천 명령으로 즉시 생성.")
+    # 개행을 그대로 표시 (white-space:pre-line)
+    return f"""
+<section class="section" id="coach" aria-label="AI 맞춤 비서">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--ai">🦾</span>
+      <h2>AI 맞춤 비서</h2>
+      <span class="section__badge">이제훈님 전용</span>
+    </div>
+  </div>
+  <div style="padding:16px 22px;font-size:14px;line-height:1.8;color:var(--text-1);white-space:pre-line;">{personal_brief}</div>
+</section>
+"""
+
+
 def _make_ai_card(ai_summary: str, ai_sector: str) -> str:
     """AI 시장 판단 카드."""
     if not ai_summary:
@@ -3757,6 +3940,7 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
     """좌측 사이드바 — 섹션 네비게이션 (활성/비활성 표시)."""
     items = [
         ("overview", "🏠", "개요", True),
+        ("coach", "🦾", "AI 비서", sections_status.get("coach", False)),
         ("value", "💼", "가치주", sections_status.get("value", False)),
         ("auto", "🤖", "자동매매", sections_status.get("auto", False)),
         ("allocation", "📊", "자산 배분", sections_status.get("allocation", False)),
@@ -3856,6 +4040,7 @@ def build_and_save_dashboard(
     macro: dict = None,
     ai_macro: str = "",
     holdings_alerts: list = None,
+    personal_brief: str = "",
 ) -> str:
     """대시보드 HTML 생성 + docs/index.html 저장.
 
@@ -3870,6 +4055,7 @@ def build_and_save_dashboard(
         if not ai_summary:      ai_summary  = _dc.get("ai_summary", "") or ""
         if not ai_sector:       ai_sector   = _dc.get("ai_sector", "") or ""
         if not ai_macro:        ai_macro    = _dc.get("ai_macro", "") or ""
+        if not personal_brief:  personal_brief = _dc.get("personal_brief", "") or ""
         if ai_insights is None: ai_insights = _dc.get("ai_insights")
         if avoid is None:       avoid       = _dc.get("avoid")
         if dart_alerts is None: dart_alerts = _dc.get("dart_alerts")
@@ -3938,6 +4124,7 @@ def build_and_save_dashboard(
             "market": bool(mood and (mood.get("kospi_price") or mood.get("vix"))),
             "macro": bool(macro),
             "ai": bool(ai_summary),
+            "coach": bool(personal_brief),
             "recommend": bool(kr_top),
             "avoid": bool(avoid),
             "dart": bool(dart_alerts),
@@ -3962,6 +4149,7 @@ def build_and_save_dashboard(
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
         ai_html = _make_ai_card(ai_summary, ai_sector)
+        coach_html = _make_personal_coach_card(personal_brief)
         recommend_html = _make_recommend_card(kr_top, ai_insights)
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
@@ -4002,6 +4190,7 @@ def build_and_save_dashboard(
 {sidebar_html}
 <main class="main">
 {hero_html}
+{coach_html}
 {allocation_html}
 {value_html}
 {auto_html}
@@ -5093,13 +5282,36 @@ def run_auto_buy():
 
     prev_buy_count = daily["buy_count"]  # 매수 요약 메시지용 (이번 회차 매수 건수 계산)
 
+    # 가치주 섹터 비중 계산 (자동매수와 섹터 겹침 경고용 — Phase 1)
+    sec_pct = {}
+    try:
+        ha_for_sec = check_holdings_alerts() or []
+        sec_value = {}
+        for h in ha_for_sec:
+            sec = h.get("sector") or "기타"
+            sec_value[sec] = sec_value.get(sec, 0) + h.get("value", 0)
+        total_v = sum(sec_value.values())
+        if total_v > 0:
+            sec_pct = {sec: v/total_v*100 for sec, v in sec_value.items()}
+    except Exception:
+        pass
+
     # 사전 알림 (30초 동안 /취소 가능)
     preview_lines = [f"⏰ <b>{mode_tag} {SWING_PRE_ALERT_SEC}초 후 자동 매수</b>", "취소: /취소", ""]
     for s in selected:
         price = s["price"]
-        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
-        amt   = price * qty
-        preview_lines.append(f"• <b>{s['name']}</b> ({s['swing_score']}점) — {qty}주 약 {amt:,}원")
+        sec   = s.get("sector", "")
+        sec_warn = ""
+        if sec and sec in sec_pct and sec_pct[sec] >= 30:
+            # 가치주에서 같은 섹터를 30% 이상 보유 → 경고 + 매수량 축소
+            ratio = 0.5 if sec_pct[sec] >= 30 else 1.0
+            qty   = max(1, int(INVEST_PER_STOCK * qty_factor * ratio / price))
+            sec_warn = f" ⚠️ 가치주 {sec} {sec_pct[sec]:.0f}% 보유 → 50% 축소"
+            s["_qty_override"] = qty  # 매수 실행 시 사용
+        else:
+            qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        amt = price * qty
+        preview_lines.append(f"• <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원{sec_warn}")
     tg_send("\n".join(preview_lines))
 
     if _poll_cancel_during_sleep(SWING_PRE_ALERT_SEC):
@@ -5118,7 +5330,11 @@ def run_auto_buy():
 
         code  = s["ticker"].split(".")[0]
         price = s["price"]
-        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        # 사전알림에서 섹터 겹침 → 매수량 축소 결정된 경우 _qty_override 사용
+        if "_qty_override" in s:
+            qty = s["_qty_override"]
+        else:
+            qty = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
 
         if daily["buy_amount"] + amt > SWING_MAX_DAILY_AMT:
@@ -5492,6 +5708,11 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
             if text in ("/도움말", "/help"):
                 tg_send(
                     "<b>📌 투자 비서 v6.0 명령어</b>\n\n"
+                    "<b>🤖 AI 맞춤 코칭 (NEW)</b>\n"
+                    "/추천 — 지금 뭐 사야 할지 종합 답변 (보유+자금+섹터 고려)\n"
+                    "/진단 — 포트폴리오 리스크 진단\n"
+                    "/오늘 — 보유 종목별 오늘 액션 (사/팔/홀드)\n"
+                    "X 사도 돼? — 보유와 비교 후 답변\n\n"
                     "<b>기본</b>\n"
                     "/리포트 — 오늘 전체 리포트\n"
                     "/보유 — 보유종목 현황 (수동 등록)\n"
@@ -5508,10 +5729,51 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
                     "현대로템 300만원 — 투자 시뮬레이션\n"
                     "삼성중공업 500 — 500만원 시뮬레이션\n\n"
                     "<b>시장</b>\n"
-                    "지금 시장 어때? — 시장 현황 분석\n"
-                    "오늘 뭐 사? — 오늘의 추천 종목",
+                    "지금 시장 어때? — 시장 현황 분석",
                     chat_id,
                 )
+                continue
+
+            # ── AI 맞춤 코칭 명령어 (Phase 1) ─────────────────
+            if text in ("/추천", "/coach"):
+                tg_send("🤖 분석 중... (10~20초)", chat_id)
+                ans = ai_personal_coach(
+                    "지금 어떤 종목을 사야 할까? 내 보유와 자금 상황 고려해서 종합 추천.",
+                    mood=mood, fg=fg, kr_top=kr_top,
+                )
+                tg_send(ans or "AI 응답 실패", chat_id)
+                continue
+
+            if text == "/진단":
+                tg_send("🩺 포트폴리오 진단 중... (10~20초)", chat_id)
+                ans = ai_personal_coach(
+                    "내 포트폴리오를 진단해줘. 섹터 집중도, 종목 간 상관관계 위험, "
+                    "분산 부족, 큰 손실 시나리오를 짚어주고 개선안 추천.",
+                    mood=mood, fg=fg, kr_top=kr_top,
+                )
+                tg_send(ans or "AI 응답 실패", chat_id)
+                continue
+
+            if text == "/오늘":
+                tg_send("📅 오늘 액션 분석 중... (10~20초)", chat_id)
+                ans = ai_personal_coach(
+                    "오늘 내가 보유한 가치주 종목별로 어떻게 대응해야 할지 (홀드/익절/추매/손절) "
+                    "오늘 시장 상황과 매크로 고려해서 1줄씩 알려줘. 자동매매도 매수 추천 있으면 함께.",
+                    mood=mood, fg=fg, kr_top=kr_top,
+                )
+                tg_send(ans or "AI 응답 실패", chat_id)
+                continue
+
+            # "X 사도 돼?" / "X 사도될까?" 자연어 패턴 → 코칭으로
+            if re.search(r"사도\s*(돼|될까|될까요|되나|되니)\??", text):
+                tg_send("🤔 분석 중... (10~20초)", chat_id)
+                ans = ai_personal_coach(
+                    f"질문: '{text}'\n"
+                    "이 종목을 사도 될지 내 보유 종목과 섹터 분포, 자금 상황 고려해서 답해줘. "
+                    "겹치는 섹터/유사 종목 있으면 명시.",
+                    mood=mood, fg=fg, kr_top=kr_top,
+                )
+                tg_send(ans or "AI 응답 실패", chat_id)
                 continue
 
             if text == "/잔고":
@@ -6100,6 +6362,21 @@ def run():
     ha = check_holdings_alerts()
     record_recommendations(kr_top5, us_top5)
 
+    # AI 맞춤 비서 — 이제훈님 보유+자금+섹터 종합 코칭 (Phase 1)
+    print("\n[7.5/7] AI 맞춤 비서 (개인 코칭) 생성 중...")
+    try:
+        personal_brief = ai_personal_coach(
+            "오늘 내 포트폴리오 종합 진단 + 추천 종목 + 보유별 액션 + 주의사항을 "
+            "한 화면에 정리. 각 섹션 헤더 (📊 시장 / 💼 보유 진단 / 🎯 추천 / ⚠️ 주의 / 🎬 오늘 행동)로 구분.",
+            mood=mood, fg=fg, kr_top=kr_top5, ai_macro=ai_macro,
+            max_tokens=1500,
+        )
+        if personal_brief:
+            print(f"  → 개인 코칭 생성됨 ({len(personal_brief)}자)")
+    except Exception as e:
+        print(f"  [run] AI 맞춤 비서 오류: {e}")
+        personal_brief = ""
+
     # 풀 데이터 캐시 저장 — 이후 호출(autobuy 14번, premarket, close 등)에서 보충용
     try:
         _save_dashboard_cache({
@@ -6107,6 +6384,7 @@ def run():
             "ai_macro": ai_macro, "ai_insights": ai_insights,
             "kr_top": kr_top5, "us_top": us_top5,
             "avoid": avoid_list, "dart_alerts": dart_alerts,
+            "personal_brief": personal_brief,
         })
     except Exception as e:
         print(f"  [run] dashboard_cache 저장 오류: {e}")
@@ -6121,6 +6399,7 @@ def run():
             ai_insights=ai_insights,
             macro=macro, ai_macro=ai_macro,
             holdings_alerts=ha,
+            personal_brief=personal_brief,
         )
     except Exception as e:
         print(f"  [run] 대시보드 갱신 오류: {e}")
