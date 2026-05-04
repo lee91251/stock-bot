@@ -137,23 +137,26 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
   pointer-events: none;
 }
-/* 스캔 라인 애니메이션 — staticrypt-content 안쪽에 배치 */
-#staticrypt_content {
-  position: relative;
-}
-#staticrypt_content::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 0;
+/* 스캔 라인 — form 안에서 위→아래로 (form 100% 높이 활용) */
+.jv-scanner {
+  position: absolute; left: 0; right: 0;
+  top: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(6,182,212,0.55), transparent);
-  animation: jv-scan 4s ease-in-out infinite;
+  background: linear-gradient(90deg,
+              transparent 0%, transparent 15%,
+              rgba(6,182,212,0.7) 50%,
+              transparent 85%, transparent 100%);
   pointer-events: none;
-  z-index: 2;
+  z-index: 10;
+  box-shadow: 0 0 12px rgba(6,182,212,0.6),
+              0 0 24px rgba(6,182,212,0.25);
+  animation: jv-scan-full 4s linear infinite;
 }
-@keyframes jv-scan {
-  0%, 100% { transform: translateY(0); opacity: 0; }
-  10%      { opacity: 1; }
-  50%      { transform: translateY(380px); opacity: 1; }
-  60%      { opacity: 0; }
+@keyframes jv-scan-full {
+  0%   { top: 0;    opacity: 0; }
+  6%   { opacity: 1; }
+  94%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 
 /* ── 5. 타이틀 (cyan 글로우) ── */
@@ -321,11 +324,18 @@ def main():
         print("  [login_style] </head> 없음 — 스킵")
         return 0
 
-    # 기존 jarvis-login-style/script 제거 후 새로 주입 (디자인 갱신 대응)
+    # 기존 jarvis-login-style/script + scanner 제거 후 새로 주입 (디자인 갱신 대응)
     import re
     html = re.sub(r'<style id="jarvis-login-style">.*?</style>\s*', '', html, flags=re.DOTALL)
     html = re.sub(r'<script id="jarvis-login-bg-script">.*?</script>\s*', '', html, flags=re.DOTALL)
+    html = re.sub(r'<div class="jv-scanner"[^>]*></div>\s*', '', html)
     new_html = html.replace("</head>", CUSTOM_CSS + "\n</head>", 1)
+    # staticrypt-form 시작 직후 스캔 라인 div 주입 (카드 위→아래 풀 스캔용)
+    new_html = re.sub(
+        r'(<(?:div|form)[^>]*class="[^"]*\bstaticrypt-form\b[^"]*"[^>]*>)',
+        r'\1<div class="jv-scanner" aria-hidden="true"></div>',
+        new_html, count=1
+    )
     with open(path, "w", encoding="utf-8") as f:
         f.write(new_html)
     print(f"  [login_style] 자비스 HUD 디자인 주입 완료 → {path}")
