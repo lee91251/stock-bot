@@ -1559,17 +1559,25 @@ def analyze(
     if momentum_bad:
         sw_score -= 15
 
-    # 스윙 매수 시그널: 점수 + 안전 조건 6개
-    swing_signal = (
-        sw_score >= SWING_SCORE_MIN
-        and rsi < 65
-        and not manipulation_signal
-        and not momentum_bad
-        and not dart_sigs.get("rights")
-        and not sr["near_resistance"]
-        and vol_ratio >= 100
-        and ret_1m > -15
-    )
+    # 스윙 매수 시그널: 점수 + 안전 조건 6개. 차단 사유 list로도 기록 (자동매수 진단용).
+    swing_block_reasons = []
+    if sw_score < SWING_SCORE_MIN:
+        swing_block_reasons.append(f"점수<{SWING_SCORE_MIN}")
+    if rsi >= 65:
+        swing_block_reasons.append(f"RSI{int(rsi)}")
+    if manipulation_signal:
+        swing_block_reasons.append("조작감지")
+    if momentum_bad:
+        swing_block_reasons.append("모멘텀악화")
+    if dart_sigs.get("rights"):
+        swing_block_reasons.append("유증")
+    if sr["near_resistance"]:
+        swing_block_reasons.append("저항근처")
+    if vol_ratio < 100:
+        swing_block_reasons.append(f"거래량{int(vol_ratio)}%")
+    if ret_1m <= -15:
+        swing_block_reasons.append(f"1개월{ret_1m:.0f}%")
+    swing_signal = len(swing_block_reasons) == 0
 
     return {
         "ticker": ticker, "name": name, "period": period, "sector": sector,
@@ -1583,6 +1591,7 @@ def analyze(
         "reasons": reasons, "warnings": warnings,
         "buy_signal": buy_signal, "buy_reason": buy_reason,
         "swing_score": sw_score, "swing_reasons": sw_reasons, "swing_signal": swing_signal,
+        "swing_block_reasons": swing_block_reasons,
         "buy_price": buy_price, "stop_price": stop_price,
         "dynamic_stop": dynamic_stop, "dynamic_stop_pct": dynamic_stop_pct,
         "target1": target1, "target2": target2, "target3": target3,
@@ -4961,12 +4970,38 @@ def run_auto_buy():
     # DART 데이터는 KR_STOCKS만 (market_scan 종목은 코드 정보 부족하여 스킵)
     all_dart = get_all_dart_data(KR_STOCKS)
     candidates = []
+    diag_buckets  = {"65+": 0, "50-64": 0, "<50": 0}
+    diag_blocks   = {}                  # 차단 사유 종류별 카운트
+    diag_top_score: list = []           # (-score, name, score, blocks) — 최고점 TOP5 추적
     for ticker, (name, period, sector) in pool.items():
         r = analyze(ticker, name, period, sector,
                     dart_data=all_dart.get(ticker), with_sentiment=False)
-        if r and r.get("swing_signal") and r.get("swing_score", 0) >= SWING_SCORE_MIN:
-            candidates.append(r)
+        if r:
+            sc = r.get("swing_score", 0)
+            blocks = r.get("swing_block_reasons", [])
+            # 점수 분포
+            if sc >= 65:
+                diag_buckets["65+"] += 1
+            elif sc >= 50:
+                diag_buckets["50-64"] += 1
+            else:
+                diag_buckets["<50"] += 1
+            # 차단 사유 카운트 — 동적 값(점수<65, RSI72 등)을 type만 남기고 그룹화
+            for b in blocks:
+                key = re.split(r"[<\d]", b, maxsplit=1)[0] or b
+                diag_blocks[key] = diag_blocks.get(key, 0) + 1
+            diag_top_score.append((-sc, name, sc, blocks))
+            if r.get("swing_signal") and sc >= SWING_SCORE_MIN:
+                candidates.append(r)
         time.sleep(0.4)
+
+    # 진단 로그 — swing_signal 통과 0인 경우 어느 조건이 막는지 즉시 파악 가능
+    diag_top_score.sort()
+    print(f"\n[진단] 점수 분포: 65+ {diag_buckets['65+']} / 50-64 {diag_buckets['50-64']} / <50 {diag_buckets['<50']}")
+    print(f"[진단] 차단 사유 카운트: {diag_blocks}")
+    print(f"[진단] 최고점 TOP5:")
+    for _, name_, sc_, blocks_ in diag_top_score[:5]:
+        print(f"  • {name_}: {sc_}점 / 차단={blocks_ or 'OK(통과)'}")
 
     # 보유 / 쿨다운 / 일일 한도 적용
     held = set(pos.get("positions", {}).keys())
