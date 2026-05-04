@@ -1763,6 +1763,189 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
         return ""
 
 
+def analyze_trading_performance(window_days: int = 30) -> dict:
+    """positions.json history 기반 매매 결과 자가 분석. (Phase 2 — 자가 학습 인프라)
+
+    매수↔매도 매칭하여 종목별 수익률/보유일/매도 사유 계산.
+    daily 08:00에 호출되어 ai_personal_coach 프롬프트에 통계 전달 → AI가 학습 결과 반영.
+
+    데이터 30건+ 쌓이면 swing_score 가중치 자동 조정으로 확장 (TODO).
+    """
+    try:
+        pos = load_positions()
+        history = pos.get("history", [])
+        if not history:
+            return {"trades": 0, "summary": "매매 데이터 없음 (자동매매 시작 후 누적)"}
+
+        cutoff = (_now_kst() - timedelta(days=window_days)).strftime("%Y-%m-%d")
+        recent = [h for h in history if h.get("date", "") >= cutoff]
+
+        # 매수/매도 매칭 (FIFO)
+        buys = {}
+        results = []
+        for h in recent:
+            code = h.get("code", "")
+            if h.get("side") == "buy":
+                buys[code] = h
+            elif h.get("side") == "sell" and code in buys:
+                buy = buys[code]
+                bp = buy.get("price", 0)
+                sp = h.get("price", 0)
+                if bp > 0 and sp > 0:
+                    pnl_pct = (sp - bp) / bp * 100
+                    # 보유일 계산
+                    try:
+                        bd = datetime.strptime(buy.get("date", ""), "%Y-%m-%d")
+                        sd = datetime.strptime(h.get("date", ""), "%Y-%m-%d")
+                        hold_days = (sd - bd).days
+                    except Exception:
+                        hold_days = 0
+                    # buy의 reason "swing_score N" 파싱
+                    score = 0
+                    try:
+                        reason = buy.get("reason", "")
+                        if "swing_score" in reason:
+                            score = int(reason.split("swing_score")[-1].strip().split()[0])
+                    except Exception:
+                        pass
+                    results.append({
+                        "name": buy.get("name", code),
+                        "swing_score": score,
+                        "pnl_pct": pnl_pct,
+                        "hold_days": hold_days,
+                        "sell_reason": h.get("reason", ""),
+                    })
+                buys.pop(code, None)
+
+        if not results:
+            return {"trades": 0, "summary": f"최근 {window_days}일 완료 매매 없음 (보유 중인 종목은 미포함)"}
+
+        wins   = [r for r in results if r["pnl_pct"] > 0]
+        losses = [r for r in results if r["pnl_pct"] <= 0]
+        avg_win  = sum(r["pnl_pct"] for r in wins) / len(wins) if wins else 0
+        avg_loss = sum(r["pnl_pct"] for r in losses) / len(losses) if losses else 0
+        avg_hold = sum(r["hold_days"] for r in results) / len(results)
+
+        # 점수 구간별 승률
+        bucket_70 = [r for r in results if r["swing_score"] >= 70]
+        bucket_65 = [r for r in results if 65 <= r["swing_score"] < 70]
+        bucket_60 = [r for r in results if 60 <= r["swing_score"] < 65]
+        def _wr(b):
+            if not b: return 0
+            return sum(1 for r in b if r["pnl_pct"] > 0) / len(b) * 100
+
+        summary_lines = [
+            f"최근 {window_days}일 완료 매매: {len(results)}건 (승 {len(wins)}/패 {len(losses)})",
+            f"승률: {len(wins)/len(results)*100:.1f}% / 평균 수익 {avg_win:+.2f}% / 평균 손실 {avg_loss:+.2f}%",
+            f"평균 보유: {avg_hold:.1f}일",
+        ]
+        if bucket_70:
+            summary_lines.append(f"점수 70+: {len(bucket_70)}건, 승률 {_wr(bucket_70):.0f}%")
+        if bucket_65:
+            summary_lines.append(f"점수 65-69: {len(bucket_65)}건, 승률 {_wr(bucket_65):.0f}%")
+        if bucket_60:
+            summary_lines.append(f"점수 60-64: {len(bucket_60)}건, 승률 {_wr(bucket_60):.0f}%")
+
+        return {
+            "trades": len(results),
+            "wins": len(wins),
+            "losses": len(losses),
+            "win_rate": len(wins) / len(results) * 100,
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "avg_hold_days": avg_hold,
+            "summary": "\n".join(summary_lines),
+            "details": results,
+        }
+    except Exception as e:
+        return {"trades": 0, "summary": f"분석 오류: {e}"}
+
+
+def calculate_market_risk(mood: dict, fg: dict) -> dict:
+    """시장 위험 지수 0~100 — VIX/공포탐욕/코스피 변동률 종합. (Phase 1.5)
+
+    구성:
+      - VIX (40점): 35+ 40 / 30+ 30 / 25+ 20 / 20+ 10 / <20 0
+      - 공포탐욕 (30점): ≤25 30(극도공포) / ≤40 20 / ≤60 10 / ≥75 15(탐욕역설)
+      - 코스피 변동률 (20점): ≤-3 20(폭락) / ≤-2 15 / ≤-1 10 / 정상 0
+      - 변동성 가속 (10점): VIX 직전 대비 +20% 급등 시
+
+    등급 → autobuy 동작:
+      - 위험(70+) → qty_factor 0 (매수 정지)
+      - 경계(50+) → qty_factor 0.5 (50% 축소)
+      - 주의(30+) → qty_factor 0.75 (25% 축소)
+      - 안전(<30) → qty_factor 1.0
+    """
+    score = 0
+    reasons = []
+
+    # 1) VIX (40점)
+    vix = mood.get("vix", 20) if mood else 20
+    if vix >= 35:
+        score += 40; reasons.append(f"VIX {vix:.1f} 위험구간")
+    elif vix >= 30:
+        score += 30; reasons.append(f"VIX {vix:.1f} 경계")
+    elif vix >= 25:
+        score += 20
+    elif vix >= 20:
+        score += 10
+
+    # 2) 공포·탐욕 (30점) — 극도공포 OR 극도탐욕 둘 다 위험
+    fg_score = fg.get("score", 50) if fg else 50
+    if fg_score <= 25:
+        score += 30; reasons.append(f"공포탐욕 {fg_score} 극도공포")
+    elif fg_score <= 40:
+        score += 20; reasons.append(f"공포탐욕 {fg_score} 공포")
+    elif fg_score >= 80:
+        score += 20; reasons.append(f"공포탐욕 {fg_score} 극도탐욕(조정 임박)")
+    elif fg_score >= 70:
+        score += 10
+    elif fg_score <= 60:
+        score += 5
+
+    # 3) 코스피 변동률 (20점)
+    kospi_chg = mood.get("kospi_chg", 0) if mood else 0
+    if kospi_chg <= -3:
+        score += 20; reasons.append(f"코스피 {kospi_chg:.1f}% 폭락")
+    elif kospi_chg <= -2:
+        score += 15; reasons.append(f"코스피 {kospi_chg:.1f}% 급락")
+    elif kospi_chg <= -1:
+        score += 10
+    elif kospi_chg <= -0.5:
+        score += 5
+
+    # 4) 변동성 가속 (10점) — VIX 직전 종가 대비 +20% 급등 (history_cache)
+    try:
+        history = _load_market_history(max_age_hours=2)
+        vix_hist = history.get("vix", {}).get("values", [])
+        if len(vix_hist) >= 2:
+            prev_vix = vix_hist[-2]
+            if prev_vix > 0 and (vix - prev_vix) / prev_vix >= 0.20:
+                score += 10
+                reasons.append(f"VIX 24h +{(vix - prev_vix) / prev_vix * 100:.0f}% 급등")
+    except Exception:
+        pass
+
+    score = min(100, max(0, score))
+
+    if score >= 70:
+        level, action, qty_factor = "위험", "자동매수 정지", 0.0
+    elif score >= 50:
+        level, action, qty_factor = "경계", "매수량 50% 축소", 0.5
+    elif score >= 30:
+        level, action, qty_factor = "주의", "매수량 25% 축소", 0.75
+    else:
+        level, action, qty_factor = "안전", "정상 매수", 1.0
+
+    return {
+        "score": score,
+        "level": level,
+        "action": action,
+        "qty_factor": qty_factor,
+        "reasons": reasons,
+    }
+
+
 def _build_user_portfolio_context() -> str:
     """이제훈님 보유 + 자금 + 섹터 분포를 텍스트로 요약 (AI 프롬프트용).
 
@@ -1897,16 +2080,30 @@ def ai_personal_coach(query: str = "지금 뭐 사야 할까?",
                 f"{'매수신호 ✅' if s.get('buy_signal') else '관찰 🔍'}"
             )
 
+        # 자가 학습 통계 (Phase 2)
+        try:
+            perf = analyze_trading_performance(window_days=30)
+            perf_text = perf.get("summary", "")
+        except Exception:
+            perf_text = ""
+
         prompt = (
-            f"이제훈님(비개발자, 한국 거주, 두 계좌 분리: 가치주=미래에셋, 자동매매=한국투자증권 모의)의 "
-            f"맞춤 투자 비서로서 답변하세요. 점수 나열이 아니라 **그의 현재 포트폴리오와 자금 상황을 고려한** 조언.\n\n"
+            f"이제훈님(비개발자, 한국 거주)의 맞춤 투자 비서로서 답변하세요.\n"
+            f"점수 나열이 아니라 **그의 현재 포트폴리오와 자금 상황을 고려한** 조언.\n\n"
+            f"⚠️ 두 계좌 분리 (시간 프레임 완전히 다름):\n"
+            f"  - 가치주 = 미래에셋, **장기 보유** (몇 달~몇 년, 펀더멘털/배당 추구)\n"
+            f"  - 자동매매 = 한국투자증권 모의, **5일 이내 스윙** (단기 모멘텀, +6%/+10% 익절, -4% 손절)\n"
+            f"→ 두 계좌의 종목/섹터가 **겹쳐도 독립 리스크** (시간 프레임 다름). 같은 섹터 강제 분산 X.\n"
+            f"→ 섹터 집중도 평가는 **가치주 내부에서만** (예: 가치주 방산 50%면 가치주 추가 매수는 비추, 자동매매 방산 매수는 무관).\n\n"
             f"[그의 현재 상태]\n{user_ctx}\n\n"
+            f"[자동매매 자가 학습 통계 (최근 30일)]\n{perf_text or '데이터 부족'}\n\n"
             f"[시장 상황]\n" + ("\n".join(market_lines) if market_lines else "데이터 없음") + "\n\n"
             f"[봇이 발굴한 후보 종목]\n" + ("\n".join(cand_lines) if cand_lines else "  (마켓스캔 캐시 없음)") + "\n\n"
             f"[질문]\n{query}\n\n"
             f"답변 가이드:\n"
             f"- 한국어, 비개발자 친화 (전문 용어는 풀어서)\n"
-            f"- 그의 보유 종목과 섹터 분포를 반드시 고려 (예: 이미 방산 30%면 추가 방산 매수 비추)\n"
+            f"- 가치주 추천: 가치주 섹터 분포 고려 (장기 보유라 분산 중요)\n"
+            f"- 자동매매 추천: 시간 프레임 다르므로 가치주 섹터와 별개. 점수/시그널/매크로 위주\n"
             f"- 자동매매 잔여 슬롯/금액 안에서만 추천\n"
             f"- '사세요/팔지 마세요' 단정 X. '이 조건이면 권장, 저 위험은 주의' 형식\n"
             f"- 너무 길지 않게 (텔레그램 한 화면). 핵심 3~5가지로 정리\n"
@@ -5180,24 +5377,46 @@ def run_auto_buy():
         print(f"[autobuy] 일일 금액 한도({SWING_MAX_DAILY_AMT//10000}만원) 이미 도달 — 분석 스킵")
         return
 
-    # ── 시장 무드 사전 점검 (폭락장/극도 공포 시 매수 중단) ──
+    # ── 시장 위험 지수 통합 평가 (Phase 1.5) ──
+    # VIX/공포탐욕/코스피 변동률/변동성 가속을 0~100 점수로 종합.
+    # 70+ 정지 / 50+ 50% 축소 / 30+ 25% 축소 / <30 정상.
     mood = get_market_mood()
     fg = get_fear_greed(mood) if mood else {"score": 50, "label": "중립"}
-    kospi_chg = mood.get("kospi_chg", 0) if mood else 0
+    risk = calculate_market_risk(mood, fg)
+    print(f"[자동매수] 시장 위험 지수: {risk['score']}/100 ({risk['level']}) → {risk['action']}")
+    if risk['reasons']:
+        print(f"  → 위험 요인: {', '.join(risk['reasons'])}")
 
-    # 폭락장 (KOSPI -2% 이상 급락) 또는 극도 공포 시 매수 중단
-    if kospi_chg <= -2.0:
-        _alert(
-            f"🚨 <b>{mode_tag} 폭락장 감지 — 자동매수 중단</b>\n"
-            f"KOSPI {kospi_chg:+.2f}% (기준: -2% 이하)\n"
-            f"<i>다음 영업일 다시 시도. 헌법 §4 폭락장 전략 참고.</i>"
+    # Phase 3: 위험 등급 변화 즉시 알림 (먼저 말 거는 비서) ─────────────
+    # 등급 변화 시에만 텔레그램 (state 추적으로 30분마다 같은 알림 X).
+    LEVEL_RANK = {"안전": 0, "주의": 1, "경계": 2, "위험": 3}
+    last_risk_level = pos.get("last_risk_level", "안전")
+    new_rank = LEVEL_RANK.get(risk['level'], 0)
+    old_rank = LEVEL_RANK.get(last_risk_level, 0)
+    if new_rank > old_rank:
+        # 등급 악화 — is_first_call 무관 즉시 알림 (중요)
+        reasons_html = "\n".join(f"• {r}" for r in risk['reasons']) if risk['reasons'] else ""
+        tg_send(
+            f"🚨 <b>시장 위험 등급 상승</b>: {last_risk_level} → <b>{risk['level']}</b> ({risk['score']}/100)\n"
+            f"<b>대응:</b> {risk['action']}\n\n"
+            + (f"<b>주요 위험 요인:</b>\n{reasons_html}" if reasons_html else "")
         )
-        return
-    if fg.get("label") == "극도 공포":
+    elif new_rank < old_rank:
+        tg_send(
+            f"✅ <b>시장 위험 등급 하락</b>: {last_risk_level} → <b>{risk['level']}</b> "
+            f"({risk['score']}/100) — 정상화 추세"
+        )
+    pos["last_risk_level"] = risk['level']
+    save_positions(pos)
+
+    if risk['qty_factor'] == 0.0:
+        # 위험 등급(70+) → 자동매수 정지
+        reasons_html = "\n".join(f"• {r}" for r in risk['reasons']) if risk['reasons'] else "• (상세 데이터 부족)"
         _alert(
-            f"🚨 <b>{mode_tag} 극도 공포 — 자동매수 중단</b>\n"
-            f"공포·탐욕 지수 {fg.get('score')}점 (극도 공포)\n"
-            f"<i>심리 회복 후 재개. 다음 영업일 자동 재시도.</i>"
+            f"🚨 <b>{mode_tag} 시장 위험도 {risk['score']}/100 ({risk['level']}) — 자동매수 정지</b>\n"
+            f"{risk['action']}\n\n"
+            f"<b>위험 요인:</b>\n{reasons_html}\n\n"
+            f"<i>안정 시 다음 호출에서 자동 재개</i>"
         )
         return
 
@@ -5252,14 +5471,14 @@ def run_auto_buy():
 
     candidates.sort(key=lambda x: x.get("swing_score", 0), reverse=True)
 
-    qty_factor = 1.0
-    if mood.get("status") in ("탐욕", "위험"):
-        qty_factor = 0.5
-        _alert(f"⚠️ 시장 무드 '{mood['status']}' — 매수량 50% 축소")
-    elif fg.get("label") == "공포":
-        # 공포 단계는 신중 매수 — 50% 축소
-        qty_factor = 0.5
-        _alert(f"⚠️ 공포 구간(공포탐욕 {fg.get('score')}) — 매수량 50% 축소")
+    # qty_factor: 시장 위험 지수 기반 자동 조정 (Phase 1.5)
+    qty_factor = risk['qty_factor']
+    if qty_factor < 1.0:
+        reasons_short = " / ".join(risk['reasons'][:3]) if risk['reasons'] else ""
+        _alert(
+            f"⚠️ 시장 위험 {risk['score']}/100 ({risk['level']}) — {risk['action']}"
+            + (f"\n사유: {reasons_short}" if reasons_short else "")
+        )
 
     # 일일 잔여 슬롯만큼만 selected (나머지는 다음 호출 회차에서 처리)
     remaining_slots = SWING_MAX_DAILY_BUY - daily["buy_count"]
@@ -5282,36 +5501,16 @@ def run_auto_buy():
 
     prev_buy_count = daily["buy_count"]  # 매수 요약 메시지용 (이번 회차 매수 건수 계산)
 
-    # 가치주 섹터 비중 계산 (자동매수와 섹터 겹침 경고용 — Phase 1)
-    sec_pct = {}
-    try:
-        ha_for_sec = check_holdings_alerts() or []
-        sec_value = {}
-        for h in ha_for_sec:
-            sec = h.get("sector") or "기타"
-            sec_value[sec] = sec_value.get(sec, 0) + h.get("value", 0)
-        total_v = sum(sec_value.values())
-        if total_v > 0:
-            sec_pct = {sec: v/total_v*100 for sec, v in sec_value.items()}
-    except Exception:
-        pass
-
     # 사전 알림 (30초 동안 /취소 가능)
+    # 가치주(미래에셋, 장기) ↔ 자동매매(한국투자증권 모의, 5일 스윙)는 시간 프레임이 달라
+    # 섹터 겹쳐도 독립적 리스크 → 섹터 겹침 경고/축소 로직 제거 (5/4 사용자 결정).
     preview_lines = [f"⏰ <b>{mode_tag} {SWING_PRE_ALERT_SEC}초 후 자동 매수</b>", "취소: /취소", ""]
     for s in selected:
         price = s["price"]
         sec   = s.get("sector", "")
-        sec_warn = ""
-        if sec and sec in sec_pct and sec_pct[sec] >= 30:
-            # 가치주에서 같은 섹터를 30% 이상 보유 → 경고 + 매수량 축소
-            ratio = 0.5 if sec_pct[sec] >= 30 else 1.0
-            qty   = max(1, int(INVEST_PER_STOCK * qty_factor * ratio / price))
-            sec_warn = f" ⚠️ 가치주 {sec} {sec_pct[sec]:.0f}% 보유 → 50% 축소"
-            s["_qty_override"] = qty  # 매수 실행 시 사용
-        else:
-            qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
-        amt = price * qty
-        preview_lines.append(f"• <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원{sec_warn}")
+        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        amt   = price * qty
+        preview_lines.append(f"• <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원")
     tg_send("\n".join(preview_lines))
 
     if _poll_cancel_during_sleep(SWING_PRE_ALERT_SEC):
@@ -5330,11 +5529,7 @@ def run_auto_buy():
 
         code  = s["ticker"].split(".")[0]
         price = s["price"]
-        # 사전알림에서 섹터 겹침 → 매수량 축소 결정된 경우 _qty_override 사용
-        if "_qty_override" in s:
-            qty = s["_qty_override"]
-        else:
-            qty = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
 
         if daily["buy_amount"] + amt > SWING_MAX_DAILY_AMT:
@@ -5523,6 +5718,63 @@ def run_auto_sell():
             print(f"  [자동매도] 대시보드 갱신 오류: {e}")
     else:
         print(f"  [자동매도] 매도 조건 충족 종목 없음")
+
+    # ── Phase 3: 매도 임박 알림 (먼저 말 거는 비서) ─────────────────────
+    # 익절(+5~+5.9%) / 손절(-3~-3.9%) 임박 종목 — 등급 변화 시에만 1회 알림.
+    pos = load_positions()
+    imminent_alerts = []
+    state_changed = False
+    for code, p in pos.get("positions", {}).items():
+        try:
+            if not _kis.available():
+                break
+            pi = _kis.get_price(code)
+            if not pi:
+                continue
+            curr      = _safe_float(pi.get("stck_prpr"))
+            buy_price = p.get("buy_price", 0)
+            if buy_price <= 0 or curr <= 0:
+                continue
+            pnl_pct = (curr - buy_price) / buy_price * 100
+
+            # 등급 판정
+            new_state = ""
+            if 5.0 <= pnl_pct < SWING_TARGET1_PCT * 100:
+                new_state = "near_target1"
+            elif pnl_pct >= SWING_TARGET1_PCT * 100 and pnl_pct < SWING_TARGET2_PCT * 100:
+                new_state = "near_target2"
+            elif -SWING_STOP_LOSS_PCT * 100 < pnl_pct <= -3.0:
+                new_state = "near_stop"
+
+            old_state = p.get("imminent_state", "")
+            if new_state != old_state:
+                p["imminent_state"] = new_state
+                state_changed = True
+                if new_state == "near_target1":
+                    imminent_alerts.append(
+                        f"🟢 <b>{p.get('name', code)}</b> {pnl_pct:+.2f}% — "
+                        f"1차 익절 임박 (목표 +{SWING_TARGET1_PCT*100:.0f}%, 절반 매도)"
+                    )
+                elif new_state == "near_target2":
+                    imminent_alerts.append(
+                        f"💎 <b>{p.get('name', code)}</b> {pnl_pct:+.2f}% — "
+                        f"2차 익절 임박 (목표 +{SWING_TARGET2_PCT*100:.0f}%, 전량 매도)"
+                    )
+                elif new_state == "near_stop":
+                    imminent_alerts.append(
+                        f"🔴 <b>{p.get('name', code)}</b> {pnl_pct:+.2f}% — "
+                        f"손절 임박 (기준 -{SWING_STOP_LOSS_PCT*100:.0f}%, 자동 매도)"
+                    )
+        except Exception:
+            continue
+
+    if imminent_alerts:
+        tg_send(
+            f"⚠️ <b>매매 임박 알림</b> ({_now_kst().strftime('%H:%M')})\n\n"
+            + "\n".join(imminent_alerts)
+        )
+    if state_changed:
+        save_positions(pos)
 
 
 def run_balance_report() -> str:
