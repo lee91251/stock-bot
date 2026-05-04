@@ -2936,6 +2936,58 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
 .section__icon--rec { background: rgba(34,197,94,0.12); }
 .section__icon--alert { background: rgba(239,68,68,0.12); }
 .section__icon--macro { background: rgba(59,130,246,0.12); }
+
+/* ── 🦾 AI 맞춤 비서 카드 (자비스 스타일) ── */
+.coach-section { background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+                 border: 1px solid var(--accent); position: relative; overflow: visible; }
+.coach-section::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+                          background: linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b);
+                          border-radius: 14px 14px 0 0; }
+.coach-head { display: flex !important; align-items: center; justify-content: space-between;
+              gap: 16px; flex-wrap: wrap; padding-top: 22px !important; }
+.coach-section .section__icon--ai { background: linear-gradient(135deg, #7c3aed, #ec4899);
+                                    color: #fff; box-shadow: 0 2px 8px rgba(124,58,237,0.3); }
+.coach-section .section__title h2 { background: linear-gradient(90deg, #7c3aed, #ec4899);
+                                     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                                     background-clip: text; font-weight: 800; }
+.coach-body { padding: 16px 24px 22px; font-size: 14px; line-height: 1.7; color: var(--text-1); }
+.coach-h3 { font-size: 17px; font-weight: 700; color: var(--accent); margin: 18px 0 10px;
+            padding-bottom: 6px; border-bottom: 2px solid var(--surface-2); display: flex;
+            align-items: center; gap: 6px; }
+.coach-h4 { font-size: 15px; font-weight: 700; color: var(--text-1); margin: 14px 0 8px; }
+.coach-h5 { font-size: 13px; font-weight: 600; color: var(--text-2); margin: 10px 0 6px;
+            text-transform: uppercase; letter-spacing: 0.5px; }
+.coach-p { margin: 6px 0; color: var(--text-1); }
+.coach-list { margin: 8px 0; padding-left: 22px; }
+.coach-list li { margin: 4px 0; color: var(--text-1); }
+.coach-quote { border-left: 3px solid #f59e0b; padding: 10px 14px;
+               background: rgba(245,158,11,0.08); margin: 12px 0; border-radius: 0 8px 8px 0;
+               color: var(--text-1); font-size: 13px; }
+.coach-table-wrap { margin: 12px 0; overflow-x: auto; border-radius: 10px;
+                    border: 1px solid var(--border); }
+.coach-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.coach-table th { background: var(--surface-2); font-weight: 700; padding: 8px 12px;
+                  text-align: left; color: var(--text-1); border-bottom: 2px solid var(--border);
+                  position: sticky; top: 0; }
+.coach-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-1); }
+.coach-table tr:last-child td { border-bottom: none; }
+.coach-table tr:hover td { background: var(--surface-2); }
+
+/* 위험 지수 게이지 */
+.risk-gauge { display: flex; flex-direction: column; align-items: center;
+              padding: 8px 16px; min-width: 200px; }
+.risk-gauge svg { display: block; }
+.risk-gauge__label { font-size: 16px; font-weight: 800; margin-top: -8px;
+                     letter-spacing: 0.3px; }
+.risk-gauge__action { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+@media (max-width: 720px) {
+  .coach-head { flex-direction: column; align-items: stretch; }
+  .risk-gauge { align-self: center; }
+  .coach-body { padding: 14px 16px 18px; }
+  .coach-table { font-size: 12px; }
+  .coach-table th, .coach-table td { padding: 6px 8px; }
+}
 .section__title h2 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-1); letter-spacing: -0.2px; }
 .section__badge { padding: 3px 10px; background: var(--surface-2); border-radius: 99px;
                   font-size: 11px; color: var(--text-3); font-weight: 600; border: 1px solid var(--border); }
@@ -3983,23 +4035,187 @@ def _make_market_briefing_card(mood: dict, fg: dict, history: dict = None) -> st
 """
 
 
-def _make_personal_coach_card(personal_brief: str) -> str:
-    """🦾 AI 맞춤 비서 카드 — 이제훈님 보유+자금+섹터 종합 코칭 (daily 08:00 생성)."""
+def _md_table_to_html(lines: list) -> str:
+    """| ... | 마크다운 표 라인들을 <table> HTML로 변환 (자비스 카드용)."""
+    if not lines:
+        return ""
+    rows = []
+    for line in lines:
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if all(re.match(r'^-+:?\s*$', c) or c == "" for c in cells):
+            continue  # 구분선 |---|---| 스킵
+        # 굵게 **...** 처리
+        cells = [re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', c) for c in cells]
+        rows.append(cells)
+    if not rows:
+        return ""
+
+    # 수익률/점수 셀 색상 자동 적용
+    def _colorize(cell: str) -> str:
+        # +X% 또는 -X% 패턴 → 색상
+        m = re.search(r'([+-]?\d+(\.\d+)?)\s*%', cell)
+        if m:
+            v = float(m.group(1))
+            if v > 0:
+                color = "#10b981"  # green
+            elif v < 0:
+                color = "#ef4444"  # red
+            else:
+                color = "#94a3b8"  # gray
+            return f'<span style="color:{color};font-weight:600;">{cell}</span>'
+        return cell
+
+    html = ['<div class="coach-table-wrap"><table class="coach-table">']
+    html.append("<thead><tr>" + "".join(f"<th>{c}</th>" for c in rows[0]) + "</tr></thead>")
+    if len(rows) > 1:
+        html.append("<tbody>")
+        for row in rows[1:]:
+            html.append("<tr>" + "".join(f"<td>{_colorize(c)}</td>" for c in row) + "</tr>")
+        html.append("</tbody>")
+    html.append("</table></div>")
+    return "\n".join(html)
+
+
+def _md_to_html(text: str) -> str:
+    """간단 마크다운 → HTML 변환 (자비스 AI 비서 카드 전용).
+
+    지원: ##/###/#### 헤더, **굵게**, > 인용, 표 (|...|), - 리스트.
+    """
+    if not text:
+        return ""
+
+    # 1) 표 먼저 처리 (블록 단위)
+    lines = text.split("\n")
+    out_lines = []
+    table_buf = []
+    for line in lines:
+        if line.strip().startswith("|"):
+            table_buf.append(line)
+        else:
+            if table_buf:
+                out_lines.append(_md_table_to_html(table_buf))
+                table_buf = []
+            out_lines.append(line)
+    if table_buf:
+        out_lines.append(_md_table_to_html(table_buf))
+
+    # 2) 라인 단위 변환
+    result = []
+    in_list = False
+    for line in out_lines:
+        # 표 HTML은 그대로 통과
+        if line.startswith("<div class=\"coach-table-wrap\""):
+            if in_list:
+                result.append("</ul>"); in_list = False
+            result.append(line)
+            continue
+
+        stripped = line.strip()
+        # 헤더
+        if stripped.startswith("#### "):
+            if in_list: result.append("</ul>"); in_list = False
+            result.append(f'<h5 class="coach-h5">{stripped[5:]}</h5>')
+            continue
+        if stripped.startswith("### "):
+            if in_list: result.append("</ul>"); in_list = False
+            result.append(f'<h4 class="coach-h4">{stripped[4:]}</h4>')
+            continue
+        if stripped.startswith("## "):
+            if in_list: result.append("</ul>"); in_list = False
+            result.append(f'<h3 class="coach-h3">{stripped[3:]}</h3>')
+            continue
+        # 인용
+        if stripped.startswith("> "):
+            if in_list: result.append("</ul>"); in_list = False
+            inner = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', stripped[2:])
+            result.append(f'<blockquote class="coach-quote">{inner}</blockquote>')
+            continue
+        # 리스트
+        if stripped.startswith("- ") or stripped.startswith("* "):
+            if not in_list:
+                result.append('<ul class="coach-list">')
+                in_list = True
+            inner = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', stripped[2:])
+            result.append(f"<li>{inner}</li>")
+            continue
+        # 일반 라인
+        if in_list and stripped == "":
+            result.append("</ul>"); in_list = False
+        # 굵게 처리
+        line2 = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', line)
+        # 빈 줄은 단락 구분
+        if not line2.strip():
+            result.append("")
+        else:
+            result.append(f'<p class="coach-p">{line2}</p>')
+
+    if in_list:
+        result.append("</ul>")
+
+    return "\n".join(result)
+
+
+def _make_risk_gauge_html(risk: dict) -> str:
+    """시장 위험 지수 게이지 (반원형 SVG) — 자비스 카드 헤더에 표시."""
+    if not risk:
+        return ""
+    score = max(0, min(100, risk.get("score", 0)))
+    level = risk.get("level", "안전")
+    action = risk.get("action", "")
+    # 등급별 색상
+    color_map = {"안전": "#10b981", "주의": "#eab308", "경계": "#f97316", "위험": "#ef4444"}
+    color = color_map.get(level, "#94a3b8")
+    # 반원 게이지: 0~100 → 0~180도
+    angle = score * 1.8  # 0~180
+    # SVG arc — 반원 위 (0~100)
+    cx, cy, r = 100, 100, 80
+    end_x = cx + r * (1 - 2 * (angle / 180.0))  # 단순화: 직선 위치
+    # 더 정확한 SVG arc
+    import math
+    rad = math.radians(180 - angle)
+    end_x = cx - r * math.cos(rad)
+    end_y = cy - r * math.sin(rad)
+    large_arc = 1 if angle > 180 else 0
+    return f"""
+<div class="risk-gauge">
+  <svg viewBox="0 0 200 120" width="200" height="120">
+    <!-- 배경 반원 -->
+    <path d="M 20 100 A 80 80 0 0 1 180 100" stroke="var(--surface-2)" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <!-- 위험도 호 -->
+    <path d="M 20 100 A 80 80 0 {large_arc} 1 {end_x:.2f} {end_y:.2f}" stroke="{color}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <!-- 중앙 점수 -->
+    <text x="100" y="92" text-anchor="middle" font-size="32" font-weight="700" fill="{color}">{score}</text>
+    <text x="100" y="110" text-anchor="middle" font-size="11" fill="var(--text-2)">/ 100</text>
+  </svg>
+  <div class="risk-gauge__label" style="color:{color};">{level}</div>
+  <div class="risk-gauge__action">{action}</div>
+</div>
+"""
+
+
+def _make_personal_coach_card(personal_brief: str, risk: dict = None) -> str:
+    """🦾 AI 맞춤 비서 카드 — 마크다운→HTML 변환 + 위험 지수 게이지."""
     if not personal_brief:
         return _empty_section("coach", "🦾", "section__icon--ai", "AI 맞춤 비서",
                               "이제훈님 전용", "맞춤 코칭이 없습니다",
                               "08:00 daily 갱신 또는 텔레그램 /추천 명령으로 즉시 생성.")
-    # 개행을 그대로 표시 (white-space:pre-line)
+
+    body_html = _md_to_html(personal_brief)
+    gauge_html = _make_risk_gauge_html(risk) if risk else ""
+
     return f"""
-<section class="section" id="coach" aria-label="AI 맞춤 비서">
-  <div class="section__head">
+<section class="section coach-section" id="coach" aria-label="AI 맞춤 비서">
+  <div class="section__head coach-head">
     <div class="section__title">
       <span class="section__icon section__icon--ai">🦾</span>
       <h2>AI 맞춤 비서</h2>
       <span class="section__badge">이제훈님 전용</span>
     </div>
+    {gauge_html}
   </div>
-  <div style="padding:16px 22px;font-size:14px;line-height:1.8;color:var(--text-1);white-space:pre-line;">{personal_brief}</div>
+  <div class="coach-body">
+    {body_html}
+  </div>
 </section>
 """
 
@@ -4238,6 +4454,7 @@ def build_and_save_dashboard(
     ai_macro: str = "",
     holdings_alerts: list = None,
     personal_brief: str = "",
+    risk: dict = None,
 ) -> str:
     """대시보드 HTML 생성 + docs/index.html 저장.
 
@@ -4253,6 +4470,7 @@ def build_and_save_dashboard(
         if not ai_sector:       ai_sector   = _dc.get("ai_sector", "") or ""
         if not ai_macro:        ai_macro    = _dc.get("ai_macro", "") or ""
         if not personal_brief:  personal_brief = _dc.get("personal_brief", "") or ""
+        if risk is None:        risk        = _dc.get("risk")
         if ai_insights is None: ai_insights = _dc.get("ai_insights")
         if avoid is None:       avoid       = _dc.get("avoid")
         if dart_alerts is None: dart_alerts = _dc.get("dart_alerts")
@@ -4346,7 +4564,7 @@ def build_and_save_dashboard(
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
         ai_html = _make_ai_card(ai_summary, ai_sector)
-        coach_html = _make_personal_coach_card(personal_brief)
+        coach_html = _make_personal_coach_card(personal_brief, risk)
         recommend_html = _make_recommend_card(kr_top, ai_insights)
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
@@ -6614,6 +6832,16 @@ def run():
     ha = check_holdings_alerts()
     record_recommendations(kr_top5, us_top5)
 
+    # 시장 위험 지수 계산 (Phase 1.5) — daily 시점 기준 dashboard 게이지용
+    try:
+        risk = calculate_market_risk(mood, fg)
+        print(f"\n[7.4/7] 시장 위험 지수: {risk['score']}/100 ({risk['level']}) → {risk['action']}")
+        if risk.get('reasons'):
+            print(f"  → 위험 요인: {', '.join(risk['reasons'])}")
+    except Exception as e:
+        print(f"  [run] 위험 지수 계산 오류: {e}")
+        risk = None
+
     # AI 맞춤 비서 — 이제훈님 보유+자금+섹터 종합 코칭 (Phase 1)
     print("\n[7.5/7] AI 맞춤 비서 (개인 코칭) 생성 중...")
     try:
@@ -6637,6 +6865,7 @@ def run():
             "kr_top": kr_top5, "us_top": us_top5,
             "avoid": avoid_list, "dart_alerts": dart_alerts,
             "personal_brief": personal_brief,
+            "risk": risk,
         })
     except Exception as e:
         print(f"  [run] dashboard_cache 저장 오류: {e}")
@@ -6652,6 +6881,7 @@ def run():
             macro=macro, ai_macro=ai_macro,
             holdings_alerts=ha,
             personal_brief=personal_brief,
+            risk=risk,
         )
     except Exception as e:
         print(f"  [run] 대시보드 갱신 오류: {e}")
