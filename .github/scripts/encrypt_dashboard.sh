@@ -12,8 +12,6 @@ STATICRYPT_OPTS=(
   --password "${DASHBOARD_PASSWORD:-changeme}"
   --short
   -d docs/
-  --template-color-primary "#7c3aed"
-  --template-color-secondary "#ec4899"
   --template-page-title "AI 투자 비서"
   --template-title "🦾 AI 투자 비서"
   --template-instructions "이제훈님 전용 대시보드입니다. 비밀번호를 입력하세요."
@@ -31,4 +29,6 @@ if ! npx -y staticrypt docs/index.html "${STATICRYPT_OPTS[@]}"; then
   exit 0
 fi
 
+# 자비스 고급 로그인 디자인 (다크 그라디언트 + 글래스모피즘) 주입
+python3 .github/scripts/inject_login_style.py docs/index.html || echo "::warning::login style 주입 실패"
 python3 .github/scripts/inject_pwa.py docs/index.html || echo "::warning::PWA 메타 주입 실패"
