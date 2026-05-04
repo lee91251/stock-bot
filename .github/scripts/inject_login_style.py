@@ -137,26 +137,38 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
   pointer-events: none;
 }
-/* 스캔 라인 — form 안에서 위→아래로 (form 100% 높이 활용) */
+/* 스캔 라인 — form 안에서 위→아래로, 콘텐츠 뒤로 */
 .jv-scanner {
   position: absolute; left: 0; right: 0;
   top: 0;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(90deg,
-              transparent 0%, transparent 15%,
-              rgba(6,182,212,0.7) 50%,
-              transparent 85%, transparent 100%);
+              transparent 0%, transparent 18%,
+              rgba(6,182,212,0.95) 50%,
+              transparent 82%, transparent 100%);
   pointer-events: none;
-  z-index: 10;
-  box-shadow: 0 0 12px rgba(6,182,212,0.6),
-              0 0 24px rgba(6,182,212,0.25);
-  animation: jv-scan-full 4s linear infinite;
+  z-index: 1;
+  box-shadow: 0 0 6px rgba(6,182,212,0.55);
+  animation: jv-scan-full 2.5s linear infinite;
 }
 @keyframes jv-scan-full {
   0%   { top: 0;    opacity: 0; }
-  6%   { opacity: 1; }
-  94%  { opacity: 1; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
   100% { top: 100%; opacity: 0; }
+}
+
+/* 카드 콘텐츠는 스캔 라인 위에 — 라인이 텍스트 뒤로 흐름 */
+.staticrypt-title,
+.staticrypt-instructions,
+.staticrypt-hr,
+.staticrypt-password-container,
+.staticrypt-remember,
+.staticrypt-decrypt-button,
+#staticrypt_content,
+#staticrypt-form {
+  position: relative;
+  z-index: 2;
 }
 
 /* ── 5. 타이틀 (cyan 글로우) ── */
