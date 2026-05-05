@@ -55,6 +55,56 @@
       "score": 75,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-05-06",
+      "month": "2026-05",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 44500.0,
+      "score": 109,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-06",
+      "month": "2026-05",
+      "ticker": "293490.KQ",
+      "name": "카카오게임즈",
+      "price": 11820.0,
+      "score": 93,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-06",
+      "month": "2026-05",
+      "ticker": "012330.KS",
+      "name": "현대모비스",
+      "price": 431500.0,
+      "score": 73,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-06",
+      "month": "2026-05",
+      "ticker": "138930.KS",
+      "name": "BNK금융지주",
+      "price": 18200.0,
+      "score": 72,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-06",
+      "month": "2026-05",
+      "ticker": "051900.KS",
+      "name": "LG생활건강",
+      "price": 279500.0,
+      "score": 72,
+      "buy_signal": false,
+      "result": null
     }
   ]
 }
