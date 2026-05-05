@@ -10,7 +10,6 @@ fi
 
 STATICRYPT_OPTS=(
   --password "${DASHBOARD_PASSWORD:-changeme}"
-  --short
   -d docs/
   --template-color-primary "#03060f"
   --template-color-secondary "#0a0e1a"
