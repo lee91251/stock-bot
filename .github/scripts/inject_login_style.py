@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """staticrypt 로그인 페이지에 자비스 HUD 디자인 주입 (Iron Man 톤).
 
-- 검정 우주 배경 + 별빛 + nebula
-- 미세한 헬로그래픽 그리드 (HUD 느낌)
-- 다크 글래스 카드 (rgba 검정 + cyan 보더)
-- cyan/blue/purple 그라디언트 액센트
-- 스캔 라인 애니메이션 (위에서 아래로 흘러감)
+PC: 풀 디자인 — nebula 배경, 별빛 + twinkle, HUD 그리드, blur(40px) glassmorphism, 스캔 라인.
+폰(터치 기기): 가벼운 fallback — 단색 검정 + cyan 보더 카드. GPU/메인스레드 부담 없음.
+분기: @media (hover: hover) and (pointer: fine) — 마우스 있는 기기만 무거운 효과.
 """
 import sys
 
@@ -39,93 +37,35 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   overflow-x: hidden;
 }
 
-/* ── 1. 우주 배경: nebula ── */
-.staticrypt-body::before {
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(ellipse 700px 500px at 25% 20%, rgba(6,182,212,0.18), transparent 60%),
-    radial-gradient(ellipse 600px 800px at 75% 80%, rgba(124,58,237,0.16), transparent 60%),
-    radial-gradient(ellipse 500px 400px at 50% 50%, rgba(59,130,246,0.10), transparent 70%),
-    radial-gradient(ellipse 400px 300px at 90% 30%, rgba(236,72,153,0.10), transparent 60%),
-    #03060f;
-  background-attachment: fixed;
-}
-
-/* ── 2. 별빛 (CSS 다중 box-shadow 트릭) ── */
-.staticrypt-body::after {
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(1.5px 1.5px at 8% 12%, #fff, transparent 60%),
-    radial-gradient(1px 1px at 23% 45%, rgba(255,255,255,0.8), transparent),
-    radial-gradient(2px 2px at 47% 18%, rgba(167,243,253,0.9), transparent 60%),
-    radial-gradient(1px 1px at 62% 73%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 78% 35%, rgba(255,255,255,0.7), transparent 60%),
-    radial-gradient(1px 1px at 89% 88%, rgba(167,139,250,0.9), transparent),
-    radial-gradient(2px 2px at 12% 78%, #fff, transparent 60%),
-    radial-gradient(1px 1px at 35% 92%, rgba(255,255,255,0.6), transparent),
-    radial-gradient(1.5px 1.5px at 55% 8%, rgba(186,230,253,0.9), transparent 60%),
-    radial-gradient(1px 1px at 71% 56%, #fff, transparent),
-    radial-gradient(1.2px 1.2px at 95% 15%, rgba(255,255,255,0.7), transparent 60%),
-    radial-gradient(1px 1px at 4% 60%, #fff, transparent),
-    radial-gradient(2.5px 2.5px at 38% 38%, rgba(255,255,255,0.8), transparent 60%),
-    radial-gradient(1px 1px at 67% 22%, rgba(255,255,255,0.6), transparent),
-    radial-gradient(1.5px 1.5px at 19% 65%, rgba(244,114,182,0.7), transparent 60%);
-  animation: jv-twinkle 4s ease-in-out infinite alternate;
-}
-@keyframes jv-twinkle {
-  0%   { opacity: 0.55; }
-  100% { opacity: 0.95; }
-}
-
-/* ── 3. HUD 그리드 (헬로그래픽) ── */
+/* ── 페이지 레이아웃 (모든 기기) ── */
 .staticrypt-page {
   position: relative; z-index: 1;
   display: flex !important; align-items: center; justify-content: center;
   min-height: 100vh; padding: 24px;
   background: transparent !important;
 }
-.staticrypt-page::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(6,182,212,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6,182,212,0.06) 1px, transparent 1px);
-  background-size: 60px 60px;
-  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-          mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-}
 
-/* ── 4. 카드: 다크 글래스 + cyan 보더 ── */
+/* ── 카드 베이스 (모든 기기) — 폰에선 단색 반투명, PC에선 아래 @media에서 blur ── */
 .staticrypt-form {
   position: relative;
   width: 100%; max-width: 420px;
-  background: rgba(8, 12, 22, 0.72) !important;
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  background: rgba(8, 12, 22, 0.95) !important;
   border: 1px solid rgba(6,182,212,0.30) !important;
   border-radius: 18px !important;
   padding: 44px 40px !important;
   box-shadow:
     0 0 0 1px rgba(6,182,212,0.15),
-    0 0 60px rgba(6,182,212,0.20),
-    0 25px 50px -12px rgba(0,0,0,0.8),
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 0 40px rgba(6,182,212,0.04) !important;
-  animation: jv-fade-in 0.7s cubic-bezier(0.4,0,0.2,1);
+    0 25px 50px -12px rgba(0,0,0,0.8) !important;
   overflow: hidden;
 }
-@keyframes jv-fade-in {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
 
-/* 카드 모서리 cyan 코너 액센트 — 좌상단 ㄱ + 우하단 ㄴ (대칭) */
+/* 카드 모서리 cyan 코너 액센트 — 좌상단 ㄱ + 우하단 ㄴ (대칭, 가벼움 — 모든 기기) */
 .staticrypt-form::before {
   content: ""; position: absolute; top: 12px; left: 12px;
   width: 28px; height: 28px;
   border-top: 2px solid var(--jv-cyan);
   border-left: 2px solid var(--jv-cyan);
   opacity: 0.85;
-  filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
   pointer-events: none;
 }
 .staticrypt-form::after {
@@ -134,31 +74,10 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   border-bottom: 2px solid var(--jv-cyan);
   border-right: 2px solid var(--jv-cyan);
   opacity: 0.85;
-  filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
   pointer-events: none;
-}
-/* 스캔 라인 — form 안에서 위→아래로, 콘텐츠 뒤로 */
-.jv-scanner {
-  position: absolute; left: 0; right: 0;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-              transparent 0%, transparent 18%,
-              rgba(6,182,212,0.95) 50%,
-              transparent 82%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
-  box-shadow: 0 0 6px rgba(6,182,212,0.55);
-  animation: jv-scan-full 2.5s linear infinite;
-}
-@keyframes jv-scan-full {
-  0%   { top: 0;    opacity: 0; }
-  5%   { opacity: 1; }
-  95%  { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
 }
 
-/* 카드 콘텐츠는 스캔 라인 위에 — 라인이 텍스트 뒤로 흐름 */
+/* 카드 콘텐츠 z-index — 스캔 라인 위에 (PC) / 그냥 정렬용 (폰) */
 .staticrypt-title,
 .staticrypt-instructions,
 .staticrypt-hr,
@@ -171,7 +90,7 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   z-index: 2;
 }
 
-/* ── 5. 타이틀 (cyan 글로우) ── */
+/* ── 타이틀 (cyan 글로우) ── */
 .staticrypt-title {
   color: #fff !important;
   font-size: 26px !important; font-weight: 800 !important;
@@ -196,7 +115,7 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   margin: 0 0 22px !important;
 }
 
-/* ── 6. 입력창 ── */
+/* ── 입력창 ── */
 .staticrypt-password-container { position: relative; margin-bottom: 18px !important; }
 #staticrypt-password {
   background: rgba(255,255,255,0.95) !important;
@@ -226,10 +145,8 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   box-shadow: 0 0 0 3px rgba(6,182,212,0.25),
               0 0 25px rgba(6,182,212,0.30) !important;
 }
-/* staticrypt 동작 안 막음 — display 클래스 보존 */
 .hidden { display: none !important; }
 #staticrypt-form, #staticrypt_content { pointer-events: auto !important; }
-/* focus 스타일은 위쪽 input 정의에서 처리 */
 .staticrypt-toggle-password-visibility {
   position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
   background: transparent !important; border: none; cursor: pointer;
@@ -238,7 +155,7 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
 }
 .staticrypt-toggle-password-visibility:hover { color: var(--jv-cyan) !important; }
 
-/* ── 7. Remember me ── */
+/* ── Remember me ── */
 .staticrypt-remember {
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 22px !important;
@@ -253,7 +170,7 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
 }
 #staticrypt-remember-label { cursor: pointer; user-select: none; }
 
-/* ── 8. 버튼 (cyan→blue→purple 그라디언트) ── */
+/* ── 버튼 (cyan→blue→purple 그라디언트) ── */
 .staticrypt-decrypt-button {
   width: 100%;
   background: linear-gradient(135deg, var(--jv-cyan) 0%, var(--jv-blue) 50%, var(--jv-purple) 100%) !important;
@@ -286,14 +203,117 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
 
 .staticrypt-spinner-container { color: rgba(186,230,253,0.7) !important; }
 
+/* 폰 카드 패딩 축소 */
 @media (max-width: 480px) {
   .staticrypt-form { padding: 36px 26px !important; }
   .staticrypt-title { font-size: 22px !important; }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   ★ PC 전용 무거운 효과 (마우스 있는 기기만)
+   폰/태블릿 터치는 자동 fallback (위 베이스 스타일만 적용)
+   ───────────────────────────────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  /* 우주 배경: nebula */
+  .staticrypt-body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 700px 500px at 25% 20%, rgba(6,182,212,0.18), transparent 60%),
+      radial-gradient(ellipse 600px 800px at 75% 80%, rgba(124,58,237,0.16), transparent 60%),
+      radial-gradient(ellipse 500px 400px at 50% 50%, rgba(59,130,246,0.10), transparent 70%),
+      radial-gradient(ellipse 400px 300px at 90% 30%, rgba(236,72,153,0.10), transparent 60%),
+      #03060f;
+    background-attachment: fixed;
+  }
+  /* 별빛 (15개 + twinkle 무한) */
+  .staticrypt-body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(1.5px 1.5px at 8% 12%, #fff, transparent 60%),
+      radial-gradient(1px 1px at 23% 45%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(2px 2px at 47% 18%, rgba(167,243,253,0.9), transparent 60%),
+      radial-gradient(1px 1px at 62% 73%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 78% 35%, rgba(255,255,255,0.7), transparent 60%),
+      radial-gradient(1px 1px at 89% 88%, rgba(167,139,250,0.9), transparent),
+      radial-gradient(2px 2px at 12% 78%, #fff, transparent 60%),
+      radial-gradient(1px 1px at 35% 92%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 55% 8%, rgba(186,230,253,0.9), transparent 60%),
+      radial-gradient(1px 1px at 71% 56%, #fff, transparent),
+      radial-gradient(1.2px 1.2px at 95% 15%, rgba(255,255,255,0.7), transparent 60%),
+      radial-gradient(1px 1px at 4% 60%, #fff, transparent),
+      radial-gradient(2.5px 2.5px at 38% 38%, rgba(255,255,255,0.8), transparent 60%),
+      radial-gradient(1px 1px at 67% 22%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 19% 65%, rgba(244,114,182,0.7), transparent 60%);
+    animation: jv-twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes jv-twinkle {
+    0%   { opacity: 0.55; }
+    100% { opacity: 0.95; }
+  }
+  /* HUD 그리드 (헬로그래픽) */
+  .staticrypt-page::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(6,182,212,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6,182,212,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+            mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+  }
+  /* 카드 글래스 (blur 40px + 진입 애니메이션 + 외곽 글로우 강화) */
+  .staticrypt-form {
+    background: rgba(8, 12, 22, 0.72) !important;
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    box-shadow:
+      0 0 0 1px rgba(6,182,212,0.15),
+      0 0 60px rgba(6,182,212,0.20),
+      0 25px 50px -12px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 0 40px rgba(6,182,212,0.04) !important;
+    animation: jv-fade-in 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes jv-fade-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  /* 카드 코너에 cyan 글로우 추가 */
+  .staticrypt-form::before {
+    filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
+  }
+  .staticrypt-form::after {
+    filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
+  }
+  /* 스캔 라인 — form 안 위→아래 무한 */
+  .jv-scanner {
+    position: absolute; left: 0; right: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+                transparent 0%, transparent 18%,
+                rgba(6,182,212,0.95) 50%,
+                transparent 82%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+    box-shadow: 0 0 6px rgba(6,182,212,0.55);
+    animation: jv-scan-full 2.5s linear infinite;
+  }
+  @keyframes jv-scan-full {
+    0%   { top: 0;    opacity: 0; }
+    5%   { opacity: 1; }
+    95%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+}
+/* 폰에선 .jv-scanner 자체를 안 보이게 (PC @media 안에서만 정의됨이라 자동 비활성) */
+.jv-scanner { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .jv-scanner { display: block; }
+}
 </style>
 <script id="jarvis-login-bg-script">
 (function(){
-  // staticrypt가 inline style로 색상 주입한 경우를 강제 제거 (다크 배경 보장)
+  // 다크 배경 보장 — DOMContentLoaded 한 번만 (setTimeout 무한 강제 X — 폰 메인스레드 부담)
   function fixBg(){
     try {
       var d = document.documentElement, b = document.body;
@@ -309,9 +329,6 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', fixBg);
   }
-  // staticrypt 폼 렌더 후 한 번 더
-  setTimeout(fixBg, 50);
-  setTimeout(fixBg, 300);
 })();
 </script>
 """
@@ -342,7 +359,7 @@ def main():
     html = re.sub(r'<script id="jarvis-login-bg-script">.*?</script>\s*', '', html, flags=re.DOTALL)
     html = re.sub(r'<div class="jv-scanner"[^>]*></div>\s*', '', html)
     new_html = html.replace("</head>", CUSTOM_CSS + "\n</head>", 1)
-    # staticrypt-form 시작 직후 스캔 라인 div 주입 (카드 위→아래 풀 스캔용)
+    # staticrypt-form 시작 직후 스캔 라인 div 주입 (PC에서만 보임 — 폰에선 display:none)
     new_html = re.sub(
         r'(<(?:div|form)[^>]*class="[^"]*\bstaticrypt-form\b[^"]*"[^>]*>)',
         r'\1<div class="jv-scanner" aria-hidden="true"></div>',
