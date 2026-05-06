@@ -115,15 +115,15 @@ jobs:
         run: pip install -r requirements.txt
       - name: 장전 브리핑
         run: python stock.py --premarket
-      - name: 대시보드 커밋
+      - name: 대시보드 + mirae_paper 커밋
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 갱신 (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
+          git add docs/ mirae_paper.json || true
+          git diff --staged --quiet || git commit -m "chore: 대시보드 + mirae_paper (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
           git push || true
 
   # ── 장 마감 결산 (cron-job.org 평일 15:35 KST) ────
@@ -141,15 +141,15 @@ jobs:
         run: pip install -r requirements.txt
       - name: 마감 결산
         run: python stock.py --close
-      - name: 대시보드 + tomorrow_picks 커밋
+      - name: 대시보드 + tomorrow_picks + mirae_paper 커밋
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ tomorrow_picks.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + tomorrow_picks $(date '+%Y-%m-%d')"
+          git add docs/ tomorrow_picks.json mirae_paper.json || true
+          git diff --staged --quiet || git commit -m "chore: 대시보드 + tomorrow_picks + mirae_paper $(date '+%Y-%m-%d')"
           git push || true
 
   # ── 장중 실시간 모니터링 (cron-job.org 평일 09:05 KST 시작, 20분) ────

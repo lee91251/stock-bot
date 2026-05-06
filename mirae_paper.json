@@ -1,0 +1,28 @@
+{
+  "positions": {
+    "293490": {
+      "name": "카카오게임즈",
+      "qty": 172,
+      "buy_price": 11610.0,
+      "buy_date": "2026-05-06",
+      "buy_amount": 1996920,
+      "partial_sold": false,
+      "rec_date": "2026-05-06",
+      "rec_score": 0,
+      "peak_pct": 0.09
+    }
+  },
+  "history": [
+    {
+      "date": "2026-05-06",
+      "time": "13:00",
+      "side": "buy",
+      "code": "293490",
+      "name": "카카오게임즈",
+      "qty": 172,
+      "price": 11610.0,
+      "amount": 1996920,
+      "source": "추천 (Daily Top5)"
+    }
+  ]
+}

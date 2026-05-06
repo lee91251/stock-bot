@@ -100,6 +100,13 @@ except Exception:
 PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
 MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
+MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
+
+# 미래에셋 모의 (추천 검증용 가치주) — 가치주 룰 적용
+PAPER_MIRAE_STOP_LOSS_PCT  = 0.07   # -7% 손절
+PAPER_MIRAE_TARGET1_PCT    = 0.10   # +10% 1차 (절반)
+PAPER_MIRAE_TARGET2_PCT    = 0.20   # +20% 2차 (전량)
+PAPER_MIRAE_TARGET3_PCT    = 0.40   # +40% 장기 목표 (참고)
 
 # 대시보드 URL (GitHub Pages). 사용자가 활성화 후 자동으로 노출됨.
 DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "https://lee91251.github.io/stock-bot/")
@@ -2184,6 +2191,215 @@ def _calc_mdd_from_portfolio(window_days: int = 30) -> dict:
     except Exception as e:
         print(f"  [MDD] 계산 오류: {e}")
         return {"mdd_pct": 0, "mdd_amount": 0, "peak_date": "", "trough_date": "", "current_dd_pct": 0}
+
+
+# ════════════════════════════════════════════════
+# 미래에셋 모의 (추천 검증용 가치주) — 2번 계좌
+# ════════════════════════════════════════════════
+def load_mirae_paper() -> dict:
+    """mirae_paper.json 로드. 없으면 빈 구조 반환."""
+    try:
+        if os.path.exists(MIRAE_PAPER_FILE):
+            with open(MIRAE_PAPER_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"  [mirae_paper] 로드 오류: {e}")
+    return {"positions": {}, "history": []}
+
+
+def save_mirae_paper(data: dict) -> None:
+    try:
+        with open(MIRAE_PAPER_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [mirae_paper] 저장 오류: {e}")
+
+
+def mirae_paper_buy(code: str, name: str, qty: int, price: float,
+                     buy_amount: float = None, source: str = "manual",
+                     rec_score: int = 0) -> dict:
+    """미래에셋 모의 매수 등록. 같은 종목 추가 매수 시 평단 가중평균 재계산.
+
+    Args:
+        code: 종목 코드 (6자리)
+        name: 종목명
+        qty: 수량
+        price: 단가
+        buy_amount: 실제 매수금액 (체결가 × 수량과 다를 수 있음 — 사용자 입력 우선)
+        source: 매수 출처 ("manual" / "추천 Daily Top5" 등)
+        rec_score: 추천 시점 점수 (검증용)
+    """
+    if buy_amount is None:
+        buy_amount = qty * price
+
+    data = load_mirae_paper()
+    today = _today_str()
+
+    if code in data["positions"]:
+        # 추가 매수 — 평단 가중평균
+        old = data["positions"][code]
+        old_qty = old.get("qty", 0)
+        old_amt = old.get("buy_amount", 0)
+        new_qty = old_qty + qty
+        new_amt = old_amt + buy_amount
+        new_avg = new_amt / new_qty
+        data["positions"][code] = {
+            **old,
+            "qty": new_qty,
+            "buy_price": round(new_avg, 2),
+            "buy_amount": round(new_amt),
+        }
+    else:
+        data["positions"][code] = {
+            "name":         name,
+            "qty":          qty,
+            "buy_price":    round(price, 2),
+            "buy_date":     today,
+            "buy_amount":   round(buy_amount),
+            "partial_sold": False,
+            "rec_date":     today if source != "manual" else "",
+            "rec_score":    rec_score,
+            "peak_pct":     0.0,  # 트레일링 스톱용 (최고 수익률 추적)
+        }
+
+    data["history"].append({
+        "date":   today,
+        "time":   _now_kst().strftime("%H:%M"),
+        "side":   "buy",
+        "code":   code,
+        "name":   name,
+        "qty":    qty,
+        "price":  round(price, 2),
+        "amount": round(buy_amount),
+        "source": source,
+    })
+
+    save_mirae_paper(data)
+    return data["positions"][code]
+
+
+def mirae_paper_sell(code: str, qty: int, price: float, reason: str = "수동 매도") -> dict:
+    """미래에셋 모의 매도 등록.
+
+    Args:
+        code: 종목 코드
+        qty: 매도 수량 (보유 ≤이면 부분, =이면 전량 → 포지션 제거)
+        price: 매도 단가
+        reason: 매도 사유 (예: "+10% 1차 익절", "사용자 결정")
+    """
+    data = load_mirae_paper()
+    if code not in data["positions"]:
+        return {"ok": False, "msg": "보유 종목 아님"}
+
+    p = data["positions"][code]
+    held = p.get("qty", 0)
+    if qty > held:
+        qty = held  # 안전 — 보유보다 많이 매도 X
+
+    bp     = p.get("buy_price", 0)
+    profit = round((price - bp) * qty)
+    pct    = round((price - bp) / bp * 100, 2) if bp else 0
+    today  = _today_str()
+
+    data["history"].append({
+        "date":      today,
+        "time":      _now_kst().strftime("%H:%M"),
+        "side":      "sell",
+        "code":      code,
+        "name":      p.get("name", code),
+        "qty":       qty,
+        "price":     round(price, 2),
+        "amount":    round(price * qty),
+        "buy_price": bp,
+        "profit":    profit,
+        "pct":       pct,
+        "reason":    reason,
+    })
+
+    if qty == held:
+        # 전량 매도 → 포지션 제거
+        del data["positions"][code]
+    else:
+        data["positions"][code] = {
+            **p,
+            "qty":          held - qty,
+            "partial_sold": True,
+        }
+
+    save_mirae_paper(data)
+    return {"ok": True, "profit": profit, "pct": pct}
+
+
+def check_mirae_paper_alerts(send_telegram: bool = True) -> list:
+    """미래에셋 모의 매도시점 도달 종목 추출 + 알림.
+
+    가치주 룰 적용: -7% 손절 / +10% 1차 / +20% 2차 / +40% 장기.
+    각 종목별로 도달 즉시 1번만 알림 (peak_pct 추적으로 중복 방지).
+    """
+    data = load_mirae_paper()
+    if not data.get("positions"):
+        return []
+
+    alerts = []
+    for code, p in list(data["positions"].items()):
+        # 시세 조회
+        try:
+            info = _kis.get_price(code) if _kis.available() else {}
+            cur_price = _safe_float(info.get("stck_prpr")) if info else 0
+        except Exception:
+            cur_price = 0
+        if cur_price <= 0:
+            continue
+
+        bp  = p.get("buy_price", 0)
+        if not bp:
+            continue
+        pct      = (cur_price - bp) / bp * 100
+        peak_pct = p.get("peak_pct", 0)
+        partial  = p.get("partial_sold", False)
+        name     = p.get("name", code)
+
+        # peak_pct 갱신 (최고 수익률 추적)
+        if pct > peak_pct:
+            data["positions"][code]["peak_pct"] = round(pct, 2)
+            peak_pct = pct
+
+        alert = None
+        if pct <= -PAPER_MIRAE_STOP_LOSS_PCT * 100:
+            alert = {"type": "🔴 손절", "name": name, "code": code, "pct": pct,
+                     "cur_price": cur_price, "buy_price": bp,
+                     "msg": f"-7% 도달 — 즉시 매도 권장"}
+        elif pct >= PAPER_MIRAE_TARGET3_PCT * 100:
+            alert = {"type": "🏆 장기 목표", "name": name, "code": code, "pct": pct,
+                     "cur_price": cur_price, "buy_price": bp,
+                     "msg": f"+40% 장기 목표 도달 — 분할 매도 검토"}
+        elif pct >= PAPER_MIRAE_TARGET2_PCT * 100:
+            alert = {"type": "🟢 2차 목표", "name": name, "code": code, "pct": pct,
+                     "cur_price": cur_price, "buy_price": bp,
+                     "msg": f"+20% 도달 — 잔여 전량 매도 권장"}
+        elif pct >= PAPER_MIRAE_TARGET1_PCT * 100 and not partial:
+            alert = {"type": "🟢 1차 목표", "name": name, "code": code, "pct": pct,
+                     "cur_price": cur_price, "buy_price": bp,
+                     "msg": f"+10% 도달 — 절반 매도 권장 (잔여는 +20% 까지 보유)"}
+
+        if alert:
+            alerts.append(alert)
+
+    # peak_pct 갱신 저장
+    save_mirae_paper(data)
+
+    # 텔레그램 발송
+    if send_telegram and alerts:
+        lines = [f"<b>📊 [미래에셋 모의 — 추천 검증]</b>", ""]
+        for a in alerts:
+            lines.append(
+                f"{a['type']} <b>{a['name']}</b> ({a['pct']:+.2f}%)\n"
+                f"  매수가 {a['buy_price']:,.0f}원 → 현재 {a['cur_price']:,.0f}원\n"
+                f"  💡 {a['msg']}"
+            )
+        tg_send("\n".join(lines))
+
+    return alerts
 
 
 def analyze_trading_performance(window_days: int = 30) -> dict:
@@ -4461,6 +4677,126 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_paper_mirae_section() -> str:
+    """미래에셋 모의 (추천 검증용) 카드.
+
+    봇이 추천한 가치주를 모의로 매수해서 추천 정확도 검증.
+    가치주 룰: -7% 손절 / +10% 1차 / +20% 2차 / +40% 장기.
+    각 종목별 매도시점 도달 여부를 시각적으로 표시.
+    """
+    data = load_mirae_paper()
+    positions = data.get("positions", {})
+
+    if not positions:
+        return _empty_section(
+            "paper-mirae", "🧪", "section__icon--auto", "미래에셋 모의 (추천 검증)",
+            "가치주 검증", "아직 등록된 종목 없음",
+            "봇 추천 가치주를 모의로 매수해서 정확도 검증. 채팅 또는 텔레그램으로 등록.",
+        )
+
+    rows = []
+    total_cost   = 0
+    total_value  = 0
+
+    for code, p in positions.items():
+        name      = p.get("name", code)
+        qty       = p.get("qty", 0)
+        bp        = p.get("buy_price", 0)
+        partial   = p.get("partial_sold", False)
+        peak_pct  = p.get("peak_pct", 0)
+        rec_score = p.get("rec_score", 0)
+        buy_date  = p.get("buy_date", "")
+        rec_date  = p.get("rec_date", "")
+
+        # 시세 조회
+        cur_price = 0
+        try:
+            info = _kis.get_price(code) if _kis.available() else {}
+            cur_price = _safe_float(info.get("stck_prpr")) if info else 0
+        except Exception:
+            pass
+
+        cost = bp * qty
+        value = cur_price * qty if cur_price > 0 else cost
+        profit = value - cost
+        pct = ((cur_price - bp) / bp * 100) if (cur_price and bp) else 0
+        total_cost  += cost
+        total_value += value
+
+        # 매도시점 도달 표시
+        cls = _pnl_class(pct)
+        sign = "+" if profit >= 0 else ""
+
+        target_tag = ""
+        if pct <= -PAPER_MIRAE_STOP_LOSS_PCT * 100:
+            target_tag = f' <span style="color:#dc2626;font-weight:700">🔴 손절 도달</span>'
+        elif pct >= PAPER_MIRAE_TARGET3_PCT * 100:
+            target_tag = f' <span style="color:#16a34a;font-weight:700">🏆 +40% 장기 목표!</span>'
+        elif pct >= PAPER_MIRAE_TARGET2_PCT * 100:
+            target_tag = f' <span style="color:#16a34a;font-weight:700">🟢 2차 목표 (+20%)</span>'
+        elif pct >= PAPER_MIRAE_TARGET1_PCT * 100:
+            if partial:
+                target_tag = f' <span style="color:#0369a1">🟢 1차 매도 완료 — 잔여 +20% 까지</span>'
+            else:
+                target_tag = f' <span style="color:#16a34a;font-weight:700">🟢 1차 목표 (+10%) — 절반 매도 권장</span>'
+
+        # 매도시점까지 거리 표시 (도달 안 한 경우)
+        progress_html = ""
+        if pct < PAPER_MIRAE_TARGET1_PCT * 100 and pct > -PAPER_MIRAE_STOP_LOSS_PCT * 100:
+            to_t1 = PAPER_MIRAE_TARGET1_PCT * 100 - pct
+            to_sl = pct - (-PAPER_MIRAE_STOP_LOSS_PCT * 100)
+            progress_html = f'<small>1차까지 +{to_t1:.1f}%p · 손절까지 -{to_sl:.1f}%p</small>'
+        elif PAPER_MIRAE_TARGET1_PCT * 100 <= pct < PAPER_MIRAE_TARGET2_PCT * 100:
+            to_t2 = PAPER_MIRAE_TARGET2_PCT * 100 - pct
+            progress_html = f'<small>2차까지 +{to_t2:.1f}%p</small>'
+
+        # peak_pct 표시 (트레일링 정보)
+        peak_html = ""
+        if peak_pct > pct + 2:  # 최고가에서 2%p 이상 빠진 경우만 표시
+            peak_html = f' <small style="color:#888">(최고 +{peak_pct:.1f}%)</small>'
+
+        partial_html = " · 1차매도완료" if partial else ""
+        rec_html = ""
+        if rec_date:
+            rec_html = f" · 추천일 {rec_date[5:].replace('-', '/')}"
+
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🧪 {name}{target_tag}</div>
+        <div class="row__sub">{qty}주 · 매수 {bp:,.0f}원 ({buy_date[5:].replace('-', '/') if buy_date else ''}{rec_html}){partial_html}<br>{progress_html}</div>
+      </div>
+      <div class="row__price">
+        <div class="row__current">{cur_price:,.0f}원{peak_html}</div>
+        <div class="row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      </div>
+    </div>""")
+
+    total_pnl = total_value - total_cost
+    total_pct = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    return f"""
+<section class="section" id="paper-mirae" aria-label="미래에셋 모의">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🧪</span>
+      <h2>미래에셋 모의 (추천 검증)</h2>
+      <span class="section__badge">가치주 룰 -7/+10/+20/+40</span>
+      <span class="section__count">{len(positions)}종목</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount">{int(round(total_value)):,}원</div>
+      <div class="section__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
 def _make_trade_history_card(limit: int = 30) -> str:
     """거래 이력 카드 — positions.json history 기반.
 
@@ -5848,6 +6184,8 @@ def build_and_save_dashboard(
             holdings_alerts or [], holdings_sparklines or {}, holdings_diagnosis or {}
         )
         auto_html = _make_auto_positions_section(auto_positions)
+        # 미래에셋 모의 (2번 계좌 — 추천 검증용)
+        paper_mirae_html = _make_paper_mirae_section()
         # 사전 매수 후보 (tomorrow_picks)
         try:
             tp_data = _load_tomorrow_picks()
@@ -5914,6 +6252,7 @@ def build_and_save_dashboard(
 {allocation_html}
 {value_html}
 {auto_html}
+{paper_mirae_html}
 {tomorrow_html}
 {performance_html}
 {trades_html}
@@ -6842,6 +7181,12 @@ def run_premarket_briefing():
             build_and_save_dashboard(mood=mood, fg=fg, kr_top=top5)
         except Exception as e:
             print(f"  [브리핑] 대시보드 갱신 오류: {e}")
+
+        # 미래에셋 모의 매도시점 알림 (2번 계좌 — 장 시작 전 점검)
+        try:
+            check_mirae_paper_alerts(send_telegram=True)
+        except Exception as e:
+            print(f"  [브리핑] mirae_paper 알림 오류: {e}")
     except Exception as e:
         print(f"  [브리핑] 장전 브리핑 오류: {e}")
         tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
@@ -6961,6 +7306,12 @@ def run_close_summary():
             _pick_tomorrow_candidates()
         except Exception as e:
             print(f"  [브리핑] tomorrow_picks 추출 오류: {e}")
+
+        # 미래에셋 모의 매도시점 알림 (2번 계좌)
+        try:
+            check_mirae_paper_alerts(send_telegram=True)
+        except Exception as e:
+            print(f"  [브리핑] mirae_paper 알림 오류: {e}")
 
         # 대시보드 갱신
         try:
