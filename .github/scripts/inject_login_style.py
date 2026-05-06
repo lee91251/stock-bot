@@ -311,26 +311,6 @@ html, body, html.staticrypt-html, body.staticrypt-body, html[class], body[class]
   .jv-scanner { display: block; }
 }
 </style>
-<script id="jarvis-login-bg-script">
-(function(){
-  // 다크 배경 보장 — DOMContentLoaded 한 번만 (setTimeout 무한 강제 X — 폰 메인스레드 부담)
-  function fixBg(){
-    try {
-      var d = document.documentElement, b = document.body;
-      d.style.setProperty('background', '#03060f', 'important');
-      d.style.setProperty('background-color', '#03060f', 'important');
-      if (b) {
-        b.style.setProperty('background', '#03060f', 'important');
-        b.style.setProperty('background-color', '#03060f', 'important');
-      }
-    } catch(e){}
-  }
-  fixBg();
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixBg);
-  }
-})();
-</script>
 """
 
 
