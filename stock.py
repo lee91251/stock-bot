@@ -6088,20 +6088,31 @@ def _make_dart_card(dart_alerts: list) -> str:
 
 def _make_sidebar(sections_status: dict, last_update: str) -> str:
     """좌측 사이드바 — 섹션 네비게이션 (활성/비활성 표시)."""
+    # 카드 그룹별 정렬 (대시보드 카드 순서와 일치)
     items = [
         ("overview", "🏠", "개요", True),
-        ("coach", "🦾", "AI 비서", sections_status.get("coach", False)),
-        ("history", "📈", "자산 추이", sections_status.get("history", False)),
-        ("value", "💼", "가치주", sections_status.get("value", False)),
-        ("auto", "🤖", "자동매매", sections_status.get("auto", False)),
-        ("allocation", "📊", "자산 배분", sections_status.get("allocation", False)),
-        ("market", "🌏", "시장", sections_status.get("market", False)),
-        ("macro", "📈", "매크로", sections_status.get("macro", False)),
-        ("ai", "🤖", "AI 분석", sections_status.get("ai", False)),
-        ("recommend", "🇰🇷", "추천", sections_status.get("recommend", False)),
-        ("avoid", "🚫", "회피", sections_status.get("avoid", False)),
-        ("disclosures", "📢", "공시", sections_status.get("disclosures", False)),
-        ("dart", "🚨", "보유 공시", sections_status.get("dart", False)),
+        # [요약]
+        ("coach",       "🦾", "AI 비서",       sections_status.get("coach", False)),
+        ("history",     "📈", "자산 추이",     sections_status.get("history", False)),
+        ("allocation",  "📊", "자산 배분",     sections_status.get("allocation", False)),
+        # [내 계좌]
+        ("value",        "💼", "가치주(1번)",       sections_status.get("value", False)),
+        ("paper-mirae",  "🧪", "모의 검증(2번)",    True),
+        ("auto",         "🤖", "자동매매(3번)",     sections_status.get("auto", False)),
+        # [매매·학습·추천]
+        ("trades",      "📜", "거래 이력",      True),
+        ("performance", "📈", "봇 성적표",      True),
+        ("tomorrow",    "🎯", "사전 후보",      True),
+        ("recommend",   "🇰🇷", "추천",          sections_status.get("recommend", False)),
+        ("avoid",       "🚫", "회피",          sections_status.get("avoid", False)),
+        # [시장]
+        ("market",      "🌏", "시장",          sections_status.get("market", False)),
+        ("macro",       "📈", "매크로",        sections_status.get("macro", False)),
+        ("ai",          "🤖", "AI 분석",       sections_status.get("ai", False)),
+        # [공시·알림]
+        ("alerts",      "📢", "최근 알림",      True),
+        ("dart",        "🚨", "DART",          sections_status.get("dart", False)),
+        ("disclosures", "📰", "공시 목록",      sections_status.get("disclosures", False)),
     ]
     badge_html = '<span class="sidebar__link-badge">대기</span>'
     links = []
