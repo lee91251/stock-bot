@@ -2255,6 +2255,7 @@ def mirae_paper_buy(code: str, name: str, qty: int, price: float,
             "qty":          qty,
             "buy_price":    round(price, 2),
             "buy_date":     today,
+            "buy_time":     _now_kst().strftime("%H:%M"),
             "buy_amount":   round(buy_amount),
             "partial_sold": False,
             "rec_date":     today if source != "manual" else "",
@@ -2456,6 +2457,8 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
                         "pnl_pct": pnl_pct,
                         "hold_days": hold_days,
                         "sell_reason": h.get("reason", ""),
+                        "buy_time":  buy.get("time", ""),
+                        "sell_time": h.get("time", ""),
                     })
                 buys.pop(code, None)
 
@@ -2527,6 +2530,60 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
         top_winners = sorted_by_pnl[:3]
         top_losers  = sorted_by_pnl[-3:][::-1]  # 역순 (가장 큰 손실 먼저)
 
+        # B3+ 자가학습: 매수/매도 시간대별 승률 (사용자 의도 — 주가 언제 오르고 내리는지 파악)
+        def _hour_bucket(time_str: str) -> str:
+            if not time_str or ":" not in time_str:
+                return ""
+            try:
+                h = int(time_str.split(":")[0])
+            except Exception:
+                return ""
+            if 9 <= h < 11:   return "09-11시 (개장)"
+            if 11 <= h < 13:  return "11-13시 (점심)"
+            if 13 <= h < 15:  return "13-15시 (오후)"
+            if 15 <= h < 16:  return "15시+ (마감)"
+            return ""
+
+        # 매수 시간대별 승률
+        buy_hour_stats: dict = {}
+        for r in results:
+            bucket = _hour_bucket(r.get("buy_time", ""))
+            if not bucket:
+                continue
+            buy_hour_stats.setdefault(bucket, []).append(r)
+        buy_hour_perf = []
+        for bucket, lst in buy_hour_stats.items():
+            wins = sum(1 for r in lst if r["pnl_pct"] > 0)
+            avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
+            buy_hour_perf.append({
+                "bucket":   bucket,
+                "trades":   len(lst),
+                "win_rate": round(wins / len(lst) * 100, 1),
+                "avg_pnl":  round(avg, 2),
+            })
+        # 시간 순 정렬
+        bucket_order = ["09-11시 (개장)", "11-13시 (점심)", "13-15시 (오후)", "15시+ (마감)"]
+        buy_hour_perf.sort(key=lambda x: bucket_order.index(x["bucket"]) if x["bucket"] in bucket_order else 99)
+
+        # 매도 시간대별 승률
+        sell_hour_stats: dict = {}
+        for r in results:
+            bucket = _hour_bucket(r.get("sell_time", ""))
+            if not bucket:
+                continue
+            sell_hour_stats.setdefault(bucket, []).append(r)
+        sell_hour_perf = []
+        for bucket, lst in sell_hour_stats.items():
+            wins = sum(1 for r in lst if r["pnl_pct"] > 0)
+            avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
+            sell_hour_perf.append({
+                "bucket":   bucket,
+                "trades":   len(lst),
+                "win_rate": round(wins / len(lst) * 100, 1),
+                "avg_pnl":  round(avg, 2),
+            })
+        sell_hour_perf.sort(key=lambda x: bucket_order.index(x["bucket"]) if x["bucket"] in bucket_order else 99)
+
         # B3: MDD (portfolio_history 기반)
         mdd = _calc_mdd_from_portfolio(window_days=window_days)
 
@@ -2551,6 +2608,9 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
                 "65-69": {"trades": len(bucket_65), "win_rate": _wr(bucket_65)},
                 "60-64": {"trades": len(bucket_60), "win_rate": _wr(bucket_60)},
             },
+            # B3+ 자가학습 — 시간대별 매매 성과 (주가 언제 오르고 내리는지)
+            "buy_hour_perf":  buy_hour_perf,
+            "sell_hour_perf": sell_hour_perf,
         }
     except Exception as e:
         return {"trades": 0, "summary": f"분석 오류: {e}"}
@@ -4645,11 +4705,19 @@ def _make_auto_positions_section(auto_positions: list) -> str:
         cls = _pnl_class(pct)
         sign = "+" if profit >= 0 else ""
         partial = " · 1차매도완료" if e.get("partial_sold") else ""
+        # 매수 일시 (B3+ — 시간대별 성과 검증용)
+        bd = e.get("buy_date", "")
+        bt = e.get("buy_time", "")
+        when = ""
+        if bd:
+            when = f" · 매수 {bd[5:].replace('-', '/')}"
+            if bt:
+                when += f" {bt}"
         rows.append(f"""
     <div class="row">
       <div class="row__main">
         <div class="row__name">{name}</div>
-        <div class="row__sub">{qty:,}주 · 매수 {bp:,.0f}원{partial}</div>
+        <div class="row__sub">{qty:,}주 · 매수가 {bp:,.0f}원{when}{partial}</div>
       </div>
       <div class="row__price">
         <div class="row__current">{cp:,.0f}원</div>
@@ -4756,6 +4824,12 @@ def _make_paper_mirae_section() -> str:
             peak_html = f' <small style="color:#888">(최고 +{peak_pct:.1f}%)</small>'
 
         partial_html = " · 1차매도완료" if partial else ""
+        bt_str = p.get("buy_time", "")
+        when = ""
+        if buy_date:
+            when = buy_date[5:].replace('-', '/')
+            if bt_str:
+                when += f" {bt_str}"
         rec_html = ""
         if rec_date:
             rec_html = f" · 추천일 {rec_date[5:].replace('-', '/')}"
@@ -4764,7 +4838,7 @@ def _make_paper_mirae_section() -> str:
     <div class="row">
       <div class="row__main">
         <div class="row__name">🧪 {name}{target_tag}</div>
-        <div class="row__sub">{qty}주 · 매수 {bp:,.0f}원 ({buy_date[5:].replace('-', '/') if buy_date else ''}{rec_html}){partial_html}<br>{progress_html}</div>
+        <div class="row__sub">{qty}주 · 매수 {bp:,.0f}원 ({when}{rec_html}){partial_html}<br>{progress_html}</div>
       </div>
       <div class="row__price">
         <div class="row__current">{cur_price:,.0f}원{peak_html}</div>
@@ -4972,6 +5046,36 @@ def _make_performance_card(perf: dict) -> str:
       <div class="row__main">
         <div class="row__name">⏱️ 보유일별 승률</div>
         <div class="row__sub">{" · ".join(h_parts)}</div>
+      </div>
+    </div>""")
+
+    # 매수 시간대별 (자가학습 — 어느 시간대 매수가 더 좋은지)
+    bhp = perf.get("buy_hour_perf", [])
+    if bhp:
+        b_parts = []
+        for h in bhp:
+            color = "#16a34a" if h["win_rate"] >= 50 else "#dc2626"
+            b_parts.append(f'<span style="color:{color}">{h["bucket"]}: {h["win_rate"]:.0f}% ({h["trades"]}건, 평균 {h["avg_pnl"]:+.1f}%)</span>')
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🕘 매수 시간대별 승률</div>
+        <div class="row__sub">{" · ".join(b_parts)}</div>
+      </div>
+    </div>""")
+
+    # 매도 시간대별
+    shp = perf.get("sell_hour_perf", [])
+    if shp:
+        s_parts = []
+        for h in shp:
+            color = "#16a34a" if h["win_rate"] >= 50 else "#dc2626"
+            s_parts.append(f'<span style="color:{color}">{h["bucket"]}: {h["win_rate"]:.0f}% ({h["trades"]}건)</span>')
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🕒 매도 시간대별 승률</div>
+        <div class="row__sub">{" · ".join(s_parts)}</div>
       </div>
     </div>""")
 
@@ -7694,6 +7798,7 @@ def run_auto_buy():
                 "qty":           qty,
                 "buy_price":     price,
                 "buy_date":      today,
+                "buy_time":      _now_kst().strftime("%H:%M"),
                 "buy_amount":    amt,
                 "partial_sold":  False,
                 "score":         s.get("score", 0),
