@@ -98,7 +98,8 @@ except Exception:
     HOLDINGS = []
 
 PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
-MARKET_SCAN_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
+MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
+TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 
 # 대시보드 URL (GitHub Pages). 사용자가 활성화 후 자동으로 노출됨.
 DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "https://lee91251.github.io/stock-bot/")
@@ -5980,6 +5981,14 @@ def _is_trading_day(d: datetime) -> bool:
     return d.strftime("%Y-%m-%d") not in _KRX_HOLIDAYS
 
 
+def _next_trading_day(d: datetime) -> datetime:
+    """다음 거래일 반환 (주말+휴장일 건너뜀)."""
+    nxt = d + timedelta(days=1)
+    while not _is_trading_day(nxt):
+        nxt += timedelta(days=1)
+    return nxt
+
+
 def _skip_if_holiday(mode_label: str) -> bool:
     """한국 휴장일이면 콘솔 로그만 남기고 True 반환.
 
@@ -6206,10 +6215,105 @@ def run_premarket_briefing():
         tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
 
 
+def _pick_tomorrow_candidates() -> dict:
+    """장 마감 시점 — 다음 거래일 매수 우선순위 후보 추출 + tomorrow_picks.json 저장.
+
+    조건 (오늘 강세 + 추세 지속 시그널):
+      - 오늘 +3% 이상 상승
+      - 거래량 평균 대비 +150% 이상
+      - 스윙 점수 50 이상
+      - RSI 70 미만 (과매수 X)
+      - 모멘텀 약화 X
+
+    저장된 picks를 다음날 autobuy가 우선 분석 + score_bonus 적용.
+    """
+    pool = _load_auto_buy_pool()
+    print(f"[tomorrow_picks] 풀 {len(pool)}종목 강세 분석 시작...")
+
+    candidates = []
+    for ticker, (name, period, sector) in pool.items():
+        try:
+            r = analyze(ticker, name, period, sector, with_sentiment=False)
+            if not r:
+                continue
+            change   = r.get("change", 0) or 0
+            vol_r    = r.get("vol_ratio", 0) or 0
+            sw_score = r.get("swing_score", 0) or 0
+            rsi      = r.get("rsi", 50) or 50
+
+            if (change >= 3.0
+                and vol_r >= 150
+                and sw_score >= 50
+                and rsi < 70):
+                # 보너스: +3%면 +3, +10% 이상이면 상한 +10
+                bonus = min(10, max(3, int(round(change))))
+                candidates.append({
+                    "code":          ticker.split(".")[0],
+                    "name":          name,
+                    "sector":        sector,
+                    "score_bonus":   bonus,
+                    "today_change":  round(change, 2),
+                    "today_vol_ratio": round(vol_r, 0),
+                    "today_score":   sw_score,
+                    "reasons": [
+                        f"오늘 +{change:.1f}% 마감",
+                        f"거래량 평균 +{vol_r:.0f}%",
+                        f"스윙점수 {sw_score}",
+                    ],
+                    "source": "close_summary",
+                })
+            time.sleep(0.4)
+        except Exception as e:
+            print(f"  [tomorrow_picks] {name}({ticker}) 오류: {e}")
+
+    # 보너스 → 점수 → 거래량 순 TOP 20만
+    candidates.sort(key=lambda x: (-x["score_bonus"], -x["today_score"], -x["today_vol_ratio"]))
+    candidates = candidates[:20]
+
+    next_day = _next_trading_day(_now_kst())
+    data = {
+        "date":           next_day.strftime("%Y-%m-%d"),
+        "generated_at":   _now_kst().isoformat(),
+        "source_phase":   "close_summary",
+        "picks":          candidates,
+        "sector_weights": {},  # usclose Phase 3에서 채움 (해외 영향 가중치)
+    }
+
+    try:
+        with open(TOMORROW_PICKS_CACHE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"[tomorrow_picks] {next_day.strftime('%m/%d (%a)')} 후보 {len(candidates)}종목 저장")
+        for c in candidates[:5]:
+            print(f"  • {c['name']} (+{c['today_change']}%, vol {c['today_vol_ratio']:.0f}%, 점수 {c['today_score']}, 보너스 +{c['score_bonus']})")
+    except Exception as e:
+        print(f"[tomorrow_picks] 저장 실패: {e}")
+
+    return data
+
+
+def _load_tomorrow_picks() -> dict:
+    """tomorrow_picks.json 로드. 다음 거래일과 일치하면 반환, 아니면 빈 dict."""
+    try:
+        if not os.path.exists(TOMORROW_PICKS_CACHE):
+            return {}
+        with open(TOMORROW_PICKS_CACHE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # 신선도 체크 — 오늘 날짜와 일치해야 유효
+        today = _today_str()
+        if data.get("date") != today:
+            print(f"  [tomorrow_picks] 날짜 불일치 ({data.get('date')} ≠ {today}) — 무시")
+            return {}
+        return data
+    except Exception as e:
+        print(f"  [tomorrow_picks] 로드 실패: {e}")
+        return {}
+
+
 def run_close_summary():
     """3시 35분 — 장 마감 결산.
 
     텔레그램 다이어트 후: 텔레그램 발송 안 함. 데이터는 대시보드 갱신용.
+    + 다음 거래일 매수 우선순위 후보 추출 (tomorrow_picks.json).
     """
     if _skip_if_holiday("장 마감 결산"):
         return
@@ -6219,6 +6323,12 @@ def run_close_summary():
         fg   = get_fear_greed(mood)
         # 보유종목 알림 데이터 수집 (대시보드용)
         ha = check_holdings_alerts()
+
+        # 다음 거래일 매수 우선순위 후보 추출
+        try:
+            _pick_tomorrow_candidates()
+        except Exception as e:
+            print(f"  [브리핑] tomorrow_picks 추출 오류: {e}")
 
         # 대시보드 갱신
         try:
@@ -6419,6 +6529,28 @@ def run_auto_buy():
     # ── 종목 풀 구성 (KR_STOCKS + market_scan_cache) ──
     pool = _load_auto_buy_pool()
 
+    # tomorrow_picks 로드 (어제 장마감/미장마감 분석으로 추출된 강세 후보)
+    # 풀에서 picks 종목을 앞으로 빼서 먼저 분석 (cron 지연 시에도 우선 캐치)
+    tp_data = _load_tomorrow_picks()
+    tp_picks = tp_data.get("picks", []) if tp_data else []
+    tp_bonus_map = {p["code"]: p for p in tp_picks}  # code → pick 정보
+    if tp_bonus_map:
+        # 풀 정렬: tomorrow_picks 종목 우선, 그 다음 KR_STOCKS, 마지막 market_scan
+        ordered_pool = {}
+        # 1) tomorrow_picks 종목 (보너스 점수 높은 순)
+        sorted_picks = sorted(tp_picks, key=lambda x: -x["score_bonus"])
+        for p in sorted_picks:
+            for ticker in pool:
+                if ticker.split(".")[0] == p["code"]:
+                    ordered_pool[ticker] = pool[ticker]
+                    break
+        # 2) 나머지
+        for ticker, val in pool.items():
+            if ticker not in ordered_pool:
+                ordered_pool[ticker] = val
+        pool = ordered_pool
+        print(f"[자동매수] 🎯 tomorrow_picks 우선순위 적용 — {len(tp_picks)}종목 우선 분석")
+
     print(f"[자동매수] 시작 — 풀 {len(pool)}개 / 무드 {mood.get('status', '중립')} / "
           f"공포탐욕 {fg.get('score', 50)}({fg.get('label', '중립')}) / first_call={is_first_call}")
 
@@ -6448,6 +6580,15 @@ def run_auto_buy():
                 key = re.split(r"[<\d]", b, maxsplit=1)[0] or b
                 diag_blocks[key] = diag_blocks.get(key, 0) + 1
             diag_top_score.append((-sc, name, sc, blocks))
+            # tomorrow_picks 보너스 적용 (어제 강세 후보 → 점수 가산)
+            code_only = ticker.split(".")[0]
+            if code_only in tp_bonus_map:
+                pick = tp_bonus_map[code_only]
+                bonus = pick.get("score_bonus", 0)
+                r["swing_score"] = r.get("swing_score", 0) + bonus
+                r["from_tomorrow_picks"] = True
+                r["tomorrow_pick_reasons"] = pick.get("reasons", [])
+                sc = r["swing_score"]  # 보너스 적용 후 점수로 업데이트
             # swing_signal (점수≥65 + 안전조건) 또는 momentum_signal (급등 +3%/vol+200%) 둘 중 하나
             if (r.get("swing_signal") and sc >= SWING_SCORE_MIN) or r.get("momentum_signal"):
                 candidates.append(r)
@@ -6515,8 +6656,13 @@ def run_auto_buy():
         sec   = s.get("sector", "")
         qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
-        # 급등 모멘텀 종목은 🚀 표시
-        tag = "🚀 급등" if s.get("momentum_signal") else "📊 스윙"
+        # 급등 모멘텀 종목은 🚀, tomorrow_picks 사전 후보는 🎯 표시
+        if s.get("momentum_signal"):
+            tag = "🚀 급등"
+        elif s.get("from_tomorrow_picks"):
+            tag = "🎯 사전 후보"
+        else:
+            tag = "📊 스윙"
         preview_lines.append(
             f"• {tag} <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원"
         )
