@@ -93,15 +93,15 @@ jobs:
         run: pip install -r requirements.txt
       - name: 미국 마감 브리핑
         run: python stock.py --usclose
-      - name: 대시보드 + tomorrow_picks 커밋
+      - name: 대시보드 + tomorrow_picks + alerts 커밋
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ tomorrow_picks.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + 섹터 가중치 (미국 마감) $(date '+%Y-%m-%d')"
+          git add docs/ tomorrow_picks.json alerts.json || true
+          git diff --staged --quiet || git commit -m "chore: 대시보드 + 섹터 가중치 + alerts (미국 마감) $(date '+%Y-%m-%d')"
           git push || true
 
   # ── 장 시작 전 브리핑 (cron-job.org 평일 08:50 KST) ────
@@ -122,15 +122,15 @@ jobs:
         run: pip install -r requirements.txt
       - name: 장전 브리핑
         run: python stock.py --premarket
-      - name: 대시보드 + mirae_paper 커밋
+      - name: 대시보드 + mirae_paper + alerts 커밋
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ mirae_paper.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + mirae_paper (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
+          git add docs/ mirae_paper.json alerts.json || true
+          git diff --staged --quiet || git commit -m "chore: 대시보드 + mirae_paper + alerts (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
           git push || true
 
   # ── 장 마감 결산 (cron-job.org 평일 15:35 KST) ────
@@ -151,15 +151,15 @@ jobs:
         run: pip install -r requirements.txt
       - name: 마감 결산
         run: python stock.py --close
-      - name: 대시보드 + tomorrow_picks + mirae_paper 커밋
+      - name: 대시보드 + tomorrow_picks + mirae_paper + alerts 커밋
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ tomorrow_picks.json mirae_paper.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + tomorrow_picks + mirae_paper $(date '+%Y-%m-%d')"
+          git add docs/ tomorrow_picks.json mirae_paper.json alerts.json || true
+          git diff --staged --quiet || git commit -m "chore: 대시보드 + tomorrow_picks + mirae_paper + alerts $(date '+%Y-%m-%d')"
           git push || true
 
   # ── 장중 실시간 모니터링 (cron-job.org 평일 09:05 KST 시작, 20분) ────
@@ -205,9 +205,9 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add positions.json docs/ || true
+          git add positions.json docs/ alerts.json || true
           git diff --staged --quiet && exit 0 || true
-          git commit -m "chore: 자동매수 포지션 + 대시보드 $(date '+%Y-%m-%d %H:%M')"
+          git commit -m "chore: 자동매수 포지션 + 대시보드 + alerts $(date '+%Y-%m-%d %H:%M')"
           # push retry — 충돌 시 pull --rebase 후 다시 push (race condition 방어)
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
@@ -245,9 +245,9 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add positions.json docs/ dart_seen.json || true
+          git add positions.json docs/ dart_seen.json alerts.json || true
           git diff --staged --quiet && exit 0 || true
-          git commit -m "chore: 자동매도 포지션 + 대시보드 $(date '+%Y-%m-%d %H:%M')"
+          git commit -m "chore: 자동매도 포지션 + 대시보드 + alerts $(date '+%Y-%m-%d %H:%M')"
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
             git pull --rebase origin master 2>&1

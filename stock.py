@@ -101,6 +101,7 @@ PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pe
 MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
+ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
 
 # 미래에셋 모의 (추천 검증용 가치주) — 가치주 룰 적용
 PAPER_MIRAE_STOP_LOSS_PCT  = 0.07   # -7% 손절
@@ -819,22 +820,22 @@ def collect_new_disclosures(context_label: str = "") -> list:
             critical.append((it, em, is_held))
 
     if critical:
-        header = "📢 <b>DART 공시 (중요)</b>"
-        if context_label:
-            header += f" <i>({context_label})</i>"
-        lines = [header, ""]
-        for it, em, is_held in critical[:10]:
+        # 텔레그램 X — 대시보드 알림 센터로 (정보성 다이어트)
+        for it, em, is_held in critical:
             title = it.get("report_nm", "")
             name  = it.get("corp_name", "")
-            rno   = it.get("rcept_no", "")
             held_mark = " 🏠" if is_held else ""
-            url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rno}"
-            lines.append(f'{em} <b>{name}</b>{held_mark}')
-            lines.append(f'   <a href="{url}">{title}</a>')
-        if len(critical) > 10:
-            lines.append(f"\n…외 중요 공시 {len(critical) - 10}건 더 (대시보드에서 확인)")
-        lines.append(f"\n📊 전체 새 공시 {len(new_items)}건은 대시보드 '공시' 섹션에서.")
-        tg_send("\n".join(lines))
+            # ⚠️ 위험 키워드는 warning, 보유 종목은 info, ✅ 호재는 info
+            if em == "⚠️":
+                lvl = "warning"
+            else:
+                lvl = "info"
+            log_alert(
+                "disclosure", lvl,
+                f"DART {em} {name}{held_mark}",
+                title,
+                em or "📰",
+            )
 
     # 5) 캐시 갱신 (모든 새 공시)
     seen.update(it["rcept_no"] for it in new_items if it.get("rcept_no"))
@@ -4745,6 +4746,85 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_alerts_section() -> str:
+    """📢 최근 알림 카드 — alerts.json 기반 (24시간 이내).
+
+    텔레그램 다이어트 후 정보성 알림(임박/공시/브리핑/추천/위험)이 여기로 모임.
+    카테고리별 이모지 + 시간순 (최신 위).
+    """
+    alerts = _load_alerts()
+    if not alerts:
+        return _empty_section(
+            "alerts", "📢", "section__icon--auto", "최근 알림",
+            "24시간 누적", "최근 24시간 누적된 알림이 없습니다",
+            "임박 알림 / 공시 / 브리핑 / 추천 변화 / 위험 등급 등이 여기에 자동 기록됩니다.",
+        )
+
+    # 시간 역순 (최신 위)
+    sorted_alerts = sorted(alerts, key=lambda a: a.get("time", ""), reverse=True)
+    # 최근 30건만 표시
+    sorted_alerts = sorted_alerts[:30]
+
+    rows = []
+    for a in sorted_alerts:
+        emoji   = a.get("emoji", "🔵")
+        title   = a.get("title", "")
+        detail  = a.get("detail", "")
+        level   = a.get("level", "info")
+        time_iso = a.get("time", "")
+
+        # 시간 표시 (HH:MM)
+        try:
+            dt = datetime.fromisoformat(time_iso)
+            time_str = dt.strftime("%m/%d %H:%M")
+        except Exception:
+            time_str = ""
+
+        # 레벨별 색상
+        color_map = {
+            "info":    "#0369a1",
+            "warning": "#d97706",
+            "danger":  "#dc2626",
+        }
+        color = color_map.get(level, "#0369a1")
+
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">{emoji} {title}</div>
+        <div class="row__sub" style="color:{color}">{detail} · <small>{time_str}</small></div>
+      </div>
+    </div>""")
+
+    # 카테고리별 카운트
+    cat_counts = {}
+    for a in alerts:
+        cat = a.get("category", "기타")
+        cat_counts[cat] = cat_counts.get(cat, 0) + 1
+    cat_summary = " · ".join(
+        f"{c}: {n}"
+        for c, n in sorted(cat_counts.items(), key=lambda x: -x[1])
+    )
+
+    return f"""
+<section class="section" id="alerts" aria-label="최근 알림">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">📢</span>
+      <h2>최근 알림</h2>
+      <span class="section__badge">최근 24h</span>
+      <span class="section__count">{len(alerts)}건</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount">{cat_summary}</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
 def _make_paper_mirae_section() -> str:
     """미래에셋 모의 (추천 검증용) 카드.
 
@@ -6304,6 +6384,8 @@ def build_and_save_dashboard(
         performance_html = _make_performance_card(perf_data)
         # 거래 이력 (사용자 메모 대체용 — 매수/매도 자동 누적)
         trades_html = _make_trade_history_card(limit=30)
+        # 알림 센터 (텔레그램 다이어트 후 정보성 알림 모음)
+        alerts_html = _make_alerts_section()
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -6355,18 +6437,19 @@ def build_and_save_dashboard(
 {history_html}
 {allocation_html}
 {value_html}
-{auto_html}
 {paper_mirae_html}
-{tomorrow_html}
-{performance_html}
+{auto_html}
 {trades_html}
+{performance_html}
+{tomorrow_html}
+{recommend_html}
+{avoid_html}
 {market_html}
 {macro_html}
 {ai_html}
-{recommend_html}
-{avoid_html}
-{disclosures_html}
+{alerts_html}
 {dart_html}
+{disclosures_html}
 <div class="footer">
   ⚠️ 본 대시보드는 자동 분석된 참고 정보입니다. 최종 투자 판단은 본인이 직접 하세요.<br>
   투자 손익의 책임은 전적으로 투자자 본인에게 있으며 어떤 수익도 보장하지 않습니다.<br>
@@ -6727,6 +6810,67 @@ def tg_send(text: str, chat_id: str = "", silent: bool = False):
                 )
         except Exception as e:
             print(f"  [텔레그램] 전송 오류: {e}")
+
+
+# ════════════════════════════════════════════════
+# 대시보드 알림 센터 (alerts.json) — 정보성 알림 누적
+# ════════════════════════════════════════════════
+def _load_alerts() -> list:
+    """alerts.json 로드. 24시간 이내 알림만 반환."""
+    try:
+        if os.path.exists(ALERTS_FILE):
+            with open(ALERTS_FILE, "r", encoding="utf-8") as f:
+                alerts = json.load(f)
+            if not isinstance(alerts, list):
+                return []
+            cutoff = (_now_kst() - timedelta(hours=24)).isoformat()
+            return [a for a in alerts if a.get("time", "") >= cutoff]
+    except Exception as e:
+        print(f"  [alerts] 로드 오류: {e}")
+    return []
+
+
+def _save_alerts(alerts: list) -> None:
+    try:
+        with open(ALERTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(alerts, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [alerts] 저장 오류: {e}")
+
+
+def log_alert(category: str, level: str, title: str, detail: str = "", emoji: str = "") -> None:
+    """대시보드 알림 센터에 기록 (텔레그램 X — 정보성 알림 분리).
+
+    Args:
+        category: "imminent" | "disclosure" | "briefing" | "recommend" | "risk" | "system"
+        level:    "info" | "warning" | "danger"
+        title:    제목 (예: "미국 마감 브리핑")
+        detail:   상세 내용 (HTML 허용)
+        emoji:    카테고리 이모지 (자동 매핑됨, 빈 값 시)
+    """
+    if not emoji:
+        emoji = {
+            "imminent":   "📊",
+            "disclosure": "📰",
+            "briefing":   "🔔",
+            "recommend":  "🎯",
+            "risk":       "⚠️",
+            "system":     "🤖",
+        }.get(category, "🔵")
+
+    alerts = _load_alerts()
+    alerts.append({
+        "time":     _now_kst().isoformat(),
+        "category": category,
+        "level":    level,
+        "emoji":    emoji,
+        "title":    title,
+        "detail":   detail,
+    })
+    # 최근 100건만 보관 (24h cutoff와 별개로 안전 캡)
+    if len(alerts) > 100:
+        alerts = alerts[-100:]
+    _save_alerts(alerts)
 
 
 def tg_send_document(html: str, caption: str = ""):
@@ -7174,8 +7318,17 @@ def run_us_briefing():
             mood_txt,
             f"📊 {DASHBOARD_URL}",
         ]
-        # 새벽 06:00 정보성 브리핑 → 무음 (사용자 수면 방해 방지)
-        tg_send("\n".join(lines), silent=True)
+        # 텔레그램 X — 대시보드 알림 센터에만 (정보성 다이어트)
+        # 위험 등급 격상은 별도 risk 알림이 텔레그램 발송 (안전장치)
+        detail = f"S&P {sp_chg:+.2f}% / 나스닥 {nq_chg:+.2f}% / VIX {vix_val:.2f} / 환율 {fx_val:,.0f}원"
+        # 단순 mood_txt에 따라 level 결정
+        if "⛔" in mood_txt or "급등" in mood_txt:
+            lvl = "danger"
+        elif "⚠️" in mood_txt or "급락" in mood_txt:
+            lvl = "warning"
+        else:
+            lvl = "info"
+        log_alert("briefing", lvl, "미국 마감", detail + " · " + re.sub(r"<[^>]+>", "", mood_txt), "🌙")
 
         # tomorrow_picks 섹터 가중치 갱신 (Phase 3) — 미국 섹터 영향 → 한국 섹터 가중치
         try:
@@ -7277,8 +7430,12 @@ def run_premarket_briefing():
         # 대시보드 링크
         lines.append(f"📊 대시보드: {DASHBOARD_URL}")
 
-        # 08:50 장 시작 전 정보성 브리핑 → 무음 (장 시작 후 매수 알림으로 충분)
-        tg_send("\n".join(lines), silent=True)
+        # 텔레그램 X — 대시보드 알림 센터에만 (정보성 다이어트)
+        kos_chg = mood.get("kospi_chg", 0)
+        fg_score = fg.get("score", 50)
+        fg_label = fg.get("label", "중립")
+        detail = f"코스피 {kos_chg:+.2f}% / VIX {mood.get('vix', 0):.1f} / 공포탐욕 {fg_score}({fg_label})"
+        log_alert("briefing", "info", "장 시작 전", detail, "🔔")
 
         # 대시보드 갱신
         try:
@@ -7587,17 +7744,28 @@ def run_auto_buy():
     new_rank = LEVEL_RANK.get(risk['level'], 0)
     old_rank = LEVEL_RANK.get(last_risk_level, 0)
     if new_rank > old_rank:
-        # 등급 악화 — is_first_call 무관 즉시 알림 (중요)
+        # 등급 악화 — 텔레그램 + 대시보드 둘 다 (긴급, 안전장치)
         reasons_html = "\n".join(f"• {r}" for r in risk['reasons']) if risk['reasons'] else ""
         tg_send(
             f"🚨 <b>시장 위험 등급 상승</b>: {last_risk_level} → <b>{risk['level']}</b> ({risk['score']}/100)\n"
             f"<b>대응:</b> {risk['action']}\n\n"
             + (f"<b>주요 위험 요인:</b>\n{reasons_html}" if reasons_html else "")
         )
+        # 대시보드 알림 센터에도 기록
+        reasons_text = " · ".join(risk['reasons'][:3]) if risk['reasons'] else ""
+        log_alert(
+            "risk", "danger",
+            f"위험 등급 상승: {last_risk_level} → {risk['level']}",
+            f"{risk['score']}/100 · {risk['action']}" + (f" · {reasons_text}" if reasons_text else ""),
+            "🚨",
+        )
     elif new_rank < old_rank:
-        tg_send(
-            f"✅ <b>시장 위험 등급 하락</b>: {last_risk_level} → <b>{risk['level']}</b> "
-            f"({risk['score']}/100) — 정상화 추세"
+        # 하락은 대시보드만 (정보성)
+        log_alert(
+            "risk", "info",
+            f"위험 등급 하락: {last_risk_level} → {risk['level']}",
+            f"{risk['score']}/100 — 정상화 추세",
+            "✅",
         )
     pos["last_risk_level"] = risk['level']
     save_positions(pos)
@@ -8089,10 +8257,16 @@ def run_auto_sell():
             continue
 
     if imminent_alerts:
-        tg_send(
-            f"⚠️ <b>매매 임박 알림</b> ({_now_kst().strftime('%H:%M')})\n\n"
-            + "\n".join(imminent_alerts)
-        )
+        # 텔레그램 X — 대시보드 알림 센터로 이동 (정보성 다이어트)
+        for line in imminent_alerts:
+            # 간단한 HTML 태그 제거
+            clean = re.sub(r"<[^>]+>", "", line)
+            # level 추측: 손절은 danger, 익절 임박은 info
+            if "손절" in clean:
+                lvl = "danger"
+            else:
+                lvl = "info"
+            log_alert("imminent", lvl, "매매 임박", clean, "📊")
     if state_changed:
         save_positions(pos)
 
