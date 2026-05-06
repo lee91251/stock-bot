@@ -6464,6 +6464,12 @@ def run_auto_buy():
     cooldown = pos.get("loss_cooldown", {})
     today_iso = today
 
+    # 오늘 이미 매수한 종목 (회차 간 중복 매수 차단 — 5/6 추가)
+    # GitHub Actions cron 지연으로 두 회차가 거의 동시 실행 시 held가 비어 있어도
+    # history는 git pull로 동기화돼 있을 가능성 ↑. 이중 안전장치.
+    today_bought = {h.get("code") for h in pos.get("history", [])
+                    if h.get("date") == today and h.get("side") == "buy"}
+
     candidates.sort(key=lambda x: x.get("swing_score", 0), reverse=True)
 
     # qty_factor: 시장 위험 지수 기반 자동 조정 (Phase 1.5)
@@ -6481,6 +6487,8 @@ def run_auto_buy():
     for s in candidates:
         code = s["ticker"].split(".")[0]
         if code in held:
+            continue
+        if code in today_bought:
             continue
         if cooldown.get(code) and today_iso < cooldown[code]:
             continue
