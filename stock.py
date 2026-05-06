@@ -1730,13 +1730,21 @@ def analyze(
     elif pct_from_low <= 20:
         sw_score += 4
 
-    # 2) 거래량 / 모멘텀
-    if vol_ratio >= 200:
-        sw_score += 12; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 급증")
+    # 2) 거래량 / 모멘텀 (5/6: 가중치 후하게 — 급등주 캐치 가능하도록)
+    if vol_ratio >= 250:
+        sw_score += 25; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 매우 폭증")
+    elif vol_ratio >= 200:
+        sw_score += 18; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 급증")
     elif vol_ratio >= 150:
-        sw_score += 8;  sw_reasons.append(f"거래량 {vol_ratio:.0f}% 활발")
-    elif vol_ratio < 80:
+        sw_score += 12; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 활발")
+    elif vol_ratio >= 100:
+        sw_score += 6;  sw_reasons.append(f"거래량 {vol_ratio:.0f}% 평균↑")
+    elif vol_ratio < 70:
         sw_score -= 5
+    # 급등 모멘텀 보너스 (거래량 폭증 + 가격 급등 동시) — SKC 같은 30% 종목 캐치
+    if vol_ratio >= 200 and change >= 3.0:
+        sw_score += 15
+        sw_reasons.append(f"급등 모멘텀 (vol +{vol_ratio:.0f}%, 가격 +{change:.1f}%)")
     if 0 < ret_1w <= 5:
         sw_score += 8;  sw_reasons.append(f"1주 +{ret_1w}% 가벼운 상승")
     elif 5 < ret_1w <= 10:
@@ -1788,11 +1796,11 @@ def analyze(
     if momentum_bad:
         sw_score -= 15
 
-    # 스윙 매수 시그널: 점수 + 안전 조건 6개. 차단 사유 list로도 기록 (자동매수 진단용).
+    # 스윙 매수 시그널: 점수 + 안전 조건 (5/6 완화 — RSI 65→70, vol 100→70, ret_1m -15→-20)
     swing_block_reasons = []
     if sw_score < SWING_SCORE_MIN:
         swing_block_reasons.append(f"점수<{SWING_SCORE_MIN}")
-    if rsi >= 65:
+    if rsi >= 70:
         swing_block_reasons.append(f"RSI{int(rsi)}")
     if manipulation_signal:
         swing_block_reasons.append("조작감지")
@@ -1802,11 +1810,27 @@ def analyze(
         swing_block_reasons.append("유증")
     if sr["near_resistance"]:
         swing_block_reasons.append("저항근처")
-    if vol_ratio < 100:
+    if vol_ratio < 70:
         swing_block_reasons.append(f"거래량{int(vol_ratio)}%")
-    if ret_1m <= -15:
+    if ret_1m <= -20:
         swing_block_reasons.append(f"1개월{ret_1m:.0f}%")
     swing_signal = len(swing_block_reasons) == 0
+
+    # 급등 모멘텀 매수 시그널 (5/6 추가 — SKC 같은 30% 종목 캐치)
+    # 거래량 폭증 + 가격 급등 → swing_signal 통과 못해도 강력 매수 후보
+    momentum_signal = (
+        vol_ratio >= 200          # 거래량 평균 2배 이상
+        and change >= 3.0         # 당일 +3% 이상
+        and rsi < 80              # 너무 과열은 X
+        and not manipulation_signal
+        and not momentum_bad
+        and not dart_sigs.get("rights")
+        and ret_1m > -20
+        and sw_score >= 50        # swing 임계(65)보다 느슨
+    )
+    momentum_block_reasons = []
+    if momentum_signal:
+        sw_reasons.append(f"🚀 급등 모멘텀 매수 시그널 (점수 {sw_score}, vol {vol_ratio:.0f}%, +{change:.1f}%)")
 
     return {
         "ticker": ticker, "name": name, "period": period, "sector": sector,
@@ -1821,6 +1845,7 @@ def analyze(
         "buy_signal": buy_signal, "buy_reason": buy_reason,
         "swing_score": sw_score, "swing_reasons": sw_reasons, "swing_signal": swing_signal,
         "swing_block_reasons": swing_block_reasons,
+        "momentum_signal": momentum_signal,
         "buy_price": buy_price, "stop_price": stop_price,
         "dynamic_stop": dynamic_stop, "dynamic_stop_pct": dynamic_stop_pct,
         "target1": target1, "target2": target2, "target3": target3,
@@ -6421,7 +6446,8 @@ def run_auto_buy():
                 key = re.split(r"[<\d]", b, maxsplit=1)[0] or b
                 diag_blocks[key] = diag_blocks.get(key, 0) + 1
             diag_top_score.append((-sc, name, sc, blocks))
-            if r.get("swing_signal") and sc >= SWING_SCORE_MIN:
+            # swing_signal (점수≥65 + 안전조건) 또는 momentum_signal (급등 +3%/vol+200%) 둘 중 하나
+            if (r.get("swing_signal") and sc >= SWING_SCORE_MIN) or r.get("momentum_signal"):
                 candidates.append(r)
         time.sleep(0.4)
 
@@ -6479,7 +6505,11 @@ def run_auto_buy():
         sec   = s.get("sector", "")
         qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
-        preview_lines.append(f"• <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원")
+        # 급등 모멘텀 종목은 🚀 표시
+        tag = "🚀 급등" if s.get("momentum_signal") else "📊 스윙"
+        preview_lines.append(
+            f"• {tag} <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원"
+        )
     tg_send("\n".join(preview_lines))
 
     if _poll_cancel_during_sleep(SWING_PRE_ALERT_SEC):
