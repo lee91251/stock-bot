@@ -2352,6 +2352,31 @@ def _build_user_portfolio_context() -> str:
     return "\n".join(lines)
 
 
+def _parse_coach_response(text: str) -> tuple:
+    """ai_personal_coach 응답을 (holdings_diagnosis_dict, personal_brief_md) 로 분리.
+
+    응답에 JSON 블록 (```json ... ```)이 있으면 종목 진단으로 추출,
+    JSON 블록 외 부분만 personal_brief로 반환.
+    """
+    if not text:
+        return {}, ""
+    diagnosis = {}
+    cleaned = text
+    # ```json ... ``` 블록 찾기 (중괄호 또는 일반 텍스트 모두 가능)
+    m = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if m:
+        try:
+            diagnosis = json.loads(m.group(1))
+        except Exception:
+            diagnosis = {}
+        # JSON 블록 + 그 앞 헤더(예: "**1. 종목별 진단 JSON**" 등) 제거
+        cleaned = re.sub(r"\*\*1\.[^\n]*\n+```json\s*\{.*?\}\s*```\s*", "", text, flags=re.DOTALL)
+        cleaned = re.sub(r"```json\s*\{.*?\}\s*```\s*", "", cleaned, flags=re.DOTALL)
+        # "**2. 시장 코멘트 + 추천**" 헤더 제거 (자연스럽게)
+        cleaned = re.sub(r"\*\*2\.[^\n]*\*\*\s*\n*", "", cleaned)
+    return diagnosis, cleaned.strip()
+
+
 def ai_personal_coach(query: str = "지금 뭐 사야 할까?",
                       mood: dict = None, fg: dict = None,
                       kr_top: list = None, ai_macro: str = "",
@@ -2427,13 +2452,18 @@ def ai_personal_coach(query: str = "지금 뭐 사야 할까?",
             f"[시장 상황]\n" + ("\n".join(market_lines) if market_lines else "데이터 없음") + "\n\n"
             f"[봇이 발굴한 후보 종목]\n" + ("\n".join(cand_lines) if cand_lines else "  (마켓스캔 캐시 없음)") + "\n\n"
             f"[질문]\n{query}\n\n"
-            f"답변 가이드:\n"
+            f"답변 형식 (반드시 두 부분):\n\n"
+            f"**1. 종목별 진단 JSON** — 가치주 보유 종목별 한 줄 진단 (28자 이내, 핵심만).\n"
+            f"형식: ```json\\n{{ \"종목명\": \"진단 텍스트\" }}\\n```\n"
+            f"예: {{ \"두산에너빌리티\": \"원전 테마 강세. 홀드.\", \"보령\": \"본전 근처. 모니터링.\" }}\n\n"
+            f"**2. 시장 코멘트 + 추천** — 보유 진단은 위 JSON에서 끝났으니 여기서 반복 X.\n"
+            f"📊 시장 / 🎯 추천 종목 / ⚠️ 주의 / 🎬 오늘 행동 1줄. 마크다운 헤더와 표 활용.\n\n"
+            f"가이드:\n"
             f"- 한국어, 비개발자 친화 (전문 용어는 풀어서)\n"
-            f"- 가치주 추천: 가치주 섹터 분포 고려 (장기 보유라 분산 중요)\n"
-            f"- 자동매매 추천: 시간 프레임 다르므로 가치주 섹터와 별개. 점수/시그널/매크로 위주\n"
-            f"- 자동매매 잔여 슬롯/금액 안에서만 추천\n"
-            f"- '사세요/팔지 마세요' 단정 X. '이 조건이면 권장, 저 위험은 주의' 형식\n"
-            f"- 너무 길지 않게 (텔레그램 한 화면). 핵심 3~5가지로 정리\n"
+            f"- 가치주 추천: 섹터 분포 고려\n"
+            f"- 자동매매 추천: 점수/시그널/매크로 위주, 가치주 섹터와 별개\n"
+            f"- '사세요/팔지 마세요' 단정 X\n"
+            f"- 너무 길지 않게 (한 화면). 핵심 3~5가지\n"
             f"- 마지막에 '오늘 행동 제안 1줄' 추가"
         )
 
@@ -3374,6 +3404,9 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
 .disc-more { padding: 12px 22px; font-size: 12px; color: var(--text-3); text-align: center;
              border-top: 1px dashed var(--border); }
 
+.row__diag { font-size: 12px; margin-top: 4px; line-height: 1.4;
+             font-weight: 600; letter-spacing: 0.1px; }
+
 .row__sparkline { display: flex; flex-direction: column; align-items: flex-end;
                   flex-shrink: 0; min-width: 78px; }
 .row__sparkline-label { font-size: 10px; font-weight: 700; margin-top: 1px;
@@ -4005,16 +4038,19 @@ def _make_total_summary_section(value_holdings: list, auto_positions: list) -> s
 """
 
 
-def _make_value_holdings_section(value_holdings: list, sparklines: dict = None) -> str:
+def _make_value_holdings_section(value_holdings: list, sparklines: dict = None,
+                                   diagnosis: dict = None) -> str:
     """가치주 보유 섹션 — 미래에셋증권 (HOLDINGS_JSON 기반).
 
     sparklines: {code: {values, labels, change_pct}} — 종목별 7일 종가 추세선 데이터.
+    diagnosis: {name: 'AI 진단 한 줄'} — ai_personal_coach가 만든 종목별 진단.
     """
     if not value_holdings:
         return _empty_section("value", "💼", "section__icon--value", "가치주 보유",
                               "미래에셋증권", "등록된 가치주가 없습니다",
                               "채팅창에서 '한화에어로 10주 180000원에 샀어' 같이 등록하면 표시됩니다.")
     sparklines = sparklines or {}
+    diagnosis = diagnosis or {}
     items = sorted(value_holdings, key=lambda h: h.get("profit", 0), reverse=True)
     total_value = sum(h.get("value", 0) for h in items)
     total_cost  = sum(h.get("cost", 0) for h in items)
@@ -4054,11 +4090,23 @@ def _make_value_holdings_section(value_holdings: list, sparklines: dict = None) 
             chg_color = "#10b981" if chg > 0 else ("#ef4444" if chg < 0 else "#94a3b8")
             spark_label = f'<div class="row__sparkline-label" style="color:{chg_color};">7일 {chg:+.1f}%</div>'
 
+        # AI 진단 한 줄 (있으면)
+        diag_text = diagnosis.get(name) or ""
+        diag_html = ""
+        if diag_text:
+            # 키워드별 색상 (홀드/매수/매도/주의)
+            d_color = "#10b981" if any(k in diag_text for k in ("홀드", "보유", "유망", "강세", "매수")) \
+                else ("#ef4444" if any(k in diag_text for k in ("매도", "주의", "약세", "차익", "리스크")) \
+                else "#94a3b8")
+            diag_html = (f'<div class="row__diag" style="color:{d_color};">'
+                         f'🤖 {diag_text}</div>')
+
         rows.append(f"""
     <div class="row">
       <div class="row__main">
         <div class="row__name">{name}{badge}</div>
         <div class="row__sub">{qty:,}주 · 평단 {avg:,.0f}원</div>
+        {diag_html}
       </div>
       <div class="row__sparkline">
         {spark_svg}
@@ -5141,6 +5189,7 @@ def build_and_save_dashboard(
     holdings_sparklines: dict = None,
     portfolio_history: list = None,
     disclosures: list = None,
+    holdings_diagnosis: dict = None,
 ) -> str:
     """대시보드 HTML 생성 + docs/index.html 저장.
 
@@ -5158,6 +5207,7 @@ def build_and_save_dashboard(
         if not personal_brief:  personal_brief = _dc.get("personal_brief", "") or ""
         if risk is None:        risk        = _dc.get("risk")
         if holdings_sparklines is None: holdings_sparklines = _dc.get("holdings_sparklines")
+        if holdings_diagnosis is None:  holdings_diagnosis = _dc.get("holdings_diagnosis") or {}
         if disclosures is None:         disclosures = _dc.get("disclosures") or []
         if portfolio_history is None:
             try:
@@ -5253,7 +5303,9 @@ def build_and_save_dashboard(
 
         # ── 섹션 HTML 생성 ─────
         hero_html = _make_hero_header(today, time_str, mood, fg, total_value, total_pnl, total_pct)
-        value_html = _make_value_holdings_section(holdings_alerts or [], holdings_sparklines or {})
+        value_html = _make_value_holdings_section(
+            holdings_alerts or [], holdings_sparklines or {}, holdings_diagnosis or {}
+        )
         auto_html = _make_auto_positions_section(auto_positions)
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
@@ -7611,15 +7663,19 @@ def run():
 
     # AI 맞춤 비서 — 이제훈님 보유+자금+섹터 종합 코칭 (Phase 1)
     print("\n[7.5/7] AI 맞춤 비서 (개인 코칭) 생성 중...")
+    holdings_diagnosis = {}
     try:
-        personal_brief = ai_personal_coach(
-            "오늘 내 포트폴리오 종합 진단 + 추천 종목 + 보유별 액션 + 주의사항을 "
-            "한 화면에 정리. 각 섹션 헤더 (📊 시장 / 💼 보유 진단 / 🎯 추천 / ⚠️ 주의 / 🎬 오늘 행동)로 구분.",
+        raw_brief = ai_personal_coach(
+            "오늘 보유 종목별 진단(JSON) + 시장 코멘트 + 추천 + 주의 + 오늘 행동 1줄.",
             mood=mood, fg=fg, kr_top=kr_top5, ai_macro=ai_macro,
             max_tokens=1500,
         )
+        # JSON 종목별 진단 + brief 분리
+        holdings_diagnosis, personal_brief = _parse_coach_response(raw_brief)
         if personal_brief:
             print(f"  → 개인 코칭 생성됨 ({len(personal_brief)}자)")
+        if holdings_diagnosis:
+            print(f"  → 종목별 진단 {len(holdings_diagnosis)}건 (가치주 row에 표시)")
     except Exception as e:
         print(f"  [run] AI 맞춤 비서 오류: {e}")
         personal_brief = ""
@@ -7634,6 +7690,7 @@ def run():
             "personal_brief": personal_brief,
             "risk": risk,
             "holdings_sparklines": holdings_sparklines,
+            "holdings_diagnosis": holdings_diagnosis,
             "disclosures": disclosures_data,
         })
     except Exception as e:
@@ -7653,6 +7710,7 @@ def run():
             risk=risk,
             holdings_sparklines=holdings_sparklines,
             disclosures=disclosures_data,
+            holdings_diagnosis=holdings_diagnosis,
         )
     except Exception as e:
         print(f"  [run] 대시보드 갱신 오류: {e}")
