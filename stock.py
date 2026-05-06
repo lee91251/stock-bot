@@ -8047,12 +8047,15 @@ def run_auto_sell():
             if buy_price <= 0 or curr <= 0:
                 continue
             pnl_pct = (curr - buy_price) / buy_price * 100
+            partial = p.get("partial_sold", False)  # 절반 매도 완료 여부
 
-            # 등급 판정
+            # 등급 판정 — partial_sold 반영하여 다음 트리거에 맞게
+            # 절반 매도 안 한 경우 → 다음 트리거 +6% (1차)
+            # 절반 매도 완료 → 다음 트리거 +10% (2차)
             new_state = ""
-            if 5.0 <= pnl_pct < SWING_TARGET1_PCT * 100:
+            if not partial and 5.0 <= pnl_pct < SWING_TARGET1_PCT * 100:
                 new_state = "near_target1"
-            elif pnl_pct >= SWING_TARGET1_PCT * 100 and pnl_pct < SWING_TARGET2_PCT * 100:
+            elif partial and (SWING_TARGET2_PCT * 100 - 1.0) <= pnl_pct < SWING_TARGET2_PCT * 100:
                 new_state = "near_target2"
             elif -SWING_STOP_LOSS_PCT * 100 < pnl_pct <= -3.0:
                 new_state = "near_stop"
@@ -8069,7 +8072,7 @@ def run_auto_sell():
                 elif new_state == "near_target2":
                     imminent_alerts.append(
                         f"💎 <b>{p.get('name', code)}</b> {pnl_pct:+.2f}% — "
-                        f"2차 익절 임박 (목표 +{SWING_TARGET2_PCT*100:.0f}%, 전량 매도)"
+                        f"2차 익절 임박 (목표 +{SWING_TARGET2_PCT*100:.0f}%, 잔여 전량 매도)"
                     )
                 elif new_state == "near_stop":
                     imminent_alerts.append(
