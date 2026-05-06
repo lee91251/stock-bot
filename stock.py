@@ -6065,6 +6065,89 @@ def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
 # ════════════════════════════════════════════════
 # 브리핑 함수 (스케줄별)
 # ════════════════════════════════════════════════
+
+# 미국 섹터 ETF → 한국 관련 섹터 매핑 (Phase 3)
+# 미국 섹터 강세/약세가 다음 거래일 한국 동조 섹터에 영향.
+US_SECTOR_TO_KR = {
+    "SOXX": ["반도체", "IT"],            # 필라델피아 반도체 — 한국 반도체 강한 동조
+    "XLK":  ["IT", "통신", "AI"],         # 미국 기술
+    "XLF":  ["금융", "은행", "보험"],     # 미국 금융
+    "XLE":  ["에너지", "정유"],           # 미국 에너지
+    "XLV":  ["바이오", "제약", "헬스"],   # 미국 헬스케어
+    "XLI":  ["조선", "방산", "기계"],     # 미국 산업재
+    "XLB":  ["화학", "소재", "철강"],     # 미국 소재
+    "XLY":  ["자동차", "유통"],           # 미국 임의소비재
+}
+
+
+def _fetch_us_sector_changes() -> dict:
+    """미국 주요 섹터 ETF 변동률 수집 (전일 대비, %)."""
+    results: dict = {}
+    for etf in US_SECTOR_TO_KR.keys():
+        try:
+            hist = yf.Ticker(etf).history(period="2d")
+            if len(hist) >= 2:
+                chg = (hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2] * 100
+                results[etf] = round(chg, 2)
+        except Exception as e:
+            print(f"  [usclose] {etf} 수집 실패: {e}")
+    return results
+
+
+def _calc_sector_weights(etf_changes: dict) -> dict:
+    """미국 섹터 ETF 변동률 → 한국 섹터 가중치 (-5 ~ +5).
+
+    +2.5%↑ → +5 / +1.5~2.5 → +3 / +0.5~1.5 → +1
+    -2.5%↓ → -5 / -1.5~-2.5 → -3 / -0.5~-1.5 → -1
+    """
+    kr_weights: dict = {}
+    for etf, chg in etf_changes.items():
+        if   chg >= 2.5:  w = 5
+        elif chg >= 1.5:  w = 3
+        elif chg >= 0.5:  w = 1
+        elif chg <= -2.5: w = -5
+        elif chg <= -1.5: w = -3
+        elif chg <= -0.5: w = -1
+        else:             w = 0
+        if w == 0:
+            continue
+        for sector in US_SECTOR_TO_KR.get(etf, []):
+            existing = kr_weights.get(sector, 0)
+            # 동부호 → 더 강한 값 / 이부호 → 합산 (상쇄)
+            if (existing >= 0 and w >= 0) or (existing <= 0 and w <= 0):
+                kr_weights[sector] = max(existing, w) if w > 0 else min(existing, w)
+            else:
+                kr_weights[sector] = existing + w
+    return kr_weights
+
+
+def _update_tomorrow_picks_sectors(sector_weights: dict, etf_changes: dict):
+    """tomorrow_picks.json의 sector_weights 갱신 (오늘 = picks.date일 때만)."""
+    try:
+        if not os.path.exists(TOMORROW_PICKS_CACHE):
+            print(f"  [usclose] tomorrow_picks.json 없음 — 섹터 가중치 스킵")
+            return
+        with open(TOMORROW_PICKS_CACHE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # 신선도: 오늘 = picks.date여야 (어제 close에서 오늘 위해 만든 picks)
+        today = _today_str()
+        if data.get("date") != today:
+            print(f"  [usclose] tomorrow_picks 날짜 불일치 ({data.get('date')} ≠ {today}) — 갱신 스킵")
+            return
+        data["sector_weights"]    = sector_weights
+        data["us_etf_changes"]    = etf_changes
+        data["sector_updated_at"] = _now_kst().isoformat()
+        with open(TOMORROW_PICKS_CACHE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        if sector_weights:
+            top = sorted(sector_weights.items(), key=lambda x: -abs(x[1]))[:5]
+            print(f"  [usclose] sector_weights 갱신 — TOP: {top}")
+        else:
+            print(f"  [usclose] sector_weights 비어있음 (모든 섹터 변동 미미)")
+    except Exception as e:
+        print(f"  [usclose] sector_weights 갱신 오류: {e}")
+
+
 def run_us_briefing():
     """새벽 6시 — 미국 시장 마감 브리핑"""
     print("[브리핑] 미국 시장 마감 브리핑")
@@ -6111,6 +6194,15 @@ def run_us_briefing():
             f"📊 {DASHBOARD_URL}",
         ]
         tg_send("\n".join(lines))
+
+        # tomorrow_picks 섹터 가중치 갱신 (Phase 3) — 미국 섹터 영향 → 한국 섹터 가중치
+        try:
+            etf_changes = _fetch_us_sector_changes()
+            if etf_changes:
+                sector_weights = _calc_sector_weights(etf_changes)
+                _update_tomorrow_picks_sectors(sector_weights, etf_changes)
+        except Exception as e:
+            print(f"  [브리핑] 섹터 가중치 처리 오류: {e}")
 
         # 대시보드 갱신 (미국 데이터 반영)
         try:
@@ -6534,6 +6626,7 @@ def run_auto_buy():
     tp_data = _load_tomorrow_picks()
     tp_picks = tp_data.get("picks", []) if tp_data else []
     tp_bonus_map = {p["code"]: p for p in tp_picks}  # code → pick 정보
+    tp_sector_weights = tp_data.get("sector_weights", {}) if tp_data else {}  # Phase 3
     if tp_bonus_map:
         # 풀 정렬: tomorrow_picks 종목 우선, 그 다음 KR_STOCKS, 마지막 market_scan
         ordered_pool = {}
@@ -6588,7 +6681,13 @@ def run_auto_buy():
                 r["swing_score"] = r.get("swing_score", 0) + bonus
                 r["from_tomorrow_picks"] = True
                 r["tomorrow_pick_reasons"] = pick.get("reasons", [])
-                sc = r["swing_score"]  # 보너스 적용 후 점수로 업데이트
+                sc = r["swing_score"]
+            # 섹터 가중치 적용 (Phase 3) — 미국 동조 섹터 강세/약세 반영
+            sec_w = tp_sector_weights.get(sector, 0)
+            if sec_w:
+                r["swing_score"] = r.get("swing_score", 0) + sec_w
+                r["sector_bonus"] = sec_w
+                sc = r["swing_score"]
             # swing_signal (점수≥65 + 안전조건) 또는 momentum_signal (급등 +3%/vol+200%) 둘 중 하나
             if (r.get("swing_signal") and sc >= SWING_SCORE_MIN) or r.get("momentum_signal"):
                 candidates.append(r)
