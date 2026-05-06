@@ -11,6 +11,19 @@
       "swing_score": 57,
       "order_no": "0000015415",
       "imminent_state": "near_target1"
+    },
+    "323410": {
+      "name": "카카오뱅크",
+      "qty": 158,
+      "buy_price": 25200.0,
+      "buy_date": "2026-05-06",
+      "buy_time": "13:51",
+      "buy_amount": 3981600.0,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 60,
+      "sector": "금융",
+      "order_no": ""
     }
   },
   "history": [
@@ -45,13 +58,39 @@
       "reason": "+7.7% 절반 익절",
       "pct": 7.72,
       "sector": ""
+    },
+    {
+      "date": "2026-05-06",
+      "time": "13:51",
+      "side": "buy",
+      "code": "323410",
+      "name": "카카오뱅크",
+      "qty": 79,
+      "price": 25250.0,
+      "amount": 1994750.0,
+      "reason": "swing_score 56 (🚀 급등 모멘텀)",
+      "sector": "금융",
+      "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-05-06",
+      "time": "14:07",
+      "side": "buy",
+      "code": "323410",
+      "name": "카카오뱅크",
+      "qty": 79,
+      "price": 25150.0,
+      "amount": 1986850.0,
+      "reason": "swing_score 60 (🚀 급등 모멘텀, 2차 재매수 — race condition 발생, 수동 보정)",
+      "sector": "금융",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
     "2026-05-06": {
-      "buy_count": 1,
-      "buy_amount": 3854400.0,
-      "trade_count": 3
+      "buy_count": 2,
+      "buy_amount": 7836000.0,
+      "trade_count": 5
     }
   },
   "loss_cooldown": {},

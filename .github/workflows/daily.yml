@@ -79,6 +79,10 @@ jobs:
     if: github.event.inputs.mode == '--usclose'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # 자동매매 관련 워크플로우 sequential 실행 (race condition 차단)
+    concurrency:
+      group: trading-state
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -105,6 +109,9 @@ jobs:
     if: github.event.inputs.mode == '--premarket'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: trading-state
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -131,6 +138,9 @@ jobs:
     if: github.event.inputs.mode == '--close'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: trading-state
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -168,11 +178,16 @@ jobs:
       - name: 장중 모니터링 (20분)
         run: python -c "import stock; stock.run_monitor(duration_hours=0.33, interval_sec=120)"
 
-  # ── 자동 매수 (cron-job.org 평일 09:10 KST, 1회/일) ────
+  # ── 자동 매수 (cron-job.org 평일 09:00~15:30, 15분마다) ────
   auto-buy:
     if: github.event.inputs.mode == '--autobuy'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # CRITICAL: race condition 영구 차단 — autobuy/autosell sequential 실행
+    # 한 회차 끝(push 완료)나야 다음 회차 시작 → 같은 종목 중복 매수 불가능
+    concurrency:
+      group: trading-state
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -191,14 +206,28 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json docs/ || true
-          git diff --staged --quiet || git commit -m "chore: 자동매수 포지션 + 대시보드 $(date '+%Y-%m-%d %H:%M')"
-          git push || true
+          git diff --staged --quiet && exit 0 || true
+          git commit -m "chore: 자동매수 포지션 + 대시보드 $(date '+%Y-%m-%d %H:%M')"
+          # push retry — 충돌 시 pull --rebase 후 다시 push (race condition 방어)
+          git push 2>&1 || (
+            echo "push 충돌 — rebase 후 재시도"
+            git pull --rebase origin master 2>&1
+            git push 2>&1 || (
+              sleep 3
+              git pull --rebase origin master 2>&1
+              git push 2>&1
+            )
+          )
 
-  # ── 자동 매도 (cron-job.org 평일 09:30~15:30, 30분마다) ────
+  # ── 자동 매도 (cron-job.org 평일 09:00~15:30, 15분마다) ────
   auto-sell:
     if: github.event.inputs.mode == '--autosell'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # CRITICAL: race condition 영구 차단 — autobuy와 같은 그룹
+    concurrency:
+      group: trading-state
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -217,8 +246,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add positions.json docs/ dart_seen.json || true
-          git diff --staged --quiet || git commit -m "chore: 자동매도 포지션 + 대시보드 $(date '+%Y-%m-%d %H:%M')"
-          git push || true
+          git diff --staged --quiet && exit 0 || true
+          git commit -m "chore: 자동매도 포지션 + 대시보드 $(date '+%Y-%m-%d %H:%M')"
+          git push 2>&1 || (
+            echo "push 충돌 — rebase 후 재시도"
+            git pull --rebase origin master 2>&1
+            git push 2>&1 || (
+              sleep 3
+              git pull --rebase origin master 2>&1
+              git push 2>&1
+            )
+          )
 
   # ── 백테스팅 (수동 / 주말 자동) ────
   backtest:
