@@ -102,6 +102,12 @@ MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
 ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
+AI_ADVISOR_LOG      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai_advisor_log.json")
+
+# AI 매도 어드바이저 v2 (B1 → 신뢰도 검증 → 자동 결정 반영)
+AI_ADVISOR_MIN_SAMPLES   = 30      # 최소 누적 건수 (이 미만이면 default 동작)
+AI_ADVISOR_MIN_ACCURACY  = 0.6     # 자동 활성화 신뢰도 임계 (60%+)
+AI_ADVISOR_OUTCOME_DAYS  = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가
 
 # 미래에셋 모의 (추천 검증용 가치주) — 가치주 룰 적용
 PAPER_MIRAE_STOP_LOSS_PCT  = 0.07   # -7% 손절
@@ -2213,6 +2219,167 @@ def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
     except Exception as e:
         print(f"  [AI 일기] 호출 오류: {e}")
         return ""
+
+
+def _load_advisor_log() -> list:
+    """ai_advisor_log.json 로드. AI 매도 의견 + 실제 결과 추적용."""
+    try:
+        if os.path.exists(AI_ADVISOR_LOG):
+            with open(AI_ADVISOR_LOG, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"  [advisor_log] 로드 오류: {e}")
+    return []
+
+
+def _save_advisor_log(log: list) -> None:
+    try:
+        # 최근 200건만 보관 (안전 캡)
+        if len(log) > 200:
+            log = log[-200:]
+        with open(AI_ADVISOR_LOG, "w", encoding="utf-8") as f:
+            json.dump(log, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [advisor_log] 저장 오류: {e}")
+
+
+def log_advisor_decision(stock_info: dict, ai_opinion: str,
+                          sell_executed: bool, sell_pct: float) -> None:
+    """매도 시점 AI 의견 + 실제 매도 정보 기록 (B1 → v2 진화 데이터).
+
+    이후 5일 후 가격 추적 → AI 의견 정확도 평가:
+    - "보류 검토" 후 가격 ↑ → AI 정확
+    - "매도 적절" 후 가격 ↓ → AI 정확
+    """
+    if not ai_opinion:
+        return  # AI 호출 실패 시 기록 X
+
+    # 의견 분류: "매도" 키워드 vs "보류" 키워드
+    op_lower = ai_opinion.lower()
+    if "보류" in ai_opinion:
+        opinion_class = "hold"
+    elif "매도" in ai_opinion:
+        opinion_class = "sell"
+    else:
+        opinion_class = "neutral"
+
+    log = _load_advisor_log()
+    log.append({
+        "date":         _today_str(),
+        "time":         _now_kst().strftime("%H:%M"),
+        "code":         stock_info.get("code", ""),
+        "name":         stock_info.get("name", ""),
+        "sell_price":   stock_info.get("curr_price", 0),
+        "sell_pct":     round(sell_pct, 2),
+        "ai_opinion":   ai_opinion[:200],
+        "opinion_class": opinion_class,
+        "sell_executed": sell_executed,
+        # 5일 후 결과 (track_advisor_outcomes에서 채움)
+        "outcome_price":    None,
+        "outcome_date":     None,
+        "outcome_pct":      None,
+        "ai_correct":       None,  # True if AI 정확
+    })
+    _save_advisor_log(log)
+    print(f"  [advisor_log] {opinion_class} 의견 기록 (누적 {len(log)}건)")
+
+
+def track_advisor_outcomes() -> int:
+    """AI 어드바이저 로그의 5일 전 의견들 결과 추적 (정확도 평가).
+
+    daily(08:00) 또는 close_summary에서 호출 → 5일 전 매도들의 현재가 비교.
+    Returns: 갱신된 건수
+    """
+    log = _load_advisor_log()
+    if not log:
+        return 0
+
+    today = _now_kst()
+    cutoff = (today - timedelta(days=AI_ADVISOR_OUTCOME_DAYS)).strftime("%Y-%m-%d")
+    updated = 0
+
+    for entry in log:
+        if entry.get("ai_correct") is not None:
+            continue  # 이미 평가됨
+        entry_date = entry.get("date", "")
+        if entry_date > cutoff:
+            continue  # 5일 미만 — 아직 평가 X
+
+        try:
+            code = entry.get("code", "")
+            sell_price = entry.get("sell_price", 0)
+            if not code or sell_price <= 0:
+                continue
+
+            # 현재가 조회 (5일 후 가격)
+            info = _kis.get_price(code) if _kis.available() else {}
+            cur = _safe_float(info.get("stck_prpr")) if info else 0
+            if cur <= 0:
+                continue
+
+            outcome_pct = (cur - sell_price) / sell_price * 100
+            entry["outcome_price"] = round(cur)
+            entry["outcome_date"]  = today.strftime("%Y-%m-%d")
+            entry["outcome_pct"]   = round(outcome_pct, 2)
+
+            # AI 정확도 판정
+            #   "hold" (보류) → 5일 후 +1% 이상이면 정확 (안 팔길 잘했다)
+            #   "sell" (매도) → 5일 후 -1% 이상 하락이면 정확 (잘 팔았다)
+            cls = entry.get("opinion_class", "neutral")
+            if cls == "hold":
+                entry["ai_correct"] = outcome_pct >= 1.0
+            elif cls == "sell":
+                entry["ai_correct"] = outcome_pct <= -1.0
+            else:
+                entry["ai_correct"] = abs(outcome_pct) < 1.0  # neutral은 정체일 때 맞음
+            updated += 1
+        except Exception as e:
+            print(f"  [advisor] 결과 추적 오류 ({entry.get('name', '?')}): {e}")
+
+    if updated > 0:
+        _save_advisor_log(log)
+        print(f"  [advisor] {updated}건 결과 평가 완료")
+
+    return updated
+
+
+def calc_advisor_accuracy() -> dict:
+    """AI 어드바이저 누적 정확도 계산.
+
+    Returns: {
+        "total":       전체 평가 완료 건수,
+        "correct":     AI 정확 건수,
+        "accuracy":    정확도 %,
+        "hold_total":  보류 권장 건수,
+        "hold_correct": 보류 권장 정확,
+        "sell_total":  매도 권장 건수,
+        "sell_correct": 매도 권장 정확,
+        "ready_to_activate": 30건+ AND 정확도 60%+ 인지,
+    }
+    """
+    log = _load_advisor_log()
+    evaluated = [e for e in log if e.get("ai_correct") is not None]
+    total = len(evaluated)
+    correct = sum(1 for e in evaluated if e.get("ai_correct"))
+
+    hold = [e for e in evaluated if e.get("opinion_class") == "hold"]
+    sell = [e for e in evaluated if e.get("opinion_class") == "sell"]
+
+    accuracy = (correct / total * 100) if total > 0 else 0
+    ready = total >= AI_ADVISOR_MIN_SAMPLES and accuracy >= AI_ADVISOR_MIN_ACCURACY * 100
+
+    return {
+        "total":          total,
+        "correct":        correct,
+        "accuracy":       round(accuracy, 1),
+        "hold_total":     len(hold),
+        "hold_correct":   sum(1 for e in hold if e.get("ai_correct")),
+        "sell_total":     len(sell),
+        "sell_correct":   sum(1 for e in sell if e.get("ai_correct")),
+        "ready_to_activate": ready,
+        "pending":        len(log) - total,  # 5일 안 된 평가 대기
+    }
 
 
 def _get_recent_journals(limit: int = 5) -> list:
@@ -4836,6 +5003,190 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_advisor_stats_card() -> str:
+    """AI 매도 어드바이저 신뢰도 카드 (#4) — B1 → v2 진화.
+
+    누적 30건 미만: "데이터 누적 중 X/30" + 의견만 표시 (default 동작)
+    누적 30건+ : 정확도 표시 + 60%+ 시 자동 활성화 권장 알림
+    """
+    stats = calc_advisor_accuracy()
+    total   = stats["total"]
+    pending = stats.get("pending", 0)
+
+    if total == 0 and pending == 0:
+        return _empty_section(
+            "advisor", "🤖", "section__icon--auto", "AI 매도 신뢰도",
+            "데이터 누적 중", "AI 의견 데이터 없음",
+            f"매도 발생 시 AI 의견 자동 누적. {AI_ADVISOR_MIN_SAMPLES}건+ 평가 후 자동 결정 활성화 가능.",
+        )
+
+    accuracy   = stats["accuracy"]
+    correct    = stats["correct"]
+    hold_t     = stats["hold_total"]
+    hold_c     = stats["hold_correct"]
+    sell_t     = stats["sell_total"]
+    sell_c     = stats["sell_correct"]
+    ready      = stats["ready_to_activate"]
+
+    progress_pct = min(100, total / AI_ADVISOR_MIN_SAMPLES * 100)
+    acc_color = "#16a34a" if accuracy >= 60 else ("#d97706" if accuracy >= 40 else "#dc2626")
+
+    # 진행도 바
+    progress_bar = f"""
+    <div style="background:#f3f4f6;border-radius:8px;height:8px;margin:6px 0">
+      <div style="width:{progress_pct:.0f}%;background:{acc_color};height:8px;border-radius:8px"></div>
+    </div>
+    """
+
+    # 활성화 권장 메시지
+    activation_msg = ""
+    if ready:
+        activation_msg = """
+    <div style="background:#dcfce7;border:1px solid #16a34a;padding:10px;border-radius:8px;margin-top:10px">
+      🎯 <b>자동 활성화 권장</b> — 30건+ 누적 + 정확도 60%+ 도달.
+      AI "보류 검토" 시 매도 1회 미루기 활성화 가능 (사용자 결정 필요).
+    </div>
+    """
+    elif total < AI_ADVISOR_MIN_SAMPLES:
+        activation_msg = f"""
+    <div style="background:#fef3c7;border:1px solid #d97706;padding:10px;border-radius:8px;margin-top:10px">
+      ⏳ <b>데이터 누적 중</b> — {total} / {AI_ADVISOR_MIN_SAMPLES}건 (남은 {AI_ADVISOR_MIN_SAMPLES - total}건).
+      평가 대기 중인 5일 미만 의견: {pending}건.
+    </div>
+    """
+    else:
+        activation_msg = f"""
+    <div style="background:#fee2e2;border:1px solid #dc2626;padding:10px;border-radius:8px;margin-top:10px">
+      ⚠️ <b>정확도 부족</b> — 30건+ 누적했지만 정확도 {accuracy:.1f}% (60%+ 필요).
+      AI 의견은 참고용 그대로 — 자동 결정 활성화 X.
+    </div>
+    """
+
+    return f"""
+<section class="section" id="advisor" aria-label="AI 매도 신뢰도">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🤖</span>
+      <h2>AI 매도 신뢰도</h2>
+      <span class="section__badge">{total}건 평가</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount" style="color:{acc_color}">정확도 {accuracy:.1f}%</div>
+      <div>{correct} / {total} 정확</div>
+    </div>
+  </div>
+  <div class="section__body">
+    <div style="padding:10px">
+      <div style="font-size:13px;color:#666;margin-bottom:4px">진행도 ({total}/{AI_ADVISOR_MIN_SAMPLES})</div>
+      {progress_bar}
+      <div class="row">
+        <div class="row__main">
+          <div class="row__name">📊 의견 분류별 정확도</div>
+          <div class="row__sub">
+            🟡 보류 권장: {hold_c} / {hold_t} 정확 ({(hold_c/hold_t*100 if hold_t else 0):.0f}%)
+            · 🔴 매도 권장: {sell_c} / {sell_t} 정확 ({(sell_c/sell_t*100 if sell_t else 0):.0f}%)
+          </div>
+        </div>
+      </div>
+      {activation_msg}
+    </div>
+  </div>
+</section>
+"""
+
+
+def _make_compare_card(compare_data: dict) -> str:
+    """봇 vs 코스피 비교 카드 (#3) — Chart.js 라인 차트 + 초과수익 시각화."""
+    if not compare_data or not compare_data.get("bot_pct"):
+        return _empty_section(
+            "compare", "📊", "section__icon--auto", "봇 vs 코스피",
+            "초과수익", "데이터 누적 중",
+            "자동매매 시작 후 일별 자산이 누적되면 봇과 코스피 비교 차트가 표시됩니다.",
+        )
+
+    bot_last   = compare_data.get("bot_last", 0)
+    kospi_last = compare_data.get("kospi_last", 0)
+    alpha      = compare_data.get("alpha", 0)
+    days       = compare_data.get("days", 0)
+
+    bot_color   = "#16a34a" if bot_last >= 0 else "#dc2626"
+    kospi_color = "#16a34a" if kospi_last >= 0 else "#dc2626"
+    alpha_color = "#16a34a" if alpha >= 0 else "#dc2626"
+    alpha_sign  = "+" if alpha >= 0 else ""
+    bot_sign    = "+" if bot_last >= 0 else ""
+    kos_sign    = "+" if kospi_last >= 0 else ""
+
+    chart_id = "compare-chart"
+    labels    = compare_data.get("labels", [])
+    bot_pct   = compare_data.get("bot_pct", [])
+    kospi_pct = compare_data.get("kospi_pct", [])
+
+    return f"""
+<section class="section" id="compare" aria-label="봇 vs 코스피">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">📊</span>
+      <h2>봇 vs 코스피</h2>
+      <span class="section__badge">{days}일 누적</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount" style="color:{alpha_color}">초과수익 {alpha_sign}{alpha:.2f}%p</div>
+      <div>
+        🤖 봇 <span style="color:{bot_color};font-weight:700">{bot_sign}{bot_last:.2f}%</span>
+        · 📈 코스피 <span style="color:{kospi_color};font-weight:700">{kos_sign}{kospi_last:.2f}%</span>
+      </div>
+    </div>
+  </div>
+  <div class="section__body">
+    <div style="height:260px;padding:10px">
+      <canvas id="{chart_id}"></canvas>
+    </div>
+    <div style="padding:8px 12px;font-size:12px;color:#666">
+      봇 자동매매 누적 수익률(매도 실현 + 보유 평가)을 코스피 지수 변동률과 비교.
+      초과수익(α)이 양수면 봇이 시장보다 우수, 음수면 시장보다 부진.
+    </div>
+  </div>
+  <script>
+  (function() {{
+    const ctx = document.getElementById('{chart_id}');
+    if (!ctx || !window.Chart) return;
+    new Chart(ctx, {{
+      type: 'line',
+      data: {{
+        labels: {json.dumps(labels)},
+        datasets: [
+          {{ label: '🤖 봇', data: {json.dumps(bot_pct)},
+             borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.10)',
+             borderWidth: 2.5, tension: 0.3, fill: true, pointRadius: 2 }},
+          {{ label: '📈 코스피', data: {json.dumps(kospi_pct)},
+             borderColor: '#3b82f6', borderWidth: 2, borderDash: [4, 4],
+             tension: 0.3, fill: false, pointRadius: 2 }}
+        ]
+      }},
+      options: {{
+        responsive: true, maintainAspectRatio: false,
+        interaction: {{ mode: 'index', intersect: false }},
+        plugins: {{
+          legend: {{ display: true, position: 'top', labels: {{ font: {{ size: 12 }} }} }},
+          tooltip: {{
+            callbacks: {{
+              label: (ctx) => ctx.dataset.label + ': ' + Number(ctx.parsed.y).toFixed(2) + '%'
+            }}
+          }}
+        }},
+        scales: {{
+          x: {{ grid: {{ display: false }}, ticks: {{ color: 'var(--text-3)', maxTicksLimit: 10 }} }},
+          y: {{ grid: {{ color: 'rgba(148,163,184,0.15)' }},
+                ticks: {{ color: 'var(--text-3)', callback: (v) => v.toFixed(1) + '%' }} }}
+        }}
+      }}
+    }});
+  }})();
+  </script>
+</section>
+"""
+
+
 def _make_alerts_section() -> str:
     """📢 최근 알림 카드 — alerts.json 기반 (24시간 이내).
 
@@ -6199,6 +6550,8 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
         # [매매·학습·추천]
         ("trades",      "📜", "거래 이력",      True),
         ("performance", "📈", "봇 성적표",      True),
+        ("compare",     "📊", "봇 vs 코스피",   True),
+        ("advisor",     "🤖", "AI 신뢰도",      True),
         ("tomorrow",    "🎯", "사전 후보",      True),
         ("recommend",   "🇰🇷", "추천",          sections_status.get("recommend", False)),
         ("avoid",       "🚫", "회피",          sections_status.get("avoid", False)),
@@ -6285,6 +6638,87 @@ def _record_portfolio_value(value_total: float, value_cost: float,
         print(f"  [portfolio_history] {today} 스냅샷 저장 (누적 {len(history)}건)")
     except Exception as e:
         print(f"  [portfolio_history] 저장 실패: {e}")
+
+
+def _calc_bot_kospi_compare(days: int = 30) -> dict:
+    """봇 자동매매 누적 수익률 vs 코스피 누적 변동률 (#3).
+
+    portfolio_history.json (auto_total/auto_cost) → 봇 일별 수익률
+    yfinance ^KS11 → 코스피 일별 종가 → 시작일 기준 변동률
+    두 라인 차트로 비교 → 봇이 코스피보다 잘 하는지 시각화.
+
+    Returns: {
+        "labels":   ["5/6", "5/7", ...],
+        "bot_pct":  [0, 0.5, 1.2, ...],  # 봇 누적 수익률 %
+        "kospi_pct":[0, -0.2, 0.8, ...], # 코스피 누적 변동률 %
+        "bot_last": 마지막 봇 수익률,
+        "kospi_last": 마지막 코스피 변동률,
+        "alpha":    초과수익 (bot - kospi) %p,
+        "days":     데이터 일수,
+    }
+    """
+    try:
+        history = _load_portfolio_history(days=days)
+        if not history or len(history) < 2:
+            return {}
+
+        # 자동매매가 첫 시작된 시점부터 (auto_cost > 0)
+        start_idx = 0
+        for i, h in enumerate(history):
+            if h.get("auto_cost", 0) > 0:
+                start_idx = i
+                break
+        history = history[start_idx:]
+        if len(history) < 2:
+            return {}
+
+        # 봇 일별 누적 수익률 (auto_pnl / auto_cost)
+        labels = []
+        bot_pct = []
+        for h in history:
+            date = h.get("date", "")
+            labels.append(date[5:].replace("-", "/"))
+            cost = h.get("auto_cost", 0)
+            pnl  = h.get("auto_pnl", 0)
+            pct  = (pnl / cost * 100) if cost > 0 else 0
+            bot_pct.append(round(pct, 2))
+
+        # 코스피 데이터 (yfinance) — 같은 기간
+        kospi_pct = []
+        try:
+            n = len(history)
+            kos = yf.Ticker("^KS11").history(period=f"{n + 10}d")
+            if not kos.empty:
+                closes = kos["Close"].tolist()
+                # 봇 데이터 일수만큼만 추출 (마지막 N개)
+                closes = closes[-n:]
+                if len(closes) >= 2 and closes[0] > 0:
+                    start_kospi = closes[0]
+                    kospi_pct = [round((c - start_kospi) / start_kospi * 100, 2) for c in closes]
+        except Exception as e:
+            print(f"  [compare] kospi 조회 오류: {e}")
+
+        # kospi_pct 길이가 봇 길이와 다르면 패딩
+        if len(kospi_pct) < len(bot_pct):
+            kospi_pct = [0] * (len(bot_pct) - len(kospi_pct)) + kospi_pct
+        elif len(kospi_pct) > len(bot_pct):
+            kospi_pct = kospi_pct[-len(bot_pct):]
+
+        bot_last   = bot_pct[-1] if bot_pct else 0
+        kospi_last = kospi_pct[-1] if kospi_pct else 0
+
+        return {
+            "labels":     labels,
+            "bot_pct":    bot_pct,
+            "kospi_pct":  kospi_pct,
+            "bot_last":   bot_last,
+            "kospi_last": kospi_last,
+            "alpha":      round(bot_last - kospi_last, 2),
+            "days":       len(history),
+        }
+    except Exception as e:
+        print(f"  [compare] 계산 오류: {e}")
+        return {}
 
 
 def _load_portfolio_history(days: int = 90) -> list:
@@ -6494,6 +6928,14 @@ def build_and_save_dashboard(
         trades_html = _make_trade_history_card(limit=30)
         # 알림 센터 (텔레그램 다이어트 후 정보성 알림 모음)
         alerts_html = _make_alerts_section()
+        # 봇 vs 코스피 비교 (#3)
+        try:
+            compare_data = _calc_bot_kospi_compare(days=30)
+        except Exception:
+            compare_data = {}
+        compare_html = _make_compare_card(compare_data)
+        # AI 매도 어드바이저 신뢰도 (#4 — B1 진화)
+        advisor_html = _make_advisor_stats_card()
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -6511,6 +6953,10 @@ def build_and_save_dashboard(
             history_json = json.dumps(history, ensure_ascii=False)
         except Exception:
             history_json = "{}"
+        try:
+            compare_json = json.dumps(compare_data, ensure_ascii=False)
+        except Exception:
+            compare_json = "{}"
 
         # ── 풀 HTML 조립 ─────
         html = f"""<!DOCTYPE html>
@@ -6529,7 +6975,7 @@ def build_and_save_dashboard(
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>투자 비서 — 대시보드</title>
-<script>window._chartData = {history_json};</script>
+<script>window._chartData = {history_json}; window._compareData = {compare_json};</script>
 {_dashboard_css()}
 </head>
 <body>
@@ -6549,6 +6995,8 @@ def build_and_save_dashboard(
 {auto_html}
 {trades_html}
 {performance_html}
+{compare_html}
+{advisor_html}
 {tomorrow_html}
 {recommend_html}
 {avoid_html}
@@ -7684,6 +8132,14 @@ def run_close_summary():
         except Exception as e:
             print(f"  [브리핑] mirae_paper 알림 오류: {e}")
 
+        # AI 어드바이저 v2 — 5일 전 의견들의 결과 추적 (정확도 평가)
+        try:
+            updated = track_advisor_outcomes()
+            if updated > 0:
+                print(f"  [브리핑] AI 어드바이저 {updated}건 결과 평가 완료")
+        except Exception as e:
+            print(f"  [브리핑] advisor outcome 추적 오류: {e}")
+
         # 텔레그램 발송 X — 대시보드에서 확인
         print(f"  [브리핑] 코스피 {mood['kospi_chg']:+.2f}% 마감.")
     except Exception as e:
@@ -8285,6 +8741,21 @@ def run_auto_sell():
             "ai_opinion": ai_opinion,
             "journal":    journal,  # AI 회고 (매도 후 1줄, 학습 누적용)
         })
+
+        # AI 어드바이저 v2 — 의견 + 매도 정보 누적 (5일 후 정확도 평가용)
+        try:
+            log_advisor_decision(
+                stock_info={
+                    "code":       code,
+                    "name":       p.get("name", code),
+                    "curr_price": cur_price,
+                },
+                ai_opinion=ai_opinion,
+                sell_executed=True,
+                sell_pct=pct,
+            )
+        except Exception as e:
+            print(f"  [자동매도] advisor_log 저장 오류: {e}")
         daily["trade_count"] += 1
 
         if sell_qty == held_qty:
