@@ -1876,21 +1876,94 @@ def analyze(
 _ai_client = None
 
 
-def _ai_system() -> str:
-    """AI 시스템 프롬프트 — 매번 호출 시점의 KST 날짜를 동적으로 포함.
+_AI_SYSTEM_STATIC = """당신은 한국 주식 시장 전문 AI 투자 분석가입니다.
 
-    Claude 학습 데이터 컷오프로 인한 잘못된 연도 표기(예: '2025') 방지.
-    """
+## 분석 원칙
+- 데이터 기반의 간결하고 핵심적인 분석을 제공합니다
+- 섹터별 트렌드, 매크로 환경, 수급 동향을 종합적으로 고려합니다
+- 투자 조언은 참고용임을 명심하고, 불확실성을 솔직하게 표현합니다
+- 한국어로 답변하며, 핵심만 간결하게 작성합니다
+- 절대로 다른 연도를 추측해서 표기하지 마세요 (학습 컷오프 주의)
+- 데이터 부족 시 "데이터 부족"이라고 명시
+- 종목 코드보다 종목명 우선 사용
+- 숫자는 천 단위 콤마, 변동률은 %로
+
+## 한국 시장 구조
+- 거래시간: 09:00 ~ 15:30 KST (점심 휴장 X, 동시호가 제외)
+- 코스피: 대형주, 외국인 비중 ↑, 주요 산업재
+- 코스닥: 중소형/성장주, 변동성 ↑, 바이오/IT 비중 ↑
+- 휴장일 (2026): 어린이날 5/5, 부처님오신날 5/25 (대체), 지방선거 6/3, 추석 9/24~9/25, 한글날 10/9, 크리스마스 12/25, 종가일 12/31
+
+## 주요 섹터 특성
+- **반도체** (삼성전자, SK하이닉스): 미국 SOXX/엔비디아 동조, 환율 영향 큼
+- **조선** (HD한국조선해양, 삼성중공업): 수주 사이클, 친환경 선박 트렌드, 후행 지표
+- **방산** (한화에어로, LIG넥스원): 수주 잔고 안정적, 지정학 리스크 시 강세
+- **원전** (두산에너빌리티, HD현대): SMR 트렌드, AI 데이터센터 전력 수요 호재
+- **바이오** (셀트리온, 삼성바이오로직스, 보령): 변동성 큼, 임상/FDA 승인 영향
+- **화학/2차전지** (LG화학, 포스코퓨처엠, 한화솔루션): 전기차 수요/원자재 가격 영향
+- **금융** (KB금융, 신한지주, 미래에셋증권): 금리 사이클, 부동산 PF 노출
+- **자동차** (현대차, 기아): 환율 약세 시 수출 유리
+- **재생에너지** (한화솔루션, OCI): 정책 / 미국 IRA 영향
+
+## 매크로 영향 가이드
+- USD/KRW 1380↑: 수출주 유리 (반도체/조선/자동차)
+- USD/KRW 1250↓: 내수·소비주 유리
+- VIX 30↑: 방어주 (필수소비재/배당주) 선호
+- VIX 18↓: 성장주/IT 선호 가능
+- 미 10년물 금리 4.5↑: 성장주 부담, 가치·금융 유리
+- 미 10년물 금리 3.5↓: 성장주/리츠 유리
+- WTI 80↑: 정유/에너지 강세, 항공·소비재 부담
+- WTI 60↓: 항공/소비재 유리
+- 공포탐욕지수 25↓ (극도공포): 역발상 매수 기회
+- 공포탐욕지수 75↑ (극도탐욕): 차익실현 권장
+- 코스피 -2%↓ (당일): 자동매수 중단 권장
+- 외국인 순매수 +50억↑ (개별종목): 강한 매수세 신호
+- 외국인 순매도 -50억↓: 이탈 주의
+
+## 사용자 자동매매 룰 (참고)
+- 매수 임계 스윙 점수: 65 (5/4 변경)
+- 급등 모멘텀 매수: +3~+5% 안전대만 (5/6 추가, 추격매수 차단)
+- 매도: +6% 절반 / +10% 전량 익절 / -4% 손절 / 5거래일 강제
+- 종목당 200만원 / 일일 5종목·1,000만원 / 같은 종목 하루 1회
+
+## 자주 보는 지표 해석
+- PER: 8↓ 매우 저렴 / 12↓ 저렴 / 15↓ 적정 / 20↑ 비싼 편
+- PBR: 0.8↓ 자산보다 싸게 / 1.2↓ 저렴 / 1.5↓ 적정
+- ROE: 15%↑ 수익성 매우 좋음 / 10%↑ 안정 / 5%↑ 평균
+- RSI: 30↓ 과매도 (반등 가능) / 70↑ 과매수 (조정 가능)
+- 부채비율: 50%↓ 매우 양호 / 200%↑ 부담
+- 거래량 비율: 200%↑ 강한 매수세 / 150%↑ 활발 / 100% 평소
+"""
+
+
+def _ai_system_dynamic() -> str:
+    """AI 시스템 프롬프트 — 동적 부분 (오늘 날짜)."""
     today = _now_kst().strftime("%Y년 %m월 %d일")
-    return (
-        f"오늘 날짜: {today} (한국시간). 이 날짜를 기준으로 분석하세요. "
-        "당신은 한국 주식 시장 전문 AI 투자 분석가입니다. "
-        "데이터를 바탕으로 간결하고 핵심적인 분석을 제공합니다. "
-        "섹터별 트렌드, 매크로 환경, 수급 동향을 종합적으로 고려합니다. "
-        "투자 조언은 참고용임을 명심하고, 불확실성을 솔직하게 표현합니다. "
-        "한국어로 답변하며, 핵심만 간결하게 작성합니다. "
-        "절대로 다른 연도를 추측해서 표기하지 마세요."
-    )
+    return f"오늘 날짜: {today} (한국시간). 이 날짜를 기준으로 분석하세요."
+
+
+def _ai_system_messages() -> list:
+    """캐싱 적용된 system 메시지 (Anthropic SDK 형식).
+
+    정적 부분(약 1500토큰)에 ephemeral cache_control 적용. 5분 TTL.
+    같은 mode/회차 내 여러 AI 호출 시 캐시 히트 → 비용 ~90% 절감.
+    """
+    return [
+        {
+            "type": "text",
+            "text": _AI_SYSTEM_STATIC,
+            "cache_control": {"type": "ephemeral"},
+        },
+        {
+            "type": "text",
+            "text": _ai_system_dynamic(),
+        },
+    ]
+
+
+def _ai_system() -> str:
+    """기존 호환성 — 캐싱 X 단순 string. 신규 코드는 _ai_system_messages() 사용."""
+    return _ai_system_dynamic() + "\n\n" + _AI_SYSTEM_STATIC
 
 
 def _get_ai_client():
@@ -1939,7 +2012,7 @@ def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=400,
-            system=_ai_system(),
+            system=_ai_system_messages(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -1969,7 +2042,7 @@ def ai_sector_rotation(mood: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=200,
-            system=_ai_system(),
+            system=_ai_system_messages(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -2010,7 +2083,7 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=700,  # 5/4: 350→700 (3가지 항목 답변이 한국어로 잘리는 문제)
-            system=_ai_system(),
+            system=_ai_system_messages(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -2498,7 +2571,7 @@ def ai_personal_coach(query: str = "지금 뭐 사야 할까?",
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=max_tokens,
-            system=_ai_system(),
+            system=_ai_system_messages(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -2523,7 +2596,7 @@ def ai_stock_insight(s: dict) -> str:
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=100,
-            system=_ai_system(),
+            system=_ai_system_messages(),
             messages=[{"role": "user", "content": prompt}],
         )
         return resp.content[0].text.strip()
@@ -2565,7 +2638,7 @@ def ai_answer_query(query: str, kr_results: list, us_results: list, mood: dict) 
         resp = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=400,
-            system=_ai_system(),
+            system=_ai_system_messages(),
             messages=[{
                 "role": "user",
                 "content": (
@@ -4238,6 +4311,74 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_tomorrow_picks_section(tp_data: dict) -> str:
+    """내일/오늘 사전 후보 섹션 — tomorrow_picks.json 기반.
+
+    어제 장마감/미장마감 분석으로 추출된 강세 후보. autobuy 우선 매수 대상.
+    카드에는 점수 보너스 + 사유 + 섹터 가중치 표시.
+    """
+    if not tp_data or not tp_data.get("picks"):
+        return _empty_section(
+            "tomorrow", "🎯", "section__icon--auto", "사전 매수 후보",
+            "tomorrow_picks", "아직 사전 후보가 없습니다",
+            "평일 15:35 장 마감 분석 후 다음 거래일 강세 종목 TOP 20이 자동 등록됩니다.",
+        )
+    picks  = tp_data.get("picks", [])
+    date   = tp_data.get("date", "")
+    sw     = tp_data.get("sector_weights", {})
+    rows = []
+    for p in picks:
+        name   = p.get("name", "?")
+        sector = p.get("sector", "")
+        bonus  = p.get("score_bonus", 0)
+        chg    = p.get("today_change", 0)
+        score  = p.get("today_score", 0)
+        sec_w  = sw.get(sector, 0)
+        # 섹터 가중치 표시
+        sec_tag = ""
+        if sec_w > 0:
+            sec_tag = f' · <span style="color:#16a34a">섹터 +{sec_w}</span>'
+        elif sec_w < 0:
+            sec_tag = f' · <span style="color:#dc2626">섹터 {sec_w}</span>'
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🎯 {name}</div>
+        <div class="row__sub">{sector} · 어제 +{chg:.1f}% / 점수 {score} · 보너스 +{bonus}{sec_tag}</div>
+      </div>
+      <div class="row__price">
+        <div class="row__current" style="color:#0369a1">+{bonus}점</div>
+        <div class="row__pnl"><small>가산</small></div>
+      </div>
+    </div>""")
+
+    # 섹터 가중치 요약 (TOP 영향 섹터)
+    sw_summary = ""
+    if sw:
+        sw_sorted = sorted(sw.items(), key=lambda x: -abs(x[1]))[:5]
+        sw_parts = [
+            f'<span style="color:{"#16a34a" if v>0 else "#dc2626"}">{k} {"+" if v>0 else ""}{v}</span>'
+            for k, v in sw_sorted
+        ]
+        sw_summary = f'<div class="section__subtitle"><div class="section__amount">섹터 영향:</div><div>{" · ".join(sw_parts)}</div></div>'
+
+    return f"""
+<section class="section" id="tomorrow" aria-label="사전 매수 후보">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🎯</span>
+      <h2>사전 매수 후보</h2>
+      <span class="section__badge">{date} 우선순위</span>
+      <span class="section__count">{len(picks)}종목</span>
+    </div>
+    {sw_summary}
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
 def _empty_section(sid: str, icon: str, icon_cls: str, title: str, badge: str,
                    empty_title: str, empty_desc: str) -> str:
     """데이터가 없을 때 안내 메시지를 띄우는 빈 섹션."""
@@ -5335,6 +5476,12 @@ def build_and_save_dashboard(
             holdings_alerts or [], holdings_sparklines or {}, holdings_diagnosis or {}
         )
         auto_html = _make_auto_positions_section(auto_positions)
+        # 사전 매수 후보 (tomorrow_picks)
+        try:
+            tp_data = _load_tomorrow_picks()
+        except Exception:
+            tp_data = {}
+        tomorrow_html = _make_tomorrow_picks_section(tp_data)
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -5387,6 +5534,7 @@ def build_and_save_dashboard(
 {allocation_html}
 {value_html}
 {auto_html}
+{tomorrow_html}
 {market_html}
 {macro_html}
 {ai_html}
@@ -5708,7 +5856,12 @@ def _balance_html_tags(chunk: str) -> str:
     return chunk
 
 
-def tg_send(text: str, chat_id: str = ""):
+def tg_send(text: str, chat_id: str = "", silent: bool = False):
+    """텔레그램 메시지 전송.
+
+    silent=True: 알림 진동/소리 X (브리핑, 요약 등 정보성 메시지에 사용).
+                 매수/매도/위험/오류는 silent=False 유지 (즉시 인지 필요).
+    """
     cid = chat_id or TELEGRAM_CHAT_ID
     if not TELEGRAM_TOKEN or not cid:
         return
@@ -5730,9 +5883,12 @@ def tg_send(text: str, chat_id: str = ""):
         # HTML 태그 균형 보정 (분할 지점에서 깨진 태그 자동 닫기)
         chunk = _balance_html_tags(chunk)
         try:
+            payload = {"chat_id": cid, "text": chunk, "parse_mode": "HTML"}
+            if silent:
+                payload["disable_notification"] = True
             r = requests.post(
                 f"{_tg_base()}/sendMessage",
-                json={"chat_id": cid, "text": chunk, "parse_mode": "HTML"},
+                json=payload,
                 timeout=15,
             )
             if not r.ok:
@@ -6058,7 +6214,7 @@ def run_monitor(duration_hours: float = 7.0, interval_sec: int = 300):
 
         time.sleep(interval_sec)
 
-    tg_send("📡 실시간 모니터링 종료")
+    tg_send("📡 실시간 모니터링 종료", silent=True)
     print("[모니터] 종료")
 
 
@@ -6193,7 +6349,8 @@ def run_us_briefing():
             mood_txt,
             f"📊 {DASHBOARD_URL}",
         ]
-        tg_send("\n".join(lines))
+        # 새벽 06:00 정보성 브리핑 → 무음 (사용자 수면 방해 방지)
+        tg_send("\n".join(lines), silent=True)
 
         # tomorrow_picks 섹터 가중치 갱신 (Phase 3) — 미국 섹터 영향 → 한국 섹터 가중치
         try:
@@ -6284,7 +6441,7 @@ def run_premarket_briefing():
                 resp = client.messages.create(
                     model=CLAUDE_MODEL,
                     max_tokens=120,
-                    system=_ai_system(),
+                    system=_ai_system_messages(),
                     messages=[{"role": "user", "content": prompt}],
                 )
                 lines.append(f"🤖 {resp.content[0].text.strip()}")
@@ -6295,7 +6452,8 @@ def run_premarket_briefing():
         # 대시보드 링크
         lines.append(f"📊 대시보드: {DASHBOARD_URL}")
 
-        tg_send("\n".join(lines))
+        # 08:50 장 시작 전 정보성 브리핑 → 무음 (장 시작 후 매수 알림으로 충분)
+        tg_send("\n".join(lines), silent=True)
 
         # 대시보드 갱신
         try:
@@ -6836,11 +6994,13 @@ def run_auto_buy():
     daily = pos["daily"][today]
     new_buys = daily["buy_count"] - prev_buy_count
     if new_buys > 0:
+        # 매수 요약은 정보성 (실제 매수 체결 알림은 이미 받음) → 무음
         tg_send(
             f"📊 <b>{mode_tag} 매수 요약</b>\n"
             f"이번 회차 신규: {new_buys}종목\n"
             f"오늘 누적: {daily['buy_count']}종목 / 총 {daily['buy_amount']:,}원\n"
-            f"현재 보유: {len(pos.get('positions', {}))}종목"
+            f"현재 보유: {len(pos.get('positions', {}))}종목",
+            silent=True,
         )
     else:
         print(f"[자동매수] 이번 회차 매수 0건 — 요약 메시지 생략 (누적: {daily['buy_count']}종목)")
@@ -7138,7 +7298,7 @@ def compare_stocks(name_a: str, name_b: str, all_stocks: list) -> str:
             resp = client.messages.create(
                 model=CLAUDE_MODEL,
                 max_tokens=200,
-                system=_ai_system(),
+                system=_ai_system_messages(),
                 messages=[{"role": "user", "content": prompt}],
             )
             lines += ["", f"🤖 AI: {resp.content[0].text.strip()}"]
