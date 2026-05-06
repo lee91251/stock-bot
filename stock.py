@@ -2092,6 +2092,50 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
         return ""
 
 
+def ai_sell_advisor(stock_info: dict, mood: dict, sell_reason: str, pct: float, days: int) -> str:
+    """매도 트리거 직전 AI 의견 조회 (참고용 — 자동 매도 룰은 그대로 진행).
+
+    텔레그램 매도 알림에 1~2 문장 의견 추가. 1~2주 운영 후 신뢰도 검증되면
+    AI 의견을 자동 매도 결정에 반영하는 단계로 진화 가능.
+
+    Args:
+        stock_info: {"name", "code", "sector", "buy_price", "curr_price"}
+        mood: 시장 데이터 (kospi_chg, vix, fg_score)
+        sell_reason: "+6.5% 절반 익절", "-4.2% 손절" 등
+        pct: 손익률 %
+        days: 보유 거래일
+
+    Returns:
+        1~2 문장 의견 (빈 문자열이면 호출 실패).
+    """
+    client = _get_ai_client()
+    if not client:
+        return ""
+    try:
+        prompt = (
+            f"보유 종목: {stock_info.get('name', '?')} ({stock_info.get('sector', '')})\n"
+            f"매수가 {stock_info.get('buy_price', 0):,.0f}원 → 현재가 {stock_info.get('curr_price', 0):,.0f}원 ({pct:+.1f}%)\n"
+            f"보유: {days}거래일 / 매도 트리거: {sell_reason}\n\n"
+            f"시장 상황:\n"
+            f"- 코스피: {mood.get('kospi_chg', 0):+.2f}%\n"
+            f"- VIX: {mood.get('vix', 20):.1f}\n"
+            f"- 공포탐욕: {mood.get('fg_score', 50)}\n\n"
+            f"위 매도 트리거에 따라 자동 매도 예정. 시장 상황·손익·보유 기간 종합해서 "
+            f"매도가 적절한지 1~2문장으로 의견.\n"
+            f"형식: \"매도 적절 — 짧은 이유\" 또는 \"보류 검토 — 짧은 이유\""
+        )
+        resp = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=150,
+            system=_ai_system_messages(),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp.content[0].text.strip()
+    except Exception as e:
+        print(f"  [AI 매도] 호출 오류: {e}")
+        return ""
+
+
 def analyze_trading_performance(window_days: int = 30) -> dict:
     """positions.json history 기반 매매 결과 자가 분석. (Phase 2 — 자가 학습 인프라)
 
@@ -6965,6 +7009,7 @@ def run_auto_buy():
                 "partial_sold":  False,
                 "score":         s.get("score", 0),
                 "swing_score":   s.get("swing_score", 0),
+                "sector":        s.get("sector", ""),
                 "order_no":      result.get("order_no", ""),
             }
             pos["history"].append({
@@ -7046,6 +7091,7 @@ def run_auto_sell():
     today = _today_str()
     daily = _ensure_daily(pos, today)
     sold_msgs = []
+    ai_mood_cache = None  # 매도 발생 시 1번만 조회 (lazy)
 
     for code in list(pos["positions"].keys()):
         p = pos["positions"][code]
@@ -7089,6 +7135,31 @@ def run_auto_sell():
             print(f"  [자동매도] 일일 매매 한도 도달")
             break
 
+        # AI 매도 의견 조회 (참고용 — 자동 매도 룰은 그대로 진행)
+        # B1: 1~2주 운영 후 신뢰도 검증되면 의견을 자동 결정에 반영하는 단계로 진화
+        ai_opinion = ""
+        try:
+            if ai_mood_cache is None:
+                m = get_market_mood() or {}
+                fg = get_fear_greed(m) if m else {"score": 50}
+                m["fg_score"] = fg.get("score", 50)
+                ai_mood_cache = m
+            ai_opinion = ai_sell_advisor(
+                stock_info={
+                    "name":       p.get("name", code),
+                    "code":       code,
+                    "sector":     p.get("sector", ""),
+                    "buy_price":  buy_price,
+                    "curr_price": cur_price,
+                },
+                mood=ai_mood_cache,
+                sell_reason=sell_reason,
+                pct=pct,
+                days=days,
+            )
+        except Exception as e:
+            print(f"  [자동매도] AI 의견 조회 오류: {e}")
+
         result = client.sell(code, sell_qty)
         if not result.get("ok"):
             tg_send(f"❌ {mode_tag} 매도 실패: {p.get('name','?')} — {result.get('msg','')}")
@@ -7115,10 +7186,13 @@ def run_auto_sell():
             pos["positions"][code]["partial_sold"] = True
 
         emoji = "🔴" if is_loss else ("⏱️" if is_force else "🟢")
-        sold_msgs.append(
+        msg = (
             f"{emoji} <b>{p['name']}</b> {sell_qty}주 @ {cur_price:,}원 "
             f"({pct:+.1f}%) — {sell_reason}"
         )
+        if ai_opinion:
+            msg += f"\n  💭 AI: {ai_opinion}"
+        sold_msgs.append(msg)
         save_positions(pos)
         time.sleep(1)
 
