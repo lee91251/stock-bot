@@ -109,6 +109,14 @@ AI_ADVISOR_MIN_SAMPLES   = 30      # 최소 누적 건수 (이 미만이면 defa
 AI_ADVISOR_MIN_ACCURACY  = 0.6     # 자동 활성화 신뢰도 임계 (60%+)
 AI_ADVISOR_OUTCOME_DAYS  = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가
 
+# B4 자동 가중치 튜닝 (자가학습 — 30건+ 누적 시 권장 알림)
+B4_MIN_SAMPLES           = 30      # 자가학습 최소 표본
+B4_SECTOR_MIN_TRADES     = 3       # 섹터 권장 최소 매매 건수
+B4_HOUR_MIN_TRADES       = 3       # 시간대 권장 최소 매매 건수
+B4_GAP_HIGH              = 20      # 점수대 승률 차이 20%p 이상 — 임계 조정 권장
+B4_WEAK_WIN_RATE         = 30      # 30% 미만 승률 — 회피 권장
+B4_STRONG_WIN_RATE       = 70      # 70%+ 승률 — 우대 권장
+
 # 미래에셋 모의 (추천 검증용 가치주) — 가치주 룰 적용
 PAPER_MIRAE_STOP_LOSS_PCT  = 0.07   # -7% 손절
 PAPER_MIRAE_TARGET1_PCT    = 0.10   # +10% 1차 (절반)
@@ -5003,6 +5011,106 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_b4_learning_card() -> str:
+    """B4 자가학습 카드 (#5) — 매매 데이터 기반 가중치 자동 조정 권장.
+
+    데이터 30건+ 누적 시 자동 활성화. 그 전엔 진행도 표시.
+    """
+    data = calc_weight_recommendations()
+    trades   = data.get("trades", 0)
+    ready    = data.get("ready", False)
+    win_rate = data.get("win_rate", 0)
+    recs     = data.get("recommendations", [])
+
+    if not ready:
+        progress = trades / B4_MIN_SAMPLES * 100
+        progress_bar = f"""
+    <div style="background:#f3f4f6;border-radius:8px;height:10px;margin:10px 0">
+      <div style="width:{progress:.0f}%;background:#7c3aed;height:10px;border-radius:8px"></div>
+    </div>
+    <div style="font-size:13px;color:#666">{trades} / {B4_MIN_SAMPLES}건 ({progress:.0f}%) — 남은 {B4_MIN_SAMPLES - trades}건</div>
+    """
+        return f"""
+<section class="section" id="learning" aria-label="자가학습">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🧠</span>
+      <h2>자가학습 (B4)</h2>
+      <span class="section__badge">데이터 누적 중</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount" style="color:#7c3aed">{trades}/{B4_MIN_SAMPLES}건</div>
+      <div>현재 승률 {win_rate:.1f}%</div>
+    </div>
+  </div>
+  <div class="section__body">
+    <div style="padding:14px">
+      {progress_bar}
+      <div style="font-size:13px;color:#444;line-height:1.7;margin-top:12px">
+        <b>봇이 자기 매매를 분석해 가중치를 스스로 조정하는 시스템.</b><br>
+        매매 30건+ 누적 시 자동으로:
+        <ul style="margin:6px 0 0 18px;padding:0">
+          <li>점수대별 승률 차이 → <b>매수 점수 임계 조정 권장</b></li>
+          <li>섹터별 승률 → <b>강세 섹터 우대 / 약세 섹터 회피 권장</b></li>
+          <li>시간대별 승률 → <b>매수 회차 시간 조정 권장</b></li>
+          <li>보유일별 승률 → <b>강제 매도 일수 조정 권장</b></li>
+        </ul>
+        <br>
+        권장 사항은 사용자 OK 후 코드에 반영. 자동 변경 X (안전 우선).
+      </div>
+    </div>
+  </div>
+</section>
+"""
+
+    # 30건+ 활성화된 경우
+    if not recs:
+        body = """
+    <div style="background:#dcfce7;border:1px solid #16a34a;padding:14px;border-radius:8px;margin:12px">
+      ✅ <b>현재 가중치 적정</b> — 매매 패턴 분석 결과 추가 조정 권장 없음.
+      현재 룰 그대로 유지.
+    </div>
+    """
+    else:
+        rec_rows = []
+        level_colors = {"high": "#dc2626", "medium": "#d97706", "low": "#0369a1"}
+        for r in recs:
+            color = level_colors.get(r.get("level", "low"), "#0369a1")
+            rec_rows.append(f"""
+    <div class="row" style="border-left:4px solid {color}">
+      <div class="row__main">
+        <div class="row__name">{r.get('title', '')}</div>
+        <div class="row__sub">{r.get('reason', '')}</div>
+      </div>
+    </div>""")
+        body = f"""
+    <div style="background:#fef3c7;border:1px solid #d97706;padding:10px;border-radius:8px;margin:12px">
+      🎯 <b>가중치 자동 조정 권장 {len(recs)}건</b> — 사용자 결정 후 코드 반영.
+      "코드 수정해줘 [권장 항목]" 채팅으로 적용 가능.
+    </div>
+    {''.join(rec_rows)}
+    """
+
+    return f"""
+<section class="section" id="learning" aria-label="자가학습">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🧠</span>
+      <h2>자가학습 (B4)</h2>
+      <span class="section__badge">활성화됨</span>
+      <span class="section__count">{trades}건</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount">권장 {len(recs)}건</div>
+      <div>현재 승률 {win_rate:.1f}%</div>
+    </div>
+  </div>
+  <div class="section__body">{body}
+  </div>
+</section>
+"""
+
+
 def _make_advisor_stats_card() -> str:
     """AI 매도 어드바이저 신뢰도 카드 (#4) — B1 → v2 진화.
 
@@ -6552,6 +6660,7 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
         ("performance", "📈", "봇 성적표",      True),
         ("compare",     "📊", "봇 vs 코스피",   True),
         ("advisor",     "🤖", "AI 신뢰도",      True),
+        ("learning",    "🧠", "자가학습",       True),
         ("tomorrow",    "🎯", "사전 후보",      True),
         ("recommend",   "🇰🇷", "추천",          sections_status.get("recommend", False)),
         ("avoid",       "🚫", "회피",          sections_status.get("avoid", False)),
@@ -6638,6 +6747,130 @@ def _record_portfolio_value(value_total: float, value_cost: float,
         print(f"  [portfolio_history] {today} 스냅샷 저장 (누적 {len(history)}건)")
     except Exception as e:
         print(f"  [portfolio_history] 저장 실패: {e}")
+
+
+def calc_weight_recommendations() -> dict:
+    """B4 자가학습 — 매매 데이터 누적 분석 → 가중치 자동 조정 권장 (#5).
+
+    데이터 30건+ 누적 시 활성화. positions.json history 기반.
+    분석 항목:
+      1. 점수 임계 (70+ vs 60-64 승률 차이 → SWING_SCORE_MIN 조정)
+      2. 섹터 우대/회피 (승률 70%+ → 우대 / 30% 미만 → 회피)
+      3. 시간대 회피 (특정 시간대 승률 30% 미만 → 매수 회차 조정)
+
+    Returns: {
+        "ready": True if 30건+ else False,
+        "trades": 누적 건수,
+        "remaining": 활성화까지 남은 건수,
+        "win_rate": 전체 승률,
+        "recommendations": [
+            {"type", "reason", "current", "recommended", "level"}, ...
+        ],
+    }
+    """
+    perf = analyze_trading_performance(window_days=90)
+    total = perf.get("trades", 0)
+
+    base = {
+        "trades":      total,
+        "remaining":   max(0, B4_MIN_SAMPLES - total),
+        "win_rate":    perf.get("win_rate", 0),
+        "ready":       total >= B4_MIN_SAMPLES,
+        "recommendations": [],
+    }
+
+    if total < B4_MIN_SAMPLES:
+        return base
+
+    recs = []
+
+    # 1) 점수 임계 조정 권장
+    sb = perf.get("score_buckets", {})
+    bucket_70 = sb.get("70+", {})
+    bucket_60 = sb.get("60-64", {})
+    if bucket_70.get("trades", 0) >= 5 and bucket_60.get("trades", 0) >= 5:
+        wr_70 = bucket_70.get("win_rate", 0)
+        wr_60 = bucket_60.get("win_rate", 0)
+        gap = wr_70 - wr_60
+        if gap >= B4_GAP_HIGH:
+            recs.append({
+                "type":        "score_threshold",
+                "level":       "high",
+                "title":       f"매수 점수 임계 {SWING_SCORE_MIN} → 70 권장",
+                "reason":      f"70점+ 승률 {wr_70:.0f}% vs 60-64점 {wr_60:.0f}% (차이 +{gap:.0f}%p)",
+                "current":     SWING_SCORE_MIN,
+                "recommended": 70,
+                "code_var":    "SWING_SCORE_MIN",
+            })
+        elif wr_60 - wr_70 >= B4_GAP_HIGH:
+            # 역으로 60점대가 더 잘 나오는 이상 케이스
+            recs.append({
+                "type":        "score_threshold_lower",
+                "level":       "medium",
+                "title":       f"매수 점수 임계 완화 검토",
+                "reason":      f"60-64점 승률 {wr_60:.0f}% > 70점+ {wr_70:.0f}% — 표본 더 필요",
+                "current":     SWING_SCORE_MIN,
+                "recommended": SWING_SCORE_MIN,
+                "code_var":    "SWING_SCORE_MIN",
+            })
+
+    # 2) 섹터별 권장
+    sector_perf = perf.get("sector_perf", [])
+    weak_sectors = [s for s in sector_perf
+                    if s.get("win_rate", 0) < B4_WEAK_WIN_RATE
+                    and s.get("trades", 0) >= B4_SECTOR_MIN_TRADES]
+    strong_sectors = [s for s in sector_perf
+                      if s.get("win_rate", 0) >= B4_STRONG_WIN_RATE
+                      and s.get("trades", 0) >= B4_SECTOR_MIN_TRADES]
+
+    for s in weak_sectors[:3]:
+        recs.append({
+            "type":     "sector_avoid",
+            "level":    "medium",
+            "title":    f"🚫 {s['sector']} 섹터 회피 권장",
+            "reason":   f"승률 {s['win_rate']:.0f}% ({s['trades']}건) — 평균 손익 {s.get('avg_pnl', 0):+.1f}%",
+            "sector":   s["sector"],
+        })
+    for s in strong_sectors[:3]:
+        recs.append({
+            "type":   "sector_boost",
+            "level":  "low",
+            "title":  f"🎯 {s['sector']} 섹터 우대 권장",
+            "reason": f"승률 {s['win_rate']:.0f}% ({s['trades']}건) — 평균 손익 {s.get('avg_pnl', 0):+.1f}%",
+            "sector": s["sector"],
+        })
+
+    # 3) 시간대별 권장
+    bhp = perf.get("buy_hour_perf", [])
+    weak_hours = [h for h in bhp
+                  if h.get("win_rate", 0) < B4_WEAK_WIN_RATE
+                  and h.get("trades", 0) >= B4_HOUR_MIN_TRADES]
+    for h in weak_hours[:2]:
+        recs.append({
+            "type":   "hour_avoid",
+            "level":  "low",
+            "title":  f"⏰ {h['bucket']} 매수 회차 검토",
+            "reason": f"승률 {h['win_rate']:.0f}% ({h['trades']}건) — 평균 손익 {h.get('avg_pnl', 0):+.1f}%",
+            "bucket": h["bucket"],
+        })
+
+    # 4) 보유일 권장 (특정 보유일이 다른 것보다 현저히 낮으면)
+    hp = perf.get("hold_perf", [])
+    if len(hp) >= 2:
+        worst = min(hp, key=lambda x: x.get("win_rate", 0))
+        best  = max(hp, key=lambda x: x.get("win_rate", 0))
+        if worst != best and worst.get("trades", 0) >= 3:
+            wr_gap = best.get("win_rate", 0) - worst.get("win_rate", 0)
+            if wr_gap >= B4_GAP_HIGH:
+                recs.append({
+                    "type":   "hold_days",
+                    "level":  "low",
+                    "title":  f"⏱️ 보유 {best['range']} 우수, {worst['range']} 부진",
+                    "reason": f"{best['range']} 승률 {best['win_rate']:.0f}% / {worst['range']} {worst['win_rate']:.0f}% (차이 {wr_gap:.0f}%p)",
+                })
+
+    base["recommendations"] = recs
+    return base
 
 
 def _calc_bot_kospi_compare(days: int = 30) -> dict:
@@ -6936,6 +7169,8 @@ def build_and_save_dashboard(
         compare_html = _make_compare_card(compare_data)
         # AI 매도 어드바이저 신뢰도 (#4 — B1 진화)
         advisor_html = _make_advisor_stats_card()
+        # 자가학습 가중치 권장 (#5 — B4)
+        learning_html = _make_b4_learning_card()
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -6997,6 +7232,7 @@ def build_and_save_dashboard(
 {performance_html}
 {compare_html}
 {advisor_html}
+{learning_html}
 {tomorrow_html}
 {recommend_html}
 {avoid_html}
@@ -8139,6 +8375,35 @@ def run_close_summary():
                 print(f"  [브리핑] AI 어드바이저 {updated}건 결과 평가 완료")
         except Exception as e:
             print(f"  [브리핑] advisor outcome 추적 오류: {e}")
+
+        # B4 자가학습 — 30건 도달 시 첫 번째 알림 (1회만)
+        try:
+            b4 = calc_weight_recommendations()
+            if b4.get("ready") and b4.get("recommendations"):
+                # alerts.json에 1회만 (오늘 아직 안 보냈으면)
+                today_alerts = _load_alerts()
+                already_sent = any(
+                    a.get("category") == "system" and "B4 자가학습" in a.get("title", "")
+                    and a.get("time", "").startswith(_today_str())
+                    for a in today_alerts
+                )
+                if not already_sent:
+                    n = len(b4["recommendations"])
+                    log_alert(
+                        "system", "warning",
+                        "🧠 B4 자가학습 권장 발견",
+                        f"매매 {b4['trades']}건 누적 → 가중치 조정 권장 {n}건. 자가학습 카드에서 확인.",
+                        "🧠",
+                    )
+                    # 텔레그램 (긴급은 아니지만 의미 있는 변화 — 1회 알림)
+                    tg_send(
+                        f"🧠 <b>봇 자가학습 권장</b>\n"
+                        f"매매 {b4['trades']}건 누적 → 가중치 조정 권장 <b>{n}건</b>.\n"
+                        f"📊 대시보드 '자가학습' 카드에서 확인 후 결정해주세요.",
+                        silent=True,
+                    )
+        except Exception as e:
+            print(f"  [브리핑] B4 학습 알림 오류: {e}")
 
         # 텔레그램 발송 X — 대시보드에서 확인
         print(f"  [브리핑] 코스피 {mood['kospi_chg']:+.2f}% 마감.")
