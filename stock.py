@@ -7339,14 +7339,16 @@ def run_us_briefing():
         except Exception as e:
             print(f"  [브리핑] 섹터 가중치 처리 오류: {e}")
 
-        # 대시보드 갱신 (미국 데이터 반영)
-        try:
-            build_and_save_dashboard()
-        except Exception as e:
-            print(f"  [브리핑] 대시보드 갱신 오류: {e}")
     except Exception as e:
         print(f"  [브리핑] 미국 브리핑 오류: {e}")
         tg_send(f"⚠️ 미국 시장 브리핑 수집 실패: {e}")
+
+    # 대시보드 갱신 — 미국 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
+    # 이래야 yfinance/외부 API 일시 장애에도 dashboard build 보장
+    try:
+        build_and_save_dashboard()
+    except Exception as e:
+        print(f"  [브리핑] 대시보드 갱신 오류: {e}")
 
 
 def _load_value_top5() -> list:
@@ -7437,12 +7439,6 @@ def run_premarket_briefing():
         detail = f"코스피 {kos_chg:+.2f}% / VIX {mood.get('vix', 0):.1f} / 공포탐욕 {fg_score}({fg_label})"
         log_alert("briefing", "info", "장 시작 전", detail, "🔔")
 
-        # 대시보드 갱신
-        try:
-            build_and_save_dashboard(mood=mood, fg=fg, kr_top=top5)
-        except Exception as e:
-            print(f"  [브리핑] 대시보드 갱신 오류: {e}")
-
         # 미래에셋 모의 매도시점 알림 (2번 계좌 — 장 시작 전 점검)
         try:
             check_mirae_paper_alerts(send_telegram=True)
@@ -7451,6 +7447,12 @@ def run_premarket_briefing():
     except Exception as e:
         print(f"  [브리핑] 장전 브리핑 오류: {e}")
         tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
+
+    # 대시보드 갱신 — 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
+    try:
+        build_and_save_dashboard()
+    except Exception as e:
+        print(f"  [브리핑] 대시보드 갱신 오류: {e}")
 
 
 def _pick_tomorrow_candidates() -> dict:
@@ -7574,16 +7576,16 @@ def run_close_summary():
         except Exception as e:
             print(f"  [브리핑] mirae_paper 알림 오류: {e}")
 
-        # 대시보드 갱신
-        try:
-            build_and_save_dashboard(mood=mood, fg=fg, holdings_alerts=ha)
-        except Exception as e:
-            print(f"  [브리핑] 대시보드 갱신 오류: {e}")
-
         # 텔레그램 발송 X — 대시보드에서 확인
-        print(f"  [브리핑] 코스피 {mood['kospi_chg']:+.2f}% 마감. 대시보드 갱신 완료.")
+        print(f"  [브리핑] 코스피 {mood['kospi_chg']:+.2f}% 마감.")
     except Exception as e:
         print(f"  [브리핑] 마감 결산 오류: {e}")
+
+    # 대시보드 갱신 — 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
+    try:
+        build_and_save_dashboard()
+    except Exception as e:
+        print(f"  [브리핑] 대시보드 갱신 오류: {e}")
 
 
 # ════════════════════════════════════════════════
