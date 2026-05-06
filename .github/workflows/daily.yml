@@ -100,7 +100,11 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ tomorrow_picks.json alerts.json || true
+          # 파일 존재 체크 후 개별 add (한 파일 없어도 fatal 방지)
+          [ -d docs ] && git add docs/ || true
+          [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
+          [ -f alerts.json ] && git add alerts.json || true
+          [ -f mirae_paper.json ] && git add mirae_paper.json || true
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
@@ -141,7 +145,10 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ mirae_paper.json alerts.json || true
+          [ -d docs ] && git add docs/ || true
+          [ -f mirae_paper.json ] && git add mirae_paper.json || true
+          [ -f alerts.json ] && git add alerts.json || true
+          [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
@@ -181,7 +188,10 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ tomorrow_picks.json mirae_paper.json alerts.json || true
+          [ -d docs ] && git add docs/ || true
+          [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
+          [ -f mirae_paper.json ] && git add mirae_paper.json || true
+          [ -f alerts.json ] && git add alerts.json || true
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
@@ -239,8 +249,14 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add positions.json docs/ alerts.json || true
-          git diff --staged --quiet && exit 0 || true
+          [ -f positions.json ] && git add positions.json || true
+          [ -d docs ] && git add docs/ || true
+          [ -f alerts.json ] && git add alerts.json || true
+          [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
+          [ -f mirae_paper.json ] && git add mirae_paper.json || true
+          echo "=== git status (디버그) ==="
+          git status --short
+          git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
           git commit -m "chore: 자동매수 포지션 + 대시보드 + alerts $(date '+%Y-%m-%d %H:%M')"
           # push retry — 충돌 시 pull --rebase 후 다시 push (race condition 방어)
           git push 2>&1 || (
@@ -279,8 +295,15 @@ jobs:
           bash .github/scripts/encrypt_dashboard.sh
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add positions.json docs/ dart_seen.json alerts.json || true
-          git diff --staged --quiet && exit 0 || true
+          [ -f positions.json ] && git add positions.json || true
+          [ -d docs ] && git add docs/ || true
+          [ -f dart_seen.json ] && git add dart_seen.json || true
+          [ -f alerts.json ] && git add alerts.json || true
+          [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
+          [ -f mirae_paper.json ] && git add mirae_paper.json || true
+          echo "=== git status (디버그) ==="
+          git status --short
+          git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
           git commit -m "chore: 자동매도 포지션 + 대시보드 + alerts $(date '+%Y-%m-%d %H:%M')"
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
