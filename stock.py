@@ -2136,13 +2136,64 @@ def ai_sell_advisor(stock_info: dict, mood: dict, sell_reason: str, pct: float, 
         return ""
 
 
+def _calc_mdd_from_portfolio(window_days: int = 30) -> dict:
+    """portfolio_history.json 기반 MDD (Maximum Drawdown) 계산.
+
+    Returns: {"mdd_pct", "mdd_amount", "peak_date", "trough_date", "current_dd_pct"}
+    """
+    try:
+        history = _load_portfolio_history(days=window_days)
+        if not history or len(history) < 2:
+            return {"mdd_pct": 0, "mdd_amount": 0, "peak_date": "", "trough_date": "", "current_dd_pct": 0}
+
+        # total 키는 _load_portfolio_history 반환 형식에 따라 다름. 일반적으로 total/value/auto+value
+        def get_total(h):
+            return h.get("total") or h.get("value") or h.get("auto_value") or 0
+
+        peak_amount = 0
+        peak_date   = ""
+        max_dd      = 0
+        max_dd_amt  = 0
+        trough_date = ""
+
+        for h in history:
+            amt = get_total(h)
+            if amt <= 0:
+                continue
+            if amt > peak_amount:
+                peak_amount = amt
+                peak_date   = h.get("date", "")
+            elif peak_amount > 0:
+                dd_pct = (amt - peak_amount) / peak_amount * 100
+                if dd_pct < max_dd:
+                    max_dd      = dd_pct
+                    max_dd_amt  = amt - peak_amount
+                    trough_date = h.get("date", "")
+
+        # 현재 시점 낙폭 (피크 대비)
+        last_amt = get_total(history[-1]) if history else 0
+        current_dd = ((last_amt - peak_amount) / peak_amount * 100) if peak_amount > 0 else 0
+
+        return {
+            "mdd_pct":        round(max_dd, 2),
+            "mdd_amount":     round(max_dd_amt),
+            "peak_date":      peak_date,
+            "trough_date":    trough_date,
+            "current_dd_pct": round(current_dd, 2),
+        }
+    except Exception as e:
+        print(f"  [MDD] 계산 오류: {e}")
+        return {"mdd_pct": 0, "mdd_amount": 0, "peak_date": "", "trough_date": "", "current_dd_pct": 0}
+
+
 def analyze_trading_performance(window_days: int = 30) -> dict:
     """positions.json history 기반 매매 결과 자가 분석. (Phase 2 — 자가 학습 인프라)
 
     매수↔매도 매칭하여 종목별 수익률/보유일/매도 사유 계산.
     daily 08:00에 호출되어 ai_personal_coach 프롬프트에 통계 전달 → AI가 학습 결과 반영.
 
-    데이터 30건+ 쌓이면 swing_score 가중치 자동 조정으로 확장 (TODO).
+    B3 (5/6): MDD / 섹터별 / 보유일별 / TOP 종목 추가 — 자가학습 인프라 완성.
+    데이터 30건+ 쌓이면 swing_score 가중치 자동 조정으로 확장 (B4).
     """
     try:
         pos = load_positions()
@@ -2183,6 +2234,8 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
                         pass
                     results.append({
                         "name": buy.get("name", code),
+                        "code": code,
+                        "sector": buy.get("sector", "") or h.get("sector", ""),
                         "swing_score": score,
                         "pnl_pct": pnl_pct,
                         "hold_days": hold_days,
@@ -2219,6 +2272,48 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
         if bucket_60:
             summary_lines.append(f"점수 60-64: {len(bucket_60)}건, 승률 {_wr(bucket_60):.0f}%")
 
+        # B3: 섹터별 승률
+        sector_stats = {}
+        for r in results:
+            sec = r.get("sector") or "기타"
+            sector_stats.setdefault(sec, []).append(r)
+        sector_perf = []
+        for sec, lst in sector_stats.items():
+            if len(lst) < 2:  # 1건은 통계 의미 X
+                continue
+            sec_wins = sum(1 for r in lst if r["pnl_pct"] > 0)
+            sec_avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
+            sector_perf.append({
+                "sector":   sec,
+                "trades":   len(lst),
+                "win_rate": sec_wins / len(lst) * 100,
+                "avg_pnl":  sec_avg,
+            })
+        sector_perf.sort(key=lambda x: -x["win_rate"])
+
+        # B3: 보유일별 승률 (1일 / 2~3일 / 4~5일)
+        hold_buckets = {"1일": [], "2-3일": [], "4-5일": [], "6일+": []}
+        for r in results:
+            d = r["hold_days"]
+            if d <= 1:   hold_buckets["1일"].append(r)
+            elif d <= 3: hold_buckets["2-3일"].append(r)
+            elif d <= 5: hold_buckets["4-5일"].append(r)
+            else:        hold_buckets["6일+"].append(r)
+        hold_perf = []
+        for label, lst in hold_buckets.items():
+            if not lst:
+                continue
+            wr = sum(1 for r in lst if r["pnl_pct"] > 0) / len(lst) * 100
+            hold_perf.append({"range": label, "trades": len(lst), "win_rate": wr})
+
+        # B3: 최고 / 최악 종목 TOP 3
+        sorted_by_pnl = sorted(results, key=lambda r: -r["pnl_pct"])
+        top_winners = sorted_by_pnl[:3]
+        top_losers  = sorted_by_pnl[-3:][::-1]  # 역순 (가장 큰 손실 먼저)
+
+        # B3: MDD (portfolio_history 기반)
+        mdd = _calc_mdd_from_portfolio(window_days=window_days)
+
         return {
             "trades": len(results),
             "wins": len(wins),
@@ -2229,6 +2324,17 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             "avg_hold_days": avg_hold,
             "summary": "\n".join(summary_lines),
             "details": results,
+            # B3 추가
+            "sector_perf": sector_perf,    # [{sector, trades, win_rate, avg_pnl}, ...]
+            "hold_perf":   hold_perf,      # [{range, trades, win_rate}, ...]
+            "top_winners": top_winners,    # 상위 3건
+            "top_losers":  top_losers,     # 하위 3건
+            "mdd":         mdd,            # MDD 정보
+            "score_buckets": {             # 점수대별 (이미 있던 것 정리)
+                "70+":   {"trades": len(bucket_70), "win_rate": _wr(bucket_70)},
+                "65-69": {"trades": len(bucket_65), "win_rate": _wr(bucket_65)},
+                "60-64": {"trades": len(bucket_60), "win_rate": _wr(bucket_60)},
+            },
         }
     except Exception as e:
         return {"trades": 0, "summary": f"분석 오류: {e}"}
@@ -4355,6 +4461,132 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_performance_card(perf: dict) -> str:
+    """봇 성적표 카드 — analyze_trading_performance() 결과 시각화 (B3).
+
+    누적 매매 / 승률 / 평균 / MDD / 섹터별 / 보유일별 / TOP 종목.
+    """
+    if not perf or perf.get("trades", 0) == 0:
+        return _empty_section(
+            "performance", "📈", "section__icon--auto", "봇 성적표",
+            "최근 30일 누적", "아직 누적 매매 데이터 없음",
+            "자동매매 시작 후 매매 완료(매수→매도) 데이터가 모이면 표시됩니다.",
+        )
+
+    trades   = perf.get("trades", 0)
+    wins     = perf.get("wins", 0)
+    losses   = perf.get("losses", 0)
+    win_rate = perf.get("win_rate", 0)
+    avg_win  = perf.get("avg_win", 0)
+    avg_loss = perf.get("avg_loss", 0)
+    avg_hold = perf.get("avg_hold_days", 0)
+    wr_color = "#16a34a" if win_rate >= 50 else "#dc2626"
+
+    rows = []
+
+    # MDD
+    mdd = perf.get("mdd", {})
+    if mdd.get("mdd_pct", 0) < 0:
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">📉 최대 낙폭 (MDD)</div>
+        <div class="row__sub">{mdd.get('peak_date', '?')} 피크 → {mdd.get('trough_date', '?')} 저점 ({mdd.get('mdd_amount', 0):+,}원)</div>
+      </div>
+      <div class="row__price">
+        <div class="row__current" style="color:#dc2626">{mdd.get('mdd_pct', 0):.1f}%</div>
+        <div class="row__pnl"><small>peak→trough</small></div>
+      </div>
+    </div>""")
+
+    # 점수대별
+    sb = perf.get("score_buckets", {})
+    bucket_parts = []
+    for label, data in sb.items():
+        if data.get("trades", 0) > 0:
+            wr = data.get("win_rate", 0)
+            color = "#16a34a" if wr >= 50 else "#dc2626"
+            bucket_parts.append(f'<span style="color:{color}">{label}: {wr:.0f}% ({data["trades"]}건)</span>')
+    if bucket_parts:
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🎯 점수대별 승률</div>
+        <div class="row__sub">{" · ".join(bucket_parts)}</div>
+      </div>
+    </div>""")
+
+    # 섹터별 TOP 5
+    sp = perf.get("sector_perf", [])
+    if sp:
+        sec_parts = []
+        for s in sp[:5]:
+            color = "#16a34a" if s["win_rate"] >= 50 else "#dc2626"
+            sec_parts.append(f'<span style="color:{color}">{s["sector"]} {s["win_rate"]:.0f}% ({s["trades"]})</span>')
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🏷️ 섹터별 승률</div>
+        <div class="row__sub">{" · ".join(sec_parts)}</div>
+      </div>
+    </div>""")
+
+    # 보유일별
+    hp = perf.get("hold_perf", [])
+    if hp:
+        h_parts = [f'{h["range"]} {h["win_rate"]:.0f}% ({h["trades"]})' for h in hp]
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">⏱️ 보유일별 승률</div>
+        <div class="row__sub">{" · ".join(h_parts)}</div>
+      </div>
+    </div>""")
+
+    # 최고 / 최악 TOP 3
+    winners = perf.get("top_winners", [])
+    losers  = perf.get("top_losers", [])
+    if winners:
+        w_parts = [f'{w["name"]} +{w["pnl_pct"]:.1f}%' for w in winners if w["pnl_pct"] > 0]
+        if w_parts:
+            rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🏆 최고 수익 TOP 3</div>
+        <div class="row__sub" style="color:#16a34a">{" · ".join(w_parts)}</div>
+      </div>
+    </div>""")
+    if losers:
+        l_parts = [f'{l["name"]} {l["pnl_pct"]:.1f}%' for l in losers if l["pnl_pct"] < 0]
+        if l_parts:
+            rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">⚠️ 최대 손실 TOP 3</div>
+        <div class="row__sub" style="color:#dc2626">{" · ".join(l_parts)}</div>
+      </div>
+    </div>""")
+
+    return f"""
+<section class="section" id="performance" aria-label="봇 성적표">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">📈</span>
+      <h2>봇 성적표</h2>
+      <span class="section__badge">최근 30일</span>
+      <span class="section__count">{trades}건</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount" style="color:{wr_color}">승률 {win_rate:.0f}%</div>
+      <div>{wins}승 / {losses}패 · 평균 수익 +{avg_win:.1f}% / 평균 손실 {avg_loss:.1f}% · 평균 보유 {avg_hold:.1f}일</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
 def _make_tomorrow_picks_section(tp_data: dict) -> str:
     """내일/오늘 사전 후보 섹션 — tomorrow_picks.json 기반.
 
@@ -5526,6 +5758,12 @@ def build_and_save_dashboard(
         except Exception:
             tp_data = {}
         tomorrow_html = _make_tomorrow_picks_section(tp_data)
+        # 봇 성적표 (B3)
+        try:
+            perf_data = analyze_trading_performance(window_days=30)
+        except Exception:
+            perf_data = {}
+        performance_html = _make_performance_card(perf_data)
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -5579,6 +5817,7 @@ def build_and_save_dashboard(
 {value_html}
 {auto_html}
 {tomorrow_html}
+{performance_html}
 {market_html}
 {macro_html}
 {ai_html}
@@ -7016,6 +7255,7 @@ def run_auto_buy():
                 "date": today, "side": "buy", "code": code, "name": s["name"],
                 "qty": qty, "price": price, "amount": amt,
                 "reason": f"swing_score {s.get('swing_score',0)}",
+                "sector": s.get("sector", ""),
             })
             daily["buy_count"]   += 1
             daily["buy_amount"]  += amt
@@ -7170,6 +7410,7 @@ def run_auto_sell():
             "date": today, "side": "sell", "code": code, "name": p["name"],
             "qty": sell_qty, "price": cur_price, "amount": amt,
             "reason": sell_reason, "pct": round(pct, 2),
+            "sector": p.get("sector", ""),
         })
         daily["trade_count"] += 1
 
