@@ -7737,6 +7737,11 @@ def run_auto_buy():
         # 다이어트: 매수 후보 0개는 텔레그램 X (콘솔만). 30분마다 13번 호출되므로 시끄러움 방지.
         print(f"[자동매수] 매수할 종목 없음 — 시그널 통과 후보 {len(candidates)}개, "
               f"보유/쿨다운 제외 후 0개")
+        # 매수 발생 X에도 대시보드 갱신 (현재가/평가손익/매도시점 거리 등 항상 최신)
+        try:
+            build_and_save_dashboard()
+        except Exception as e:
+            print(f"  [자동매수] 대시보드 갱신 오류: {e}")
         return
 
     prev_buy_count = daily["buy_count"]  # 매수 요약 메시지용 (이번 회차 매수 건수 계산)
@@ -8005,13 +8010,14 @@ def run_auto_sell():
     if sold_msgs:
         header = f"🤖 <b>{mode_tag} 자동 매도</b> ({_now_kst().strftime('%H:%M')})"
         tg_send("\n".join([header, ""] + sold_msgs))
-        # 대시보드 갱신 (보유 변경 반영)
-        try:
-            build_and_save_dashboard()
-        except Exception as e:
-            print(f"  [자동매도] 대시보드 갱신 오류: {e}")
     else:
         print(f"  [자동매도] 매도 조건 충족 종목 없음")
+
+    # 대시보드 갱신 (매도 발생 X에도 항상 — 현재가/평가손익/매도시점 거리 항상 최신)
+    try:
+        build_and_save_dashboard()
+    except Exception as e:
+        print(f"  [자동매도] 대시보드 갱신 오류: {e}")
 
     # DART 공시 — 30분마다: 텔레그램(새것만 핵심) + 대시보드(오늘 전체 갱신)
     try:
