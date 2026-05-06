@@ -8,6 +8,14 @@ if [ ! -f docs/index.html ]; then
   exit 0
 fi
 
+# 이미 staticrypt 처리된 docs면 이중 처리 방지 (staticryptInitiator 중복 → JS SyntaxError)
+# stock.py가 raw HTML로 덮어쓰지 않은 경우 (휴장일 즉시 return 등) 발생 가능.
+if grep -q 'staticryptInitiator' docs/index.html; then
+  echo "::warning::docs/index.html에 이미 staticryptInitiator 존재 — 이중 staticrypt 방지로 스킵"
+  echo "  (다음 stock.py 실행에서 새 raw HTML 만들어야 정상화됨)"
+  exit 0
+fi
+
 STATICRYPT_OPTS=(
   --password "${DASHBOARD_PASSWORD:-changeme}"
   --short
