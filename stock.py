@@ -4461,6 +4461,102 @@ def _make_auto_positions_section(auto_positions: list) -> str:
 """
 
 
+def _make_trade_history_card(limit: int = 30) -> str:
+    """거래 이력 카드 — positions.json history 기반.
+
+    사용자 메모 대체용: 봇이 모든 매수/매도 기록을 자동 저장.
+    매수: 종목/수량/가격/시각/태그(🚀/🎯/📊)
+    매도: 종목/수량/가격/사유/손익/AI 의견/시각
+    최근 N건 (날짜+시각 역순).
+    """
+    try:
+        pos = load_positions()
+        history = pos.get("history", [])
+        if not history:
+            return _empty_section(
+                "trades", "📜", "section__icon--auto", "거래 이력",
+                "최근 30건", "아직 매매 기록 없음",
+                "자동매매 시작 후 모든 매수/매도 기록이 여기에 자동으로 누적됩니다.",
+            )
+
+        # 최근순 정렬 (date + time)
+        def _sort_key(h):
+            return (h.get("date", ""), h.get("time", "00:00"))
+        recent = sorted(history, key=_sort_key, reverse=True)[:limit]
+
+        rows = []
+        for h in recent:
+            side  = h.get("side", "")
+            name  = h.get("name", "?")
+            qty   = h.get("qty", 0)
+            price = h.get("price", 0)
+            date  = h.get("date", "")
+            tm    = h.get("time", "")
+            stamp = f"{date[5:].replace('-', '/')} {tm}" if date else tm
+
+            if side == "buy":
+                tag    = h.get("tag", "📊 스윙")
+                reason = h.get("reason", "")
+                amount = h.get("amount", 0)
+                rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🟦 매수: {tag} {name}</div>
+        <div class="row__sub">{qty}주 × {price:,.0f}원 = {amount:,.0f}원 · {reason} · <small>{stamp}</small></div>
+      </div>
+    </div>""")
+            elif side == "sell":
+                profit = h.get("profit", 0)
+                pct    = h.get("pct", 0)
+                bp     = h.get("buy_price", 0)
+                reason = h.get("reason", "")
+                ai_op  = h.get("ai_opinion", "")
+                emoji  = "🟢" if profit > 0 else ("🔴" if profit < 0 else "⚪")
+                p_color = "#16a34a" if profit > 0 else "#dc2626"
+                p_sign  = "+" if profit > 0 else ""
+                ai_html = f'<br>  <small style="color:#0369a1">💭 {ai_op}</small>' if ai_op else ""
+                rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">{emoji} 매도: {name}</div>
+        <div class="row__sub">{qty}주 × {price:,.0f}원 (매수가 {bp:,.0f}원) · {reason} · <small>{stamp}</small>{ai_html}</div>
+      </div>
+      <div class="row__price">
+        <div class="row__current" style="color:{p_color}">{p_sign}{profit:,.0f}원</div>
+        <div class="row__pnl" style="color:{p_color}"><small>{p_sign}{pct:.1f}%</small></div>
+      </div>
+    </div>""")
+
+        # 통계: 총 매수 / 매도 / 누적 손익
+        total_buys    = sum(1 for h in history if h.get("side") == "buy")
+        total_sells   = sum(1 for h in history if h.get("side") == "sell")
+        total_profit  = sum(h.get("profit", 0) for h in history if h.get("side") == "sell")
+        profit_color  = "#16a34a" if total_profit >= 0 else "#dc2626"
+        profit_sign   = "+" if total_profit >= 0 else ""
+
+        return f"""
+<section class="section" id="trades" aria-label="거래 이력">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">📜</span>
+      <h2>거래 이력</h2>
+      <span class="section__badge">최근 {len(recent)}건</span>
+      <span class="section__count">총 매수 {total_buys} / 매도 {total_sells}</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount" style="color:{profit_color}">{profit_sign}{total_profit:,.0f}원</div>
+      <div>매도 누적 손익 (실현 분만)</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+    except Exception as e:
+        print(f"  [trade_history] 카드 생성 오류: {e}")
+        return ""
+
+
 def _make_performance_card(perf: dict) -> str:
     """봇 성적표 카드 — analyze_trading_performance() 결과 시각화 (B3).
 
@@ -5764,6 +5860,8 @@ def build_and_save_dashboard(
         except Exception:
             perf_data = {}
         performance_html = _make_performance_card(perf_data)
+        # 거래 이력 (사용자 메모 대체용 — 매수/매도 자동 누적)
+        trades_html = _make_trade_history_card(limit=30)
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -5818,6 +5916,7 @@ def build_and_save_dashboard(
 {auto_html}
 {tomorrow_html}
 {performance_html}
+{trades_html}
 {market_html}
 {macro_html}
 {ai_html}
@@ -7252,10 +7351,13 @@ def run_auto_buy():
                 "order_no":      result.get("order_no", ""),
             }
             pos["history"].append({
-                "date": today, "side": "buy", "code": code, "name": s["name"],
+                "date": today,
+                "time": _now_kst().strftime("%H:%M"),
+                "side": "buy", "code": code, "name": s["name"],
                 "qty": qty, "price": price, "amount": amt,
                 "reason": f"swing_score {s.get('swing_score',0)}",
                 "sector": s.get("sector", ""),
+                "tag": "🚀 급등" if s.get("momentum_signal") else ("🎯 사전 후보" if s.get("from_tomorrow_picks") else "📊 스윙"),
             })
             daily["buy_count"]   += 1
             daily["buy_amount"]  += amt
@@ -7406,11 +7508,18 @@ def run_auto_sell():
             continue
 
         amt = cur_price * sell_qty
+        profit = (cur_price - buy_price) * sell_qty
         pos["history"].append({
-            "date": today, "side": "sell", "code": code, "name": p["name"],
+            "date": today,
+            "time": _now_kst().strftime("%H:%M"),
+            "side": "sell", "code": code, "name": p["name"],
             "qty": sell_qty, "price": cur_price, "amount": amt,
             "reason": sell_reason, "pct": round(pct, 2),
             "sector": p.get("sector", ""),
+            # 사용자 메모 대체용 — 봇이 모든 정보 자동 저장
+            "buy_price": buy_price,
+            "profit": round(profit),
+            "ai_opinion": ai_opinion,
         })
         daily["trade_count"] += 1
 
