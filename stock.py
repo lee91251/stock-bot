@@ -1818,9 +1818,11 @@ def analyze(
 
     # 급등 모멘텀 매수 시그널 (5/6 추가 — SKC 같은 30% 종목 캐치)
     # 거래량 폭증 + 가격 급등 → swing_signal 통과 못해도 강력 매수 후보
+    # 5/6 변경: 가격 상승률 +3~+5% 안전대만 매수 (추격매수 차단)
+    #   배경: 미래에셋 5/6 매수가 +14.5%에 잡혀 평균 +1%만 남음 — 너무 늦은 진입.
     momentum_signal = (
         vol_ratio >= 200          # 거래량 평균 2배 이상
-        and change >= 3.0         # 당일 +3% 이상
+        and 3.0 <= change <= 5.0  # 당일 +3~+5% 안전대 (이전: +3% 이상 무상한)
         and rsi < 80              # 너무 과열은 X
         and not manipulation_signal
         and not momentum_bad
