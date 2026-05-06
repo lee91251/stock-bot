@@ -101,8 +101,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ tomorrow_picks.json alerts.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + 섹터 가중치 + alerts (미국 마감) $(date '+%Y-%m-%d')"
-          git push || true
+          echo "=== git status (디버그) ==="
+          git status --short
+          git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
+          git commit -m "chore: 대시보드 + alerts (미국 마감) $(date '+%Y-%m-%d')"
+          # push retry — 충돌 시 pull --rebase 후 재시도
+          git push 2>&1 || (
+            echo "push 충돌 — rebase 후 재시도"
+            git pull --rebase origin master 2>&1
+            git push 2>&1 || (
+              sleep 3
+              git pull --rebase origin master 2>&1
+              git push 2>&1
+            )
+          )
 
   # ── 장 시작 전 브리핑 (cron-job.org 평일 08:50 KST) ────
   premarket-briefing:
@@ -130,8 +142,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ mirae_paper.json alerts.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + mirae_paper + alerts (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
-          git push || true
+          echo "=== git status (디버그) ==="
+          git status --short
+          git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
+          git commit -m "chore: 대시보드 + alerts (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
+          git push 2>&1 || (
+            echo "push 충돌 — rebase 후 재시도"
+            git pull --rebase origin master 2>&1
+            git push 2>&1 || (
+              sleep 3
+              git pull --rebase origin master 2>&1
+              git push 2>&1
+            )
+          )
 
   # ── 장 마감 결산 (cron-job.org 평일 15:35 KST) ────
   close-summary:
@@ -159,8 +182,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/ tomorrow_picks.json mirae_paper.json alerts.json || true
-          git diff --staged --quiet || git commit -m "chore: 대시보드 + tomorrow_picks + mirae_paper + alerts $(date '+%Y-%m-%d')"
-          git push || true
+          echo "=== git status (디버그) ==="
+          git status --short
+          git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
+          git commit -m "chore: 대시보드 + alerts (장 마감) $(date '+%Y-%m-%d')"
+          git push 2>&1 || (
+            echo "push 충돌 — rebase 후 재시도"
+            git pull --rebase origin master 2>&1
+            git push 2>&1 || (
+              sleep 3
+              git pull --rebase origin master 2>&1
+              git push 2>&1
+            )
+          )
 
   # ── 장중 실시간 모니터링 (cron-job.org 평일 09:05 KST 시작, 20분) ────
   intraday-monitor:
