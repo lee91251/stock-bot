@@ -2144,6 +2144,96 @@ def ai_sell_advisor(stock_info: dict, mood: dict, sell_reason: str, pct: float, 
         return ""
 
 
+def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
+                      sell_reason: str, mood: dict,
+                      past_journals: list = None) -> str:
+    """매도 후 AI 자동 회고 — '왜 이겼나/졌나' 1줄 일기.
+
+    핵심: 과거 일기를 함께 전달 → AI가 패턴 학습 → 다음 매매 인사이트 누적.
+    거래 이력에 누적되어 사용자 + AI 둘 다 학습 자료로 활용.
+
+    Args:
+        stock_info: {"name", "sector", "buy_price", "curr_price", "buy_time", "sell_time"}
+        hold_days: 보유 거래일
+        pct: 수익률 %
+        sell_reason: 매도 사유 (예: "+6.0% 절반 익절")
+        mood: 시장 데이터 (kospi_chg, vix, fg_score)
+        past_journals: 최근 5건 일기 (AI 학습 컨텍스트용, [{name, pct, journal}, ...])
+
+    Returns:
+        1~2 문장 회고. 빈 문자열이면 호출 실패/AI 비활성.
+    """
+    client = _get_ai_client()
+    if not client:
+        return ""
+    try:
+        # 과거 일기 컨텍스트 (학습 효과 — AI가 비슷한 패턴 떠올리며 통찰)
+        past_text = ""
+        if past_journals:
+            past_lines = []
+            for j in past_journals[:5]:
+                past_lines.append(
+                    f"  - {j.get('name', '')} {j.get('pct', 0):+.1f}% "
+                    f"({j.get('journal', '')[:60]})"
+                )
+            if past_lines:
+                past_text = "\n\n[최근 5건 매매 일기 — 패턴 참고]\n" + "\n".join(past_lines)
+
+        # 결과 분류
+        if pct >= 6.0:
+            outcome = "익절 성공"
+        elif pct <= -3.5:
+            outcome = "손절"
+        elif pct > 0:
+            outcome = "소폭 수익"
+        else:
+            outcome = "소폭 손실"
+
+        prompt = (
+            f"[방금 매도한 매매 데이터]\n"
+            f"종목: {stock_info.get('name', '?')} ({stock_info.get('sector', '')})\n"
+            f"매수가 {stock_info.get('buy_price', 0):,.0f}원 ({stock_info.get('buy_time', '')}) → "
+            f"매도가 {stock_info.get('curr_price', 0):,.0f}원 ({stock_info.get('sell_time', '')})\n"
+            f"수익률: {pct:+.2f}% ({outcome}) / 보유 {hold_days}거래일 / {sell_reason}\n\n"
+            f"[당시 시장]\n"
+            f"코스피 {mood.get('kospi_chg', 0):+.2f}% / VIX {mood.get('vix', 20):.1f} / "
+            f"공포탐욕 {mood.get('fg_score', 50)}\n"
+            f"{past_text}\n\n"
+            f"위 매매를 1~2문장으로 회고하세요. 핵심: '무엇이 잘 됐고/잘못됐나'를 짚고, "
+            f"가능하면 과거 일기와 연결해 패턴 발견.\n"
+            f"형식: '✅ 잘된 점 — 핵심' 또는 '⚠️ 아쉬운 점 — 핵심'"
+        )
+        resp = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=200,
+            system=_ai_system_messages(),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp.content[0].text.strip()
+    except Exception as e:
+        print(f"  [AI 일기] 호출 오류: {e}")
+        return ""
+
+
+def _get_recent_journals(limit: int = 5) -> list:
+    """positions.json history에서 최근 매도 N건의 journal 추출 (AI 학습용)."""
+    try:
+        pos = load_positions()
+        history = pos.get("history", [])
+        sells = [h for h in history if h.get("side") == "sell" and h.get("journal")]
+        sells.sort(key=lambda h: (h.get("date", ""), h.get("time", "")), reverse=True)
+        return [
+            {
+                "name":    s.get("name", ""),
+                "pct":     s.get("pct", 0),
+                "journal": s.get("journal", ""),
+            }
+            for s in sells[:limit]
+        ]
+    except Exception:
+        return []
+
+
 def _calc_mdd_from_portfolio(window_days: int = 30) -> dict:
     """portfolio_history.json 기반 MDD (Maximum Drawdown) 계산.
 
@@ -5001,15 +5091,22 @@ def _make_trade_history_card(limit: int = 30) -> str:
                 bp     = h.get("buy_price", 0)
                 reason = h.get("reason", "")
                 ai_op  = h.get("ai_opinion", "")
+                journal = h.get("journal", "")
                 emoji  = "🟢" if profit > 0 else ("🔴" if profit < 0 else "⚪")
                 p_color = "#16a34a" if profit > 0 else "#dc2626"
                 p_sign  = "+" if profit > 0 else ""
-                ai_html = f'<br>  <small style="color:#0369a1">💭 {ai_op}</small>' if ai_op else ""
+                # AI 의견 (매도 직전) + 일기 (매도 후 회고, 학습용)
+                extras = []
+                if ai_op:
+                    extras.append(f'<small style="color:#0369a1">💭 {ai_op}</small>')
+                if journal:
+                    extras.append(f'<small style="color:#7c3aed">📝 {journal}</small>')
+                extras_html = ("<br>  " + "<br>  ".join(extras)) if extras else ""
                 rows.append(f"""
     <div class="row">
       <div class="row__main">
         <div class="row__name">{emoji} 매도: {name}</div>
-        <div class="row__sub">{qty}주 × {price:,.0f}원 (매수가 {bp:,.0f}원) · {reason} · <small>{stamp}</small>{ai_html}</div>
+        <div class="row__sub">{qty}주 × {price:,.0f}원 (매수가 {bp:,.0f}원) · {reason} · <small>{stamp}</small>{extras_html}</div>
       </div>
       <div class="row__price">
         <div class="row__current" style="color:{p_color}">{p_sign}{profit:,.0f}원</div>
@@ -8151,6 +8248,30 @@ def run_auto_sell():
 
         amt = cur_price * sell_qty
         profit = (cur_price - buy_price) * sell_qty
+
+        # AI 트레이딩 일기 — 매도 후 1줄 회고 (학습 누적)
+        # 과거 5건 일기를 함께 전달 → AI가 패턴 학습 → 다음 매매 인사이트 ↑
+        journal = ""
+        try:
+            past_journals = _get_recent_journals(limit=5)
+            journal = ai_trade_journal(
+                stock_info={
+                    "name":       p.get("name", code),
+                    "sector":     p.get("sector", ""),
+                    "buy_price":  buy_price,
+                    "curr_price": cur_price,
+                    "buy_time":   p.get("buy_time", ""),
+                    "sell_time":  _now_kst().strftime("%H:%M"),
+                },
+                hold_days=days,
+                pct=pct,
+                sell_reason=sell_reason,
+                mood=ai_mood_cache or {},
+                past_journals=past_journals,
+            )
+        except Exception as e:
+            print(f"  [자동매도] AI 일기 작성 오류: {e}")
+
         pos["history"].append({
             "date": today,
             "time": _now_kst().strftime("%H:%M"),
@@ -8162,6 +8283,7 @@ def run_auto_sell():
             "buy_price": buy_price,
             "profit": round(profit),
             "ai_opinion": ai_opinion,
+            "journal":    journal,  # AI 회고 (매도 후 1줄, 학습 누적용)
         })
         daily["trade_count"] += 1
 
@@ -8184,6 +8306,8 @@ def run_auto_sell():
         )
         if ai_opinion:
             msg += f"\n  💭 AI: {ai_opinion}"
+        if journal:
+            msg += f"\n  📝 일기: {journal}"
         sold_msgs.append(msg)
         save_positions(pos)
         time.sleep(1)

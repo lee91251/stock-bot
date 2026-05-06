@@ -33,10 +33,19 @@ STATICRYPT_OPTS=(
   --template-toggle-hide "숨김"
 )
 
+# staticrypt 1차 시도 — 일시 장애(npm CDN, network) 대비 재시도 로직
 if ! npx -y staticrypt docs/index.html "${STATICRYPT_OPTS[@]}"; then
-  echo "::warning::staticrypt 실패 — docs 변경 폐기, 평문 노출 차단"
-  git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
-  exit 0
+  echo "::warning::staticrypt 1차 실패 — 5초 후 재시도"
+  sleep 5
+  if ! npx -y staticrypt docs/index.html "${STATICRYPT_OPTS[@]}"; then
+    echo "::warning::staticrypt 2차 실패 — 10초 후 마지막 재시도"
+    sleep 10
+    if ! npx -y staticrypt docs/index.html "${STATICRYPT_OPTS[@]}"; then
+      echo "::warning::staticrypt 최종 실패 — docs 변경 폐기, 평문 노출 차단"
+      git checkout HEAD -- docs/index.html 2>/dev/null || rm -f docs/index.html
+      exit 0
+    fi
+  fi
 fi
 
 # 자비스 고급 로그인 디자인 (다크 그라디언트 + 글래스모피즘) 주입
