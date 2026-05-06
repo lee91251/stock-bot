@@ -2,14 +2,15 @@
   "positions": {
     "006800": {
       "name": "미래에셋증권",
-      "qty": 48,
+      "qty": 24,
       "buy_price": 80300.0,
       "buy_date": "2026-05-06",
       "buy_amount": 3854400.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 46,
       "swing_score": 57,
-      "order_no": "0000015415"
+      "order_no": "0000015415",
+      "imminent_state": "near_target2"
     }
   },
   "history": [
@@ -32,13 +33,25 @@
       "price": 80100.0,
       "amount": 1922400.0,
       "reason": "swing_score 57 (2차 재매수 — cron 지연으로 중복 발생, 수동 보정)"
+    },
+    {
+      "date": "2026-05-06",
+      "side": "sell",
+      "code": "006800",
+      "name": "미래에셋증권",
+      "qty": 24,
+      "price": 86500.0,
+      "amount": 2076000.0,
+      "reason": "+7.7% 절반 익절",
+      "pct": 7.72,
+      "sector": ""
     }
   ],
   "daily": {
     "2026-05-06": {
       "buy_count": 1,
       "buy_amount": 3854400.0,
-      "trade_count": 2
+      "trade_count": 3
     }
   },
   "loss_cooldown": {},
