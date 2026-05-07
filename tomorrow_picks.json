@@ -1,0 +1,38 @@
+{
+  "date": "2026-05-08",
+  "generated_at": "2026-05-07T15:44:35.366945",
+  "source_phase": "close_summary",
+  "picks": [
+    {
+      "code": "003490",
+      "name": "대한항공",
+      "sector": "항공",
+      "score_bonus": 7,
+      "today_change": 7.33,
+      "today_vol_ratio": 369.0,
+      "today_score": 73,
+      "reasons": [
+        "오늘 +7.3% 마감",
+        "거래량 평균 +369%",
+        "스윙점수 73"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "068270",
+      "name": "셀트리온",
+      "sector": "바이오",
+      "score_bonus": 4,
+      "today_change": 4.01,
+      "today_vol_ratio": 214.0,
+      "today_score": 53,
+      "reasons": [
+        "오늘 +4.0% 마감",
+        "거래량 평균 +214%",
+        "스윙점수 53"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
+}
