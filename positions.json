@@ -12,7 +12,7 @@
       "swing_score": 57,
       "sector": "금융",
       "order_no": "0000015415",
-      "imminent_state": ""
+      "imminent_state": "near_stop"
     },
     "323410": {
       "name": "카카오뱅크",
@@ -25,7 +25,8 @@
       "score": 0,
       "swing_score": 60,
       "sector": "금융",
-      "order_no": ""
+      "order_no": "",
+      "imminent_state": "near_stop"
     }
   },
   "history": [
