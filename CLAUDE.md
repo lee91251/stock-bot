@@ -75,6 +75,62 @@
 - "1주일 운영 데이터 점검" — 매수/매도 빈도, AI 의견 신뢰도
 - "Anthropic 콘솔에서 캐시 히트율 확인"
 
+## 🚨 다음 세션 첫 명령 (5/8~)
+
+> **사용자가 "이어서 하자"라고 하면 이 섹션부터 읽으세요.**
+
+### 사용자 통찰 (5/7 마지막 대화) ⭐⭐⭐
+**"팀/부서 분리하면 어때? 재무부서, 매수부서, 매도부서, 추천부서, 알림부서로 나누고 순서대로 일해."**
+
+→ 시스템 설계의 정석 (Microservices/Modularization 패턴). **다음 큰 작업의 방향**.
+
+### 5/7 마지막 합의된 진행 순서
+
+#### Phase 1: 안정화 (5/8~5/13, 1주)
+- **신기능 X** — 사고 fix만
+- autostash fix (`0b1d76d`) 작동 검증 → 워크플로우 실패 0건 확인
+- KIS API timeout / 장 마감 매수 차단 (`ec328c7`) 검증
+- 데이터 누적 (B1 5건+, B4 진행도)
+
+#### Phase 2: 팀/부서 모듈 분리 (5/14~5/27, 4~5세션)
+**사용자 아이디어 적용 — 큰 리팩토링**:
+```
+stock.py (9,000줄 모놀리식)
+  ↓
+finance.py    — positions/mirae_paper/ai_advisor_log 관리
+buy.py        — 매수 분석 + 실행 + Tomorrow picks 활용
+sell.py       — 매도 점검 + 손절 + 일기
+recommend.py  — AI 분석 + Tomorrow picks 생성 + 매크로
+notify.py     — 텔레그램 + 대시보드 알림 센터
+learning.py   — B3 통계 + B4 자가학습 + AI 어드바이저 정확도
+dashboard.py  — HTML 카드 생성 + Chart.js
+orchestrator.py — 부서 순서대로 호출 + 단일 git push
+```
+
+**효과**:
+- git push 5번 → 1번 (race condition 영구 차단)
+- 한 부서 사고 ≠ 다른 부서 영향 (장애 격리)
+- 코드 가독성 ↑ (부서별 1,000~2,000줄)
+- 사용자 명령 "재무부 점검해줘" 같은 모듈별 확인 가능
+
+**위험**:
+- 큰 리팩토링 (10~15h, 잘못하면 다 망가짐)
+- 1주일 검증 필요
+- 한 번에 1~2부서씩 분할 진행 권장
+
+#### Phase 3: Railway 이전 (6월~)
+- cron 지연 영구 해결
+- PWA Push 알림 (폰 진동)
+- 부서별 다른 서버 가능 (진짜 microservices)
+- 24h 텔레그램 즉시 응답
+
+#### Phase 4: 실전 매매 (Phase 1~3 검증 후)
+- 별도 KIS 실계좌 키
+- `INVEST_PER_STOCK` / `SWING_MAX_DAILY_AMT` 시드 맞춤 조정
+- `PAPER_TRADING=false`
+
+---
+
 ## 🎯 5/7~ 진행 작업 (인프라 모두 완료, 데이터 누적 대기)
 
 > **이 섹션이 다음 세션 시작 시 가장 먼저 볼 작업 순서입니다.**
