@@ -113,10 +113,10 @@ jobs:
           # push retry — 충돌 시 pull --rebase 후 재시도
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
-            git pull --rebase origin master 2>&1
+            git pull --rebase --autostash origin master 2>&1
             git push 2>&1 || (
               sleep 3
-              git pull --rebase origin master 2>&1
+              git pull --rebase --autostash origin master 2>&1
               git push 2>&1
             )
           )
@@ -157,10 +157,10 @@ jobs:
           git commit -m "chore: 대시보드 + alerts (장 시작 전) $(date '+%Y-%m-%d %H:%M')"
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
-            git pull --rebase origin master 2>&1
+            git pull --rebase --autostash origin master 2>&1
             git push 2>&1 || (
               sleep 3
-              git pull --rebase origin master 2>&1
+              git pull --rebase --autostash origin master 2>&1
               git push 2>&1
             )
           )
@@ -201,10 +201,10 @@ jobs:
           git commit -m "chore: 대시보드 + alerts (장 마감) $(date '+%Y-%m-%d')"
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
-            git pull --rebase origin master 2>&1
+            git pull --rebase --autostash origin master 2>&1
             git push 2>&1 || (
               sleep 3
-              git pull --rebase origin master 2>&1
+              git pull --rebase --autostash origin master 2>&1
               git push 2>&1
             )
           )
@@ -265,10 +265,10 @@ jobs:
           # push retry — 충돌 시 pull --rebase 후 다시 push (race condition 방어)
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
-            git pull --rebase origin master 2>&1
+            git pull --rebase --autostash origin master 2>&1
             git push 2>&1 || (
               sleep 3
-              git pull --rebase origin master 2>&1
+              git pull --rebase --autostash origin master 2>&1
               git push 2>&1
             )
           )
@@ -312,10 +312,10 @@ jobs:
           git commit -m "chore: 자동매도 포지션 + 대시보드 + alerts $(date '+%Y-%m-%d %H:%M')"
           git push 2>&1 || (
             echo "push 충돌 — rebase 후 재시도"
-            git pull --rebase origin master 2>&1
+            git pull --rebase --autostash origin master 2>&1
             git push 2>&1 || (
               sleep 3
-              git pull --rebase origin master 2>&1
+              git pull --rebase --autostash origin master 2>&1
               git push 2>&1
             )
           )
