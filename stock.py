@@ -8526,6 +8526,13 @@ def run_auto_buy():
         )
         return
 
+    # 장 마감 후 자동매수 차단 (5/7 fix — 장 마감 후 매수 시도 → 한투 카톡 알림 무더기 방지)
+    # cron-job.org가 15:45 호출하거나 GitHub Actions 지연으로 16시 후 도달 시 매수 시도 X
+    if not _is_market_open(now):
+        # 장 시간 외 — 매수 시도 X (KIS 카톡 알림/매수실패 메시지 방지)
+        print(f"[autobuy] 장 시간 외 ({now.strftime('%H:%M')}) — 매수 스킵")
+        return
+
     client = get_trading_client()
     mode_tag = client.mode_tag()
 
