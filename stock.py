@@ -8962,9 +8962,30 @@ def run_auto_sell():
         except Exception as e:
             print(f"  [자동매도] AI 의견 조회 오류: {e}")
 
-        result = client.sell(code, sell_qty)
+        # KIS API 호출 try/except로 감싸서 timeout 등 예외 시 다음 종목 진행 보장
+        # (5/7 사고: 카카오뱅크 timeout 시 미래에셋 매도 commit이 누락됨 → race)
+        try:
+            result = client.sell(code, sell_qty)
+        except Exception as e:
+            tg_send(f"❌ {mode_tag} 매도 호출 오류: {p.get('name','?')} — {str(e)[:100]}")
+            print(f"  [자동매도] {p.get('name','?')} sell() 예외: {e}")
+            # 보유종목 잔고 없음 → KIS에서 거부 메시지
+            if "잔고" in str(e) or "없습니다" in str(e):
+                # 봇 기록 vs 실계좌 불일치 — 다음 회차에서 시세 조회 실패로 자연 정리
+                print(f"  [자동매도] {p.get('name','?')} 잔고 불일치 — positions에서 정리")
+                if code in pos["positions"]:
+                    del pos["positions"][code]
+                    save_positions(pos)
+            continue
         if not result.get("ok"):
             tg_send(f"❌ {mode_tag} 매도 실패: {p.get('name','?')} — {result.get('msg','')}")
+            # 잔고 없음 메시지 시 봇 기록 정리 (불일치 자가 회복)
+            msg_lower = str(result.get("msg", ""))
+            if "잔고" in msg_lower and "없" in msg_lower:
+                if code in pos["positions"]:
+                    del pos["positions"][code]
+                    save_positions(pos)
+                    print(f"  [자동매도] {p.get('name','?')} 잔고 없음 → positions에서 자동 정리")
             continue
 
         amt = cur_price * sell_qty
