@@ -11,6 +11,18 @@
       "rec_date": "2026-05-06",
       "rec_score": 0,
       "peak_pct": 0.09
+    },
+    "138930": {
+      "name": "BNK금융지주",
+      "qty": 110,
+      "buy_price": 18020.0,
+      "buy_date": "2026-05-08",
+      "buy_time": "12:56",
+      "buy_amount": 1982200,
+      "partial_sold": false,
+      "rec_date": "2026-05-08",
+      "rec_score": 0,
+      "peak_pct": 0.0
     }
   },
   "history": [
@@ -24,6 +36,17 @@
       "price": 11610.0,
       "amount": 1996920,
       "source": "추천 (Daily Top5)"
+    },
+    {
+      "date": "2026-05-08",
+      "time": "12:56",
+      "side": "buy",
+      "code": "138930",
+      "name": "BNK금융지주",
+      "qty": 110,
+      "price": 18020.0,
+      "amount": 1982200,
+      "source": "추천 (가치주 TOP5)"
     }
   ]
 }
