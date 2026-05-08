@@ -1,6 +1,6 @@
 {
   "date": "2026-05-11",
-  "generated_at": "2026-05-08T15:39:50.248486",
+  "generated_at": "2026-05-08T17:13:33.165764",
   "source_phase": "close_summary",
   "picks": [
     {
@@ -75,6 +75,21 @@
         "오늘 +3.5% 마감",
         "거래량 평균 +253%",
         "스윙점수 64"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "035420",
+      "name": "NAVER",
+      "sector": "IT",
+      "score_bonus": 4,
+      "today_change": 3.61,
+      "today_vol_ratio": 193.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +3.6% 마감",
+        "거래량 평균 +193%",
+        "스윙점수 54"
       ],
       "source": "close_summary"
     }
