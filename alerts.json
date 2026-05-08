@@ -1,37 +1,5 @@
 [
   {
-    "time": "2026-05-07T08:50:52.707933",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.4 / 공포탐욕 55(중립)"
-  },
-  {
-    "time": "2026-05-07T09:46:04.711798",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 미래에셋증권 -3.80% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-05-07T09:46:04.712092",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 카카오뱅크 -3.97% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-05-07T10:31:21.909389",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
     "time": "2026-05-07T13:16:11.202125",
     "category": "disclosure",
     "level": "info",
@@ -78,5 +46,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 17.1 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-05-08T10:45:57.987016",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ HD한국조선해양 🏠",
+    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
   }
 ]
