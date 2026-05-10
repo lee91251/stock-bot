@@ -1,58 +1,10 @@
 [
   {
-    "time": "2026-05-07T13:16:11.202125",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD현대일렉트릭",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-05-07T13:45:54.611015",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 HD한국조선해양 🏠",
-    "detail": "영업(잠정)실적(공정공시)(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-05-07T14:31:09.439147",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 HD한국조선해양 🏠",
-    "detail": "영업(잠정)실적(공정공시)              "
-  },
-  {
-    "time": "2026-05-07T14:31:09.439482",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 HD한국조선해양 🏠",
-    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
-  },
-  {
-    "time": "2026-05-08T06:00:52.634472",
+    "time": "2026-05-11T06:00:43.951854",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P -0.38% / 나스닥 -0.13% / VIX 17.08 / 환율 1,457원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-05-08T08:50:42.635340",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.1 / 공포탐욕 50(중립)"
-  },
-  {
-    "time": "2026-05-08T10:45:57.987016",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
+    "detail": "S&P +0.84% / 나스닥 +1.71% / VIX 17.19 / 환율 1,461원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
