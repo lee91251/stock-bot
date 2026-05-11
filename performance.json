@@ -255,6 +255,56 @@
       "score": 86,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-05-12",
+      "month": "2026-05",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 43200.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-12",
+      "month": "2026-05",
+      "ticker": "138930.KS",
+      "name": "BNK금융지주",
+      "price": 17640.0,
+      "score": 95,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-12",
+      "month": "2026-05",
+      "ticker": "185750.KS",
+      "name": "종근당",
+      "price": 80900.0,
+      "score": 93,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-12",
+      "month": "2026-05",
+      "ticker": "011200.KS",
+      "name": "HMM",
+      "price": 20050.0,
+      "score": 92,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-12",
+      "month": "2026-05",
+      "ticker": "055550.KS",
+      "name": "신한지주",
+      "price": 97200.0,
+      "score": 90,
+      "buy_signal": false,
+      "result": null
     }
   ]
 }
