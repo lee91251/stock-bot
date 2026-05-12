@@ -38,6 +38,19 @@
       "swing_score": 51,
       "sector": "방산",
       "order_no": "0000045598"
+    },
+    "128940": {
+      "name": "한미약품",
+      "qty": 4,
+      "buy_price": 453500.0,
+      "buy_date": "2026-05-12",
+      "buy_time": "15:07",
+      "buy_amount": 1814000.0,
+      "partial_sold": false,
+      "score": 53,
+      "swing_score": 68,
+      "sector": "바이오",
+      "order_no": "0000046966"
     }
   },
   "history": [
@@ -211,6 +224,19 @@
       "reason": "swing_score 51",
       "sector": "방산",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-05-12",
+      "time": "15:07",
+      "side": "buy",
+      "code": "128940",
+      "name": "한미약품",
+      "qty": 4,
+      "price": 453500.0,
+      "amount": 1814000.0,
+      "reason": "swing_score 68",
+      "sector": "바이오",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -235,9 +261,9 @@
       "trade_count": 0
     },
     "2026-05-12": {
-      "buy_count": 3,
-      "buy_amount": 5547650.0,
-      "trade_count": 4
+      "buy_count": 4,
+      "buy_amount": 7361650.0,
+      "trade_count": 5
     }
   },
   "loss_cooldown": {
