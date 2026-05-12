@@ -52,6 +52,19 @@
       "swing_score": 68,
       "sector": "바이오",
       "order_no": "0000046966"
+    },
+    "018260": {
+      "name": "삼성에스디에스",
+      "qty": 11,
+      "buy_price": 181100.0,
+      "buy_date": "2026-05-12",
+      "buy_time": "15:23",
+      "buy_amount": 1992100.0,
+      "partial_sold": false,
+      "score": 48,
+      "swing_score": 58,
+      "sector": "IT",
+      "order_no": "0000048682"
     }
   },
   "history": [
@@ -238,6 +251,19 @@
       "reason": "swing_score 68",
       "sector": "바이오",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-05-12",
+      "time": "15:23",
+      "side": "buy",
+      "code": "018260",
+      "name": "삼성에스디에스",
+      "qty": 11,
+      "price": 181100.0,
+      "amount": 1992100.0,
+      "reason": "swing_score 58",
+      "sector": "IT",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -262,9 +288,9 @@
       "trade_count": 0
     },
     "2026-05-12": {
-      "buy_count": 4,
-      "buy_amount": 7361650.0,
-      "trade_count": 5
+      "buy_count": 5,
+      "buy_amount": 9353750.0,
+      "trade_count": 6
     }
   },
   "loss_cooldown": {
