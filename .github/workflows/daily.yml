@@ -324,7 +324,9 @@ jobs:
   backtest:
     if: github.event.inputs.mode == '--backtest' || github.event.inputs.mode == '--backtest12'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Multi-env Grid Search (54조합 시뮬 ≈ 4~5h) 위해 60분 → 360분
+    # 5/12 회장 결정 (B → 부재 → C Walk-forward 전략)
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

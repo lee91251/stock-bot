@@ -75,7 +75,8 @@ BACKTEST_SCORE_MIN = int(os.environ.get("BACKTEST_SCORE_MIN", "55"))
 BT_RSI_BUY_MAX     = float(os.environ.get("BT_RSI_BUY_MAX", "65"))     # RSI 이 값 이상 매수 차단
 BT_VOL_RATIO_MIN   = float(os.environ.get("BT_VOL_RATIO_MIN", "100"))  # 거래량 평균 대비 % 최소
 BT_RET_1M_MIN      = float(os.environ.get("BT_RET_1M_MIN", "-15"))     # 1개월 수익률 이 값 이하 차단
-BT_OPTIMIZE_MODE   = os.environ.get("BT_OPTIMIZE_MODE", "true").lower() == "true"  # 기본 ON (5/12)
+BT_OPTIMIZE_MODE   = os.environ.get("BT_OPTIMIZE_MODE", "false").lower() == "true"  # 순차 최적화
+BT_GRID_MODE       = os.environ.get("BT_GRID_MODE", "true").lower() == "true"      # Multi-env Grid (5/12 기본 ON)
 
 
 # ════════════════════════════════════════════════
@@ -856,6 +857,149 @@ def optimize_parameters(months: int = 6) -> dict:
     return results
 
 
+def multi_env_grid_search(months: int = 6) -> dict:
+    """Multi-environment Grid Search — 모든 조합 × 다중 환경 탐색.
+
+    학계 표준 방법. Local Optimum 함정 차단 + 과적합 차단.
+
+    그리드 (3×3×3 = 27조합, 회장 부재 일정 고려 절충):
+        매수 점수 임계: 45, 50, 55
+        RSI 차단 임계:  60, 65, 70
+        거래량 최소:    100, 150, 200
+
+    환경 (2개, out-of-sample 검증):
+        E1: 최근 6개월 (in-sample)
+        E2: 1년 전 6개월 (out-of-sample)
+
+    총: 27 × 2 = 54번 시뮬 ≈ 4~5시간
+
+    Returns: {
+        'all_results': [...],
+        'best_overall': {...},
+        'env_consistent': [...],  # 양 환경 모두 좋은 조합 TOP 5
+    }
+    """
+    global BACKTEST_SCORE_MIN, BT_RSI_BUY_MAX, BT_VOL_RATIO_MIN
+
+    print("\n" + "="*75)
+    print("🌐 Multi-environment Grid Search")
+    print("="*75)
+    print("그리드: 점수[45,50,55] × RSI[60,65,70] × 거래량[100,150,200] = 27조합")
+    print("환경: 최근 6개월 + 1년 전 6개월 (out-of-sample 검증)")
+    print("총 54번 시뮬 — 예상 4~5시간\n")
+
+    score_vals = [45, 50, 55]
+    rsi_vals = [60, 65, 70]
+    vol_vals = [100, 150, 200]
+
+    envs = [
+        ("최근 6개월", 0),
+        ("1년 전 6개월", 365),
+    ]
+
+    all_results = []
+    sim_count = 0
+    total = len(score_vals) * len(rsi_vals) * len(vol_vals) * len(envs)
+
+    for env_name, offset in envs:
+        print(f"\n──── 환경: {env_name} ────")
+        for sc in score_vals:
+            for rsi in rsi_vals:
+                for vol in vol_vals:
+                    sim_count += 1
+                    BACKTEST_SCORE_MIN = sc
+                    BT_RSI_BUY_MAX = rsi
+                    BT_VOL_RATIO_MIN = vol
+
+                    label = f"점수≥{sc}/RSI<{rsi}/거래량≥{vol}%"
+                    print(f"  [{sim_count}/{total}] {env_name} | {label}")
+                    m = simulate(months=months, new_rules=False, end_offset_days=offset)
+                    ret = m.get("cumulative_return_pct", 0) or 0
+                    trades = m.get("total_trades", 0) or 0
+                    win = m.get("win_rate_pct", 0) or 0
+
+                    all_results.append({
+                        "env": env_name,
+                        "score_min": sc,
+                        "rsi_max": rsi,
+                        "vol_min": vol,
+                        "return": ret,
+                        "trades": trades,
+                        "win_rate": win,
+                        "mdd": m.get("max_drawdown_pct", 0) or 0,
+                        "sharpe": m.get("sharpe_ratio", 0) or 0,
+                    })
+                    print(f"    → 수익 {ret:+.2f}% / 매매 {trades}건 / 승률 {win:.1f}%")
+
+    # 환경 무관 일관 좋은 조합 찾기 (Robust Selection)
+    # 각 조합별로 양 환경 결과 합치기
+    combo_results = {}
+    for r in all_results:
+        key = (r["score_min"], r["rsi_max"], r["vol_min"])
+        if key not in combo_results:
+            combo_results[key] = {"e1": None, "e2": None}
+        if r["env"] == "최근 6개월":
+            combo_results[key]["e1"] = r
+        else:
+            combo_results[key]["e2"] = r
+
+    # 양 환경 모두 매매 >= 3건 + 양 환경 평균 수익률
+    robust_combos = []
+    for key, envs_data in combo_results.items():
+        e1 = envs_data["e1"]
+        e2 = envs_data["e2"]
+        if e1 and e2 and e1["trades"] >= 3 and e2["trades"] >= 3:
+            avg_return = (e1["return"] + e2["return"]) / 2
+            min_return = min(e1["return"], e2["return"])
+            robust_combos.append({
+                "score_min": key[0],
+                "rsi_max": key[1],
+                "vol_min": key[2],
+                "e1_return": e1["return"],
+                "e2_return": e2["return"],
+                "avg_return": avg_return,
+                "min_return": min_return,
+                "e1_trades": e1["trades"],
+                "e2_trades": e2["trades"],
+                "avg_win": (e1["win_rate"] + e2["win_rate"]) / 2,
+            })
+
+    # min_return 기준 정렬 (최악 환경에서도 좋은 조합 우선)
+    robust_combos.sort(key=lambda x: -x["min_return"])
+    top5 = robust_combos[:5]
+
+    # 단순 최고 수익률 (참고)
+    best_overall = max(all_results, key=lambda x: x["return"]) if all_results else None
+
+    # 결과 출력
+    print("\n" + "="*75)
+    print("🏆 Multi-environment Grid Search 결과")
+    print("="*75)
+
+    if best_overall:
+        print(f"\n📈 단일 환경 최고 수익률 (참고):")
+        print(f"   {best_overall['env']} | 점수≥{best_overall['score_min']}/RSI<{best_overall['rsi_max']}/거래량≥{best_overall['vol_min']}%")
+        print(f"   수익 {best_overall['return']:+.2f}% / 매매 {best_overall['trades']}건 / 승률 {best_overall['win_rate']:.1f}%")
+        print(f"   ⚠️ 단일 환경 최고는 과적합 위험")
+
+    if top5:
+        print(f"\n⭐ Robust Top 5 (양 환경 모두 좋은 조합):")
+        print(f"   기준: 양 환경 매매 ≥3건, 최악 환경 수익률 우선")
+        for i, c in enumerate(top5, 1):
+            print(f"\n   #{i}. 점수≥{c['score_min']} / RSI<{c['rsi_max']} / 거래량≥{c['vol_min']}%")
+            print(f"      최근 6개월:   수익 {c['e1_return']:+.2f}% / {c['e1_trades']}건")
+            print(f"      1년 전 6개월: 수익 {c['e2_return']:+.2f}% / {c['e2_trades']}건")
+            print(f"      평균 수익: {c['avg_return']:+.2f}% / 평균 승률: {c['avg_win']:.1f}%")
+
+    print("\n" + "="*75)
+
+    return {
+        "all_results": all_results,
+        "best_overall": best_overall,
+        "robust_top5": top5,
+    }
+
+
 def compute_metrics(daily_capital: list, trades: list, initial: int) -> dict:
     if not daily_capital:
         return {"error": "데이터 없음"}
@@ -1084,7 +1228,63 @@ if __name__ == "__main__":
         print("❌ pykrx 미설치 — pip install pykrx 필요")
         sys.exit(1)
 
-    # ─── 파라미터 최적화 모드 ───
+    # ─── Multi-environment Grid Search 모드 (5/12 기본 ON) ───
+    if BT_GRID_MODE:
+        grid_results = multi_env_grid_search(months=months)
+
+        # 결과 저장
+        combined = {
+            "grid_mode": True,
+            "months": months,
+            "generated_at": _now_kst().isoformat(),
+            "grid_search": grid_results,
+        }
+        try:
+            with open(BACKTEST_RESULTS, "w", encoding="utf-8") as f:
+                json.dump(combined, f, ensure_ascii=False, indent=2, default=str)
+            print(f"\n📁 결과 저장: {BACKTEST_RESULTS}")
+        except Exception as e:
+            print(f"⚠️ 저장 실패: {e}")
+
+        # 텔레그램 발송
+        if not no_report:
+            try:
+                top5 = grid_results.get("robust_top5", [])
+                tg_lines = [
+                    f"🌐 <b>Multi-env Grid Search 결과</b> ({months}개월 × 2환경)",
+                    f"총 54조합 검증 — 양 환경 모두 좋은 조합 TOP 5:",
+                    "",
+                ]
+                if top5:
+                    for i, c in enumerate(top5, 1):
+                        tg_lines.extend([
+                            f"<b>#{i}. 점수≥{c['score_min']} / RSI&lt;{c['rsi_max']} / 거래량≥{c['vol_min']}%</b>",
+                            f"  최근 6개월:   {c['e1_return']:+.2f}% / {c['e1_trades']}건",
+                            f"  1년 전 6개월: {c['e2_return']:+.2f}% / {c['e2_trades']}건",
+                            f"  평균 수익: {c['avg_return']:+.2f}% / 평균 승률: {c['avg_win']:.1f}%",
+                            "",
+                        ])
+                else:
+                    tg_lines.extend([
+                        "⚠️ 양 환경 모두 매매 ≥3건 조건 충족 조합 없음",
+                        "→ 그리드 더 완화 필요 또는 알고리즘 재설계",
+                        "",
+                    ])
+
+                best = grid_results.get("best_overall")
+                if best:
+                    tg_lines.extend([
+                        f"<b>📈 단일 환경 최고 (참고, 과적합 위험)</b>",
+                        f"{best['env']}: {best['return']:+.2f}% / {best['trades']}건",
+                        f"점수≥{best['score_min']} / RSI&lt;{best['rsi_max']} / 거래량≥{best['vol_min']}%",
+                    ])
+
+                tg_send("\n".join(tg_lines))
+            except Exception as e:
+                print(f"⚠️ 텔레그램 전송 실패: {e}")
+        sys.exit(0)
+
+    # ─── 파라미터 순차 최적화 모드 ───
     if BT_OPTIMIZE_MODE:
         opt_results = optimize_parameters(months=months)
 
