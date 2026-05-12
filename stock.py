@@ -8474,9 +8474,9 @@ def _poll_cancel_during_sleep(seconds: int) -> bool:
 def _check_emergency_stop(pos: dict) -> tuple:
     """비상정지 검증 — 일일 누적 손실 + MDD (5/13 추가).
 
-    회장 부재 (5/17~5/31) 안전망. 등급별 비상정지 트리거 확인.
-    매수 직전 호출. 발동 시 자동매수 정지 (halted=True).
-    매도는 정상 작동 (손절/익절 자동).
+    회장 부재 (5/17~5/31) 안전망. 발동 시 *그날만* 자동매수 정지.
+    다음 거래일 09:00 자동 재개 (회장 결정 5/13).
+    매도는 항상 정상 작동 (손절/익절 자동).
 
     Returns: (should_halt: bool, reason: str)
     """
@@ -8485,7 +8485,7 @@ def _check_emergency_stop(pos: dict) -> tuple:
         mdd_info = _calc_mdd_from_portfolio(window_days=30)
         mdd_pct = mdd_info.get("mdd_pct", 0) if mdd_info else 0
         if mdd_pct <= EMERGENCY_MDD_PCT:
-            return True, f"MDD {mdd_pct:.2f}% ≤ {EMERGENCY_MDD_PCT}% — 비상정지"
+            return True, f"MDD {mdd_pct:.2f}% ≤ {EMERGENCY_MDD_PCT}%"
     except Exception as e:
         print(f"  [emergency] MDD 계산 오류: {e}")
 
@@ -8506,7 +8506,7 @@ def _check_emergency_stop(pos: dict) -> tuple:
             if today_loss_pct <= EMERGENCY_DAILY_LOSS_PCT:
                 return True, (
                     f"일일 누적 손실 {today_loss_pct:.2f}% ≤ {EMERGENCY_DAILY_LOSS_PCT}% "
-                    f"({today_loss_amt:,}원) — 비상정지"
+                    f"({today_loss_amt:,}원)"
                 )
     except Exception as e:
         print(f"  [emergency] 일일 손익 계산 오류: {e}")
@@ -8682,31 +8682,43 @@ def run_auto_buy():
         return
 
     pos = load_positions()
+    today = _today_str()
+
+    # 영구 정지 (사용자 /정지 명령 등) — 회장 /재개 명령까지
     if pos.get("halted"):
         _alert(f"⏸ <b>{mode_tag} 자동매매 정지 중</b> — /재개 명령으로 해제")
         return
 
-    # 비상정지 검증 (5/13 추가, 회장 부재 안전망)
-    # 일일 누적 -3% 또는 MDD -15% 도달 시 자동정지
-    should_halt, halt_reason = _check_emergency_stop(pos)
-    if should_halt:
-        pos["halted"] = True
-        save_positions(pos)
-        tg_send(
-            f"🚨 <b>비상정지 발동</b> ({mode_tag})\n"
-            f"{halt_reason}\n\n"
-            f"자동매수 정지. 자동매도는 정상 작동 (손절/익절).\n"
-            f"회장 확인 후 /재개 명령으로 해제."
-        )
-        log_alert(
-            "emergency", "danger",
-            "비상정지 발동",
-            halt_reason,
-            "🚨",
+    # 비상정지 — 그날만 정지 (5/13 회장 결정, 다음날 자동 재개)
+    # halted_until_date == 오늘 → 매수 X / 자정 지나면 자동 재개
+    if pos.get("halted_until_date") == today:
+        _alert(
+            f"🟡 <b>{mode_tag} 비상정지 (오늘만)</b>\n"
+            f"오늘 매수 X. 내일 09:00 자동 재개.\n"
+            f"자동매도는 정상 작동."
         )
         return
 
-    today = _today_str()
+    # 비상정지 검증 (5/13 추가, 회장 부재 안전망)
+    # 일일 누적 -3% 또는 MDD -15% 도달 시 *오늘만* 정지
+    should_halt, halt_reason = _check_emergency_stop(pos)
+    if should_halt:
+        pos["halted_until_date"] = today  # 그날만 정지 (자정 지나면 자동 해제)
+        save_positions(pos)
+        tg_send(
+            f"🟡 <b>비상정지 (오늘만)</b> ({mode_tag})\n"
+            f"{halt_reason}\n\n"
+            f"오늘 자동매수 X. 내일 09:00 자동 재개.\n"
+            f"자동매도는 정상 작동 (손절/익절)."
+        )
+        log_alert(
+            "emergency", "warning",
+            "비상정지 (오늘만)",
+            f"{halt_reason} — 내일 자동 재개",
+            "🟡",
+        )
+        return
+
     daily = _ensure_daily(pos, today)
 
     # 일일 한도 사전 체크 — 이미 도달했으면 분석 자체를 건너뜀 (불필요한 API 호출 방지)
