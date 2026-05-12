@@ -159,6 +159,14 @@ SWING_LOSS_COOLDOWN_DAYS = 3           # 손절 후 같은 종목 재매수 금�
 SWING_PRE_ALERT_SEC      = 30          # 매수 직전 사전 알림 + /취소 대기 시간
 SWING_DAILY_TRADE_CAP    = 20          # 일일 매매 횟수 한도 (폭주 차단)
 
+# 한국 스윙 확률 룰 (5/12 추가, 백테스트 검증 후 활성화 예정)
+# 활성화 시 매수 직전 추가 가드:
+#   1. 외국인+기관 *둘 다* 최근 3거래일 합산 순매도 → 매수 차단
+#   2. 거래량 +500% 초과 (과열) → 매수 차단
+# 환경변수 NEW_RULES_ENABLED=true 로 활성화 (기본 false — 검증 전 안전)
+NEW_RULES_ENABLED = os.environ.get("NEW_RULES_ENABLED", "false").lower() == "true"
+NEW_RULES_VOL_OVERHEAT_PCT = 500.0  # 거래량 평균 대비 N% 초과 시 과열로 차단
+
 # ════════════════════════════════════════════════
 # 유틸
 # ════════════════════════════════════════════════
@@ -8458,6 +8466,39 @@ def _poll_cancel_during_sleep(seconds: int) -> bool:
     return cancelled
 
 
+def _check_foreign_inst_3day(code: str) -> tuple:
+    """최근 3거래일 외국인/기관 순매수 합산 조회 (pykrx).
+
+    NEW_RULES_ENABLED=true 시 매수 직전 호출. 둘 다 합산 매도세면 차단.
+
+    Returns:
+        (foreign_sum_eok, inst_sum_eok, ok)
+        - foreign_sum_eok: 외국인 3일 합산 (억원, +매수 / -매도)
+        - inst_sum_eok: 기관 3일 합산 (억원)
+        - ok: 외국인 OR 기관 둘 중 하나라도 합산 > 0 (둘 다 음수면 False)
+
+    데이터 부족 / API 오류 시 ok=True (기본 허용 — 매매 차단 방지)
+    """
+    try:
+        from pykrx import stock as _krx
+        end = _now_kst().strftime("%Y%m%d")
+        start = (_now_kst() - timedelta(days=10)).strftime("%Y%m%d")  # 여유 10일
+        df = _krx.get_market_trading_value_by_date(start, end, code)
+        if df is None or df.empty or len(df) < 3:
+            return 0.0, 0.0, True  # 데이터 부족 → 통과 (기본 허용)
+        last3 = df.tail(3)
+        # pykrx 컬럼명: "외국인합계", "기관합계" (또는 영문)
+        f_col = "외국인합계" if "외국인합계" in last3.columns else last3.columns[-2]
+        i_col = "기관합계" if "기관합계" in last3.columns else last3.columns[-3]
+        foreign_sum = float(last3[f_col].sum()) / 1e8  # 원 → 억원
+        inst_sum = float(last3[i_col].sum()) / 1e8
+        ok = (foreign_sum > 0) or (inst_sum > 0)
+        return round(foreign_sum, 1), round(inst_sum, 1), ok
+    except Exception as e:
+        print(f"  [3day check] {code} 오류: {e} — 기본 허용")
+        return 0.0, 0.0, True  # 오류 시 통과 (기본 허용 / 안전)
+
+
 def _load_auto_buy_pool() -> dict:
     """자동매수 후보 종목 풀 — KR_STOCKS(고정 26개) + market_scan_cache(매일 02:00 갱신)."""
     pool: dict = {}
@@ -8809,6 +8850,21 @@ def run_auto_buy():
         if daily["trade_count"] >= SWING_DAILY_TRADE_CAP:
             tg_send(f"🛑 일일 매매 횟수 한도 도달 ({SWING_DAILY_TRADE_CAP}건) — 비정상 폭주 차단")
             break
+
+        # ── 한국 스윙 확률 룰 가드 (5/12, NEW_RULES_ENABLED 토글) ──
+        # 백테스트 검증된 룰만 활성화. 검증 전 false (기본).
+        if NEW_RULES_ENABLED:
+            # 외국인+기관 3일 합산 매수 검증
+            f_sum, i_sum, ok = _check_foreign_inst_3day(code)
+            if not ok:
+                print(f"  [new_rules] {s['name']} 외인 {f_sum:+.0f}억 / 기관 {i_sum:+.0f}억 — "
+                      f"둘 다 3일 합산 매도세, 매수 차단")
+                continue
+            # 거래량 과열 차단 (analyze 결과의 vol_ratio 사용)
+            vol_ratio = s.get("vol_ratio", 0)
+            if vol_ratio > NEW_RULES_VOL_OVERHEAT_PCT:
+                print(f"  [new_rules] {s['name']} 거래량 +{vol_ratio:.0f}% 과열 — 매수 차단")
+                continue
 
         result = client.buy(code, qty)
         if result.get("ok"):
