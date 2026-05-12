@@ -1,5 +1,32 @@
 {
-  "positions": {},
+  "positions": {
+    "014680": {
+      "name": "한솔케미칼",
+      "qty": 6,
+      "buy_price": 289000.0,
+      "buy_date": "2026-05-12",
+      "buy_time": "14:37",
+      "buy_amount": 1734000.0,
+      "partial_sold": false,
+      "score": 23,
+      "swing_score": 61,
+      "sector": "화학",
+      "order_no": "0000044612"
+    },
+    "326030": {
+      "name": "SK바이오팜",
+      "qty": 19,
+      "buy_price": 102500.0,
+      "buy_date": "2026-05-12",
+      "buy_time": "14:38",
+      "buy_amount": 1947500.0,
+      "partial_sold": false,
+      "score": 49,
+      "swing_score": 59,
+      "sector": "바이오",
+      "order_no": "0000044615"
+    }
+  },
   "history": [
     {
       "date": "2026-05-06",
@@ -132,6 +159,32 @@
       "profit": -82500,
       "ai_opinion": "**매도 적절** — 손절 트리거(-4.2%) 정확히 도달했고, VIX 18.4로 시장이 안정적임에도 코스피 보합 속 반등 모멘텀이 보이지 않으며, 3거래일 보유 후 추가 하락 리스크보다 룰 준수가 우선입니다.",
       "journal": "⚠️ 아쉬운 점 — 매수 3거래일 만에 손절가(-4.2%)에 정확히 걸린 패턴으로, 카카오뱅크·미래에셋증권에 이어 **3연속 손절**이 반복되고 있어 진입 근거 자체를 재점검해야 할 시점; VIX 18·공포탐욕 중립이라는 무난한 환경에서도 항공섹터(WTI·환율 복합 변수)에 진입한 것이 리스크 대비 근거가 얕었다."
+    },
+    {
+      "date": "2026-05-12",
+      "time": "14:37",
+      "side": "buy",
+      "code": "014680",
+      "name": "한솔케미칼",
+      "qty": 6,
+      "price": 289000.0,
+      "amount": 1734000.0,
+      "reason": "swing_score 61",
+      "sector": "화학",
+      "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-05-12",
+      "time": "14:38",
+      "side": "buy",
+      "code": "326030",
+      "name": "SK바이오팜",
+      "qty": 19,
+      "price": 102500.0,
+      "amount": 1947500.0,
+      "reason": "swing_score 59",
+      "sector": "바이오",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -156,9 +209,9 @@
       "trade_count": 0
     },
     "2026-05-12": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 1
+      "buy_count": 2,
+      "buy_amount": 3681500.0,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {
