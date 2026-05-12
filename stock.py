@@ -8466,6 +8466,41 @@ def _poll_cancel_during_sleep(seconds: int) -> bool:
     return cancelled
 
 
+def _get_dynamic_thresholds(risk_level: str) -> dict:
+    """시장 위험 등급에 따라 동적 매수 임계 반환 (Regime-Adaptive, 5/13).
+
+    회장 통찰: 시장 환경에 따라 룰 변경. 강세=공격 / 약세=보수.
+    백테스트 검증 결과 (B 옵션, 27조합 × 2환경):
+      - 강세장: 점수≥45 / 거래량≥100% — 최근 6개월 +1.80%
+      - 중립:   점수≥50 / 거래량≥150% — 균형
+      - 약세장: 점수≥55 / 거래량≥200% — 양 환경 +수익 (Robust)
+      - 위험:   자동매매 정지 (기존 시스템)
+
+    Args:
+        risk_level: '안전' / '주의' / '경계' / '위험'
+
+    Returns:
+        dict {score_min, rsi_max, vol_min, label} 또는 None (위험 등급 = 정지)
+    """
+    if risk_level == "안전":  # 0~30: 강세장
+        return {
+            "score_min": 45, "rsi_max": 65, "vol_min": 100,
+            "label": "🟢 강세장 (적극)", "regime": "강세"
+        }
+    elif risk_level == "주의":  # 30~50: 중립
+        return {
+            "score_min": 50, "rsi_max": 65, "vol_min": 150,
+            "label": "🟡 중립 (중간)", "regime": "중립"
+        }
+    elif risk_level == "경계":  # 50~70: 약세장
+        return {
+            "score_min": 55, "rsi_max": 60, "vol_min": 200,
+            "label": "🟠 약세장 (보수)", "regime": "약세"
+        }
+    else:  # 위험 70+: 이미 정지 (기존 시스템)
+        return None
+
+
 def _check_foreign_inst_3day(code: str) -> tuple:
     """최근 3거래일 외국인/기관 순매수 합산 조회 (pykrx).
 
@@ -8864,6 +8899,28 @@ def run_auto_buy():
             vol_ratio = s.get("vol_ratio", 0)
             if vol_ratio > NEW_RULES_VOL_OVERHEAT_PCT:
                 print(f"  [new_rules] {s['name']} 거래량 +{vol_ratio:.0f}% 과열 — 매수 차단")
+                continue
+
+        # ── Regime-Adaptive 동적 임계 가드 (5/13 회장 결정) ──
+        # 시장 위험 등급에 따라 매수 임계 자동 조정
+        # 강세=공격 (점수 45) / 중립=중간 (점수 50) / 약세=보수 (점수 55)
+        thresholds = _get_dynamic_thresholds(risk['level'])
+        if thresholds:
+            real_score = s.get("score", 0)  # 진짜 점수 (보너스 제외)
+            if real_score < thresholds["score_min"]:
+                print(f"  [regime] {s['name']} 진짜 점수 {real_score} < {thresholds['score_min']} "
+                      f"({thresholds['label']}) — 매수 차단")
+                continue
+            vol_ratio_check = s.get("vol_ratio", 0)
+            if vol_ratio_check and vol_ratio_check < thresholds["vol_min"]:
+                print(f"  [regime] {s['name']} 거래량 {vol_ratio_check:.0f}% < {thresholds['vol_min']}% "
+                      f"({thresholds['label']}) — 매수 차단")
+                continue
+            # RSI는 analyze에서 이미 차단되지만 추가 보수 (약세장 RSI<60)
+            rsi_check = s.get("rsi", 50)
+            if rsi_check and rsi_check >= thresholds["rsi_max"]:
+                print(f"  [regime] {s['name']} RSI {rsi_check:.1f} ≥ {thresholds['rsi_max']} "
+                      f"({thresholds['label']}) — 매수 차단")
                 continue
 
         result = client.buy(code, qty)
