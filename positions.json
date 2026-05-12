@@ -11,7 +11,8 @@
       "score": 23,
       "swing_score": 61,
       "sector": "화학",
-      "order_no": "0000044612"
+      "order_no": "0000044612",
+      "imminent_state": "near_target1"
     },
     "326030": {
       "name": "SK바이오팜",

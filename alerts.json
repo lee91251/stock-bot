@@ -102,5 +102,21 @@
     "emoji": "⚠️",
     "title": "DART ⚠️ 한화",
     "detail": "[기재정정]유상증자결정(종속회사의주요경영사항)              "
+  },
+  {
+    "time": "2026-05-12T15:15:59.668183",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "[기재정정]주주명부폐쇄기간또는기준일설정              "
+  },
+  {
+    "time": "2026-05-12T15:16:09.143024",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🟢 한솔케미칼 +5.54% — 1차 익절 임박 (목표 +6%, 절반 매도)"
   }
 ]
