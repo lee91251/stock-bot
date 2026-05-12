@@ -1,0 +1,32 @@
+[
+  {
+    "date": "2026-05-07",
+    "time": "10:31",
+    "code": "323410",
+    "name": "카카오뱅크",
+    "sell_price": 24050.0,
+    "sell_pct": -4.56,
+    "ai_opinion": "**매도 적절** — 손절 트리거(-4%)를 이미 이탈했고, 코스피 보합에도 반등 모멘텀 부재·보유 1거래일로 추가 하락 리스크 감수 근거 없음. 룰대로 손절 이행이 적절합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": 22550,
+    "outcome_date": "2026-05-12",
+    "outcome_pct": -6.24,
+    "ai_correct": true
+  },
+  {
+    "date": "2026-05-12",
+    "time": "10:01",
+    "code": "003490",
+    "name": "대한항공",
+    "sell_price": 25250.0,
+    "sell_pct": -4.17,
+    "ai_opinion": "**매도 적절** — 손절 트리거(-4.2%) 정확히 도달했고, VIX 18.4로 시장이 안정적임에도 코스피 보합 속 반등 모멘텀이 보이지 않으며, 3거래일 보유 후 추가 하락 리스크보다 룰 준수가 우선입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
+  }
+]

@@ -167,6 +167,11 @@ SWING_DAILY_TRADE_CAP    = 20          # 일일 매매 횟수 한도 (폭주 차
 NEW_RULES_ENABLED = os.environ.get("NEW_RULES_ENABLED", "false").lower() == "true"
 NEW_RULES_VOL_OVERHEAT_PCT = 500.0  # 거래량 평균 대비 N% 초과 시 과열로 차단
 
+# 비상정지 임계 (5/13 추가, 회장 부재 안전망)
+# 회장 결정 (4단계 검증부 체크리스트): 일일 -3% / MDD -15%
+EMERGENCY_DAILY_LOSS_PCT = -3.0   # 일일 누적 손익이 -3% 도달 시 자동매수 정지
+EMERGENCY_MDD_PCT        = -15.0  # 30일 MDD가 -15% 도달 시 자동매수 정지
+
 # ════════════════════════════════════════════════
 # 유틸
 # ════════════════════════════════════════════════
@@ -8466,6 +8471,49 @@ def _poll_cancel_during_sleep(seconds: int) -> bool:
     return cancelled
 
 
+def _check_emergency_stop(pos: dict) -> tuple:
+    """비상정지 검증 — 일일 누적 손실 + MDD (5/13 추가).
+
+    회장 부재 (5/17~5/31) 안전망. 등급별 비상정지 트리거 확인.
+    매수 직전 호출. 발동 시 자동매수 정지 (halted=True).
+    매도는 정상 작동 (손절/익절 자동).
+
+    Returns: (should_halt: bool, reason: str)
+    """
+    # 1. MDD -15% 체크 (30일 기준)
+    try:
+        mdd_info = _calc_mdd_from_portfolio(window_days=30)
+        mdd_pct = mdd_info.get("mdd_pct", 0) if mdd_info else 0
+        if mdd_pct <= EMERGENCY_MDD_PCT:
+            return True, f"MDD {mdd_pct:.2f}% ≤ {EMERGENCY_MDD_PCT}% — 비상정지"
+    except Exception as e:
+        print(f"  [emergency] MDD 계산 오류: {e}")
+
+    # 2. 일일 누적 손실 -3% 체크 (오늘 매도 손익 합산)
+    try:
+        today = _today_str()
+        today_sells = [
+            h for h in pos.get("history", [])
+            if h.get("side") == "sell" and h.get("date") == today
+        ]
+        if today_sells:
+            today_loss_amt = sum(
+                h.get("profit", 0) for h in today_sells if h.get("profit", 0) < 0
+            )
+            # 시드머니 = 일일 한도 SWING_MAX_DAILY_AMT (1,000만원)
+            seed = SWING_MAX_DAILY_AMT
+            today_loss_pct = today_loss_amt / seed * 100
+            if today_loss_pct <= EMERGENCY_DAILY_LOSS_PCT:
+                return True, (
+                    f"일일 누적 손실 {today_loss_pct:.2f}% ≤ {EMERGENCY_DAILY_LOSS_PCT}% "
+                    f"({today_loss_amt:,}원) — 비상정지"
+                )
+    except Exception as e:
+        print(f"  [emergency] 일일 손익 계산 오류: {e}")
+
+    return False, ""
+
+
 def _get_dynamic_thresholds(risk_level: str) -> dict:
     """시장 위험 등급에 따라 동적 매수 임계 반환 (Regime-Adaptive, 5/13).
 
@@ -8636,6 +8684,26 @@ def run_auto_buy():
     pos = load_positions()
     if pos.get("halted"):
         _alert(f"⏸ <b>{mode_tag} 자동매매 정지 중</b> — /재개 명령으로 해제")
+        return
+
+    # 비상정지 검증 (5/13 추가, 회장 부재 안전망)
+    # 일일 누적 -3% 또는 MDD -15% 도달 시 자동정지
+    should_halt, halt_reason = _check_emergency_stop(pos)
+    if should_halt:
+        pos["halted"] = True
+        save_positions(pos)
+        tg_send(
+            f"🚨 <b>비상정지 발동</b> ({mode_tag})\n"
+            f"{halt_reason}\n\n"
+            f"자동매수 정지. 자동매도는 정상 작동 (손절/익절).\n"
+            f"회장 확인 후 /재개 명령으로 해제."
+        )
+        log_alert(
+            "emergency", "danger",
+            "비상정지 발동",
+            halt_reason,
+            "🚨",
+        )
         return
 
     today = _today_str()
