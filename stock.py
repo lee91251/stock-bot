@@ -8533,6 +8533,14 @@ def run_auto_buy():
         print(f"[autobuy] 장 시간 외 ({now.strftime('%H:%M')}) — 매수 스킵")
         return
 
+    # 14:30 후 신규 매수 차단 (5/12 fix — 한국 스윙 매매 정석)
+    # 사유: 장 마감 직전 매수 → 다음날 갭다운 시 익절 기회 0 + 즉시 손절 위험
+    # 5/6~5/12 손절 4건 중 3건이 *14:30 후 또는 전일 늦은 시간 매수* 패턴
+    # 회장 결정 (5/12): 14:30 이후 신규 매수 X / 기존 보유 모니터링은 계속
+    if now.hour > 14 or (now.hour == 14 and now.minute >= 30):
+        print(f"[autobuy] 14:30 후 신규 매수 차단 ({now.strftime('%H:%M')}) — 다음 거래일 09:00 재개")
+        return
+
     client = get_trading_client()
     mode_tag = client.mode_tag()
 
