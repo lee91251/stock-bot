@@ -70,6 +70,13 @@ RISK_FREE_RATE  = 0.035        # Sharpe 계산용 무위험 수익률 (한국 �
 # 첫 실행 데이터 (평균 13.6 / 최고 64) 기준으로 55 설정.
 BACKTEST_SCORE_MIN = int(os.environ.get("BACKTEST_SCORE_MIN", "55"))
 
+# 파라미터 최적화 환경변수 (5/12 추가)
+# 각 파라미터를 env로 변경 가능 — Grid Search 용
+BT_RSI_BUY_MAX     = float(os.environ.get("BT_RSI_BUY_MAX", "65"))     # RSI 이 값 이상 매수 차단
+BT_VOL_RATIO_MIN   = float(os.environ.get("BT_VOL_RATIO_MIN", "100"))  # 거래량 평균 대비 % 최소
+BT_RET_1M_MIN      = float(os.environ.get("BT_RET_1M_MIN", "-15"))     # 1개월 수익률 이 값 이하 차단
+BT_OPTIMIZE_MODE   = os.environ.get("BT_OPTIMIZE_MODE", "true").lower() == "true"  # 기본 ON (5/12)
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -296,14 +303,15 @@ def calc_swing_score_at(
                 sw += 2
 
     # 매수 시그널 — 백테스트 전용 임계치 사용 (DART/뉴스 미반영 보정)
+    # 파라미터 최적화 환경변수 사용 (Grid Search)
     signal = (
         sw >= BACKTEST_SCORE_MIN
-        and rsi < 65
+        and rsi < BT_RSI_BUY_MAX
         and not manipulation
         and not momentum_bad
         and not near_resistance
-        and vol_ratio >= 100
-        and ret_1m > -15
+        and vol_ratio >= BT_VOL_RATIO_MIN
+        and ret_1m > BT_RET_1M_MIN
     )
 
     # ── 새 룰 추가 가드 (B안: 합산 OR 조건) ──
@@ -743,6 +751,111 @@ def simulate(months: int = 6, new_rules: bool = False, end_offset_days: int = 0)
 # ════════════════════════════════════════════════
 # 메트릭 계산 (승률 / MDD / Sharpe)
 # ════════════════════════════════════════════════
+def optimize_parameters(months: int = 6) -> dict:
+    """파라미터 순차 최적화 — Grid Search.
+
+    각 파라미터별 여러 값 테스트 → 최적값 발견 → 다음 파라미터 (최적값 고정)
+    환경: 최근 6개월 1개만 (시간 절약, 시뮬 12번 × 5분 = 60분)
+
+    Returns: {
+        'score_min': [...], 'rsi_max': [...], 'vol_min': [...],
+        'best': {'score_min': X, 'rsi_max': Y, 'vol_min': Z},
+        'final_metrics': {...}
+    }
+    """
+    global BACKTEST_SCORE_MIN, BT_RSI_BUY_MAX, BT_VOL_RATIO_MIN
+
+    results = {"score_min": [], "rsi_max": [], "vol_min": [], "best": {}}
+
+    print("\n" + "="*70)
+    print("🔬 파라미터 순차 최적화 (Grid Search)")
+    print("="*70)
+
+    # ─── 파라미터 1: 매수 점수 임계 ───
+    print(f"\n[1/3] 매수 점수 임계 (BACKTEST_SCORE_MIN)")
+    print("-"*70)
+    score_candidates = [40, 45, 50, 55]
+    score_results = []
+    for v in score_candidates:
+        BACKTEST_SCORE_MIN = v
+        print(f"  → 임계 {v} 시뮬 중...")
+        m = simulate(months=months, new_rules=False)
+        m["param_value"] = v
+        score_results.append(m)
+        ret = m.get("cumulative_return_pct", 0) or 0
+        trades = m.get("total_trades", 0) or 0
+        win = m.get("win_rate_pct", 0) or 0
+        print(f"    수익 {ret:+.2f}% / 매매 {trades}건 / 승률 {win:.1f}%")
+        results["score_min"].append({"value": v, "return": ret, "trades": trades, "win_rate": win})
+
+    # 최적: 수익률 최고 (단 매매 0건은 제외)
+    valid = [r for r in score_results if (r.get("total_trades", 0) or 0) > 0]
+    best_score = max(valid, key=lambda x: x.get("cumulative_return_pct", -999)) if valid else score_results[0]
+    BACKTEST_SCORE_MIN = best_score["param_value"]
+    results["best"]["score_min"] = BACKTEST_SCORE_MIN
+    print(f"  ⭐ 최적: 임계 {BACKTEST_SCORE_MIN} (수익 {best_score.get('cumulative_return_pct', 0):+.2f}%)")
+
+    # ─── 파라미터 2: RSI 임계 ───
+    print(f"\n[2/3] RSI 매수 차단 임계 (BT_RSI_BUY_MAX) — 점수 임계 {BACKTEST_SCORE_MIN} 고정")
+    print("-"*70)
+    rsi_candidates = [60, 65, 70, 80]  # 80 = 거의 차단 X
+    rsi_results = []
+    for v in rsi_candidates:
+        BT_RSI_BUY_MAX = v
+        print(f"  → RSI < {v} 시뮬 중...")
+        m = simulate(months=months, new_rules=False)
+        m["param_value"] = v
+        rsi_results.append(m)
+        ret = m.get("cumulative_return_pct", 0) or 0
+        trades = m.get("total_trades", 0) or 0
+        win = m.get("win_rate_pct", 0) or 0
+        print(f"    수익 {ret:+.2f}% / 매매 {trades}건 / 승률 {win:.1f}%")
+        results["rsi_max"].append({"value": v, "return": ret, "trades": trades, "win_rate": win})
+
+    valid = [r for r in rsi_results if (r.get("total_trades", 0) or 0) > 0]
+    best_rsi = max(valid, key=lambda x: x.get("cumulative_return_pct", -999)) if valid else rsi_results[0]
+    BT_RSI_BUY_MAX = best_rsi["param_value"]
+    results["best"]["rsi_max"] = BT_RSI_BUY_MAX
+    print(f"  ⭐ 최적: RSI < {BT_RSI_BUY_MAX} (수익 {best_rsi.get('cumulative_return_pct', 0):+.2f}%)")
+
+    # ─── 파라미터 3: 거래량 비율 ───
+    print(f"\n[3/3] 거래량 비율 최소 (BT_VOL_RATIO_MIN) — 점수 {BACKTEST_SCORE_MIN} / RSI<{BT_RSI_BUY_MAX} 고정")
+    print("-"*70)
+    vol_candidates = [50, 100, 150, 200]
+    vol_results = []
+    for v in vol_candidates:
+        BT_VOL_RATIO_MIN = v
+        print(f"  → 거래량 ≥ {v}% 시뮬 중...")
+        m = simulate(months=months, new_rules=False)
+        m["param_value"] = v
+        vol_results.append(m)
+        ret = m.get("cumulative_return_pct", 0) or 0
+        trades = m.get("total_trades", 0) or 0
+        win = m.get("win_rate_pct", 0) or 0
+        print(f"    수익 {ret:+.2f}% / 매매 {trades}건 / 승률 {win:.1f}%")
+        results["vol_min"].append({"value": v, "return": ret, "trades": trades, "win_rate": win})
+
+    valid = [r for r in vol_results if (r.get("total_trades", 0) or 0) > 0]
+    best_vol = max(valid, key=lambda x: x.get("cumulative_return_pct", -999)) if valid else vol_results[0]
+    BT_VOL_RATIO_MIN = best_vol["param_value"]
+    results["best"]["vol_min"] = BT_VOL_RATIO_MIN
+    print(f"  ⭐ 최적: 거래량 ≥ {BT_VOL_RATIO_MIN}% (수익 {best_vol.get('cumulative_return_pct', 0):+.2f}%)")
+
+    # ─── 최종 결합 시뮬레이션 ───
+    print(f"\n" + "="*70)
+    print(f"🏆 최종 조합: 점수≥{BACKTEST_SCORE_MIN} / RSI<{BT_RSI_BUY_MAX} / 거래량≥{BT_VOL_RATIO_MIN}%")
+    print("="*70)
+    final_metrics = simulate(months=months, new_rules=False)
+    results["final_metrics"] = final_metrics
+    ret = final_metrics.get("cumulative_return_pct", 0) or 0
+    trades = final_metrics.get("total_trades", 0) or 0
+    win = final_metrics.get("win_rate_pct", 0) or 0
+    print(f"최종 결과: 수익 {ret:+.2f}% / 매매 {trades}건 / 승률 {win:.1f}%")
+    print("="*70)
+
+    return results
+
+
 def compute_metrics(daily_capital: list, trades: list, initial: int) -> dict:
     if not daily_capital:
         return {"error": "데이터 없음"}
@@ -964,12 +1077,66 @@ if __name__ == "__main__":
             except ValueError:
                 pass
 
-    print(f"백테스팅 v3.0 — 한국 스윙 다중 환경 검증 (3기간 × 2알고리즘 = 6회 시뮬)")
+    print(f"백테스팅 v4.0 — 파라미터 최적화 모드")
     print(f"기본 기간: 최근 {months}개월\n")
 
     if not _PYKRX_OK:
         print("❌ pykrx 미설치 — pip install pykrx 필요")
         sys.exit(1)
+
+    # ─── 파라미터 최적화 모드 ───
+    if BT_OPTIMIZE_MODE:
+        opt_results = optimize_parameters(months=months)
+
+        # 결과 저장
+        combined = {
+            "optimize_mode": True,
+            "months": months,
+            "generated_at": _now_kst().isoformat(),
+            "optimization": opt_results,
+        }
+        try:
+            with open(BACKTEST_RESULTS, "w", encoding="utf-8") as f:
+                json.dump(combined, f, ensure_ascii=False, indent=2, default=str)
+            print(f"\n📁 결과 저장: {BACKTEST_RESULTS}")
+        except Exception as e:
+            print(f"⚠️ 저장 실패: {e}")
+
+        # 텔레그램 발송
+        if not no_report:
+            try:
+                tg_lines = [
+                    f"🔬 <b>파라미터 최적화 결과</b> (최근 {months}개월)",
+                    "",
+                    "<b>━━ 매수 점수 임계 ━━</b>",
+                ]
+                for r in opt_results["score_min"]:
+                    tg_lines.append(f"  ≥{r['value']:>3}: 수익 {r['return']:+.2f}% / {r['trades']}건 / 승률 {r['win_rate']:.1f}%")
+                tg_lines.append(f"  ⭐ 최적: <b>≥{opt_results['best']['score_min']}</b>")
+
+                tg_lines.extend(["", "<b>━━ RSI 차단 임계 ━━</b>"])
+                for r in opt_results["rsi_max"]:
+                    tg_lines.append(f"  &lt;{r['value']:>3}: 수익 {r['return']:+.2f}% / {r['trades']}건 / 승률 {r['win_rate']:.1f}%")
+                tg_lines.append(f"  ⭐ 최적: <b>RSI&lt;{opt_results['best']['rsi_max']}</b>")
+
+                tg_lines.extend(["", "<b>━━ 거래량 최소 ━━</b>"])
+                for r in opt_results["vol_min"]:
+                    tg_lines.append(f"  ≥{r['value']:>3}%: 수익 {r['return']:+.2f}% / {r['trades']}건 / 승률 {r['win_rate']:.1f}%")
+                tg_lines.append(f"  ⭐ 최적: <b>≥{opt_results['best']['vol_min']}%</b>")
+
+                final = opt_results["final_metrics"]
+                tg_lines.extend([
+                    "",
+                    "<b>━━ 🏆 최종 조합 ━━</b>",
+                    f"점수≥{opt_results['best']['score_min']} / RSI&lt;{opt_results['best']['rsi_max']} / 거래량≥{opt_results['best']['vol_min']}%",
+                    f"수익률: <b>{final.get('cumulative_return_pct', 0) or 0:+.2f}%</b>",
+                    f"매매: {final.get('total_trades', 0) or 0}건 / 승률 {final.get('win_rate_pct', 0) or 0:.1f}%",
+                    f"MDD: {final.get('max_drawdown_pct', 0) or 0:.2f}% / Sharpe: {final.get('sharpe_ratio', 0) or 0:.2f}",
+                ])
+                tg_send("\n".join(tg_lines))
+            except Exception as e:
+                print(f"⚠️ 텔레그램 전송 실패: {e}")
+        sys.exit(0)
 
     # ── 3기간 × 2알고리즘 = 6회 시뮬 ──
     # 환경 1: 최근 6개월 (in-sample)
