@@ -25,6 +25,19 @@
       "swing_score": 59,
       "sector": "바이오",
       "order_no": "0000044615"
+    },
+    "000880": {
+      "name": "한화",
+      "qty": 13,
+      "buy_price": 143550.0,
+      "buy_date": "2026-05-12",
+      "buy_time": "14:51",
+      "buy_amount": 1866150.0,
+      "partial_sold": false,
+      "score": 49,
+      "swing_score": 51,
+      "sector": "방산",
+      "order_no": "0000045598"
     }
   },
   "history": [
@@ -185,6 +198,19 @@
       "reason": "swing_score 59",
       "sector": "바이오",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-05-12",
+      "time": "14:51",
+      "side": "buy",
+      "code": "000880",
+      "name": "한화",
+      "qty": 13,
+      "price": 143550.0,
+      "amount": 1866150.0,
+      "reason": "swing_score 51",
+      "sector": "방산",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -209,9 +235,9 @@
       "trade_count": 0
     },
     "2026-05-12": {
-      "buy_count": 2,
-      "buy_amount": 3681500.0,
-      "trade_count": 3
+      "buy_count": 3,
+      "buy_amount": 5547650.0,
+      "trade_count": 4
     }
   },
   "loss_cooldown": {
