@@ -267,23 +267,33 @@ def calc_swing_score_at(
     if momentum_bad: sw -= 15
 
     # ── 한국 스윙 확률 룰 (new_rules=True 시) ──
-    foreign_3day_buy = False
+    # B안: 외국인 OR 기관 3일 합산 순매수 > 0 (둘 다 음수면 차단)
+    # *3일 연속 양수*는 너무 엄격 (6개월 매매 0건 검증), *합산*으로 완화
+    foreign_3day_sum = 0.0
+    inst_3day_sum = 0.0
+    foreign_3day_buy = False  # 3일 연속 양수 (가산점용)
     inst_3day_buy = False
     if new_rules and investor_3day_rows and len(investor_3day_rows) >= 3:
         try:
             foreign_vals = [float(r.get("외국인합계", 0)) for r in investor_3day_rows[-3:]]
             inst_vals = [float(r.get("기관합계", 0)) for r in investor_3day_rows[-3:]]
+            foreign_3day_sum = sum(foreign_vals)
+            inst_3day_sum = sum(inst_vals)
             foreign_3day_buy = all(v > 0 for v in foreign_vals)
             inst_3day_buy = all(v > 0 for v in inst_vals)
         except Exception:
             pass
 
     if new_rules:
-        # 외국인 3일 연속 매수 → 가산점
-        if foreign_3day_buy:
-            sw += 10
-        if inst_3day_buy:
+        # 가산점 — 3일 합산 매수 + 3일 연속이면 추가 가산
+        if foreign_3day_sum > 0:
             sw += 5
+            if foreign_3day_buy:
+                sw += 5  # 3일 연속이면 추가 +5
+        if inst_3day_sum > 0:
+            sw += 3
+            if inst_3day_buy:
+                sw += 2
 
     # 매수 시그널 — 백테스트 전용 임계치 사용 (DART/뉴스 미반영 보정)
     signal = (
@@ -296,12 +306,13 @@ def calc_swing_score_at(
         and ret_1m > -15
     )
 
-    # ── 새 룰 추가 가드 ──
+    # ── 새 룰 추가 가드 (B안: 합산 OR 조건) ──
     if new_rules and signal:
-        # 외국인+기관 *둘 다* 3일 연속 매수 아니면 차단
-        if not (foreign_3day_buy or inst_3day_buy):
+        # 외국인 OR 기관 *둘 중 하나라도* 3일 합산 매수 > 0 필수
+        # (둘 다 3일 합산 음수면 = 외인+기관 동반 매도세 → 차단)
+        if foreign_3day_sum <= 0 and inst_3day_sum <= 0:
             signal = False
-        # 거래량 +500% 초과 → 과열 차단
+        # 거래량 +500% 초과 → 과열 차단 (한국 스윙 정석)
         if vol_ratio > 500:
             signal = False
 
@@ -321,25 +332,30 @@ def calc_swing_score_at(
         "near_resistance": near_resistance,
         "foreign_3day_buy": foreign_3day_buy,
         "inst_3day_buy": inst_3day_buy,
+        "foreign_3day_sum": round(foreign_3day_sum, 1),
+        "inst_3day_sum": round(inst_3day_sum, 1),
     }
 
 
 # ════════════════════════════════════════════════
 # 시뮬레이션 엔진
 # ════════════════════════════════════════════════
-def simulate(months: int = 6, new_rules: bool = False) -> dict:
+def simulate(months: int = 6, new_rules: bool = False, end_offset_days: int = 0) -> dict:
     """메인 시뮬레이션 — months 개월 과거 데이터로 가상 매매.
 
     Args:
         new_rules: True면 한국 스윙 확률 룰 적용
                    (외국인+기관 3일 연속 매수 필수 + 거래량 +500% 차단)
+        end_offset_days: 현재로부터 N일 이전을 *끝점*으로 (out-of-sample 검증용)
+                         0 = 어제까지 / 365 = 1년 전까지 (그 이전 months개월 시뮬)
     """
     if not _PYKRX_OK:
         return {"error": "pykrx 미설치"}
 
     # 분석 기간 설정 (백테스트 + 분석에 필요한 30거래일 여유)
     # pykrx 인덱스는 tznaive 이므로 비교 시 tzinfo 제거 (TypeError 방지)
-    end_dt   = _now_kst().replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    base_end = _now_kst().replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    end_dt   = base_end - timedelta(days=end_offset_days)
     start_dt = end_dt - timedelta(days=months * 31 + 60)  # 분석용 lookback 60일 추가
     sim_start = end_dt - timedelta(days=months * 31)       # 실제 시뮬레이션 시작
 
@@ -948,26 +964,46 @@ if __name__ == "__main__":
             except ValueError:
                 pass
 
-    print(f"백테스팅 v2.0 — 스윙 자동매매 비교 검증 (현재 vs 새 룰)")
-    print(f"분석 기간: 최근 {months}개월\n")
+    print(f"백테스팅 v3.0 — 한국 스윙 다중 환경 검증 (3기간 × 2알고리즘 = 6회 시뮬)")
+    print(f"기본 기간: 최근 {months}개월\n")
 
     if not _PYKRX_OK:
         print("❌ pykrx 미설치 — pip install pykrx 필요")
         sys.exit(1)
 
-    # ── 1차: 현재 알고리즘 ──
-    print("\n" + "="*70)
-    print("백테스트 1/2: 현재 알고리즘 (기존 봇 점수 계산)")
-    print("="*70)
-    metrics_current = simulate(months=months, new_rules=False)
-    metrics_current["algorithm"] = "current"
+    # ── 3기간 × 2알고리즘 = 6회 시뮬 ──
+    # 환경 1: 최근 6개월 (in-sample)
+    # 환경 2: 최근 12개월 (extended)
+    # 환경 3: 1년 전 6개월 (out-of-sample, 과적합 검증)
+    test_envs = [
+        ("최근 6개월", 6, 0),
+        ("최근 12개월", 12, 0),
+        ("1년 전 6개월 (out-of-sample)", 6, 365),
+    ]
 
-    # ── 2차: 새 룰 적용 ──
-    print("\n" + "="*70)
-    print("백테스트 2/2: 새 알고리즘 (외국인+기관 3일 연속 + 거래량 +500% 차단)")
-    print("="*70)
-    metrics_new = simulate(months=months, new_rules=True)
-    metrics_new["algorithm"] = "new_rules"
+    all_results = []
+    for env_name, env_months, env_offset in test_envs:
+        # 현재 알고리즘
+        print("\n" + "="*70)
+        print(f"환경: {env_name} — 현재 알고리즘")
+        print("="*70)
+        m_cur = simulate(months=env_months, new_rules=False, end_offset_days=env_offset)
+        m_cur["env"] = env_name
+        m_cur["algorithm"] = "current"
+
+        # 새 알고리즘
+        print("\n" + "="*70)
+        print(f"환경: {env_name} — 새 알고리즘 (한국 스윙 확률 룰)")
+        print("="*70)
+        m_new = simulate(months=env_months, new_rules=True, end_offset_days=env_offset)
+        m_new["env"] = env_name
+        m_new["algorithm"] = "new_rules"
+
+        all_results.append({"env": env_name, "current": m_cur, "new": m_new})
+
+    # 호환성: 메인 결과는 첫 환경 (최근 6개월)
+    metrics_current = all_results[0]["current"]
+    metrics_new = all_results[0]["new"]
 
     # ── 결과 비교 출력 ──
     print("\n" + "="*70)
@@ -994,11 +1030,31 @@ if __name__ == "__main__":
         print(f"{label:<25} {_fmt(metrics_current, key, fmt):>15} {_fmt(metrics_new, key, fmt):>15}")
     print("="*70)
 
-    # 결과 저장 (두 가지 모두)
+    # ── 다중 환경 종합 결과 ──
+    print("\n" + "="*70)
+    print("📊 다중 환경 종합 비교")
+    print("="*70)
+    print(f"{'환경':<35} {'현재 수익률':>12} {'새 룰 수익률':>12} {'우위':>6}")
+    print("-"*70)
+    for r in all_results:
+        cur_ret = r["current"].get("total_return") or r["current"].get("cumulative_return_pct", 0)
+        new_ret = r["new"].get("total_return") or r["new"].get("cumulative_return_pct", 0)
+        try:
+            cur_f = float(cur_ret) if cur_ret else 0
+            new_f = float(new_ret) if new_ret else 0
+            winner = "새 룰 ✅" if new_f > cur_f else ("현재 ❌" if cur_f > new_f else "동일")
+            print(f"{r['env']:<35} {cur_f:>+11.2f}% {new_f:>+11.2f}% {winner:>6}")
+        except Exception:
+            print(f"{r['env']:<35} {'?':>12} {'?':>12} {'?':>6}")
+    print("="*70)
+
+    # 결과 저장 (다중 환경)
     combined = {
         "comparison_mode": True,
+        "multi_env": True,
         "months": months,
         "generated_at": _now_kst().isoformat(),
+        "environments": all_results,
         "current": metrics_current,
         "new_rules": metrics_new,
     }
@@ -1011,22 +1067,37 @@ if __name__ == "__main__":
 
     if not no_report:
         try:
-            # 비교 결과를 텔레그램으로 발송
+            # 다중 환경 비교 결과를 텔레그램으로 발송
             tg_lines = [
-                f"🔬 <b>백테스트 비교 결과</b> ({months}개월)",
+                f"🔬 <b>백테스트 다중 환경 검증</b>",
                 "",
-                "<b>━━ 현재 알고리즘 ━━</b>",
-                f"수익률: {_fmt(metrics_current, 'total_return', '{:+.2f}')}% / 연환산 {_fmt(metrics_current, 'annual_return', '{:+.2f}')}%",
-                f"MDD: {_fmt(metrics_current, 'mdd', '{:.2f}')}% / Sharpe {_fmt(metrics_current, 'sharpe', '{:.2f}')}",
-                f"매매: {_fmt(metrics_current, 'total_trades', '{}')}건 / 승률 {_fmt(metrics_current, 'win_rate', '{:.1f}')}%",
-                "",
-                "<b>━━ 새 알고리즘 (한국 스윙 확률 룰) ━━</b>",
-                f"수익률: {_fmt(metrics_new, 'total_return', '{:+.2f}')}% / 연환산 {_fmt(metrics_new, 'annual_return', '{:+.2f}')}%",
-                f"MDD: {_fmt(metrics_new, 'mdd', '{:.2f}')}% / Sharpe {_fmt(metrics_new, 'sharpe', '{:.2f}')}",
-                f"매매: {_fmt(metrics_new, 'total_trades', '{}')}건 / 승률 {_fmt(metrics_new, 'win_rate', '{:.1f}')}%",
-                "",
-                "<i>※ 새 룰: 외국인+기관 3일 연속 매수 필수 + 거래량 +500% 차단</i>",
+                "<b>━━ 환경별 수익률 비교 ━━</b>",
             ]
+            for r in all_results:
+                cur_ret = r["current"].get("total_return") or r["current"].get("cumulative_return_pct", 0)
+                new_ret = r["new"].get("total_return") or r["new"].get("cumulative_return_pct", 0)
+                cur_trd = r["current"].get("total_trades", 0)
+                new_trd = r["new"].get("total_trades", 0)
+                cur_win = r["current"].get("win_rate") or r["current"].get("win_rate_pct", 0)
+                new_win = r["new"].get("win_rate") or r["new"].get("win_rate_pct", 0)
+                try:
+                    cur_f = float(cur_ret) if cur_ret else 0
+                    new_f = float(new_ret) if new_ret else 0
+                    winner = "✅ 새 룰 우위" if new_f > cur_f else ("❌ 현재 우위" if cur_f > new_f else "동일")
+                    tg_lines.extend([
+                        "",
+                        f"<b>📅 {r['env']}</b> — {winner}",
+                        f"  현재: 수익 {cur_f:+.2f}% / 매매 {cur_trd}건 / 승률 {cur_win:.1f}%",
+                        f"  새 룰: 수익 {new_f:+.2f}% / 매매 {new_trd}건 / 승률 {new_win:.1f}%",
+                    ])
+                except Exception:
+                    tg_lines.append(f"<b>{r['env']}</b>: 비교 불가")
+
+            tg_lines.extend([
+                "",
+                "<i>새 룰: 외국인+기관 3일 연속 매수 + 거래량 +500% 차단</i>",
+                "<i>3환경 모두 새 룰 우위 → 진짜 좋은 룰 / 환경별 다름 → 과적합 의심</i>",
+            ])
             tg_send("\n".join(tg_lines))
         except Exception as e:
             print(f"⚠️ 텔레그램 전송 실패: {e}")
