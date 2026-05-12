@@ -23,6 +23,18 @@
       "rec_date": "2026-05-08",
       "rec_score": 0,
       "peak_pct": 0.0
+    },
+    "185750": {
+      "name": "종근당",
+      "qty": 24,
+      "buy_price": 81100.0,
+      "buy_date": "2026-05-11",
+      "buy_time": "12:56",
+      "buy_amount": 1946400,
+      "partial_sold": false,
+      "rec_date": "2026-05-11",
+      "rec_score": 0,
+      "peak_pct": 0.0
     }
   },
   "history": [
@@ -46,6 +58,17 @@
       "qty": 110,
       "price": 18020.0,
       "amount": 1982200,
+      "source": "추천 (가치주 TOP5)"
+    },
+    {
+      "date": "2026-05-11",
+      "time": "12:56",
+      "side": "buy",
+      "code": "185750",
+      "name": "종근당",
+      "qty": 24,
+      "price": 81100.0,
+      "amount": 1946400,
       "source": "추천 (가치주 TOP5)"
     }
   ]
