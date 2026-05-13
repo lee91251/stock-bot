@@ -1,94 +1,23 @@
 {
-  "date": "2026-05-13",
-  "generated_at": "2026-05-12T16:29:50.154571",
+  "date": "2026-05-14",
+  "generated_at": "2026-05-13T13:50:05.167713",
   "source_phase": "close_summary",
   "picks": [
-    {
-      "code": "014680",
-      "name": "한솔케미칼",
-      "sector": "화학",
-      "score_bonus": 8,
-      "today_change": 7.53,
-      "today_vol_ratio": 360.0,
-      "today_score": 65,
-      "reasons": [
-        "오늘 +7.5% 마감",
-        "거래량 평균 +360%",
-        "스윙점수 65"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "128940",
-      "name": "한미약품",
-      "sector": "바이오",
-      "score_bonus": 7,
-      "today_change": 7.32,
-      "today_vol_ratio": 217.0,
-      "today_score": 64,
-      "reasons": [
-        "오늘 +7.3% 마감",
-        "거래량 평균 +217%",
-        "스윙점수 64"
-      ],
-      "source": "close_summary"
-    },
     {
       "code": "196170",
       "name": "알테오젠",
       "sector": "바이오",
-      "score_bonus": 5,
-      "today_change": 5.23,
-      "today_vol_ratio": 204.0,
-      "today_score": 66,
-      "reasons": [
-        "오늘 +5.2% 마감",
-        "거래량 평균 +204%",
-        "스윙점수 66"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "326030",
-      "name": "SK바이오팜",
-      "sector": "바이오",
       "score_bonus": 4,
-      "today_change": 4.06,
-      "today_vol_ratio": 235.0,
-      "today_score": 65,
+      "today_change": 4.39,
+      "today_vol_ratio": 361.0,
+      "today_score": 72,
       "reasons": [
-        "오늘 +4.1% 마감",
-        "거래량 평균 +235%",
-        "스윙점수 65"
+        "오늘 +4.4% 마감",
+        "거래량 평균 +361%",
+        "스윙점수 72"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -3,
-    "AI": -3,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 3,
-    "제약": 3,
-    "헬스": 3,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": -3.15,
-    "XLK": -1.51,
-    "XLF": 0.78,
-    "XLE": 0.7,
-    "XLV": 1.96,
-    "XLI": -0.39,
-    "XLB": -0.23,
-    "XLY": -0.9
-  },
-  "sector_updated_at": "2026-05-13T06:00:55.291707"
+  "sector_weights": {}
 }
