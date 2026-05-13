@@ -1,20 +1,35 @@
 {
   "date": "2026-05-14",
-  "generated_at": "2026-05-13T13:50:05.167713",
+  "generated_at": "2026-05-13T15:40:38.107444",
   "source_phase": "close_summary",
   "picks": [
+    {
+      "code": "036570",
+      "name": "엔씨소프트",
+      "sector": "게임",
+      "score_bonus": 5,
+      "today_change": 5.2,
+      "today_vol_ratio": 252.0,
+      "today_score": 52,
+      "reasons": [
+        "오늘 +5.2% 마감",
+        "거래량 평균 +252%",
+        "스윙점수 52"
+      ],
+      "source": "close_summary"
+    },
     {
       "code": "196170",
       "name": "알테오젠",
       "sector": "바이오",
       "score_bonus": 4,
-      "today_change": 4.39,
-      "today_vol_ratio": 361.0,
-      "today_score": 72,
+      "today_change": 3.51,
+      "today_vol_ratio": 378.0,
+      "today_score": 56,
       "reasons": [
-        "오늘 +4.4% 마감",
-        "거래량 평균 +361%",
-        "스윙점수 72"
+        "오늘 +3.5% 마감",
+        "거래량 평균 +378%",
+        "스윙점수 56"
       ],
       "source": "close_summary"
     }
