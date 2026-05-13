@@ -68,7 +68,13 @@
     }
   },
   "history": [],
-  "daily": {},
+  "daily": {
+    "2026-05-13": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 0
+    }
+  },
   "loss_cooldown": {},
   "halted": false,
   "pending_cancel": false,
