@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-05-12T09:01:19.970659",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 대한항공 -3.04% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
     "time": "2026-05-12T14:52:46.315338",
     "category": "disclosure",
     "level": "warning",
@@ -118,5 +110,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.0 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-05-13T09:16:53.449696",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 한화 -3.73% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
