@@ -8533,16 +8533,25 @@ def _get_dynamic_thresholds(risk_level: str) -> dict:
     if risk_level == "안전":  # 0~30: 강세장
         return {
             "score_min": 45, "rsi_max": 65, "vol_min": 100,
+            "daily_buy_limit": 5, "daily_amt_limit": 10_000_000,
+            "chase_max_pct": 5.0,  # 당일 +5%까지 추격 매수 OK
+            "allow_momentum": True,  # momentum_signal로도 매수 가능
             "label": "🟢 강세장 (적극)", "regime": "강세"
         }
     elif risk_level == "주의":  # 30~50: 중립
         return {
             "score_min": 50, "rsi_max": 65, "vol_min": 150,
+            "daily_buy_limit": 4, "daily_amt_limit": 8_000_000,
+            "chase_max_pct": 3.0,
+            "allow_momentum": True,
             "label": "🟡 중립 (중간)", "regime": "중립"
         }
     elif risk_level == "경계":  # 50~70: 약세장
         return {
             "score_min": 55, "rsi_max": 60, "vol_min": 200,
+            "daily_buy_limit": 3, "daily_amt_limit": 6_000_000,
+            "chase_max_pct": 2.0,
+            "allow_momentum": False,  # 약세장: momentum_signal 차단 (swing_signal만)
             "label": "🟠 약세장 (보수)", "regime": "약세"
         }
     else:  # 위험 70+: 이미 정지 (기존 시스템)
@@ -8943,6 +8952,9 @@ def run_auto_buy():
         return
 
     # 매수 실행
+    # Regime-Adaptive 임계 미리 1회 계산 (루프 안 매 종목 재계산 X)
+    thresholds = _get_dynamic_thresholds(risk['level'])
+
     for s in selected:
         # 정지 명령 중간 체크 (사용자가 /정지 보냈을 수도)
         pos = load_positions()
@@ -8956,11 +8968,18 @@ def run_auto_buy():
         qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
 
-        if daily["buy_amount"] + amt > SWING_MAX_DAILY_AMT:
-            tg_send(f"🛑 일일 매수 한도 도달 ({SWING_MAX_DAILY_AMT//10000}만원) — 추가 매수 중단")
+        # A: 일일 한도 동적 (5/13 회장 결정) — 시장 환경 따라 조정
+        # 강세 5종목/1,000만원 / 중립 4종목/800만원 / 약세 3종목/600만원
+        _dyn_daily_buy = SWING_MAX_DAILY_BUY
+        _dyn_daily_amt = SWING_MAX_DAILY_AMT
+        if thresholds:
+            _dyn_daily_buy = thresholds.get("daily_buy_limit", SWING_MAX_DAILY_BUY)
+            _dyn_daily_amt = thresholds.get("daily_amt_limit", SWING_MAX_DAILY_AMT)
+        if daily["buy_amount"] + amt > _dyn_daily_amt:
+            tg_send(f"🛑 일일 매수 한도 도달 ({_dyn_daily_amt//10000}만원, {thresholds['label'] if thresholds else ''}) — 추가 매수 중단")
             break
-        if daily["buy_count"] >= SWING_MAX_DAILY_BUY:
-            tg_send(f"🛑 일일 종목 한도 도달 ({SWING_MAX_DAILY_BUY}개) — 추가 매수 중단")
+        if daily["buy_count"] >= _dyn_daily_buy:
+            tg_send(f"🛑 일일 종목 한도 도달 ({_dyn_daily_buy}개, {thresholds['label'] if thresholds else ''}) — 추가 매수 중단")
             break
         if daily["trade_count"] >= SWING_DAILY_TRADE_CAP:
             tg_send(f"🛑 일일 매매 횟수 한도 도달 ({SWING_DAILY_TRADE_CAP}건) — 비정상 폭주 차단")
@@ -8984,7 +9003,7 @@ def run_auto_buy():
         # ── Regime-Adaptive 동적 임계 가드 (5/13 회장 결정) ──
         # 시장 위험 등급에 따라 매수 임계 자동 조정
         # 강세=공격 (점수 45) / 중립=중간 (점수 50) / 약세=보수 (점수 55)
-        thresholds = _get_dynamic_thresholds(risk['level'])
+        # thresholds는 루프 시작 전 1회 계산 (위에서 정의)
         if thresholds:
             real_score = s.get("score", 0)  # 진짜 점수 (보너스 제외)
             if real_score < thresholds["score_min"]:
@@ -9001,6 +9020,22 @@ def run_auto_buy():
             if rsi_check and rsi_check >= thresholds["rsi_max"]:
                 print(f"  [regime] {s['name']} RSI {rsi_check:.1f} ≥ {thresholds['rsi_max']} "
                       f"({thresholds['label']}) — 매수 차단")
+                continue
+            # ── C: 모멘텀 신호 차단 (약세장에서) — 5/13 회장 결정 ──
+            # 약세장에서 momentum_signal(급등 추격)으로만 통과한 종목 차단
+            # swing_signal(진짜 점수 + 안전조건)으로 통과한 종목만 매수
+            if not thresholds.get("allow_momentum", True):
+                if s.get("momentum_signal") and not s.get("swing_signal"):
+                    print(f"  [regime] {s['name']} momentum_signal만 통과 — "
+                          f"{thresholds['label']} 모멘텀 추격 차단")
+                    continue
+            # ── B: 추격매수 차단 동적 — 5/13 회장 결정 ──
+            # 당일 등락률이 chase_max_pct 초과 시 차단 (강세 5% / 중립 3% / 약세 2%)
+            today_change = s.get("today_change", s.get("change_pct", 0)) or 0
+            chase_max = thresholds.get("chase_max_pct", 5.0)
+            if today_change > chase_max:
+                print(f"  [regime] {s['name']} 당일 +{today_change:.1f}% > 한도 +{chase_max}% "
+                      f"({thresholds['label']}) — 추격매수 차단")
                 continue
 
         result = client.buy(code, qty)
