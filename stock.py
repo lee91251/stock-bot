@@ -8172,6 +8172,111 @@ def _load_value_top5() -> list:
         return []
 
 
+def _load_short_term_top3() -> list:
+    """단기 1~3주 추천 TOP 3 (5/13 신규).
+
+    필터: 모멘텀 + 안정성 중심
+      - score ≥ 50
+      - RSI 45~65 (과매수 X, 저점 매수 가능)
+      - 거래량 ≥ 100% (활발)
+      - MACD 골든크로스 (추세 전환)
+      - 1개월 -10% 이상만 (큰 하락 X)
+      - manipulation X / momentum_bad X
+
+    점수 (단기 가중): score + RSI bonus + 거래량 bonus + MACD bonus
+    """
+    try:
+        if not os.path.exists(MARKET_SCAN_CACHE):
+            return []
+        with open(MARKET_SCAN_CACHE, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        stocks = cache.get("stocks", [])
+
+        candidates = []
+        for s in stocks:
+            score = s.get("score", 0)
+            rsi = s.get("rsi", 50)
+            vol_ratio = s.get("vol_ratio", 0)
+            macd_cross = s.get("macd_cross", False)
+            ret_1m = s.get("ret_1m", 0)
+            warnings = s.get("warnings", [])
+
+            # 단기 필터
+            if score < 50: continue
+            if not (45 <= rsi <= 65): continue
+            if vol_ratio < 100: continue
+            if not macd_cross: continue
+            if ret_1m < -10: continue
+            if any("조작" in w or "모멘텀 약화" in w for w in warnings): continue
+
+            # 단기 가중 점수
+            short_score = score
+            if 48 <= rsi <= 60: short_score += 10  # 최적 RSI
+            if vol_ratio >= 150: short_score += 8
+            if 0 < ret_1m <= 5: short_score += 5    # 약한 상승 모멘텀
+            candidates.append((short_score, s))
+
+        candidates.sort(key=lambda x: -x[0])
+        return [s for _, s in candidates[:3]]
+    except Exception as e:
+        print(f"  [premarket] 단기 추천 로드 오류: {e}")
+        return []
+
+
+def _load_mid_term_top3() -> list:
+    """중기 1~3개월 추천 TOP 3 (5/13 신규).
+
+    필터: 가치 + 펀더멘털 중심
+      - score ≥ 50
+      - PER ≤ 시장 평균 × 1.2 (저평가)
+      - ROE ≥ 8% (수익성)
+      - 1개월 -15% 이상만
+      - 외국인 누적 매수 또는 차트 양호
+
+    점수 (중기 가중): score + 가치 bonus + ROE bonus + 모멘텀 bonus
+    """
+    try:
+        if not os.path.exists(MARKET_SCAN_CACHE):
+            return []
+        with open(MARKET_SCAN_CACHE, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        stocks = cache.get("stocks", [])
+
+        # 시장 평균 PER 계산 (간이)
+        valid_pers = [s.get("per", 0) for s in stocks if 0 < s.get("per", 0) < 100]
+        avg_per = sum(valid_pers) / len(valid_pers) if valid_pers else 15.0
+        per_threshold = avg_per * 1.2
+
+        candidates = []
+        for s in stocks:
+            score = s.get("score", 0)
+            per = s.get("per", 0)
+            roe = s.get("roe", 0)
+            ret_1m = s.get("ret_1m", 0)
+            ret_3m = s.get("ret_3m", 0)
+
+            # 중기 필터
+            if score < 50: continue
+            if not (0 < per <= per_threshold): continue
+            if roe < 8: continue
+            if ret_1m < -15: continue
+
+            # 중기 가중 점수
+            mid_score = score
+            if per <= avg_per * 0.8: mid_score += 15  # 매우 저평가
+            elif per <= avg_per: mid_score += 8
+            if roe >= 15: mid_score += 10
+            elif roe >= 12: mid_score += 5
+            if 0 < ret_3m <= 20: mid_score += 5      # 안정적 상승
+            candidates.append((mid_score, s))
+
+        candidates.sort(key=lambda x: -x[0])
+        return [s for _, s in candidates[:3]]
+    except Exception as e:
+        print(f"  [premarket] 중기 추천 로드 오류: {e}")
+        return []
+
+
 def run_premarket_briefing():
     """8시 50분 — 장 시작 전 통합 브리핑 (텔레그램 다이어트).
 
@@ -8198,20 +8303,47 @@ def run_premarket_briefing():
             "",
         ]
 
-        # 가치주 TOP 5 (market_scan_cache에서)
-        top5 = _load_value_top5()
-        if top5:
-            lines.append("<b>🎯 오늘 가치주 TOP 5</b>")
-            for i, s in enumerate(top5, 1):
+        # 3+3+3 추천 시스템 (5/13 신규 — 보유 기간별 분리)
+        # 🚀 스윙 (1~5일, 자동매매) / 📈 단기 (1~3주, 수동) / 📊 중기 (1~3개월, 수동)
+        top3_swing = _load_value_top5()[:3]  # 기존 종합 점수 TOP (자동매매 후보)
+        top3_short = _load_short_term_top3()
+        top3_mid = _load_mid_term_top3()
+
+        if top3_swing:
+            lines.append("<b>🚀 스윙 TOP 3</b> <i>(1~5일, 자동매매)</i>")
+            for i, s in enumerate(top3_swing, 1):
                 name  = s.get("name", "?")
                 score = s.get("score", 0)
                 price = s.get("price", 0)
                 sector = s.get("sector", "")
                 buy_ok = "✅" if s.get("buy_signal") else "🔍"
-                lines.append(f"{i}. {buy_ok} {name} ({sector}) — {score}점, {price:,.0f}원")
+                lines.append(f"{i}. {buy_ok} {name} ({sector}) — {score}점 / {price:,.0f}원")
             lines.append("")
-        else:
-            lines.append("<i>⚠️ 가치주 캐시 없음 — 새벽 시장스캔 확인 필요</i>")
+
+        if top3_short:
+            lines.append("<b>📈 단기 TOP 3</b> <i>(1~3주, 수동 매수)</i>")
+            for i, s in enumerate(top3_short, 1):
+                name  = s.get("name", "?")
+                score = s.get("score", 0)
+                price = s.get("price", 0)
+                rsi   = s.get("rsi", 0)
+                vol   = s.get("vol_ratio", 0)
+                lines.append(f"{i}. {name} — {score}점 / {price:,.0f}원 / RSI {rsi:.0f} / 거래량 {vol:.0f}%")
+            lines.append("")
+
+        if top3_mid:
+            lines.append("<b>📊 중기 TOP 3</b> <i>(1~3개월, 수동 매수)</i>")
+            for i, s in enumerate(top3_mid, 1):
+                name  = s.get("name", "?")
+                score = s.get("score", 0)
+                price = s.get("price", 0)
+                per   = s.get("per", 0)
+                roe   = s.get("roe", 0)
+                lines.append(f"{i}. {name} — {score}점 / {price:,.0f}원 / PER {per:.1f} / ROE {roe:.1f}%")
+            lines.append("")
+
+        if not (top3_swing or top3_short or top3_mid):
+            lines.append("<i>⚠️ 추천 캐시 없음 — 16:00 시장스캔 확인 필요</i>")
             lines.append("")
 
         # AI 한 줄
