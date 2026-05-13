@@ -6589,22 +6589,137 @@ def _make_macro_card(macro: dict, ai_macro: str, history: dict = None) -> str:
 
 
 def _make_recommend_card(kr_top: list, ai_insights: dict) -> str:
-    """가치주 추천 TOP 5 카드 — 기존 card_html 활용."""
+    """🚀 스윙 추천 TOP 3 카드 (1~5일, 자동매매 후보) — 기존 card_html 활용."""
     if not kr_top:
-        return _empty_section("recommend", "🇰🇷", "section__icon--rec", "가치주 추천 TOP 5",
-                              "오늘의 매수 후보", "추천 데이터 준비 중",
-                              "평일 02:00 시장 스캔 + 08:50 장 시작 전 분석 후 표시됩니다.")
-    cards = "".join(card_html(i, s, (ai_insights or {}).get(s.get('ticker',''), "")) for i, s in enumerate(kr_top))
+        return _empty_section("recommend", "🚀", "section__icon--rec", "스윙 추천 TOP 3",
+                              "1~5일 / 자동매매", "추천 데이터 준비 중",
+                              "평일 16:00 시장 스캔 + 08:50 장 시작 전 분석 후 표시됩니다.")
+    cards = "".join(card_html(i, s, (ai_insights or {}).get(s.get('ticker',''), "")) for i, s in enumerate(kr_top[:3]))
     return f"""
-<section class="section" id="recommend" aria-label="가치주 추천 TOP 5">
+<section class="section" id="recommend" aria-label="스윙 추천 TOP 3">
   <div class="section__head">
     <div class="section__title">
-      <span class="section__icon section__icon--rec">🇰🇷</span>
-      <h2>가치주 추천 TOP 5</h2>
-      <span class="section__badge">오늘의 매수 후보</span>
+      <span class="section__icon section__icon--rec">🚀</span>
+      <h2>스윙 추천 TOP 3</h2>
+      <span class="section__badge">1~5일 · 자동매매</span>
     </div>
   </div>
   <div class="embed-wrap">{cards}</div>
+</section>
+"""
+
+
+def _make_short_term_card(short_top: list) -> str:
+    """📈 단기 추천 TOP 3 (1~3주, 수동 매수) — 모멘텀 + 안정성."""
+    if not short_top:
+        return _empty_section("short-term", "📈", "section__icon--rec", "단기 추천 TOP 3",
+                              "1~3주 · 수동 매수", "추천 데이터 준비 중",
+                              "16:00 시장 스캔 후 RSI 45~65 + 거래량 100%+ 종목 추출.")
+    rows = ""
+    for i, s in enumerate(short_top, 1):
+        name = s.get("name", "?")
+        price = s.get("price", 0)
+        score = s.get("score", 0)
+        rsi = s.get("rsi", 0)
+        vol = s.get("vol_ratio", 0)
+        macd = "✅" if s.get("macd_cross") else "—"
+        ret_1m = s.get("ret_1m", 0)
+        rows += f"""
+        <div class="row">
+          <div class="row__main">
+            <div class="row__name">#{i} {name} <span style="color:var(--text-3);font-weight:400;font-size:12px;">{score}점</span></div>
+            <div class="row__sub">RSI {rsi:.0f} · 거래량 {vol:.0f}% · MACD {macd} · 1달 {ret_1m:+.1f}%</div>
+          </div>
+          <div class="row__right">
+            <div class="row__value">{price:,.0f}원</div>
+            <div class="row__sub" style="text-align:right;">+8~+15% 익절</div>
+          </div>
+        </div>"""
+    return f"""
+<section class="section" id="short-term" aria-label="단기 추천 TOP 3">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--rec">📈</span>
+      <h2>단기 추천 TOP 3</h2>
+      <span class="section__badge">1~3주 · 수동 매수</span>
+    </div>
+  </div>
+  <div class="section__body">{rows}</div>
+  <div class="section__foot" style="padding:8px 16px;color:var(--text-3);font-size:12px;">
+    💡 미래에셋 모의 / 한투 모의에서 수동 매수 → 1~3주 후 매도. 손절 -5~-7%
+  </div>
+</section>
+"""
+
+
+def _make_mid_term_card(mid_top: list) -> str:
+    """📊 중기 추천 TOP 3 (1~3개월, 수동 매수) — 가치 + 펀더멘털."""
+    if not mid_top:
+        return _empty_section("mid-term", "📊", "section__icon--rec", "중기 추천 TOP 3",
+                              "1~3개월 · 수동 매수", "추천 데이터 준비 중",
+                              "16:00 시장 스캔 후 PER ≤ 시장평균 + ROE ≥ 8% 종목 추출.")
+    rows = ""
+    for i, s in enumerate(mid_top, 1):
+        name = s.get("name", "?")
+        price = s.get("price", 0)
+        score = s.get("score", 0)
+        per = s.get("per", 0)
+        roe = s.get("roe", 0)
+        div = s.get("div", 0)
+        ret_3m = s.get("ret_3m", 0)
+        rows += f"""
+        <div class="row">
+          <div class="row__main">
+            <div class="row__name">#{i} {name} <span style="color:var(--text-3);font-weight:400;font-size:12px;">{score}점</span></div>
+            <div class="row__sub">PER {per:.1f} · ROE {roe:.1f}% · 배당 {div:.1f}% · 3달 {ret_3m:+.1f}%</div>
+          </div>
+          <div class="row__right">
+            <div class="row__value">{price:,.0f}원</div>
+            <div class="row__sub" style="text-align:right;">+15~+30% 익절</div>
+          </div>
+        </div>"""
+    return f"""
+<section class="section" id="mid-term" aria-label="중기 추천 TOP 3">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--rec">📊</span>
+      <h2>중기 추천 TOP 3</h2>
+      <span class="section__badge">1~3개월 · 수동 매수</span>
+    </div>
+  </div>
+  <div class="section__body">{rows}</div>
+  <div class="section__foot" style="padding:8px 16px;color:var(--text-3);font-size:12px;">
+    💡 미래에셋 모의에서 수동 매수 → 1~3개월 후 매도. 손절 -8~-10%
+  </div>
+</section>
+"""
+
+
+def _make_long_term_card() -> str:
+    """💎 장기 가치주 안내 카드 (3개월+, 미래에셋 실계좌)."""
+    return f"""
+<section class="section" id="long-term" aria-label="장기 가치주">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--rec">💎</span>
+      <h2>장기 가치주</h2>
+      <span class="section__badge">3개월+ · 미래에셋 실</span>
+    </div>
+  </div>
+  <div class="section__body" style="padding:16px;color:var(--text-2);">
+    <p style="margin:0 0 8px 0;font-size:14px;">
+      <strong>회장 가치투자 헌법 기반 (수동 발굴)</strong>
+    </p>
+    <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.8;">
+      <li>PER ≤ 시장 평균 (저평가)</li>
+      <li>PBR ≤ 1.5 / ROE ≥ 10%</li>
+      <li>배당수익률 ≥ 2%</li>
+      <li>부채비율 안정 / 영업이익 성장</li>
+    </ul>
+    <p style="margin:12px 0 0 0;font-size:12px;color:var(--text-3);">
+      💡 미래에셋 실계좌 / 봇이 자동 추천 X / 회장이 직접 발굴
+    </p>
+  </div>
 </section>
 """
 
@@ -6675,7 +6790,10 @@ def _make_sidebar(sections_status: dict, last_update: str) -> str:
         ("advisor",     "🤖", "AI 신뢰도",      True),
         ("learning",    "🧠", "자가학습",       True),
         ("tomorrow",    "🎯", "사전 후보",      True),
-        ("recommend",   "🇰🇷", "추천",          sections_status.get("recommend", False)),
+        ("recommend",   "🚀", "스윙 (1~5일)",   sections_status.get("recommend", False)),
+        ("short-term",  "📈", "단기 (1~3주)",   True),
+        ("mid-term",    "📊", "중기 (1~3개월)", True),
+        ("long-term",   "💎", "장기 (가치주)",  True),
         ("avoid",       "🚫", "회피",          sections_status.get("avoid", False)),
         # [시장]
         ("market",      "🌏", "시장",          sections_status.get("market", False)),
@@ -7192,6 +7310,12 @@ def build_and_save_dashboard(
         history_html = _make_portfolio_history_card(portfolio_history or [])
         disclosures_html = _make_disclosures_card(disclosures or [])
         recommend_html = _make_recommend_card(kr_top, ai_insights)
+        # 단기/중기/장기 추천 카드 (5/13 신규 — 4트랙 분리)
+        short_top = _load_short_term_top3()
+        mid_top = _load_mid_term_top3()
+        short_term_html = _make_short_term_card(short_top)
+        mid_term_html = _make_mid_term_card(mid_top)
+        long_term_html = _make_long_term_card()
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
         sidebar_html = _make_sidebar(sections_status, last_update)
@@ -7248,6 +7372,9 @@ def build_and_save_dashboard(
 {learning_html}
 {tomorrow_html}
 {recommend_html}
+{short_term_html}
+{mid_term_html}
+{long_term_html}
 {avoid_html}
 {market_html}
 {macro_html}
