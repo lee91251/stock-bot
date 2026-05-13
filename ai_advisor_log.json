@@ -58,5 +58,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-13",
+    "time": "10:01",
+    "code": "326030",
+    "name": "SK바이오팜",
+    "sell_price": 98300.0,
+    "sell_pct": -4.1,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%)에 정확히 도달했고, VIX 18·공포탐욕 50의 중립적 시장에서 바이오 개별 종목의 추가 반등 근거가 없으므로 룰대로 손절 집행이 타당합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
