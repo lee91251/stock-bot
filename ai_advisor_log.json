@@ -43,5 +43,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-13",
+    "time": "09:45",
+    "code": "128940",
+    "name": "한미약품",
+    "sell_price": 434500.0,
+    "sell_pct": -4.19,
+    "ai_opinion": "**매도 적절** — 손절 트리거(-4.2%) 정확히 도달했고, VIX 18·공포탐욕 50의 중립 시장에서 바이오 개별 모멘텀 부재 상태로 추가 하락 리스크 대비 반등 근거가 불분명하므로 룰대로 손절 실행이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
