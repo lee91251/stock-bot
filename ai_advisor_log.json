@@ -73,5 +73,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-13",
+    "time": "10:16",
+    "code": "014680",
+    "name": "한솔케미칼",
+    "sell_price": 322500.0,
+    "sell_pct": 11.59,
+    "ai_opinion": "**매도 적절** — +11.6%로 전량 익절 룰(+10% 초과) 충족했고, VIX 18 중립·코스피 보합 환경에서 추가 상승 모멘텀이 불확실하므로 룰대로 실현하는 것이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
