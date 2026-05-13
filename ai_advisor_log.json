@@ -28,5 +28,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-13",
+    "time": "09:31",
+    "code": "000880",
+    "name": "한화",
+    "sell_price": 137400.0,
+    "sell_pct": -4.28,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 충족했고, VIX 18·공포탐욕 50으로 시장은 중립적이나 코스피 보합 속 추가 반등 모멘텀이 약하며, 1거래일 만에 기준선 이탈 시 룰 준수가 우선입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
