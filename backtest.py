@@ -48,7 +48,55 @@ from stock import (
     _now_kst,
     _safe_float,
     tg_send,
+    # 5/14: 4트랙 점수 함수 (백테스트에서도 동일 공식 사용 — drift 방지)
+    _calc_swing_score,
+    _calc_short_term_score,
+    _calc_mid_term_score,
+    _calc_long_term_score,
 )
+
+
+# ════════════════════════════════════════════════
+# 5/14 4트랙 백테스트 설정 — 트랙별 매수/매도 룰
+# ════════════════════════════════════════════════
+TRACK_CONFIG = {
+    "swing": {
+        "label": "🚀 스윙 (1~5일)",
+        "score_func": _calc_swing_score,
+        "target1_pct": 0.06,   # +6% 절반 익절
+        "target2_pct": 0.10,   # +10% 전량 익절
+        "stop_pct":    0.04,   # -4% 손절
+        "max_hold":    5,      # 5거래일
+        "cooldown":    3,      # 손절 후 3일 쿨다운
+    },
+    "short_term": {
+        "label": "📈 단기 (1~3주)",
+        "score_func": _calc_short_term_score,
+        "target1_pct": 0.08,
+        "target2_pct": 0.15,
+        "stop_pct":    0.05,
+        "max_hold":    15,
+        "cooldown":    5,
+    },
+    "mid_term": {
+        "label": "📊 중기 (1~3개월)",
+        "score_func": _calc_mid_term_score,
+        "target1_pct": 0.15,
+        "target2_pct": 0.30,
+        "stop_pct":    0.08,
+        "max_hold":    60,
+        "cooldown":    7,
+    },
+    "long_term": {
+        "label": "💎 장기 (3개월+)",
+        "score_func": _calc_long_term_score,
+        "target1_pct": 0.40,
+        "target2_pct": 1.00,
+        "stop_pct":    None,   # 장기는 손절 X (헌법)
+        "max_hold":    180,
+        "cooldown":    0,
+    },
+}
 
 # ════════════════════════════════════════════════
 # 백테스팅 비용 모델 (실전 기준)
@@ -155,6 +203,121 @@ def load_fundamental(ticker: str, start: str, end: str) -> pd.DataFrame:
     except Exception as e:
         print(f"  [load_fundamental] {ticker} 실패: {e}")
         return pd.DataFrame()
+
+
+# ════════════════════════════════════════════════
+# 5/14 — 4트랙 백테스트 features 빌더
+# stock.py _calc_*_score 함수들이 기대하는 dict 형태로 OHLCV 데이터 변환.
+# 동일 공식 재사용 → drift 방지 (한 곳만 고치면 봇/백테스트 모두 반영).
+# ════════════════════════════════════════════════
+def _compute_features(
+    closes: pd.Series,
+    volumes: pd.Series,
+    investor_row: dict,
+    fundamental_row: dict,
+    sector: str = "기타",
+) -> dict:
+    """OHLCV + 펀더에서 4트랙 점수 함수가 기대하는 stock dict 생성."""
+    if len(closes) < 30:
+        return {}
+
+    # 기술 지표
+    delta = closes.diff()
+    gain  = delta.clip(lower=0).rolling(14).mean()
+    loss  = (-delta.clip(upper=0)).rolling(14).mean()
+    rsi   = float((100 - 100 / (1 + gain / loss.replace(0, 1e-9))).iloc[-1])
+
+    ema12 = closes.ewm(span=12).mean()
+    ema26 = closes.ewm(span=26).mean()
+    macd  = ema12 - ema26
+    sig   = macd.ewm(span=9).mean()
+    macd_cross = float(macd.iloc[-1]) > float(sig.iloc[-1])
+    macd_hist  = float(macd.iloc[-1]) - float(sig.iloc[-1])
+
+    sma20 = closes.rolling(20).mean()
+    std20 = closes.rolling(20).std()
+    bb_up = sma20 + 2 * std20
+    bb_dn = sma20 - 2 * std20
+    bb_pct = float(
+        (float(closes.iloc[-1]) - float(bb_dn.iloc[-1]))
+        / (float(bb_up.iloc[-1]) - float(bb_dn.iloc[-1]) + 1e-9) * 100
+    )
+
+    avg_vol = float(volumes.rolling(20).mean().iloc[-1])
+    last_vol = float(volumes.iloc[-1])
+    vol_ratio = (last_vol / avg_vol * 100) if avg_vol else 100
+
+    n = len(closes)
+    ret_1w = (float(closes.iloc[-1]) - float(closes.iloc[-5])) / float(closes.iloc[-5]) * 100 if n >= 5 else 0
+    ret_1m = (float(closes.iloc[-1]) - float(closes.iloc[-20])) / float(closes.iloc[-20]) * 100 if n >= 20 else 0
+    ret_3m = (float(closes.iloc[-1]) - float(closes.iloc[0])) / float(closes.iloc[0]) * 100 if n >= 60 else 0
+
+    high52 = float(closes.tail(min(252, n)).max())
+    low52  = float(closes.tail(min(252, n)).min())
+    pct_from_low  = (float(closes.iloc[-1]) - low52)  / low52  * 100 if low52  else 0
+    pct_from_high = (float(closes.iloc[-1]) - high52) / high52 * 100 if high52 else 0
+
+    sr_window = closes.tail(min(60, n))
+    support = float(sr_window.quantile(0.2))
+    resistance = float(sr_window.quantile(0.8))
+    near_support = abs(float(closes.iloc[-1]) - support) / float(closes.iloc[-1]) < 0.03
+    near_resistance = abs(float(closes.iloc[-1]) - resistance) / float(closes.iloc[-1]) < 0.03
+
+    momentum_bad = ret_3m < -20 and rsi < 40 and not macd_cross
+    manipulation = vol_ratio > 300 and ret_1w < -10
+
+    per = _safe_float(fundamental_row.get("PER", 0)) if fundamental_row else 0
+    pbr = _safe_float(fundamental_row.get("PBR", 0)) if fundamental_row else 0
+    div = _safe_float(fundamental_row.get("DIV", 0)) if fundamental_row else 0
+    eps = _safe_float(fundamental_row.get("EPS", 0)) if fundamental_row else 0
+    bps = _safe_float(fundamental_row.get("BPS", 0)) if fundamental_row else 0
+    roe = round(eps / bps * 100, 1) if bps > 0 else 0.0
+
+    # mktcap: pykrx daily fundamental에 없음 → 시가총액 데이터 부재 시 매우 큰 값으로 가정
+    # (KR_STOCKS는 사전 큐레이션된 가치주 26개 = 대형주 위주이므로 mktcap 필터 통과 가정)
+    mktcap = 10_0000_0000_0000  # 10조 (큐레이션 풀이라 안전 가정)
+
+    return {
+        "price": float(closes.iloc[-1]),
+        "rsi": round(rsi, 1),
+        "macd_cross": macd_cross,
+        "macd_hist": round(macd_hist, 4),
+        "bb_pct": round(bb_pct, 1),
+        "vol_ratio": round(vol_ratio, 0),
+        "ret_1w": round(ret_1w, 1),
+        "ret_1m": round(ret_1m, 1),
+        "ret_3m": round(ret_3m, 1),
+        "pct_from_low": round(pct_from_low, 1),
+        "pct_from_high": round(pct_from_high, 1),
+        "near_support": near_support,
+        "near_resistance": near_resistance,
+        "manipulation_signal": manipulation,
+        "momentum_bad": momentum_bad,
+        "per": per if per > 0 else None,
+        "pbr": pbr if pbr > 0 else None,
+        "roe": roe,
+        "div": div,
+        "mktcap": mktcap,
+        "sector": sector,
+        "score": 50,  # 기본 점수 (단기/중기 트랙 필터에서 사용)
+        "dart_financials": {},
+    }
+
+
+def calc_track_score_at(track: str, features: dict) -> tuple:
+    """주어진 features dict에서 트랙별 점수 계산. Returns (score, signal, reasons)."""
+    cfg = TRACK_CONFIG.get(track)
+    if not cfg or not features:
+        return 0, False, []
+
+    result = cfg["score_func"](features)
+    if result is None:
+        # 트랙 필터 미통과
+        return 0, False, []
+    score, reasons = result
+    # 트랙별 최소 매수 점수 — 우선 50 공통, 추후 백테스트 결과 보고 튜닝
+    signal = score >= 50
+    return score, signal, reasons
 
 
 # ════════════════════════════════════════════════
@@ -349,6 +512,270 @@ def calc_swing_score_at(
 # ════════════════════════════════════════════════
 # 시뮬레이션 엔진
 # ════════════════════════════════════════════════
+def simulate_track(track: str, months: int = 1) -> dict:
+    """5/14 4트랙 백테스트 — 트랙별 점수 + 매수/매도 룰 분리.
+
+    Args:
+        track: "swing" / "short_term" / "mid_term" / "long_term"
+        months: 백테스트 기간 (개월)
+
+    Returns: metrics dict (수익률 / 승률 / MDD / 매매 기록)
+    """
+    if not _PYKRX_OK:
+        return {"error": "pykrx 미설치"}
+
+    cfg = TRACK_CONFIG.get(track)
+    if not cfg:
+        return {"error": f"알 수 없는 트랙: {track}"}
+
+    # 기간 설정
+    base_end = _now_kst().replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    start_dt = base_end - timedelta(days=months * 31 + 60)
+    sim_start = base_end - timedelta(days=months * 31)
+
+    print(f"\n{'='*60}")
+    print(f"백테스트 — {cfg['label']} / 최근 {months}개월")
+    print(f"기간: {sim_start.date()} ~ {base_end.date()}")
+    print(f"룰: target +{cfg['target1_pct']*100:.0f}%/+{cfg['target2_pct']*100:.0f}% / "
+          f"stop {'-'+str(int(cfg['stop_pct']*100))+'%' if cfg['stop_pct'] else 'X(헌법)'} / "
+          f"max_hold {cfg['max_hold']}일")
+    print(f"{'='*60}\n")
+
+    s_str = start_dt.strftime("%Y%m%d")
+    e_str = base_end.strftime("%Y%m%d")
+
+    # 데이터 로드 (KR_STOCKS 26개)
+    print(f"[1/3] {len(KR_STOCKS)}종목 데이터 로드...")
+    data = {}
+    for i, (ticker, val) in enumerate(KR_STOCKS.items(), 1):
+        name, period, sector = val
+        code = ticker.split(".")[0]
+        ohlcv = load_ohlcv(code, s_str, e_str)
+        fund = load_fundamental(code, s_str, e_str)
+        if ohlcv.empty:
+            continue
+        data[code] = {"name": name, "sector": sector, "ohlcv": ohlcv, "fund": fund}
+        time.sleep(0.1)
+    print(f"  → {len(data)}/{len(KR_STOCKS)}종목 로드 완료\n")
+
+    all_dates = sorted(set().union(*[set(d["ohlcv"].index) for d in data.values()]))
+    sim_dates = [d for d in all_dates if d >= pd.Timestamp(sim_start)]
+    print(f"[2/3] 시뮬레이션 거래일: {len(sim_dates)}일\n")
+
+    # 시뮬레이션 상태
+    cash = INITIAL_CAPITAL
+    positions = {}
+    closed_trades = []
+    cooldown = {}
+    daily_capital = []
+    filter_pass_count = 0  # 트랙 필터 통과 횟수
+    score_buckets = {"<50": 0, "50-59": 0, "60-69": 0, "70-79": 0, "80+": 0}
+
+    print(f"[3/3] 시뮬레이션 실행 ({cfg['label']})...")
+    for di, today in enumerate(sim_dates):
+        if di % 20 == 0 and di > 0:
+            print(f"  진행: {di}/{len(sim_dates)} ({today.date()}) — "
+                  f"현금 {cash/1e6:.1f}M / 보유 {len(positions)} / 청산 {len(closed_trades)}")
+
+        today_str = today.strftime("%Y-%m-%d")
+
+        # 매도 점검
+        for code in list(positions.keys()):
+            p = positions[code]
+            row = data[code]["ohlcv"].loc[data[code]["ohlcv"].index == today]
+            if row.empty:
+                continue
+            close_price = float(row["종가"].iloc[0])
+            buy_price = p["buy_price"]
+            pct = (close_price - buy_price) / buy_price * 100
+            held_qty = p["qty"]
+            partial = p.get("partial_sold", False)
+            buy_date = pd.Timestamp(p["buy_date"])
+            held_days = len([d for d in sim_dates if buy_date < d <= today])
+
+            sell_qty = 0
+            reason = ""
+            is_loss = False
+            if cfg["stop_pct"] and pct <= -cfg["stop_pct"] * 100:
+                sell_qty = held_qty
+                reason = f"손절 ({pct:.1f}%)"
+                is_loss = True
+            elif pct >= cfg["target2_pct"] * 100:
+                sell_qty = held_qty
+                reason = f"+{pct:.1f}% 전량 익절"
+            elif pct >= cfg["target1_pct"] * 100 and not partial:
+                sell_qty = max(1, held_qty // 2)
+                reason = f"+{pct:.1f}% 절반 익절"
+            elif held_days >= cfg["max_hold"]:
+                sell_qty = held_qty
+                reason = f"{held_days}일 강제 청산 ({pct:+.1f}%)"
+
+            if sell_qty <= 0:
+                continue
+
+            next_idx = di + 1
+            if next_idx >= len(sim_dates):
+                continue
+            next_day = sim_dates[next_idx]
+            next_row = data[code]["ohlcv"].loc[data[code]["ohlcv"].index == next_day]
+            if next_row.empty:
+                continue
+            sell_price_raw = float(next_row["시가"].iloc[0])
+            sell_price = sell_price_raw * (1 - SLIPPAGE_RATE)
+            sell_amount = sell_price * sell_qty
+            commission = sell_amount * COMMISSION_RATE
+            tax = sell_amount * TRANSACTION_TAX
+            net_sell = sell_amount - commission - tax
+            cash += net_sell
+
+            buy_amount = buy_price * sell_qty
+            net_pnl = net_sell - buy_amount
+            net_pct = net_pnl / buy_amount * 100
+
+            closed_trades.append({
+                "code": code, "name": p["name"],
+                "buy_date": p["buy_date"], "sell_date": next_day.strftime("%Y-%m-%d"),
+                "buy_price": buy_price, "sell_price": sell_price_raw,
+                "qty": sell_qty, "raw_pct": round(pct, 2), "net_pct": round(net_pct, 2),
+                "net_pnl": round(net_pnl, 0), "held_days": held_days,
+                "reason": reason, "score": p.get("score", 0), "sector": p.get("sector", ""),
+            })
+
+            if sell_qty == held_qty:
+                del positions[code]
+                if is_loss and cfg["cooldown"] > 0:
+                    cd_until = (pd.Timestamp(next_day) + pd.Timedelta(days=cfg["cooldown"])).strftime("%Y-%m-%d")
+                    cooldown[code] = cd_until
+            else:
+                positions[code]["qty"] = held_qty - sell_qty
+                positions[code]["partial_sold"] = True
+
+        # 매수 점검
+        candidates = []
+        for code, d in data.items():
+            ohlcv = d["ohlcv"]
+            today_idx = ohlcv.index <= today
+            ohlcv_slice = ohlcv[today_idx]
+            if len(ohlcv_slice) < 30:
+                continue
+
+            fund_slice = d["fund"][d["fund"].index <= today] if not d["fund"].empty else pd.DataFrame()
+            fund_row = fund_slice.iloc[-1].to_dict() if not fund_slice.empty else {}
+
+            features = _compute_features(
+                ohlcv_slice["종가"], ohlcv_slice["거래량"], {}, fund_row, d["sector"]
+            )
+            if not features:
+                continue
+
+            score, signal, reasons = calc_track_score_at(track, features)
+            if score > 0:
+                filter_pass_count += 1
+                bucket = "<50" if score < 50 else "50-59" if score < 60 else "60-69" if score < 70 else "70-79" if score < 80 else "80+"
+                score_buckets[bucket] += 1
+
+            if signal and code not in positions and code not in cooldown:
+                candidates.append({
+                    "code": code, "name": d["name"], "sector": d["sector"],
+                    "score": score, "reasons": reasons,
+                    "price": features["price"],
+                })
+
+        # 점수 높은 순 매수 (일일 한도: 트랙별 차등, 기본 5종목)
+        candidates.sort(key=lambda c: -c["score"])
+        daily_buy_count = 0
+        max_daily = 5 if track == "swing" else 3 if track == "short_term" else 2
+        for c in candidates:
+            if daily_buy_count >= max_daily:
+                break
+            # 다음 영업일 시초가로 매수
+            next_idx = di + 1
+            if next_idx >= len(sim_dates):
+                break
+            next_day = sim_dates[next_idx]
+            next_row = data[c["code"]]["ohlcv"].loc[data[c["code"]]["ohlcv"].index == next_day]
+            if next_row.empty:
+                continue
+            buy_price_raw = float(next_row["시가"].iloc[0])
+            buy_price = buy_price_raw * (1 + SLIPPAGE_RATE)
+            qty = max(1, int(INVEST_PER_STOCK / buy_price))
+            cost = buy_price * qty * (1 + COMMISSION_RATE)
+            if cost > cash:
+                continue
+            cash -= cost
+            positions[c["code"]] = {
+                "name": c["name"], "qty": qty,
+                "buy_price": buy_price, "buy_date": next_day.strftime("%Y-%m-%d"),
+                "score": c["score"], "sector": c["sector"],
+            }
+            daily_buy_count += 1
+
+        # 일별 자산
+        holdings_value = sum(
+            float(data[code]["ohlcv"].loc[data[code]["ohlcv"].index == today, "종가"].iloc[0]) * p["qty"]
+            for code, p in positions.items()
+            if not data[code]["ohlcv"].loc[data[code]["ohlcv"].index == today].empty
+        )
+        daily_capital.append({"date": today_str, "capital": cash + holdings_value})
+
+    # 메트릭 계산
+    metrics = compute_metrics(daily_capital, closed_trades, INITIAL_CAPITAL)
+    metrics["track"] = track
+    metrics["track_label"] = cfg["label"]
+    metrics["months"] = months
+    metrics["start_date"] = sim_start.strftime("%Y-%m-%d")
+    metrics["end_date"] = base_end.strftime("%Y-%m-%d")
+    metrics["filter_pass_count"] = filter_pass_count
+    metrics["score_buckets"] = score_buckets
+    metrics["open_positions"] = len(positions)
+    metrics["trades"] = closed_trades
+
+    print(f"\n[{cfg['label']}] 완료 — 수익률 {metrics.get('total_return', 0):+.2f}% / "
+          f"매매 {metrics.get('total_trades', 0)}건 / 승률 {metrics.get('win_rate', 0):.1f}% / "
+          f"필터 통과 {filter_pass_count}회")
+    return metrics
+
+
+def run_4track_backtest(months: int = 1) -> dict:
+    """4트랙 백테스트 일괄 실행 + 통합 결과 저장.
+
+    Args:
+        months: 백테스트 기간 (기본 1개월, 30일)
+
+    Returns: {track_name: metrics, ...}
+    """
+    print(f"\n{'='*70}")
+    print(f"🔬 4트랙 백테스트 — 최근 {months}개월")
+    print(f"{'='*70}\n")
+
+    results = {}
+    for track in ["swing", "short_term", "mid_term", "long_term"]:
+        try:
+            results[track] = simulate_track(track, months)
+        except Exception as e:
+            print(f"❌ {track} 백테스트 실패: {e}")
+            results[track] = {"error": str(e)}
+
+    # 종합 요약
+    print(f"\n{'='*70}")
+    print(f"📊 4트랙 백테스트 종합")
+    print(f"{'='*70}")
+    print(f"{'트랙':<25} {'수익률':>10} {'매매':>6} {'승률':>8} {'MDD':>8}")
+    print("-" * 70)
+    for track, m in results.items():
+        if "error" in m:
+            print(f"{TRACK_CONFIG[track]['label']:<25} {'ERROR':>10}")
+            continue
+        ret = m.get("total_return", 0)
+        trd = m.get("total_trades", 0)
+        win = m.get("win_rate", 0)
+        mdd = m.get("mdd", 0)
+        print(f"{TRACK_CONFIG[track]['label']:<25} {ret:>+9.2f}% {trd:>6} {win:>7.1f}% {mdd:>7.2f}%")
+    print("=" * 70)
+
+    return results
+
+
 def simulate(months: int = 6, new_rules: bool = False, end_offset_days: int = 0) -> dict:
     """메인 시뮬레이션 — months 개월 과거 데이터로 가상 매매.
 
@@ -1212,21 +1639,72 @@ def telegram_summary(metrics: dict):
 if __name__ == "__main__":
     months = 6
     no_report = False
+    four_track_mode = False
     for arg in sys.argv[1:]:
         if arg == "--no-report":
             no_report = True
+        elif arg == "--4track":
+            four_track_mode = True
+            months = 1  # 4트랙 기본 1개월 (30일)
         else:
             try:
                 months = int(arg)
             except ValueError:
                 pass
 
-    print(f"백테스팅 v4.0 — 파라미터 최적화 모드")
+    print(f"백테스팅 v4.1 — 4트랙 통합")
     print(f"기본 기간: 최근 {months}개월\n")
 
     if not _PYKRX_OK:
         print("❌ pykrx 미설치 — pip install pykrx 필요")
         sys.exit(1)
+
+    # ─── 5/14 4트랙 백테스트 모드 (--4track) ───
+    if four_track_mode:
+        results = run_4track_backtest(months=months)
+
+        combined = {
+            "four_track_mode": True,
+            "months": months,
+            "generated_at": _now_kst().isoformat(),
+            "tracks": {
+                t: {k: v for k, v in m.items() if k not in ("trades", "daily_capital")}
+                for t, m in results.items()
+            },
+        }
+        try:
+            with open(BACKTEST_RESULTS, "w", encoding="utf-8") as f:
+                json.dump(combined, f, ensure_ascii=False, indent=2, default=str)
+            print(f"\n📁 결과 저장: {BACKTEST_RESULTS}")
+        except Exception as e:
+            print(f"⚠️ 저장 실패: {e}")
+
+        if not no_report:
+            try:
+                tg_lines = [
+                    f"🔬 <b>4트랙 백테스트 결과</b> (최근 {months}개월)",
+                    "",
+                ]
+                for track, m in results.items():
+                    if "error" in m:
+                        tg_lines.append(f"❌ {TRACK_CONFIG[track]['label']}: {m['error']}")
+                        continue
+                    ret = m.get("total_return", 0)
+                    trd = m.get("total_trades", 0)
+                    win = m.get("win_rate", 0)
+                    mdd = m.get("mdd", 0)
+                    fpc = m.get("filter_pass_count", 0)
+                    tg_lines.extend([
+                        f"<b>{TRACK_CONFIG[track]['label']}</b>",
+                        f"  수익률 {ret:+.2f}% / 매매 {trd}건 / 승률 {win:.1f}% / MDD {mdd:.1f}%",
+                        f"  필터 통과 {fpc}회",
+                        "",
+                    ])
+                tg_lines.append("<i>※ 30일 단기 검증 — 통계적 의미는 추후 6개월 확대</i>")
+                tg_send("\n".join(tg_lines))
+            except Exception as e:
+                print(f"⚠️ 텔레그램 전송 실패: {e}")
+        sys.exit(0)
 
     # ─── Multi-environment Grid Search 모드 (5/12 기본 ON) ───
     if BT_GRID_MODE:

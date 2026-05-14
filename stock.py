@@ -10303,6 +10303,65 @@ def run_bot_extended(kr_results: list, us_results: list, mood: dict,
 # ════════════════════════════════════════════════
 # pykrx 시장 전체 스캔
 # ════════════════════════════════════════════════
+def _pykrx_retry(call_name: str, fn, *args, retries: int = 3, backoff: float = 1.5, **kwargs):
+    """KRX API 호출 재시도 헬퍼 (5/14, 5/13 16:00 'Expecting value' JSON 오류 7회 사고 대응).
+
+    Args:
+        call_name: 로그용 함수 이름
+        fn: pykrx 함수
+        retries: 최대 시도 횟수 (기본 3)
+        backoff: 시도 사이 지수 백오프 베이스 (기본 1.5초)
+
+    Returns: fn 결과 또는 None (모두 실패 시)
+    """
+    last_err = None
+    for attempt in range(retries):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            last_err = e
+            if attempt < retries - 1:
+                wait = backoff * (2 ** attempt)
+                print(f"  [pykrx_retry] {call_name} 실패 ({attempt+1}/{retries}): {e} — {wait:.1f}초 후 재시도")
+                time.sleep(wait)
+    print(f"  [pykrx_retry] {call_name} 최종 실패 ({retries}회): {last_err}")
+    return None
+
+
+# 5/14: 시장 스캔 1회 내에서 동일 (날짜, 마켓) 조합은 1번만 호출 (사이클당 cap×2 + fund×2 = 4회)
+# 600종목 × 2 호출 (cap + fund) = 1200회 → 4회. 5/13 사고 방지 + 성능 5배 개선.
+_PYKRX_FUND_CACHE: dict = {}  # (date_str, mkt) → DataFrame or None
+_PYKRX_CAP_CACHE:  dict = {}  # (date_str, mkt) → DataFrame or None
+
+
+def _get_market_fundamental_cached(date_str: str, mkt: str):
+    """get_market_fundamental_by_ticker 결과 캐싱 + 3회 재시도."""
+    key = (date_str, mkt)
+    if key in _PYKRX_FUND_CACHE:
+        return _PYKRX_FUND_CACHE[key]
+    df = _pykrx_retry(
+        f"fund_by_ticker({mkt})",
+        _pykrx.get_market_fundamental_by_ticker,
+        date_str, market=mkt,
+    )
+    _PYKRX_FUND_CACHE[key] = df
+    return df
+
+
+def _get_market_cap_cached(date_str: str, mkt: str):
+    """get_market_cap_by_ticker 결과 캐싱 + 3회 재시도."""
+    key = (date_str, mkt)
+    if key in _PYKRX_CAP_CACHE:
+        return _PYKRX_CAP_CACHE[key]
+    df = _pykrx_retry(
+        f"cap_by_ticker({mkt})",
+        _pykrx.get_market_cap_by_ticker,
+        date_str, market=mkt,
+    )
+    _PYKRX_CAP_CACHE[key] = df
+    return df
+
+
 def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
     """pykrx로 코스피+코스닥 시가총액 상위 n개 종목 리스트 반환 [(code, name, mkt), ...]"""
     if not _PYKRX_OK:
@@ -10324,11 +10383,11 @@ def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
         print("  [pykrx] 시가총액 데이터 없음")
         return []
 
-    try:
-        df_kospi  = _pykrx.get_market_cap_by_ticker(date_str, market="KOSPI")
-        df_kosdaq = _pykrx.get_market_cap_by_ticker(date_str, market="KOSDAQ")
-    except Exception as e:
-        print(f"  [pykrx] 시가총액 조회 오류: {e}")
+    # 5/14: 3회 재시도 + 백오프 (5/13 'Expecting value' JSON 오류 7회 사고 방지)
+    df_kospi  = _pykrx_retry("cap_by_ticker(KOSPI)",  _pykrx.get_market_cap_by_ticker, date_str, market="KOSPI")
+    df_kosdaq = _pykrx_retry("cap_by_ticker(KOSDAQ)", _pykrx.get_market_cap_by_ticker, date_str, market="KOSDAQ")
+    if df_kospi is None and df_kosdaq is None:
+        print("  [pykrx] 시가총액 조회 모두 실패 — 시장 스캔 중단")
         return []
 
     kospi_set = set(df_kospi.index.tolist()) if df_kospi is not None else set()
@@ -10423,11 +10482,11 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
         momentum_bad        = ret_3m < -20 and rsi < 40 and macd_hist < 0
         manipulation_signal = vol_ratio > 300 and ret_1w < -10
 
-        # 펀더멘털 (pykrx)
+        # 펀더멘털 (pykrx) — 5/14: 모듈 캐시로 동일 날짜·마켓 1회만 호출 (5/13 사고 방지)
         per = pbr = None
         div = roe = mktcap = 0.0
         try:
-            fund_df = _pykrx.get_market_fundamental_by_ticker(end_str, market=mkt)
+            fund_df = _get_market_fundamental_cached(end_str, mkt)
             if fund_df is not None and code in fund_df.index:
                 row = fund_df.loc[code]
                 per = float(row.get("PER", 0) or 0) or None
@@ -10439,12 +10498,13 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
         except Exception:
             pass
 
-        try:
-            cap_df = _pykrx.get_market_cap_by_ticker(end_str, market=mkt)
-            if cap_df is not None and code in cap_df.index:
+        # 시가총액 — 모듈 캐시 사용 (5/13 사고 방지)
+        cap_df = _get_market_cap_cached(end_str, mkt)
+        if cap_df is not None and code in cap_df.index:
+            try:
                 mktcap = float(cap_df.loc[code, "시가총액"])
-        except Exception:
-            pass
+            except Exception:
+                pass
 
         # 점수 계산
         score    = 0
