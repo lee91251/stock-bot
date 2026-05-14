@@ -405,6 +405,56 @@
       "score": 90,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-05-15",
+      "month": "2026-05",
+      "ticker": "138930.KS",
+      "name": "BNK금융지주",
+      "price": 17500.0,
+      "score": 102,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-15",
+      "month": "2026-05",
+      "ticker": "316140.KS",
+      "name": "우리금융지주",
+      "price": 31800.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-15",
+      "month": "2026-05",
+      "ticker": "055550.KS",
+      "name": "신한지주",
+      "price": 96800.0,
+      "score": 93,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-05-15",
+      "month": "2026-05",
+      "ticker": "011200.KS",
+      "name": "HMM",
+      "price": 20100.0,
+      "score": 93,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-15",
+      "month": "2026-05",
+      "ticker": "004370.KS",
+      "name": "농심",
+      "price": 389500.0,
+      "score": 92,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
