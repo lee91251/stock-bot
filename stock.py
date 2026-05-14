@@ -3476,18 +3476,21 @@ def check_holdings_alerts() -> list:
 # ════════════════════════════════════════════════
 # HTML 카드 생성
 # ════════════════════════════════════════════════
-def card_html(rank: int, s: dict, ai_insight: str = "") -> str:
+def card_html(rank: int, s: dict, ai_insight: str = "", period_override: str | None = None) -> str:
     medals  = ["🥇", "🥈", "🥉"]
     medal   = medals[rank] if rank < 3 else f"{rank + 1}위"
     cur     = s["currency"]
     chg_col = "#e03131" if s["change"] >= 0 else "#1971c2"
     chg_arr = "▲" if s["change"] >= 0 else "▼"
 
+    # 5/14: 4트랙 라벨 정확화 — period_override로 트랙별 라벨 주입 가능
+    period_key = period_override or s.get("period", "중기")
     period_badge = {
-        "단기": ("#fff0f6", "#c2255c", "단기 1~4주"),
-        "중기": ("#e8f4fd", "#1971c2", "중기 1~6개월"),
-        "장기": ("#ebfbee", "#2f9e44", "장기 1년+"),
-    }.get(s["period"], ("#f8f9fa", "#495057", s["period"]))
+        "스윙": ("#fff5e6", "#d9480f", "스윙 1~5일"),
+        "단기": ("#fff0f6", "#c2255c", "단기 1~3주"),
+        "중기": ("#e8f4fd", "#1971c2", "중기 1~3개월"),
+        "장기": ("#ebfbee", "#2f9e44", "장기 3개월+"),
+    }.get(period_key, ("#f8f9fa", "#495057", period_key))
 
     # 매수 시그널 배지
     if s.get("buy_signal"):
@@ -6594,7 +6597,10 @@ def _make_recommend_card(kr_top: list, ai_insights: dict) -> str:
         return _empty_section("recommend", "🚀", "section__icon--rec", "스윙 추천 TOP 3",
                               "1~5일 / 자동매매", "추천 데이터 준비 중",
                               "평일 16:00 시장 스캔 + 08:50 장 시작 전 분석 후 표시됩니다.")
-    cards = "".join(card_html(i, s, (ai_insights or {}).get(s.get('ticker',''), "")) for i, s in enumerate(kr_top[:3]))
+    cards = "".join(
+        card_html(i, s, (ai_insights or {}).get(s.get('ticker',''), ""), period_override="스윙")
+        for i, s in enumerate(kr_top[:3])
+    )
     return f"""
 <section class="section" id="recommend" aria-label="스윙 추천 TOP 3">
   <div class="section__head">
@@ -6619,7 +6625,7 @@ def _make_short_term_card(short_top: list) -> str:
     for i, s in enumerate(short_top, 1):
         name = s.get("name", "?")
         price = s.get("price", 0)
-        score = s.get("score", 0)
+        score = s.get("short_score") or s.get("score", 0)
         rsi = s.get("rsi", 0)
         vol = s.get("vol_ratio", 0)
         macd = "✅" if s.get("macd_cross") else "—"
@@ -6662,8 +6668,8 @@ def _make_mid_term_card(mid_top: list) -> str:
     for i, s in enumerate(mid_top, 1):
         name = s.get("name", "?")
         price = s.get("price", 0)
-        score = s.get("score", 0)
-        per = s.get("per", 0)
+        score = s.get("mid_score") or s.get("score", 0)
+        per = s.get("per", 0) or 0
         roe = s.get("roe", 0)
         div = s.get("div", 0)
         ret_3m = s.get("ret_3m", 0)
@@ -6695,9 +6701,14 @@ def _make_mid_term_card(mid_top: list) -> str:
 """
 
 
-def _make_long_term_card() -> str:
-    """💎 장기 가치주 안내 카드 (3개월+, 미래에셋 실계좌)."""
-    return f"""
+def _make_long_term_card(long_top: list | None = None) -> str:
+    """💎 장기 가치주 TOP 3 (3개월+, 미래에셋 실계좌 / 자동매매 X).
+
+    5/14: 헌법 1차 필터(PER≤12, PBR≤1.2, ROE≥10, 시총≥1조) 통과 종목 TOP 3.
+    빈 경우 헌법 안내 카드로 폴백.
+    """
+    if not long_top:
+        return f"""
 <section class="section" id="long-term" aria-label="장기 가치주">
   <div class="section__head">
     <div class="section__title">
@@ -6711,14 +6722,52 @@ def _make_long_term_card() -> str:
       <strong>회장 가치투자 헌법 기반 (수동 발굴)</strong>
     </p>
     <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.8;">
-      <li>PER ≤ 시장 평균 (저평가)</li>
-      <li>PBR ≤ 1.5 / ROE ≥ 10%</li>
-      <li>배당수익률 ≥ 2%</li>
-      <li>부채비율 안정 / 영업이익 성장</li>
+      <li>PER ≤ 12 (저평가)</li>
+      <li>PBR ≤ 1.2 / ROE ≥ 10%</li>
+      <li>시가총액 ≥ 1조 (안정성)</li>
+      <li>배당수익률 ≥ 2% / 영업현금흐름 양수</li>
     </ul>
     <p style="margin:12px 0 0 0;font-size:12px;color:var(--text-3);">
       💡 미래에셋 실계좌 / 봇이 자동 추천 X / 회장이 직접 발굴
     </p>
+  </div>
+</section>
+"""
+    # 헌법 통과 종목 있음 — TOP 3 표시
+    rows = ""
+    for i, s in enumerate(long_top, 1):
+        name = s.get("name", "?")
+        price = s.get("price", 0)
+        score = s.get("long_score") or s.get("score", 0)
+        per = s.get("per", 0) or 0
+        pbr = s.get("pbr", 0) or 0
+        roe = s.get("roe", 0)
+        div = s.get("div", 0)
+        mktcap = s.get("mktcap", 0)
+        mktcap_str = f"{mktcap/1_0000_0000_0000:.1f}조" if mktcap >= 1_0000_0000_0000 else f"{mktcap/1_0000_0000:.0f}억"
+        rows += f"""
+        <div class="row">
+          <div class="row__main">
+            <div class="row__name">#{i} {name} <span style="color:var(--text-3);font-weight:400;font-size:12px;">{score}점</span></div>
+            <div class="row__sub">PER {per:.1f} · PBR {pbr:.2f} · ROE {roe:.1f}% · 배당 {div:.1f}% · {mktcap_str}</div>
+          </div>
+          <div class="row__right">
+            <div class="row__value">{price:,.0f}원</div>
+            <div class="row__sub" style="text-align:right;">+40~+100% 익절</div>
+          </div>
+        </div>"""
+    return f"""
+<section class="section" id="long-term" aria-label="장기 가치주 TOP 3">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--rec">💎</span>
+      <h2>장기 가치주 TOP 3</h2>
+      <span class="section__badge">3개월+ · 미래에셋 실 (수동)</span>
+    </div>
+  </div>
+  <div class="section__body">{rows}</div>
+  <div class="section__foot" style="padding:8px 16px;color:var(--text-3);font-size:12px;">
+    💡 헌법 1차 필터 통과 (PER≤12, PBR≤1.2, ROE≥10, 시총≥1조). 봇은 추천만 — 매수는 수동.
   </div>
 </section>
 """
@@ -7309,13 +7358,16 @@ def build_and_save_dashboard(
         coach_html = _make_personal_coach_card(personal_brief, risk)
         history_html = _make_portfolio_history_card(portfolio_history or [])
         disclosures_html = _make_disclosures_card(disclosures or [])
-        recommend_html = _make_recommend_card(kr_top, ai_insights)
-        # 단기/중기/장기 추천 카드 (5/13 신규 — 4트랙 분리)
+        # 5/14: 4트랙 진짜 알고리즘 — 트랙별 독립 점수
+        swing_top = _load_swing_top3()
         short_top = _load_short_term_top3()
-        mid_top = _load_mid_term_top3()
+        mid_top   = _load_mid_term_top3()
+        long_top  = _load_long_term_top3()
+        # 스윙 카드 — 빈 경우 kr_top 폴백 (4트랙 점수 미산정 시 호환)
+        recommend_html = _make_recommend_card(swing_top or kr_top, ai_insights)
         short_term_html = _make_short_term_card(short_top)
         mid_term_html = _make_mid_term_card(mid_top)
-        long_term_html = _make_long_term_card()
+        long_term_html = _make_long_term_card(long_top)
         avoid_html = _make_avoid_card(avoid or [])
         dart_html = _make_dart_card(dart_alerts or [])
         sidebar_html = _make_sidebar(sections_status, last_update)
@@ -8283,6 +8335,238 @@ def run_us_briefing():
         print(f"  [브리핑] 대시보드 갱신 오류: {e}")
 
 
+# ════════════════════════════════════════════════════════════
+# 5/14 4트랙 진짜 알고리즘 — 트랙별 독립 점수 함수
+#   설계 문서: Obsidian Vault/16 - 4트랙 알고리즘 설계.md
+#   각 함수: stock dict 입력 → (score, reasons) 반환. 필터 미통과 시 None.
+# ════════════════════════════════════════════════════════════
+
+def _calc_swing_score(s: dict) -> tuple | None:
+    """🚀 스윙 1~5일 — 모멘텀 추격 (max 100). 필터 미통과 시 None.
+
+    가중치: 모멘텀 60 / 기술 30 / 가치 10 (차단만)
+    """
+    vol_ratio   = s.get("vol_ratio", 0)
+    ret_1w      = s.get("ret_1w", 0)
+    macd_hist   = s.get("macd_hist", 0)
+    macd_cross  = s.get("macd_cross", False)
+    mktcap      = s.get("mktcap", 0)
+    rsi         = s.get("rsi", 50)
+    pct_from_hi = s.get("pct_from_high", 0)
+    bb_pct      = s.get("bb_pct", 50)
+    near_sup    = s.get("near_support", False)
+    per         = s.get("per") or 0
+    manipulation = s.get("manipulation_signal", False)
+
+    # 필터 — 통과 못 하면 즉시 탈락
+    if not (150 <= vol_ratio <= 350): return None
+    if ret_1w < -3: return None
+    if macd_hist <= 0: return None
+    if mktcap < 3_000_0000_0000: return None  # 시가총액 3,000억
+    if manipulation: return None
+
+    momentum = 0
+    reasons  = []
+
+    # 모멘텀 60
+    if vol_ratio >= 200:    momentum += 25; reasons.append(f"거래량 {vol_ratio:.0f}% 폭발")
+    elif vol_ratio >= 150:  momentum += 18; reasons.append(f"거래량 {vol_ratio:.0f}% 강세")
+    elif vol_ratio >= 120:  momentum += 10
+
+    if macd_hist > 0 and macd_cross: momentum += 15; reasons.append("MACD 골든+양수")
+    elif macd_cross:                  momentum += 10; reasons.append("MACD 골든크로스")
+
+    if 3 <= ret_1w <= 8:    momentum += 15; reasons.append(f"1주 +{ret_1w}% 안전 상승")
+    elif 0 <= ret_1w < 3:   momentum += 10
+    elif 8 < ret_1w <= 15:  momentum += 8
+
+    if 55 <= rsi <= 70:     momentum += 5
+
+    # 기술 30
+    tech = 0
+    if -10 <= pct_from_hi <= 0:        tech += 12; reasons.append("52주 고점 근접 — 돌파 후보")
+    elif -20 <= pct_from_hi < -10:     tech += 6
+
+    if bb_pct >= 80:        tech += 10; reasons.append(f"BB 상단 ({bb_pct}%)")
+    elif bb_pct >= 70:      tech += 6
+
+    if near_sup:            tech += 8
+
+    # 가치 10 (차단만)
+    value = 0 if (per and per > 100) else 10
+
+    total = min(100, momentum + tech + value)
+    return (total, reasons)
+
+
+def _calc_short_term_score(s: dict) -> tuple | None:
+    """📈 단기 1~3주 — 모멘텀+안정성 (max 100). 필터 미통과 시 None.
+
+    가중치: 모멘텀 40 / 안정성 40 / 가치 20
+    """
+    score_base   = s.get("score", 0)
+    rsi          = s.get("rsi", 50)
+    vol_ratio    = s.get("vol_ratio", 0)
+    macd_cross   = s.get("macd_cross", False)
+    macd_hist    = s.get("macd_hist", 0)
+    ret_1m       = s.get("ret_1m", 0)
+    mktcap       = s.get("mktcap", 0)
+    per          = s.get("per") or 0
+    pbr          = s.get("pbr") or 0
+    roe          = s.get("roe", 0)
+    near_sup     = s.get("near_support", False)
+    pct_from_lo  = s.get("pct_from_low", 0)
+    manipulation = s.get("manipulation_signal", False)
+    momentum_bad = s.get("momentum_bad", False)
+
+    # 필터
+    if score_base < 50: return None
+    if not (40 <= rsi <= 65): return None
+    if ret_1m < -10: return None
+    if not macd_cross: return None
+    if mktcap < 3_000_0000_0000: return None
+    if manipulation or momentum_bad: return None
+
+    reasons = []
+
+    # 모멘텀 40
+    momentum = 0
+    if macd_cross and macd_hist > 0: momentum += 15; reasons.append("MACD 골든크로스 + 양수")
+    elif macd_cross:                  momentum += 10
+    if 45 <= rsi <= 60:                momentum += 15; reasons.append(f"RSI {rsi} 적정")
+    elif 40 <= rsi < 45 or 60 < rsi <= 65: momentum += 8
+    if vol_ratio >= 120:               momentum += 10
+    elif vol_ratio >= 100:             momentum += 6
+
+    # 안정성 40
+    stability = 0
+    if -5 <= ret_1m <= 10:             stability += 15; reasons.append(f"1개월 {ret_1m}% 안정")
+    elif -10 <= ret_1m < -5 or 10 < ret_1m <= 15: stability += 8
+    if near_sup:                       stability += 10; reasons.append("지지선 근처")
+    if pct_from_lo <= 20:              stability += 5
+
+    # 가치 20
+    value = 0
+    if per and per <= 20:              value += 10  # 시장×1.5 대략
+    elif per and per <= 30:            value += 5
+    if roe >= 8:                       value += 5
+    if pbr and pbr <= 2:               value += 5
+
+    total = min(100, momentum + stability + value)
+    return (total, reasons)
+
+
+def _calc_mid_term_score(s: dict) -> tuple | None:
+    """📊 중기 1~3개월 — 펀더멘털+모멘텀 (max 100). 필터 미통과 시 None.
+
+    가중치: 펀더 50 / 모멘텀 30 / 안전 20
+    """
+    score_base   = s.get("score", 0)
+    per          = s.get("per") or 0
+    pbr          = s.get("pbr") or 0
+    roe          = s.get("roe", 0)
+    div          = s.get("div", 0)
+    mktcap       = s.get("mktcap", 0)
+    ret_1m       = s.get("ret_1m", 0)
+    ret_3m       = s.get("ret_3m", 0)
+    macd_cross   = s.get("macd_cross", False)
+    rsi          = s.get("rsi", 50)
+    manipulation = s.get("manipulation_signal", False)
+    momentum_bad = s.get("momentum_bad", False)
+
+    # 필터
+    if score_base < 55: return None
+    if not (per and per <= 18):  # 시장평균 ~15 × 1.2
+        return None
+    if roe < 8: return None
+    if mktcap < 5_000_0000_0000: return None  # 5,000억
+    if ret_1m < -15 or ret_3m < -25: return None
+    if manipulation or momentum_bad: return None
+
+    reasons = []
+
+    # 펀더 50
+    fund = 0
+    if per <= 10:                fund += 20; reasons.append(f"PER {per:.1f} 매우 저평가")
+    elif per <= 15:              fund += 15; reasons.append(f"PER {per:.1f} 저평가")
+    elif per <= 18:              fund += 8
+    if pbr and pbr <= 1.0:       fund += 12; reasons.append(f"PBR {pbr:.2f} 자산 대비 저렴")
+    elif pbr and pbr <= 1.5:     fund += 8
+    elif pbr and pbr <= 2.0:     fund += 3
+    if roe >= 15:                fund += 12; reasons.append(f"ROE {roe}% 수익성 우수")
+    elif roe >= 10:              fund += 8
+    elif roe >= 8:               fund += 4
+    if div >= 3:                 fund += 6
+    elif div >= 2:               fund += 4
+    elif div >= 1:               fund += 2
+
+    # 모멘텀 30
+    momentum = 0
+    if 0 <= ret_3m <= 20:        momentum += 15; reasons.append(f"3개월 +{ret_3m}% 안정 상승")
+    elif -5 <= ret_3m < 0 or 20 < ret_3m <= 30: momentum += 8
+    if macd_cross:               momentum += 10
+    if 40 <= rsi <= 60:          momentum += 5
+
+    # 안전 20
+    safety = 0
+    if mktcap >= 1_0000_0000_0000:  safety += 10; reasons.append("대형주 (시총 1조+)")
+    elif mktcap >= 5_000_0000_0000: safety += 6
+    # 거래대금/모멘텀 결함은 이미 필터에서 차단
+    safety += 5  # 모멘텀 결함 X (필터 통과)
+
+    total = min(100, fund + momentum + safety)
+    return (total, reasons)
+
+
+def _calc_long_term_score(s: dict) -> tuple | None:
+    """💎 장기 3개월+ — 가치투자 헌법 (max 100). 필터 미통과 시 None.
+
+    가중치: 가치 70 / 안전 30 / 모멘텀 0
+    헌법 5단계 1차 필터 + 2차 함정 차단 그대로.
+    """
+    per          = s.get("per") or 0
+    pbr          = s.get("pbr") or 0
+    roe          = s.get("roe", 0)
+    div          = s.get("div", 0)
+    mktcap       = s.get("mktcap", 0)
+    manipulation = s.get("manipulation_signal", False)
+
+    # 헌법 1차 필수 통과 (전부)
+    if not (0 < per <= 12): return None
+    if not (0 < pbr <= 1.2): return None
+    if roe < 10: return None
+    if mktcap < 1_0000_0000_0000: return None  # 시가총액 1조+
+    if manipulation: return None
+    # 영업현금흐름 양수 — DART 데이터 있을 때만 검증 (현재 없으면 통과)
+    dart = s.get("dart_financials") or {}
+    if dart and dart.get("operating_cashflow") is not None:
+        if dart["operating_cashflow"] <= 0:
+            return None
+
+    reasons = []
+
+    # 가치 70
+    value = 0
+    if per <= 8:     value += 25; reasons.append(f"PER {per:.1f} 매우 저렴")
+    elif per <= 12:  value += 18; reasons.append(f"PER {per:.1f} 저렴")
+    if pbr <= 0.8:   value += 20; reasons.append(f"PBR {pbr:.2f} 자산 대비 매우 저렴")
+    elif pbr <= 1.2: value += 14; reasons.append(f"PBR {pbr:.2f} 적정")
+    if roe >= 15:    value += 15; reasons.append(f"ROE {roe}% 우수")
+    elif roe >= 10:  value += 10
+    if div >= 4:     value += 10; reasons.append(f"배당 {div}% 고배당")
+    elif div >= 2:   value += 6
+    elif div >= 1:   value += 2
+
+    # 안전 30
+    safety = 0
+    if mktcap >= 1_0000_0000_0000:  safety += 15; reasons.append("대형주 (시총 1조+)")
+    # 영업현금흐름/부채/자본잠식은 DART 데이터 있을 때 추가 (현재 없으면 기본 통과)
+    safety += 15  # 기본 안전 (필터 통과 = 함정 차단 OK)
+
+    total = min(100, value + safety)
+    return (total, reasons)
+
+
 def _load_value_top5() -> list:
     """market_scan_cache에서 가치 점수 상위 5종목 로드 (다이어트 텔레그램 메시지용)."""
     try:
@@ -8299,19 +8583,14 @@ def _load_value_top5() -> list:
         return []
 
 
-def _load_short_term_top3() -> list:
-    """단기 1~3주 추천 TOP 3 (5/13 신규).
+# ─────────────────────────────────────────────────────────────
+# 5/14 4트랙 로더 — market_scan_cache의 트랙별 점수 기준 TOP 3
+# 기존 score 기반이 아닌 swing_score / short_score / mid_score / long_score 사용.
+# 트랙 필터를 통과한 종목만 점수 보유 (그 외는 None).
+# ─────────────────────────────────────────────────────────────
 
-    필터: 모멘텀 + 안정성 중심
-      - score ≥ 50
-      - RSI 45~65 (과매수 X, 저점 매수 가능)
-      - 거래량 ≥ 100% (활발)
-      - MACD 골든크로스 (추세 전환)
-      - 1개월 -10% 이상만 (큰 하락 X)
-      - manipulation X / momentum_bad X
-
-    점수 (단기 가중): score + RSI bonus + 거래량 bonus + MACD bonus
-    """
+def _load_track_top3(track_key: str, label: str) -> list:
+    """4트랙 공통 로더. track_key = 'swing_score' / 'short_score' / 'mid_score' / 'long_score'"""
     try:
         if not os.path.exists(MARKET_SCAN_CACHE):
             return []
@@ -8319,89 +8598,33 @@ def _load_short_term_top3() -> list:
             cache = json.load(f)
         stocks = cache.get("stocks", [])
 
-        candidates = []
-        for s in stocks:
-            score = s.get("score", 0)
-            rsi = s.get("rsi", 50)
-            vol_ratio = s.get("vol_ratio", 0)
-            macd_cross = s.get("macd_cross", False)
-            ret_1m = s.get("ret_1m", 0)
-            warnings = s.get("warnings", [])
-
-            # 단기 필터
-            if score < 50: continue
-            if not (45 <= rsi <= 65): continue
-            if vol_ratio < 100: continue
-            if not macd_cross: continue
-            if ret_1m < -10: continue
-            if any("조작" in w or "모멘텀 약화" in w for w in warnings): continue
-
-            # 단기 가중 점수
-            short_score = score
-            if 48 <= rsi <= 60: short_score += 10  # 최적 RSI
-            if vol_ratio >= 150: short_score += 8
-            if 0 < ret_1m <= 5: short_score += 5    # 약한 상승 모멘텀
-            candidates.append((short_score, s))
-
-        candidates.sort(key=lambda x: -x[0])
-        return [s for _, s in candidates[:3]]
+        # track_key가 None이 아닌 종목만 (= 필터 통과 종목만)
+        candidates = [s for s in stocks if s.get(track_key) is not None]
+        candidates.sort(key=lambda s: -s.get(track_key, 0))
+        return candidates[:3]
     except Exception as e:
-        print(f"  [premarket] 단기 추천 로드 오류: {e}")
+        print(f"  [premarket] {label} 추천 로드 오류: {e}")
         return []
+
+
+def _load_swing_top3() -> list:
+    """🚀 스윙 1~5일 TOP 3 (모멘텀 추격, 자동매매 대상)."""
+    return _load_track_top3("swing_score", "스윙")
+
+
+def _load_short_term_top3() -> list:
+    """📈 단기 1~3주 TOP 3 (모멘텀+안정성)."""
+    return _load_track_top3("short_score", "단기")
 
 
 def _load_mid_term_top3() -> list:
-    """중기 1~3개월 추천 TOP 3 (5/13 신규).
+    """📊 중기 1~3개월 TOP 3 (펀더멘털+모멘텀)."""
+    return _load_track_top3("mid_score", "중기")
 
-    필터: 가치 + 펀더멘털 중심
-      - score ≥ 50
-      - PER ≤ 시장 평균 × 1.2 (저평가)
-      - ROE ≥ 8% (수익성)
-      - 1개월 -15% 이상만
-      - 외국인 누적 매수 또는 차트 양호
 
-    점수 (중기 가중): score + 가치 bonus + ROE bonus + 모멘텀 bonus
-    """
-    try:
-        if not os.path.exists(MARKET_SCAN_CACHE):
-            return []
-        with open(MARKET_SCAN_CACHE, "r", encoding="utf-8") as f:
-            cache = json.load(f)
-        stocks = cache.get("stocks", [])
-
-        # 시장 평균 PER 계산 (간이)
-        valid_pers = [s.get("per", 0) for s in stocks if 0 < s.get("per", 0) < 100]
-        avg_per = sum(valid_pers) / len(valid_pers) if valid_pers else 15.0
-        per_threshold = avg_per * 1.2
-
-        candidates = []
-        for s in stocks:
-            score = s.get("score", 0)
-            per = s.get("per", 0)
-            roe = s.get("roe", 0)
-            ret_1m = s.get("ret_1m", 0)
-            ret_3m = s.get("ret_3m", 0)
-
-            # 중기 필터
-            if score < 50: continue
-            if not (0 < per <= per_threshold): continue
-            if roe < 8: continue
-            if ret_1m < -15: continue
-
-            # 중기 가중 점수
-            mid_score = score
-            if per <= avg_per * 0.8: mid_score += 15  # 매우 저평가
-            elif per <= avg_per: mid_score += 8
-            if roe >= 15: mid_score += 10
-            elif roe >= 12: mid_score += 5
-            if 0 < ret_3m <= 20: mid_score += 5      # 안정적 상승
-            candidates.append((mid_score, s))
-
-        candidates.sort(key=lambda x: -x[0])
-        return [s for _, s in candidates[:3]]
-    except Exception as e:
-        print(f"  [premarket] 중기 추천 로드 오류: {e}")
-        return []
+def _load_long_term_top3() -> list:
+    """💎 장기 3개월+ TOP 3 (가치투자 헌법, 추천만 / 자동매매 X)."""
+    return _load_track_top3("long_score", "장기")
 
 
 def run_premarket_briefing():
@@ -8430,46 +8653,59 @@ def run_premarket_briefing():
             "",
         ]
 
-        # 3+3+3 추천 시스템 (5/13 신규 — 보유 기간별 분리)
-        # 🚀 스윙 (1~5일, 자동매매) / 📈 단기 (1~3주, 수동) / 📊 중기 (1~3개월, 수동)
-        top3_swing = _load_value_top5()[:3]  # 기존 종합 점수 TOP (자동매매 후보)
+        # 5/14: 4트랙 진짜 알고리즘 — 트랙별 독립 점수
+        # 🚀 스윙 (1~5일, 자동매매) / 📈 단기 (1~3주, 수동)
+        # 📊 중기 (1~3개월, 수동) / 💎 장기 (3개월+, 수동 / 자동매매 X)
+        top3_swing = _load_swing_top3()
         top3_short = _load_short_term_top3()
-        top3_mid = _load_mid_term_top3()
+        top3_mid   = _load_mid_term_top3()
+        top3_long  = _load_long_term_top3()
 
         if top3_swing:
             lines.append("<b>🚀 스윙 TOP 3</b> <i>(1~5일, 자동매매)</i>")
             for i, s in enumerate(top3_swing, 1):
                 name  = s.get("name", "?")
-                score = s.get("score", 0)
+                sc    = s.get("swing_score", 0)
                 price = s.get("price", 0)
-                sector = s.get("sector", "")
-                buy_ok = "✅" if s.get("buy_signal") else "🔍"
-                lines.append(f"{i}. {buy_ok} {name} ({sector}) — {score}점 / {price:,.0f}원")
+                vol   = s.get("vol_ratio", 0)
+                lines.append(f"{i}. {name} — {sc}점 / {price:,.0f}원 / 거래량 {vol:.0f}%")
             lines.append("")
 
         if top3_short:
             lines.append("<b>📈 단기 TOP 3</b> <i>(1~3주, 수동 매수)</i>")
             for i, s in enumerate(top3_short, 1):
                 name  = s.get("name", "?")
-                score = s.get("score", 0)
+                sc    = s.get("short_score", 0)
                 price = s.get("price", 0)
                 rsi   = s.get("rsi", 0)
                 vol   = s.get("vol_ratio", 0)
-                lines.append(f"{i}. {name} — {score}점 / {price:,.0f}원 / RSI {rsi:.0f} / 거래량 {vol:.0f}%")
+                lines.append(f"{i}. {name} — {sc}점 / {price:,.0f}원 / RSI {rsi:.0f} / 거래량 {vol:.0f}%")
             lines.append("")
 
         if top3_mid:
             lines.append("<b>📊 중기 TOP 3</b> <i>(1~3개월, 수동 매수)</i>")
             for i, s in enumerate(top3_mid, 1):
                 name  = s.get("name", "?")
-                score = s.get("score", 0)
+                sc    = s.get("mid_score", 0)
                 price = s.get("price", 0)
-                per   = s.get("per", 0)
+                per   = s.get("per", 0) or 0
                 roe   = s.get("roe", 0)
-                lines.append(f"{i}. {name} — {score}점 / {price:,.0f}원 / PER {per:.1f} / ROE {roe:.1f}%")
+                lines.append(f"{i}. {name} — {sc}점 / {price:,.0f}원 / PER {per:.1f} / ROE {roe:.1f}%")
             lines.append("")
 
-        if not (top3_swing or top3_short or top3_mid):
+        if top3_long:
+            lines.append("<b>💎 장기 TOP 3</b> <i>(3개월+, 헌법 / 수동 매수만)</i>")
+            for i, s in enumerate(top3_long, 1):
+                name  = s.get("name", "?")
+                sc    = s.get("long_score", 0)
+                price = s.get("price", 0)
+                per   = s.get("per", 0) or 0
+                pbr   = s.get("pbr", 0) or 0
+                div   = s.get("div", 0)
+                lines.append(f"{i}. {name} — {sc}점 / {price:,.0f}원 / PER {per:.1f} / PBR {pbr:.2f} / 배당 {div:.1f}%")
+            lines.append("")
+
+        if not (top3_swing or top3_short or top3_mid or top3_long):
             lines.append("<i>⚠️ 추천 캐시 없음 — 16:00 시장스캔 확인 필요</i>")
             lines.append("")
 
@@ -10298,6 +10534,9 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
             "pct_from_low": pct_from_low, "pct_from_high": pct_from_high,
             "rsi": rsi, "macd_cross": macd_cross, "bb_pct": bb_pct,
             "vol_ratio": vol_ratio, "ret_1w": ret_1w, "ret_1m": ret_1m, "ret_3m": ret_3m,
+            "macd_hist": round(macd_hist, 4),
+            "near_support": sr["near_support"], "near_resistance": sr["near_resistance"],
+            "manipulation_signal": manipulation_signal, "momentum_bad": momentum_bad,
             "win_rate": 50, "score": score, "risk": risk, "risk_desc": risk_desc,
             "reasons": reasons, "warnings": warnings,
             "buy_signal": buy_signal, "buy_reason": buy_reason,
@@ -10361,10 +10600,31 @@ def run_market_scan(n: int = MARKET_SCAN_N):
             results.append(r)
         time.sleep(0.2)  # KIS API rate limit: 초당 5건 이하 유지
 
+    # 5/14: 4트랙 점수 계산 (스윙/단기/중기/장기) — 각 종목별 추가
+    for s in results:
+        swing  = _calc_swing_score(s)
+        short  = _calc_short_term_score(s)
+        midd   = _calc_mid_term_score(s)
+        longt  = _calc_long_term_score(s)
+        s["swing_score"]      = swing[0]  if swing  else None
+        s["swing_reasons"]    = swing[1]  if swing  else []
+        s["short_score"]      = short[0]  if short  else None
+        s["short_reasons"]    = short[1]  if short  else []
+        s["mid_score"]        = midd[0]   if midd   else None
+        s["mid_reasons"]      = midd[1]   if midd   else []
+        s["long_score"]       = longt[0]  if longt  else None
+        s["long_reasons"]     = longt[1]  if longt  else []
+
     results_sorted = sorted(results, key=lambda x: x["score"], reverse=True)
     top50 = results_sorted[:50]
 
     print(f"\n[스캔 완료] {len(results)}종목 분석 완료 / 상위 50개 캐시 저장")
+    # 4트랙 통과 종목 수
+    n_sw = sum(1 for s in results if s.get("swing_score") is not None)
+    n_sh = sum(1 for s in results if s.get("short_score") is not None)
+    n_md = sum(1 for s in results if s.get("mid_score") is not None)
+    n_lg = sum(1 for s in results if s.get("long_score") is not None)
+    print(f"  4트랙 통과: 🚀스윙 {n_sw} / 📈단기 {n_sh} / 📊중기 {n_md} / 💎장기 {n_lg}")
     for s in top50[:10]:
         print(f"  {s['name']} ({s['ticker']}) -- {s['score']}점  buy={s['buy_signal']}")
 
