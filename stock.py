@@ -9115,14 +9115,26 @@ def _load_auto_buy_pool() -> dict:
         except Exception:
             pass
 
+        # 5/14: 4트랙 스윙 점수 우선 정렬 — _calc_swing_score 통과 종목 먼저 분석
+        # 일일 한도 도달 전에 가장 유망한 스윙 후보 우선 처리.
+        cache_stocks = cache.get("stocks", [])
+        swing_pass = [s for s in cache_stocks if s.get("swing_score") is not None]
+        swing_fail = [s for s in cache_stocks if s.get("swing_score") is None]
+        swing_pass.sort(key=lambda s: -s.get("swing_score", 0))
+        ordered_stocks = swing_pass + swing_fail
+
         added = 0
-        for s in cache.get("stocks", []):
+        added_swing = 0
+        for s in ordered_stocks:
             t = s.get("ticker")
             if not t or t in pool:
                 continue
             pool[t] = (s.get("name", t), "중기", s.get("sector", "기타"))
             added += 1
-        print(f"  [auto_buy] 종목 풀 = KR_STOCKS {len(KR_STOCKS)}개 + 시장스캔 {added}개 = {len(pool)}개")
+            if s.get("swing_score") is not None:
+                added_swing += 1
+        print(f"  [auto_buy] 종목 풀 = KR_STOCKS {len(KR_STOCKS)}개 + 시장스캔 {added}개 "
+              f"(스윙 필터 통과 {added_swing}개 우선) = {len(pool)}개")
     except Exception as e:
         print(f"  [auto_buy] market_scan_cache 로드 실패: {e} — KR_STOCKS만 사용")
 
