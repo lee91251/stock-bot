@@ -1,53 +1,5 @@
 [
   {
-    "time": "2026-05-13T09:16:53.449696",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 한화 -3.73% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-05-13T09:31:48.411825",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 한솔케미칼 +9.34% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-05-13T09:46:14.698769",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-05-13T09:46:23.845163",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 SK바이오팜 -3.80% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-05-13T10:01:31.022413",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-05-13T10:15:42.708599",
-    "category": "emergency",
-    "level": "warning",
-    "emoji": "🟡",
-    "title": "비상정지 (오늘만)",
-    "detail": "일일 누적 손실 -3.22% ≤ -3.0% (-321,550원) — 내일 자동 재개"
-  },
-  {
     "time": "2026-05-14T06:00:57.025509",
     "category": "briefing",
     "level": "info",
@@ -70,5 +22,13 @@
     "emoji": "🟡",
     "title": "비상정지 (오늘만)",
     "detail": "MDD -24.41% ≤ -15.0% — 내일 자동 재개"
+  },
+  {
+    "time": "2026-05-15T06:00:44.645732",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.77% / 나스닥 +0.88% / VIX 17.26 / 환율 1,494원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
