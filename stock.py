@@ -10754,23 +10754,36 @@ def run_market_scan(n: int = MARKET_SCAN_N):
         s["long_score"]       = longt[0]  if longt  else None
         s["long_reasons"]     = longt[1]  if longt  else []
 
+    # 5/15 fix: 4트랙 통과 종목은 *무조건 캐시 포함* — general score top50 컷에 의존 X
+    # 사고: top50(general score) 안에 4트랙 통과 종목 0개 → 카드 빈 채 (회장 발견)
+    track_passed = [
+        r for r in results
+        if (r.get("swing_score") is not None or r.get("short_score") is not None
+            or r.get("mid_score") is not None or r.get("long_score") is not None)
+    ]
+    # general score top 100 + 4트랙 통과 종목 합집합 (ticker 중복 제거)
     results_sorted = sorted(results, key=lambda x: x["score"], reverse=True)
-    top50 = results_sorted[:50]
+    top100_general = results_sorted[:100]
+    combined_map = {r["ticker"]: r for r in top100_general}
+    for r in track_passed:
+        combined_map[r["ticker"]] = r  # 4트랙 통과 종목 추가 (이미 있어도 OK)
+    top_cache = sorted(combined_map.values(), key=lambda x: x["score"], reverse=True)
 
-    print(f"\n[스캔 완료] {len(results)}종목 분석 완료 / 상위 50개 캐시 저장")
+    print(f"\n[스캔 완료] {len(results)}종목 분석 완료 / 캐시 {len(top_cache)}개 저장")
     # 4트랙 통과 종목 수
     n_sw = sum(1 for s in results if s.get("swing_score") is not None)
     n_sh = sum(1 for s in results if s.get("short_score") is not None)
     n_md = sum(1 for s in results if s.get("mid_score") is not None)
     n_lg = sum(1 for s in results if s.get("long_score") is not None)
     print(f"  4트랙 통과: 🚀스윙 {n_sw} / 📈단기 {n_sh} / 📊중기 {n_md} / 💎장기 {n_lg}")
-    for s in top50[:10]:
+    print(f"  캐시 구성: general top100 + 4트랙 통과 {len(track_passed)}개 = 합집합 {len(top_cache)}개")
+    for s in top_cache[:10]:
         print(f"  {s['name']} ({s['ticker']}) -- {s['score']}점  buy={s['buy_signal']}")
 
     cache = {
         "updated": _now_kst().strftime("%Y-%m-%d %H:%M"),
-        "count":   len(top50),
-        "stocks":  top50,
+        "count":   len(top_cache),
+        "stocks":  top_cache,
     }
     with open(MARKET_SCAN_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=2)
