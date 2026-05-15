@@ -67,6 +67,14 @@ except ImportError:
     _PYKRX_OK = False
     _pykrx = None
 
+# 5/15: KRX 전체 시장 endpoint 사고(2026-05-09~) 대응 — FinanceDataReader 우회 데이터 소스
+try:
+    import FinanceDataReader as _fdr
+    _FDR_OK = True
+except ImportError:
+    _FDR_OK = False
+    _fdr = None
+
 # ════════════════════════════════════════════════
 # 환경변수 & 기본 설정
 # ════════════════════════════════════════════════
@@ -10348,24 +10356,82 @@ def _get_market_fundamental_cached(date_str: str, mkt: str):
 
 
 def _get_market_cap_cached(date_str: str, mkt: str):
-    """get_market_cap_by_ticker 결과 캐싱 + 3회 재시도."""
+    """get_market_cap_by_ticker 결과 캐싱 + 3회 재시도 + FDR 우회 (5/15 KRX 사고).
+
+    KRX 'Expecting value' 사고 시 FinanceDataReader로 우회.
+    """
     key = (date_str, mkt)
     if key in _PYKRX_CAP_CACHE:
         return _PYKRX_CAP_CACHE[key]
+
+    # 1차: pykrx 시도
     df = _pykrx_retry(
         f"cap_by_ticker({mkt})",
         _pykrx.get_market_cap_by_ticker,
         date_str, market=mkt,
     )
+
+    # 2차 fallback: FDR (5/15 KRX 전체 endpoint 사고 대응)
+    if (df is None or df.empty) and _FDR_OK:
+        try:
+            print(f"  [fallback] FDR로 {mkt} 시가총액 우회 시도...")
+            fdr_df = _fdr.StockListing(mkt)  # 'KOSPI' / 'KOSDAQ'
+            if fdr_df is not None and not fdr_df.empty:
+                # FDR 컬럼명을 pykrx 형식으로 변환
+                # FDR: Code, Name, Marcap, Stocks → pykrx: index=종목코드, 시가총액
+                df = pd.DataFrame({
+                    "시가총액": fdr_df.set_index("Code")["Marcap"],
+                })
+                df = df[df["시가총액"] > 0]
+                print(f"  [fallback] FDR {mkt}: {len(df)}종목 시총 데이터 확보")
+        except Exception as e:
+            print(f"  [fallback] FDR 시가총액 실패: {e}")
+
     _PYKRX_CAP_CACHE[key] = df
     return df
 
 
-def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
-    """pykrx로 코스피+코스닥 시가총액 상위 n개 종목 리스트 반환 [(code, name, mkt), ...]"""
-    if not _PYKRX_OK:
-        print("  [pykrx] 미설치 — 시장 스캔 불가")
+def _fetch_top_market_stocks_fdr(n: int = MARKET_SCAN_N) -> list:
+    """5/15: FDR로 시장 시총 상위 n개 종목 리스트 (KRX 사고 우회).
+
+    Returns: [(code, name, mkt), ...]
+    """
+    if not _FDR_OK:
         return []
+    try:
+        df_kospi  = _fdr.StockListing("KOSPI")
+        df_kosdaq = _fdr.StockListing("KOSDAQ")
+        if df_kospi is None or df_kosdaq is None:
+            return []
+        df_kospi  = df_kospi[df_kospi["Marcap"] > 0].copy()
+        df_kospi["mkt"] = "KOSPI"
+        df_kosdaq = df_kosdaq[df_kosdaq["Marcap"] > 0].copy()
+        df_kosdaq["mkt"] = "KOSDAQ"
+        df_all = pd.concat([df_kospi, df_kosdaq], axis=0)
+        df_all = df_all.sort_values("Marcap", ascending=False).head(n)
+
+        result = []
+        for _, row in df_all.iterrows():
+            code = row.get("Code", "")
+            name = row.get("Name", code)
+            mkt  = row.get("mkt", "KOSPI")
+            if code and len(code) == 6:
+                result.append((code, name, mkt))
+        print(f"  [FDR] 시가총액 상위 {len(result)}종목 로드 (KRX 우회)")
+        return result
+    except Exception as e:
+        print(f"  [FDR] 종목 리스트 로드 실패: {e}")
+        return []
+
+
+def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
+    """pykrx로 코스피+코스닥 시가총액 상위 n개 종목 리스트 반환 [(code, name, mkt), ...].
+
+    5/15: KRX 전체 endpoint 사고 시 FDR 우회 (시장 600종목 풀 유지 — 회장 결정).
+    """
+    if not _PYKRX_OK:
+        print("  [pykrx] 미설치 — FDR 우회 시도")
+        return _fetch_top_market_stocks_fdr(n)
 
     date_obj = _now_kst() - timedelta(days=1)
     date_str = ""
@@ -10379,20 +10445,22 @@ def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
             pass
         date_obj -= timedelta(days=1)
     else:
-        print("  [pykrx] 시가총액 데이터 없음")
-        return []
+        # 5/15: 7일 거슬러도 KRX 시가총액 X → FDR 우회
+        print("  [pykrx] 시가총액 데이터 7일 모두 없음 — FDR 우회 시도")
+        return _fetch_top_market_stocks_fdr(n)
 
     # 5/14: 3회 재시도 + 백오프 (5/13 'Expecting value' JSON 오류 7회 사고 방지)
     df_kospi  = _pykrx_retry("cap_by_ticker(KOSPI)",  _pykrx.get_market_cap_by_ticker, date_str, market="KOSPI")
     df_kosdaq = _pykrx_retry("cap_by_ticker(KOSDAQ)", _pykrx.get_market_cap_by_ticker, date_str, market="KOSDAQ")
     if df_kospi is None and df_kosdaq is None:
-        print("  [pykrx] 시가총액 조회 모두 실패 — 시장 스캔 중단")
-        return []
+        # 5/15: 양 시장 모두 KRX 실패 → FDR 우회
+        print("  [pykrx] 시가총액 조회 모두 실패 — FDR 우회 시도")
+        return _fetch_top_market_stocks_fdr(n)
 
     kospi_set = set(df_kospi.index.tolist()) if df_kospi is not None else set()
     frames = [f for f in [df_kospi, df_kosdaq] if f is not None and not f.empty]
     if not frames:
-        return []
+        return _fetch_top_market_stocks_fdr(n)
     df_all = pd.concat(frames, axis=0)
     df_all = df_all[df_all["시가총액"] > 0].sort_values("시가총액", ascending=False).head(n)
 
