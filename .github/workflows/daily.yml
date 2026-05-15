@@ -403,5 +403,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add market_scan_cache.json docs/ || true
-          git diff --staged --quiet || git commit -m "chore: 시장 스캔 + 대시보드 $(date '+%Y-%m-%d')"
-          git push || true
+          git diff --staged --quiet && exit 0
+          git commit -m "chore: 시장 스캔 + 대시보드 $(date '+%Y-%m-%d')"
+          # 5/15 fix: git push retry (5/6 메모리 영구 차단 적용 — marketscan에 누락됐던 부분)
+          for i in 1 2 3; do
+            if git push; then
+              echo "Push 성공 (시도 $i)"; exit 0
+            fi
+            echo "Push 실패 (시도 $i) — pull --rebase 후 재시도"
+            git pull --rebase origin master || true
+            sleep 3
+          done
+          echo "::warning::Git push 3회 모두 실패 — 다음 marketscan 호출에서 재시도됨"
