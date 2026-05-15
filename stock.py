@@ -10565,6 +10565,30 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
         except Exception:
             pass
 
+        # 5/15 fix: KRX 펀더멘털 사고 시 yfinance fallback (단기/중기/장기 트랙 작동 보장)
+        # KRX get_market_fundamental_by_ticker 사고로 PER/PBR None → 4트랙 단기/중기/장기 0종목 사고
+        # yfinance .info에서 trailingPE / priceToBook / dividendYield / returnOnEquity 가져옴
+        if per is None and pbr is None:
+            try:
+                yf_ticker = code + (".KS" if mkt == "KOSPI" else ".KQ")
+                yf_info = yf.Ticker(yf_ticker).info
+                if yf_info:
+                    yf_per = yf_info.get("trailingPE")
+                    yf_pbr = yf_info.get("priceToBook")
+                    yf_div = yf_info.get("dividendYield") or 0
+                    yf_roe = yf_info.get("returnOnEquity") or 0
+                    if yf_per and yf_per > 0:
+                        per = round(float(yf_per), 2)
+                    if yf_pbr and yf_pbr > 0:
+                        pbr = round(float(yf_pbr), 2)
+                    if yf_div:
+                        # yfinance dividendYield는 소수 (0.025 = 2.5%) 또는 % 단위 — 둘 다 처리
+                        div = round(float(yf_div) * 100, 2) if yf_div < 1 else round(float(yf_div), 2)
+                    if yf_roe:
+                        roe = round(float(yf_roe) * 100, 1) if yf_roe < 1 else round(float(yf_roe), 1)
+            except Exception:
+                pass
+
         # 시가총액 — 모듈 캐시 사용 (5/13 사고 방지)
         cap_df = _get_market_cap_cached(end_str, mkt)
         if cap_df is not None and code in cap_df.index:
