@@ -8967,24 +8967,23 @@ def _poll_cancel_during_sleep(seconds: int) -> bool:
 
 
 def _check_emergency_stop(pos: dict) -> tuple:
-    """비상정지 검증 — 일일 누적 손실 + MDD (5/13 추가).
+    """비상정지 검증 — 일일 누적 손실만 (5/15 영구 차단 fix).
 
     회장 부재 (5/17~5/31) 안전망. 발동 시 *그날만* 자동매수 정지.
     다음 거래일 09:00 자동 재개 (회장 결정 5/13).
     매도는 항상 정상 작동 (손절/익절 자동).
 
+    5/15 영구 fix — MDD 30일 윈도우 제거:
+    - 사고: 5/13~5/15 3일 연속 비상정지 발동 (옛 손절이 30일 윈도우 안에 살아 있어 매일 재발동)
+    - 원인: 매수 호출 시점에 MDD 30일 체크 → 옛 손실로 매일 재발동 → "그날만 정지" 의도와 모순
+    - fix: MDD 체크 제거. 매수 호출 시점엔 *오늘 발생한 손실만* (일일 누적 -3%) 체크.
+    - MDD 안전망 대체: 시장 위험 등급(70+ 자동 정지)이 시장 전체 약세 커버.
+      한 종목 큰 손실은 손절 -4% + 일일 누적 -3%로 충분.
+
     Returns: (should_halt: bool, reason: str)
     """
-    # 1. MDD -15% 체크 (30일 기준)
-    try:
-        mdd_info = _calc_mdd_from_portfolio(window_days=30)
-        mdd_pct = mdd_info.get("mdd_pct", 0) if mdd_info else 0
-        if mdd_pct <= EMERGENCY_MDD_PCT:
-            return True, f"MDD {mdd_pct:.2f}% ≤ {EMERGENCY_MDD_PCT}%"
-    except Exception as e:
-        print(f"  [emergency] MDD 계산 오류: {e}")
-
-    # 2. 일일 누적 손실 -3% 체크 (오늘 매도 손익 합산)
+    # 일일 누적 손실 -3% 체크 (오늘 매도 손익 합산)
+    # 자정 지나면 자연스럽게 0부터 시작 → "그날만 정지" 의도와 정확 일치
     try:
         today = _today_str()
         today_sells = [
