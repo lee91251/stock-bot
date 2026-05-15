@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-05-14T08:50:46.537772",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.9 / 공포탐욕 55(중립)"
-  },
-  {
-    "time": "2026-05-14T09:00:54.021586",
-    "category": "emergency",
-    "level": "warning",
-    "emoji": "🟡",
-    "title": "비상정지 (오늘만)",
-    "detail": "MDD -24.41% ≤ -15.0% — 내일 자동 재개"
-  },
-  {
     "time": "2026-05-15T06:00:44.645732",
     "category": "briefing",
     "level": "info",
@@ -30,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 17.3 / 공포탐욕 55(중립)"
+  },
+  {
+    "time": "2026-05-15T09:01:17.915450",
+    "category": "emergency",
+    "level": "warning",
+    "emoji": "🟡",
+    "title": "비상정지 (오늘만)",
+    "detail": "MDD -24.41% ≤ -15.0% — 내일 자동 재개"
   }
 ]
