@@ -4,4 +4,4 @@ numpy
 requests
 anthropic
 pykrx
-FinanceDataReader
+finance-datareader
