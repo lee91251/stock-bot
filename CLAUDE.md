@@ -46,6 +46,63 @@
 - 백테스트 결과 보고 트랙별 임계값 미세 조정 (현재 모든 트랙 ≥50)
 - 검증 통과 시 `analyze()` swing_score를 새 `_calc_swing_score`로 통합
 
+## 🚨 5/15 영구 차단 사고 5건 + DART API 작업 예약 ⭐⭐⭐⭐⭐
+
+**사고 1 — 비상정지 매일 재발동 (5/13~5/15 3일 연속)**:
+- 원인: `_check_emergency_stop` MDD 30일 윈도우 결함. 옛 손절이 30일 내내 살아있어 매수 호출 시점마다 재발동
+- 영구 fix: MDD 부분 *완전 제거*. 일일 누적 -3%만 (자정 자동 리셋). 커밋 `6c02a6d`
+
+**사고 2 — KRX 데이터 endpoint 사고 (5/9~ 진행 중)**:
+- 원인: `get_market_cap_by_ticker` / `get_market_fundamental_by_ticker` 'Expecting value' JSON 빈 응답. KRX 사이트 메인은 정상 (HTTP 200), 데이터 endpoint만 사고
+- 영구 fix: FinanceDataReader (FDR) 도입 → 시총은 우회 성공. 커밋 `3586f2a`, `45d744f`
+
+**사고 3 — git push 충돌 (5/15)**:
+- 원인: marketscan job에 5/6 메모리 영구 차단(push retry) 적용 누락
+- 영구 fix: marketscan에 3회 재시도 + pull --rebase. 커밋 `43a4276`
+
+**사고 4 — 캐시 top50 컷 (5/15)**:
+- 원인: general score 정렬 top50 → 4트랙 통과 종목 컷오프에서 잘림 (28개 통과해도 캐시에 0개)
+- 영구 fix: 4트랙 통과 종목 *무조건 포함*. general top100 + 4트랙 합집합. 커밋 `2b22e33`
+
+**사고 5 — yfinance 한국 PER/PBR 미제공 (구조적 한계)**:
+- 원인: yfinance는 미국 SEC 기반. 한국 종목 .info엔 ROE만 안정 (112/129), PER/PBR은 0/129
+- 임시 fix: yfinance fallback 추가 (ROE 작동 → 단기 트랙 3종목 통과). 커밋 `77f0131`
+- **영구 fix 미완 — 6/1 DART API 본격 구축 예약**
+
+### 📅 6/1 복귀 첫 작업 — DART API 펀더멘털 계산 (영구 차단)
+
+**작업량**: 1~2일
+
+**구조**:
+- 봇이 이미 보유한 `DART_API_KEY` 활용 (현재 공시 알림용)
+- 분기 보고서(`fnlttSinglAcntAll`) → EPS / BPS 추출
+- 현재가 / EPS → PER 직접 계산
+- 현재가 / BPS → PBR 직접 계산
+- `analyze_market_stock` 펀더 fallback 체인: pykrx → yfinance → **DART** (신설)
+
+**효과**: 중기/장기 트랙 자동 작동 → 4트랙 모두 정상
+
+**예상 결과**:
+- 📈 단기 = 3종목 → 15~30종목 (PER 데이터 들어오면)
+- 📊 중기 = 0 → 10~20종목
+- 💎 장기 = 0 → 5~10종목 (헌법 1차 필터 통과)
+
+**관련 문서**: 본 §0 + `Obsidian Vault/02 - 진행 일지.md` Day 2 항목
+
+### 부재 기간 5/18~5/31 봇 상태
+
+✅ **작동**:
+- 자동매수: 스윙 알고리즘 + KR_STOCKS 100개 + marketscan 종목 (1398) 풀
+- 자동매도: 손절/익절 정상
+- 비상정지: 일일 -3% (그날만, 자정 리셋)
+- KRX fallback: FDR로 시장 종목 풀 유지
+
+⚠️ **제한**:
+- 단기 트랙: 3종목 (yfinance ROE만)
+- 중기/장기 트랙: 0종목 (펀더 부재) — 회장님 수동 발굴 영역 일시 운영
+
+🔖 **마지막 커밋**: `77f0131` (yfinance fallback)
+
 ## 🏛️ 6/1 복귀 후 — Phase 2 14부서 분리 (5/14 회장 확정 ⭐)
 
 **원칙**: 4트랙 알고리즘이 *직원의 일하는 방식*을 정한 것 → 이제 *직원을 부서로 나누는 작업*.
@@ -106,7 +163,7 @@
 - C 옵션 (16h 완벽 Multi-env Grid)
 - Phase 2 부서 분리 (5/14 합의 연기)
 
-🔖 마지막 커밋: `4e3715b` (4트랙 백테스트 + KRX 사고 영구 차단, 5/14)
+🔖 마지막 커밋: `77f0131` (5/15 KRX 사고 우회 + yfinance fallback)
 
 ---
 
