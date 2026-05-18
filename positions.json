@@ -12,6 +12,19 @@
       "swing_score": 59,
       "sector": "기타",
       "order_no": "0000012157"
+    },
+    "293480": {
+      "name": "하나제약",
+      "qty": 202,
+      "buy_price": 9870.0,
+      "buy_date": "2026-05-18",
+      "buy_time": "14:13",
+      "buy_amount": 1993740.0,
+      "partial_sold": false,
+      "score": 77,
+      "swing_score": 53,
+      "sector": "기타",
+      "order_no": "0000032565"
     }
   },
   "history": [
@@ -129,6 +142,19 @@
       "reason": "swing_score 59",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-05-18",
+      "time": "14:13",
+      "side": "buy",
+      "code": "293480",
+      "name": "하나제약",
+      "qty": 202,
+      "price": 9870.0,
+      "amount": 1993740.0,
+      "reason": "swing_score 53",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -143,9 +169,9 @@
       "trade_count": 0
     },
     "2026-05-18": {
-      "buy_count": 1,
-      "buy_amount": 1992600.0,
-      "trade_count": 1
+      "buy_count": 2,
+      "buy_amount": 3986340.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
