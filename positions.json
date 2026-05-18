@@ -1,5 +1,19 @@
 {
-  "positions": {},
+  "positions": {
+    "033530": {
+      "name": "SJG세종",
+      "qty": 246,
+      "buy_price": 8100.0,
+      "buy_date": "2026-05-18",
+      "buy_time": "09:58",
+      "buy_amount": 1992600.0,
+      "partial_sold": false,
+      "score": 91,
+      "swing_score": 59,
+      "sector": "기타",
+      "order_no": "0000012157"
+    }
+  },
   "history": [
     {
       "date": "2026-05-13",
@@ -102,6 +116,19 @@
       "profit": 100500,
       "ai_opinion": "**매도 적절** — +11.6%로 전량 익절 룰(+10% 초과) 충족했고, VIX 18 중립·코스피 보합 환경에서 추가 상승 모멘텀이 불확실하므로 룰대로 실현하는 것이 합리적입니다.",
       "journal": "✅ **잘된 점 — 한솔케미칼 2연속 성공으로 종목 신뢰도 검증, 룰 초과 +11.59% 전량 익절 달성**\n\n직전 4연속 손절(-4%대)의 고점 추격 패턴을 완전히 탈피해 한솔케미칼을 두 번째로 성공시켰으며, +10% 전량 익절 룰을 충실히 지켜 연속 손실의 손익을 일거에 만회했다."
+    },
+    {
+      "date": "2026-05-18",
+      "time": "09:58",
+      "side": "buy",
+      "code": "033530",
+      "name": "SJG세종",
+      "qty": 246,
+      "price": 8100.0,
+      "amount": 1992600.0,
+      "reason": "swing_score 59",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -116,9 +143,9 @@
       "trade_count": 0
     },
     "2026-05-18": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 1992600.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
