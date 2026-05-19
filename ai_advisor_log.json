@@ -9,10 +9,10 @@
     "ai_opinion": "**매도 적절** — +7.6%로 절반 익절 트리거 도달, VIX 18 중립·코스피 보합 환경에서 추가 모멘텀 근거 부족하므로 룰대로 절반 실현 후 잔여 보유가 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 308500,
+    "outcome_date": "2026-05-19",
+    "outcome_pct": -0.8,
+    "ai_correct": false
   },
   {
     "date": "2026-05-13",
@@ -24,10 +24,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 이미 이탈했고, VIX 18·공포탐욕 50의 중립 시장에서 코스피가 보합인데도 개별 약세를 보이는 점은 수급 이탈 신호이므로 룰대로 손절 실행이 바람직합니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 171000,
+    "outcome_date": "2026-05-19",
+    "outcome_pct": -1.33,
+    "ai_correct": true
   },
   {
     "date": "2026-05-13",
@@ -39,10 +39,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 충족했고, VIX 18·공포탐욕 50으로 시장은 중립적이나 코스피 보합 속 추가 반등 모멘텀이 약하며, 1거래일 만에 기준선 이탈 시 룰 준수가 우선입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 123000,
+    "outcome_date": "2026-05-19",
+    "outcome_pct": -10.48,
+    "ai_correct": true
   },
   {
     "date": "2026-05-13",
@@ -54,10 +54,10 @@
     "ai_opinion": "**매도 적절** — 손절 트리거(-4.2%) 정확히 도달했고, VIX 18·공포탐욕 50의 중립 시장에서 바이오 개별 모멘텀 부재 상태로 추가 하락 리스크 대비 반등 근거가 불분명하므로 룰대로 손절 실행이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 439500,
+    "outcome_date": "2026-05-19",
+    "outcome_pct": 1.15,
+    "ai_correct": false
   },
   {
     "date": "2026-05-13",
@@ -69,10 +69,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-4%)에 정확히 도달했고, VIX 18·공포탐욕 50의 중립적 시장에서 바이오 개별 종목의 추가 반등 근거가 없으므로 룰대로 손절 집행이 타당합니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 93000,
+    "outcome_date": "2026-05-19",
+    "outcome_pct": -5.39,
+    "ai_correct": true
   },
   {
     "date": "2026-05-13",
@@ -84,9 +84,9 @@
     "ai_opinion": "**매도 적절** — +11.6%로 전량 익절 룰(+10% 초과) 충족했고, VIX 18 중립·코스피 보합 환경에서 추가 상승 모멘텀이 불확실하므로 룰대로 실현하는 것이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 308500,
+    "outcome_date": "2026-05-19",
+    "outcome_pct": -4.34,
+    "ai_correct": true
   }
 ]

@@ -1,139 +1,38 @@
 {
-  "date": "2026-05-15",
-  "generated_at": "2026-05-14T15:39:35.305804",
+  "date": "2026-05-20",
+  "generated_at": "2026-05-19T15:44:45.660224",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "097950",
-      "name": "CJ제일제당",
-      "sector": "음식료",
-      "score_bonus": 10,
-      "today_change": 10.55,
-      "today_vol_ratio": 204.0,
-      "today_score": 70,
-      "reasons": [
-        "오늘 +10.6% 마감",
-        "거래량 평균 +204%",
-        "스윙점수 70"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "003230",
-      "name": "삼양식품",
-      "sector": "음식료",
-      "score_bonus": 10,
-      "today_change": 11.12,
-      "today_vol_ratio": 291.0,
-      "today_score": 69,
-      "reasons": [
-        "오늘 +11.1% 마감",
-        "거래량 평균 +291%",
-        "스윙점수 69"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "051900",
-      "name": "LG생활건강",
-      "sector": "소비재",
-      "score_bonus": 10,
-      "today_change": 10.33,
-      "today_vol_ratio": 200.0,
-      "today_score": 56,
-      "reasons": [
-        "오늘 +10.3% 마감",
-        "거래량 평균 +200%",
-        "스윙점수 56"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "196170",
-      "name": "알테오젠",
-      "sector": "바이오",
-      "score_bonus": 9,
-      "today_change": 8.76,
-      "today_vol_ratio": 269.0,
-      "today_score": 70,
-      "reasons": [
-        "오늘 +8.8% 마감",
-        "거래량 평균 +269%",
-        "스윙점수 70"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "004370",
-      "name": "농심",
-      "sector": "음식료",
+      "code": "000370",
+      "name": "한화손해보험",
+      "sector": "기타",
       "score_bonus": 7,
-      "today_change": 7.15,
-      "today_vol_ratio": 314.0,
-      "today_score": 85,
-      "reasons": [
-        "오늘 +7.2% 마감",
-        "거래량 평균 +314%",
-        "스윙점수 85"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "000100",
-      "name": "유한양행",
-      "sector": "바이오",
-      "score_bonus": 6,
-      "today_change": 5.55,
-      "today_vol_ratio": 244.0,
-      "today_score": 54,
-      "reasons": [
-        "오늘 +5.5% 마감",
-        "거래량 평균 +244%",
-        "스윙점수 54"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "036570",
-      "name": "엔씨소프트",
-      "sector": "게임",
-      "score_bonus": 6,
-      "today_change": 6.08,
-      "today_vol_ratio": 206.0,
+      "today_change": 7.44,
+      "today_vol_ratio": 683.0,
       "today_score": 52,
       "reasons": [
-        "오늘 +6.1% 마감",
-        "거래량 평균 +206%",
+        "오늘 +7.4% 마감",
+        "거래량 평균 +683%",
         "스윙점수 52"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "267290",
+      "name": "경동도시가스",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 3.65,
+      "today_vol_ratio": 349.0,
+      "today_score": 61,
+      "reasons": [
+        "오늘 +3.6% 마감",
+        "거래량 평균 +349%",
+        "스윙점수 61"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "IT": 3,
-    "통신": 3,
-    "AI": 3,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 0.33,
-    "XLK": 1.5,
-    "XLF": 0.59,
-    "XLE": 0.76,
-    "XLV": -0.05,
-    "XLI": 0.51,
-    "XLB": -0.75,
-    "XLY": -0.04
-  },
-  "sector_updated_at": "2026-05-15T06:00:47.608453"
+  "sector_weights": {}
 }
