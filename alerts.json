@@ -1,37 +1,5 @@
 [
   {
-    "time": "2026-05-18T10:10:29.720613",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-05-18T12:13:03.355056",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ SKC 🏠",
-    "detail": "유상증자또는주식관련사채등의청약결과(자율공시)              "
-  },
-  {
-    "time": "2026-05-18T14:46:41.312770",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ BNK금융지주",
-    "detail": "[기재정정]현금ㆍ현물배당결정              "
-  },
-  {
-    "time": "2026-05-19T06:00:50.291214",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P -0.07% / 나스닥 -0.51% / VIX 17.82 / 환율 1,489원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-05-19T08:50:47.272497",
     "category": "briefing",
     "level": "info",
@@ -46,5 +14,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🟢 SJG세종 +5.68% — 1차 익절 임박 (목표 +6%, 절반 매도)"
+  },
+  {
+    "time": "2026-05-20T06:00:51.892096",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P -0.67% / 나스닥 -0.84% / VIX 18.06 / 환율 1,507원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
