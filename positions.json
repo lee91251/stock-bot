@@ -26,6 +26,19 @@
       "swing_score": 53,
       "sector": "기타",
       "order_no": "0000032565"
+    },
+    "267290": {
+      "name": "경동도시가스",
+      "qty": 88,
+      "buy_price": 22600.0,
+      "buy_date": "2026-05-19",
+      "buy_time": "12:28",
+      "buy_amount": 1988800.0,
+      "partial_sold": false,
+      "score": 83,
+      "swing_score": 66,
+      "sector": "기타",
+      "order_no": "0000023388"
     }
   },
   "history": [
@@ -156,6 +169,19 @@
       "reason": "swing_score 53",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-05-19",
+      "time": "12:28",
+      "side": "buy",
+      "code": "267290",
+      "name": "경동도시가스",
+      "qty": 88,
+      "price": 22600.0,
+      "amount": 1988800.0,
+      "reason": "swing_score 66",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -175,9 +201,9 @@
       "trade_count": 2
     },
     "2026-05-19": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 1988800.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
