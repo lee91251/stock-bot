@@ -22,5 +22,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.1 / 공포탐욕 45(중립)"
+  },
+  {
+    "time": "2026-05-20T09:01:18.618195",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 유한양행",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
