@@ -1,69 +1,7 @@
 {
-  "date": "2026-05-20",
-  "generated_at": "2026-05-19T15:44:45.660224",
+  "date": "2026-05-21",
+  "generated_at": "2026-05-20T15:43:00.819933",
   "source_phase": "close_summary",
-  "picks": [
-    {
-      "code": "000370",
-      "name": "한화손해보험",
-      "sector": "기타",
-      "score_bonus": 7,
-      "today_change": 7.44,
-      "today_vol_ratio": 683.0,
-      "today_score": 52,
-      "reasons": [
-        "오늘 +7.4% 마감",
-        "거래량 평균 +683%",
-        "스윙점수 52"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "267290",
-      "name": "경동도시가스",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.65,
-      "today_vol_ratio": 349.0,
-      "today_score": 61,
-      "reasons": [
-        "오늘 +3.6% 마감",
-        "거래량 평균 +349%",
-        "스윙점수 61"
-      ],
-      "source": "close_summary"
-    }
-  ],
-  "sector_weights": {
-    "IT": -1,
-    "통신": -1,
-    "AI": -1,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": -3,
-    "소재": -3,
-    "철강": -3,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 0.18,
-    "XLK": -0.64,
-    "XLF": -1.24,
-    "XLE": 1.17,
-    "XLV": 1.1,
-    "XLI": -1.18,
-    "XLB": -2.35,
-    "XLY": -1.11
-  },
-  "sector_updated_at": "2026-05-20T06:00:53.166403"
+  "picks": [],
+  "sector_weights": {}
 }
