@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-05-19T09:16:10.038351",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🟢 SJG세종 +5.68% — 1차 익절 임박 (목표 +6%, 절반 매도)"
-  },
-  {
     "time": "2026-05-20T06:00:51.892096",
     "category": "briefing",
     "level": "info",
@@ -38,5 +30,13 @@
     "emoji": "✅",
     "title": "DART ✅ GS건설 🏠",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-05-21T06:00:48.784573",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +1.08% / 나스닥 +1.54% / VIX 17.44 / 환율 1,498원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
