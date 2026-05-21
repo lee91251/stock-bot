@@ -655,6 +655,56 @@
       "score": 92,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-05-22",
+      "month": "2026-05",
+      "ticker": "316140.KS",
+      "name": "우리금융지주",
+      "price": 30400.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-22",
+      "month": "2026-05",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 39400.0,
+      "score": 96,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-22",
+      "month": "2026-05",
+      "ticker": "138930.KS",
+      "name": "BNK금융지주",
+      "price": 17180.0,
+      "score": 92,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-05-22",
+      "month": "2026-05",
+      "ticker": "011200.KS",
+      "name": "HMM",
+      "price": 20250.0,
+      "score": 92,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-22",
+      "month": "2026-05",
+      "ticker": "097950.KS",
+      "name": "CJ제일제당",
+      "price": 212500.0,
+      "score": 89,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
