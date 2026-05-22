@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-05-21T08:50:46.009095",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.4 / 공포탐욕 55(중립)"
-  },
-  {
     "time": "2026-05-21T14:16:03.856841",
     "category": "disclosure",
     "level": "info",
@@ -30,5 +22,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.8 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-05-22T09:23:54.016142",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "[기재정정]임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
