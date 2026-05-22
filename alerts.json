@@ -38,5 +38,13 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-05-22T14:12:13.828561",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ SKC 🏠",
+    "detail": "유상증자또는주식관련사채등의발행결과(자율공시)              "
   }
 ]
