@@ -46,5 +46,21 @@
     "emoji": "📰",
     "title": "DART 📰 SKC 🏠",
     "detail": "증권발행실적보고서"
+  },
+  {
+    "time": "2026-05-22T15:01:18.777768",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-05-22T15:01:18.778065",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ DL이앤씨",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
