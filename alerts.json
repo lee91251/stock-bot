@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-05-21T14:16:03.856841",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
     "time": "2026-05-22T06:00:51.774026",
     "category": "briefing",
     "level": "info",
@@ -46,5 +38,13 @@
     "emoji": "⚠️",
     "title": "DART ⚠️ SKC 🏠",
     "detail": "유상증자또는주식관련사채등의발행결과(자율공시)              "
+  },
+  {
+    "time": "2026-05-22T14:27:04.572326",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SKC 🏠",
+    "detail": "증권발행실적보고서"
   }
 ]
