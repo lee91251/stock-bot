@@ -1,66 +1,10 @@
 [
   {
-    "time": "2026-05-22T06:00:51.774026",
+    "time": "2026-05-25T06:00:48.192598",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +0.17% / 나스닥 +0.09% / VIX 16.76 / 환율 1,505원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-05-22T08:50:45.814404",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.8 / 공포탐욕 50(중립)"
-  },
-  {
-    "time": "2026-05-22T09:23:54.016142",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "[기재정정]임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-05-22T11:39:37.602443",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-05-22T14:12:13.828561",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ SKC 🏠",
-    "detail": "유상증자또는주식관련사채등의발행결과(자율공시)              "
-  },
-  {
-    "time": "2026-05-22T14:27:04.572326",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SKC 🏠",
-    "detail": "증권발행실적보고서"
-  },
-  {
-    "time": "2026-05-22T15:01:18.777768",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-05-22T15:01:18.778065",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ DL이앤씨",
-    "detail": "단일판매ㆍ공급계약체결              "
+    "detail": "S&P +0.37% / 나스닥 +0.19% / VIX 16.70 / 환율 1,520원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
