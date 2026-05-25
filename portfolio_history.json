@@ -167,7 +167,19 @@
       "auto_pnl": 87650,
       "total": 33936890,
       "total_pnl": 6106147
+    },
+    {
+      "date": "2026-05-26",
+      "value_total": 29710050,
+      "value_cost": 22851903,
+      "value_pnl": 6858147,
+      "value_pct": 30.01,
+      "auto_total": 5088060,
+      "auto_cost": 4978840,
+      "auto_pnl": 109220,
+      "total": 34798110,
+      "total_pnl": 6967367
     }
   ],
-  "updated": "2026-05-22 08:08:10"
+  "updated": "2026-05-26 08:09:16"
 }
