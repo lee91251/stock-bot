@@ -14,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.6 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-05-26T12:56:25.561181",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
