@@ -1,34 +1,38 @@
 {
-  "date": "2026-05-26",
-  "generated_at": "2026-05-22T15:43:23.653937",
+  "date": "2026-05-27",
+  "generated_at": "2026-05-26T15:44:48.953053",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 2.41,
-    "XLK": 1.0,
-    "XLF": 0.41,
-    "XLE": 0.61,
-    "XLV": 1.17,
-    "XLI": 0.73,
-    "XLB": 0.54,
-    "XLY": 0.4
-  },
-  "sector_updated_at": "2026-05-26T06:00:48.627310"
+  "picks": [
+    {
+      "code": "042660",
+      "name": "한화오션",
+      "sector": "조선",
+      "score_bonus": 10,
+      "today_change": 10.23,
+      "today_vol_ratio": 258.0,
+      "today_score": 80,
+      "reasons": [
+        "오늘 +10.2% 마감",
+        "거래량 평균 +258%",
+        "스윙점수 80"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "403870",
+      "name": "HPSP",
+      "sector": "반도체",
+      "score_bonus": 10,
+      "today_change": 9.87,
+      "today_vol_ratio": 272.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +9.9% 마감",
+        "거래량 평균 +272%",
+        "스윙점수 54"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
