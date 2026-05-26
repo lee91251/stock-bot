@@ -133,5 +133,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-26",
+    "time": "09:26",
+    "code": "267290",
+    "name": "경동도시가스",
+    "sell_price": 22750.0,
+    "sell_pct": 0.66,
+    "ai_opinion": "**매도 적절** — 5거래일 룰 도달 + 수익률 +0.7%로 추가 상승 모멘텀이 약하고, 코스피 보합·중립적 시장 환경에서 기타 섹터 도시가스주의 단기 촉매가 없어 규칙대로 익절 마감이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
