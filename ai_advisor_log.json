@@ -103,5 +103,35 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-26",
+    "time": "09:01",
+    "code": "033530",
+    "name": "SJG세종",
+    "sell_price": 8830.0,
+    "sell_pct": 9.01,
+    "ai_opinion": "**매도 적절** — 6거래일 강제 매도 룰 도달에 +9.0% 수익 중이며, VIX 16.6·공포탐욕 50의 중립 시장에서 추가 상승 모멘텀 근거가 부족하므로 규칙대로 익절이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
+  },
+  {
+    "date": "2026-05-26",
+    "time": "09:01",
+    "code": "293480",
+    "name": "하나제약",
+    "sell_price": 9980.0,
+    "sell_pct": 1.11,
+    "ai_opinion": "**매도 적절** — 6거래일 강제 매도 룰 도달, 수익률 +1.1%로 소폭 플러스 마감이며 VIX 16.6·공포탐욕 50의 중립 시장에서 특별한 추가 상승 모멘텀이 없으므로 룰대로 청산이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
