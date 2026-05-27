@@ -30,5 +30,29 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 17.0 / 공포탐욕 55(중립)"
+  },
+  {
+    "time": "2026-05-27T10:40:55.438537",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-05-27T10:40:55.438776",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-05-27T10:40:55.439088",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
