@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-05-26T12:56:25.561181",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
     "time": "2026-05-26T14:31:05.113896",
     "category": "disclosure",
     "level": "info",
@@ -54,5 +46,13 @@
     "emoji": "✅",
     "title": "DART ✅ 삼성중공업",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-05-27T14:25:46.041683",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "타인에대한채무보증결정              "
   }
 ]
