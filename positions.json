@@ -12,6 +12,19 @@
       "swing_score": 74,
       "sector": "조선",
       "order_no": "0000023493"
+    },
+    "048410": {
+      "name": "현대바이오",
+      "qty": 139,
+      "buy_price": 14300.0,
+      "buy_date": "2026-05-27",
+      "buy_time": "13:42",
+      "buy_amount": 1987700.0,
+      "partial_sold": false,
+      "score": 59,
+      "swing_score": 55,
+      "sector": "기타",
+      "order_no": "0000029164"
     }
   },
   "history": [
@@ -236,6 +249,19 @@
       "reason": "swing_score 74",
       "sector": "조선",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-05-27",
+      "time": "13:42",
+      "side": "buy",
+      "code": "048410",
+      "name": "현대바이오",
+      "qty": 139,
+      "price": 14300.0,
+      "amount": 1987700.0,
+      "reason": "swing_score 55",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -280,9 +306,9 @@
       "trade_count": 4
     },
     "2026-05-27": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 1987700.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
