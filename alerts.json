@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-05-26T14:31:05.113896",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "[기재정정]임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-05-27T06:00:52.073990",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P +0.61% / 나스닥 +1.19% / VIX 17.01 / 환율 1,507원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-05-27T08:50:45.918364",
     "category": "briefing",
     "level": "info",
@@ -54,5 +38,13 @@
     "emoji": "📰",
     "title": "DART 📰 GS건설 🏠",
     "detail": "타인에대한채무보증결정              "
+  },
+  {
+    "time": "2026-05-28T06:00:53.577964",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.02% / 나스닥 +0.07% / VIX 16.29 / 환율 1,502원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
