@@ -148,5 +148,35 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-28",
+    "time": "09:15",
+    "code": "042660",
+    "name": "한화오션",
+    "sell_price": 126900.0,
+    "sell_pct": -5.86,
+    "ai_opinion": "**매도 적절** — 손절 트리거(-5.9%) 정확히 도달했고, VIX 16·공포탐욕 50의 중립적 시장에서 조선 섹터 반등 촉매가 뚜렷하지 않아 룰 준수 매도가 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
+  },
+  {
+    "date": "2026-05-28",
+    "time": "09:16",
+    "code": "048410",
+    "name": "현대바이오",
+    "sell_price": 12990.0,
+    "sell_pct": -9.16,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%) 이미 초과한 -9.2% 손실로 룰 위반 상태이며, 바이오 특성상 추가 하락 리스크가 크고 시장 중립(코스피 보합)에서도 반등 모멘텀이 없어 즉시 손절이 원칙에 부합합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
