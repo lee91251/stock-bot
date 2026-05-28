@@ -855,6 +855,56 @@
       "score": 82,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-05-29",
+      "month": "2026-05",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 39050.0,
+      "score": 109,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-05-29",
+      "month": "2026-05",
+      "ticker": "030200.KS",
+      "name": "KT",
+      "price": 51900.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-29",
+      "month": "2026-05",
+      "ticker": "051900.KS",
+      "name": "LG생활건강",
+      "price": 248000.0,
+      "score": 102,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-05-29",
+      "month": "2026-05",
+      "ticker": "011200.KS",
+      "name": "HMM",
+      "price": 19610.0,
+      "score": 100,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-05-29",
+      "month": "2026-05",
+      "ticker": "055550.KS",
+      "name": "신한지주",
+      "price": 92800.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
