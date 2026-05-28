@@ -1,45 +1,5 @@
 [
   {
-    "time": "2026-05-27T10:40:55.438537",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-05-27T10:40:55.438776",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-05-27T10:40:55.439088",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-05-27T14:25:46.041683",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "타인에대한채무보증결정              "
-  },
-  {
-    "time": "2026-05-28T06:00:53.577964",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P +0.02% / 나스닥 +0.07% / VIX 16.29 / 환율 1,502원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-05-28T08:50:44.949948",
     "category": "briefing",
     "level": "info",
@@ -54,5 +14,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🔴 현대바이오 -3.92% — 손절 임박 (기준 -4%, 자동 매도)"
+  },
+  {
+    "time": "2026-05-29T06:01:00.362824",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.58% / 나스닥 +0.91% / VIX 15.74 / 환율 1,496원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
