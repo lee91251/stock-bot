@@ -61,6 +61,10 @@ from dashboard import (
     _make_performance_card,
     _make_trade_history_card,
     _make_portfolio_history_card,
+    _make_macro_html,
+    _make_personal_coach_card,
+    _make_ai_card,
+    _make_macro_card,
 )
 
 
@@ -3716,78 +3720,7 @@ def dart_alerts_section_html(dart_alerts: list) -> str:
 # ════════════════════════════════════════════════
 # HTML 전체 리포트
 # ════════════════════════════════════════════════
-def _make_macro_html(macro: dict, ai_macro: str) -> str:
-    """미국 경제지표 HTML 섹션"""
-    if not macro:
-        return ""
-
-    def _fmt(val, unit="", fmt=".3f"):
-        return f"{val:{fmt}}{unit}" if val is not None else "N/A"
-
-    tnx  = _fmt(macro.get("tnx"), "%")
-    irx  = _fmt(macro.get("irx"), "%")
-    dxy  = _fmt(macro.get("dxy"), "", ".2f")
-    spd  = _fmt(macro.get("yield_spread"), "%p")
-    cpi_yoy = f"{macro['cpi_yoy']:+.2f}%" if macro.get("cpi_yoy") is not None else "N/A"
-    cpi_mom = f"{macro['cpi_mom']:+.2f}%" if macro.get("cpi_mom") is not None else "N/A"
-    cpi_month = macro.get("cpi_month", "")
-    fed = macro.get("fed_direction", "확인불가")
-    fed_note = macro.get("fed_note", "")
-
-    fed_color = (
-        "#e03131" if "인상" in fed else
-        "#2f9e44" if "인하" in fed else
-        "#e67700"
-    )
-    spd_val = macro.get("yield_spread")
-    spd_color = "#e03131" if (spd_val is not None and spd_val < 0) else "#2f9e44"
-
-    ai_html = ""
-    if ai_macro:
-        ai_html = (
-            f'<div style="margin-top:14px;padding:12px 16px;background:#f3f0ff;'
-            f'border-radius:8px;border-left:4px solid #7950f2;font-size:13px;'
-            f'color:#5f3dc4;line-height:1.8;white-space:pre-line;">'
-            f'🤖 AI 매크로 분석: {ai_macro}</div>'
-        )
-
-    return f"""
-  <div style="background:#e8f4fd;padding:18px 24px;border-bottom:1px solid #dee2e6;">
-    <div style="font-weight:700;font-size:15px;color:#1a3a5c;margin-bottom:12px;">🇺🇸 미국 경제지표 브리핑</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
-        <div style="font-size:12px;color:#868e96;">10년물 국채금리</div>
-        <div style="font-size:18px;font-weight:700;">{tnx}</div>
-        <div style="font-size:11px;color:#868e96;">3개월 전: {_fmt(macro.get('tnx_prev'), '%')}</div>
-      </div>
-      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
-        <div style="font-size:12px;color:#868e96;">단기금리(2년물 근사)</div>
-        <div style="font-size:18px;font-weight:700;">{irx}</div>
-        <div style="font-size:11px;color:#868e96;">3개월 전: {_fmt(macro.get('irx_prev'), '%')}</div>
-      </div>
-      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
-        <div style="font-size:12px;color:#868e96;">달러인덱스(DXY)</div>
-        <div style="font-size:18px;font-weight:700;">{dxy}</div>
-        <div style="font-size:11px;color:#868e96;">3개월 전: {_fmt(macro.get('dxy_prev'), '', '.2f')}</div>
-      </div>
-      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
-        <div style="font-size:12px;color:#868e96;">CPI 소비자물가</div>
-        <div style="font-size:16px;font-weight:700;">전년비 {cpi_yoy}</div>
-        <div style="font-size:11px;color:#868e96;">전월비 {cpi_mom} ({cpi_month})</div>
-      </div>
-      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
-        <div style="font-size:12px;color:#868e96;">연준 기준금리 방향</div>
-        <div style="font-size:15px;font-weight:700;color:{fed_color};">{fed}</div>
-        <div style="font-size:11px;color:#868e96;">{fed_note[:30] if fed_note else ''}</div>
-      </div>
-      <div style="background:white;padding:12px;border-radius:10px;border:1px solid #dee2e6;text-align:center;">
-        <div style="font-size:12px;color:#868e96;">장단기 금리차(10Y-단기)</div>
-        <div style="font-size:18px;font-weight:700;color:{spd_color};">{spd}</div>
-        <div style="font-size:11px;color:#868e96;">{'역전=경기침체 신호' if (spd_val is not None and spd_val < 0) else '정상 커브'}</div>
-      </div>
-    </div>
-    {ai_html}
-  </div>"""
+# 5/29 Phase 2 4단계 4차-B: _make_macro_html -> dashboard.py
 
 
 # 5/29 Phase 2 4단계 2차: _dashboard_css → dashboard.py로 이동
@@ -4573,99 +4506,13 @@ def _make_disclosures_card(disclosures: list) -> str:
 # Phase 2 4단계 4차-A (5/29): _make_portfolio_history_card -> dashboard.py
 
 
-def _make_personal_coach_card(personal_brief: str, risk: dict = None) -> str:
-    """🦾 AI 맞춤 비서 카드 — 마크다운→HTML 변환 + 위험 지수 게이지."""
-    if not personal_brief:
-        return _empty_section("coach", "🦾", "section__icon--ai", "AI 맞춤 비서",
-                              "이제훈님 전용", "맞춤 코칭이 없습니다",
-                              "08:00 daily 갱신 또는 텔레그램 /추천 명령으로 즉시 생성.")
-
-    body_html = _md_to_html(personal_brief)
-    gauge_html = _make_risk_gauge_html(risk) if risk else ""
-
-    return f"""
-<section class="section coach-section" id="coach" aria-label="AI 맞춤 비서">
-  <div class="section__head coach-head">
-    <div class="section__title">
-      <span class="section__icon section__icon--ai">🦾</span>
-      <h2>AI 맞춤 비서</h2>
-      <span class="section__badge">이제훈님 전용</span>
-    </div>
-    {gauge_html}
-  </div>
-  <div class="coach-body">
-    {body_html}
-  </div>
-</section>
-"""
+# 5/29 Phase 2 4단계 4차-B: _make_personal_coach_card -> dashboard.py
 
 
-def _make_ai_card(ai_summary: str, ai_sector: str) -> str:
-    """AI 시장 판단 카드 — 마크다운→HTML 변환 적용 (5/5 가독성 개선)."""
-    if not ai_summary:
-        return _empty_section("ai", "🤖", "section__icon--ai", "AI 시장 판단",
-                              "Claude 분석", "AI 분석이 없습니다",
-                              "08:50 장 시작 전 또는 02:00 시장 스캔 시 갱신됩니다.")
-    summary_html = _md_to_html(ai_summary)
-    sector_html = ""
-    if ai_sector:
-        sector_inner_html = _md_to_html(ai_sector)
-        sector_html = (
-            '<div style="margin:14px 22px 22px;padding:14px 18px;background:var(--surface-2);'
-            'border-radius:10px;color:var(--text-1);border-left:3px solid var(--accent);">'
-            '<div style="font-weight:700;color:var(--accent);margin-bottom:8px;font-size:13px;'
-            'text-transform:uppercase;letter-spacing:0.5px;">섹터 로테이션</div>'
-            f'{sector_inner_html}</div>'
-        )
-    return f"""
-<section class="section" id="ai" aria-label="AI 시장 판단">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--ai">🤖</span>
-      <h2>AI 시장 판단</h2>
-      <span class="section__badge">Claude</span>
-    </div>
-  </div>
-  <div class="coach-body">{summary_html}</div>
-  {sector_html}
-</section>
-"""
+# 5/29 Phase 2 4단계 4차-B: _make_ai_card -> dashboard.py
 
 
-def _make_macro_card(macro: dict, ai_macro: str, history: dict = None) -> str:
-    """매크로 지표 카드 — 기존 _make_macro_html + 30일 라인 차트 (TNX/IRX/DXY)."""
-    if not macro:
-        return _empty_section("macro", "📈", "section__icon--macro", "미국 경제지표",
-                              "TNX/CPI/DXY", "매크로 데이터 수집 중",
-                              "06:00 미국 마감 또는 08:50 장 시작 전 갱신됩니다.")
-    inner = _make_macro_html(macro, ai_macro)
-    history = history or {}
-    chart_html = ""
-    has_chart = any(history.get(k, {}).get("values") for k in ("tnx", "irx", "dxy"))
-    if has_chart:
-        chart_html = (
-            '<div class="macro-legend">'
-            '  <span class="macro-legend__item"><span class="macro-legend__dot" style="background:#5f6dff"></span>10년물 금리 (TNX)</span>'
-            '  <span class="macro-legend__item"><span class="macro-legend__dot" style="background:#14b8a6"></span>단기 금리 (IRX)</span>'
-            '  <span class="macro-legend__item"><span class="macro-legend__dot" style="background:#f59e0b"></span>달러인덱스 (DXY)</span>'
-            '</div>'
-            '<div class="macro-chart-wrap">'
-            '  <canvas id="macro-chart" class="macro-chart"></canvas>'
-            '</div>'
-        )
-    return f"""
-<section class="section" id="macro" aria-label="미국 경제지표">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--macro">📈</span>
-      <h2>미국 경제지표</h2>
-      <span class="section__badge">FRED · Yahoo · 30일 추이</span>
-    </div>
-  </div>
-  <div class="embed-wrap">{inner}</div>
-  {chart_html}
-</section>
-"""
+# 5/29 Phase 2 4단계 4차-B: _make_macro_card -> dashboard.py
 
 
 # 5/29 Phase 2 4단계 2차: _make_recommend_card → dashboard.py로 이동
