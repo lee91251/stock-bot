@@ -8242,14 +8242,19 @@ def _parse_sell_message(text: str) -> dict:
     if not has_sell_kw:
         return {}
 
+    # 5/29 영구 차단: 전량 매도 키워드 인식 (회장 5/29 사고 — 부분 매도 잘못 입력)
+    # "전량/전부/다/모두/싹" 키워드 → full_sell=True → qty 무시하고 보유 전량 매도
+    full_sell = any(kw in text for kw in ("전량", "전부", "모두", "싹", "다 팔", "전체", "모조리"))
+
     return {
-        "account": name_found[0],   # mirae_paper / positions / holdings_local
-        "code":    name_found[1],
-        "name":    name_found[2],
-        "qty":     qty,
-        "pct":     pct,
-        "date":    date_iso,
-        "is_loss": is_loss,
+        "account":   name_found[0],   # mirae_paper / positions / holdings_local
+        "code":      name_found[1],
+        "name":      name_found[2],
+        "qty":       qty,
+        "pct":       pct,
+        "date":      date_iso,
+        "is_loss":   is_loss,
+        "full_sell": full_sell,
     }
 
 
@@ -8275,8 +8280,21 @@ def _apply_sell_to_account(parsed: dict) -> str:
 
             buy_price = p["buy_price"]
             held_qty  = p["qty"]
-            sell_qty  = qty or held_qty   # 수량 미입력 시 전량
-            sell_qty  = min(sell_qty, held_qty)
+            full_sell = parsed.get("full_sell", False)
+
+            # 5/29 영구 차단: 전량 키워드 OR 수량 미입력 → 무조건 전량 매도
+            if full_sell or qty is None:
+                sell_qty = held_qty
+                full_sell = True  # 통일 처리
+            else:
+                sell_qty = min(qty, held_qty)
+                # 입력 수량 > 보유 수량 → 경고
+                if qty > held_qty:
+                    return (
+                        f"⚠️ <b>수량 불일치 경고</b>\n"
+                        f"  {name} 입력 {qty}주 vs 보유 {held_qty}주\n"
+                        f"  전량 매도가 맞다면 '{name} 전량 매도 {pct:+.2f}%' 입력"
+                    )
 
             # 매도가 계산 (pct가 있으면 pct로, 없으면 buy_price와 동일 가정)
             if pct is not None:
@@ -8313,12 +8331,25 @@ def _apply_sell_to_account(parsed: dict) -> str:
             with open(MIRAE_PAPER_FILE, "w", encoding="utf-8") as f:
                 json.dump(d, f, ensure_ascii=False, indent=2)
 
+            # 5/29 답신 강조: cross-check 정보 명시 (회장이 잔여 보고 이상 감지 가능)
             emoji = "🔴" if profit < 0 else "🟢"
+            cross_check = (
+                f"\n💰 cross-check:\n"
+                f"  매수 {held_qty}주 @ {buy_price:,.0f}원 = {held_qty * buy_price:,.0f}원\n"
+                f"  매도 {sell_qty}주 @ {sell_price:,.0f}원 = {sell_qty * sell_price:,.0f}원\n"
+                f"  잔여 {remaining}주"
+            )
+            warning = ""
+            if remaining > 0:
+                warning = (
+                    f"\n\n⚠️ <b>부분 매도로 등록됨</b>\n"
+                    f"  전량 매도였다면 '{name} 전량 매도 {pct:+.2f}%' 추가 입력"
+                )
             return (
                 f"{emoji} <b>미래에셋 모의 매도 등록</b>\n"
-                f"  {name} {sell_qty}주 @ {sell_price:,.0f}원 ({pct:+.2f}%)\n"
-                f"  손익: {profit:+,.0f}원\n"
-                f"  잔여: {remaining}주" + (" (부분 매도)" if remaining > 0 else " (전량)")
+                f"  {name} ({pct:+.2f}%)\n"
+                f"  손익: {profit:+,.0f}원"
+                + cross_check + warning
             )
         except Exception as e:
             return f"❌ mirae_paper 갱신 오류: {e}"
