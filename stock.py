@@ -8031,6 +8031,308 @@ def tg_get_updates(offset: int = 0) -> list:
         return []
 
 
+# ════════════════════════════════════════════════════════════
+# 5/29 영구 차단 — 텔레그램 수동 매도 통보 자동 처리
+# ════════════════════════════════════════════════════════════
+# 사고: 카카오게임즈 5/19 회장 손매도 → 봇 시스템 갱신 안 됨 → 10일간 손절 알림 반복
+# 원인: 봇 텔레그램 polling이 모니터링 시간만 → 평시 메시지 처리 안 됨
+# fix: 자동매수/매도 시작 시 최근 메시지 처리 (30분 내 자동 갱신)
+#
+# 인식 패턴 (자연어):
+#   "카카오게임즈 5월19일 104주 -11.71% 손절했어"
+#   "삼성전자 100주 매도 +3.5%"
+#   "/매도 카카오게임즈 5/19 104 -11.71"
+_TG_OFFSET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".tg_offset.json")
+
+
+def _load_tg_offset() -> int:
+    try:
+        if os.path.exists(_TG_OFFSET_FILE):
+            with open(_TG_OFFSET_FILE, "r", encoding="utf-8") as f:
+                return int(json.load(f).get("offset", 0))
+    except Exception:
+        pass
+    return 0
+
+
+def _save_tg_offset(offset: int) -> None:
+    try:
+        with open(_TG_OFFSET_FILE, "w", encoding="utf-8") as f:
+            json.dump({"offset": offset}, f)
+    except Exception:
+        pass
+
+
+def _parse_sell_message(text: str) -> dict:
+    """자연어 매도 메시지 파싱.
+
+    Returns: {"name", "qty", "pct", "date", "is_loss"} 또는 빈 dict
+    필요한 필드 누락 시 빈 dict 반환.
+    """
+    # 종목명 추출 — 메시지에서 한글 단어 (영문/숫자 종목코드 포함)
+    # 단순화: KR_STOCKS / mirae_paper / positions 중 *메시지에 포함된* 첫 종목명
+    name_found = None
+
+    # 1) mirae_paper의 보유 종목 우선 (가치주 모의)
+    try:
+        with open(MIRAE_PAPER_FILE, encoding="utf-8") as f:
+            mp = json.load(f)
+        for code, p in mp.get("positions", {}).items():
+            n = p.get("name", "")
+            if n and n in text:
+                name_found = ("mirae_paper", code, n)
+                break
+    except Exception:
+        pass
+
+    # 2) positions (자동매매 한투 모의)
+    if not name_found:
+        try:
+            with open(POSITIONS_FILE, encoding="utf-8") as f:
+                pos = json.load(f)
+            for code, p in pos.get("positions", {}).items():
+                n = p.get("name", "")
+                if n and n in text:
+                    name_found = ("positions", code, n)
+                    break
+        except Exception:
+            pass
+
+    # 3) holdings_local.json (가치주 실 사본)
+    if not name_found:
+        holdings_local_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "holdings_local.json"
+        )
+        try:
+            if os.path.exists(holdings_local_path):
+                with open(holdings_local_path, encoding="utf-8") as f:
+                    hl = json.load(f)
+                for h in hl.get("holdings", []):
+                    n = h.get("name", "")
+                    if n and n in text:
+                        name_found = ("holdings_local", h.get("ticker", ""), n)
+                        break
+        except Exception:
+            pass
+
+    if not name_found:
+        return {}
+
+    # 수량 (\d+주)
+    qty_m = re.search(r"(\d{1,5})\s*주", text)
+    qty = int(qty_m.group(1)) if qty_m else None
+
+    # 수익률 [+-]?\d+\.?\d*% — 음수 강조 (-11.71%, -5%, +3.5%)
+    pct_m = re.search(r"([+-]?\d+\.?\d*)\s*%", text)
+    pct = float(pct_m.group(1)) if pct_m else None
+
+    # 매도일 — M월D일 또는 M/D 또는 YYYY-MM-DD
+    date_iso = None
+    now_kst = _now_kst()
+    md1 = re.search(r"(\d{1,2})\s*월\s*(\d{1,2})\s*일", text)
+    md2 = re.search(r"(\d{1,2})/(\d{1,2})(?!\d)", text)
+    ymd = re.search(r"(202\d)-(\d{1,2})-(\d{1,2})", text)
+    if ymd:
+        date_iso = f"{ymd.group(1)}-{int(ymd.group(2)):02d}-{int(ymd.group(3)):02d}"
+    elif md1:
+        date_iso = f"{now_kst.year}-{int(md1.group(1)):02d}-{int(md1.group(2)):02d}"
+    elif md2:
+        date_iso = f"{now_kst.year}-{int(md2.group(1)):02d}-{int(md2.group(2)):02d}"
+    else:
+        date_iso = now_kst.strftime("%Y-%m-%d")
+
+    # 손절/익절 자동 판단 (pct 부호로)
+    is_loss = pct is not None and pct < 0
+
+    # 액션 키워드 확인 — 매도/손절/익절/팔았 중 하나 필수
+    has_sell_kw = any(kw in text for kw in ("매도", "손절", "익절", "팔았", "매각", "정리"))
+    if not has_sell_kw:
+        return {}
+
+    return {
+        "account": name_found[0],   # mirae_paper / positions / holdings_local
+        "code":    name_found[1],
+        "name":    name_found[2],
+        "qty":     qty,
+        "pct":     pct,
+        "date":    date_iso,
+        "is_loss": is_loss,
+    }
+
+
+def _apply_sell_to_account(parsed: dict) -> str:
+    """파싱된 매도 정보를 해당 계좌 파일에 적용.
+
+    Returns: 처리 결과 메시지 (텔레그램 답신용)
+    """
+    account = parsed.get("account")
+    code    = parsed.get("code")
+    name    = parsed.get("name")
+    qty     = parsed.get("qty")
+    pct     = parsed.get("pct")
+    date    = parsed.get("date")
+
+    if account == "mirae_paper":
+        try:
+            with open(MIRAE_PAPER_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            p = d.get("positions", {}).get(code)
+            if not p:
+                return f"❌ mirae_paper에 {name} 없음 (이미 매도?)"
+
+            buy_price = p["buy_price"]
+            held_qty  = p["qty"]
+            sell_qty  = qty or held_qty   # 수량 미입력 시 전량
+            sell_qty  = min(sell_qty, held_qty)
+
+            # 매도가 계산 (pct가 있으면 pct로, 없으면 buy_price와 동일 가정)
+            if pct is not None:
+                sell_price = round(buy_price * (1 + pct / 100), 0)
+            else:
+                sell_price = buy_price
+                pct = 0.0
+
+            profit = round(sell_qty * (sell_price - buy_price), 0)
+
+            # history 기록
+            d.setdefault("history", []).append({
+                "date": date,
+                "side": "sell",
+                "code": code,
+                "name": name,
+                "qty": sell_qty,
+                "buy_price": buy_price,
+                "sell_price": sell_price,
+                "pct": round(pct, 2),
+                "profit": profit,
+                "reason": "회장 수동 매도 (텔레그램 자동 등록)",
+                "manual": True,
+            })
+
+            # 잔여 처리
+            remaining = held_qty - sell_qty
+            if remaining > 0:
+                p["qty"] = remaining
+                p["partial_sold"] = True
+            else:
+                del d["positions"][code]
+
+            with open(MIRAE_PAPER_FILE, "w", encoding="utf-8") as f:
+                json.dump(d, f, ensure_ascii=False, indent=2)
+
+            emoji = "🔴" if profit < 0 else "🟢"
+            return (
+                f"{emoji} <b>미래에셋 모의 매도 등록</b>\n"
+                f"  {name} {sell_qty}주 @ {sell_price:,.0f}원 ({pct:+.2f}%)\n"
+                f"  손익: {profit:+,.0f}원\n"
+                f"  잔여: {remaining}주" + (" (부분 매도)" if remaining > 0 else " (전량)")
+            )
+        except Exception as e:
+            return f"❌ mirae_paper 갱신 오류: {e}"
+
+    elif account == "positions":
+        # 자동매매는 봇이 자동 처리 — 회장 수동 매도는 드물지만 가능
+        try:
+            with open(POSITIONS_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            p = d.get("positions", {}).get(code)
+            if not p:
+                return f"❌ positions에 {name} 없음"
+            buy_price = p["buy_price"]
+            held_qty  = p["qty"]
+            sell_qty  = qty or held_qty
+            sell_qty  = min(sell_qty, held_qty)
+            sell_price = round(buy_price * (1 + (pct or 0) / 100), 0)
+            profit = round(sell_qty * (sell_price - buy_price), 0)
+
+            d.setdefault("history", []).append({
+                "date": date, "side": "sell", "code": code, "name": name,
+                "qty": sell_qty, "buy_price": buy_price, "sell_price": sell_price,
+                "pct": round(pct or 0, 2), "profit": profit,
+                "reason": "회장 수동 매도 (텔레그램 자동 등록)", "manual": True,
+            })
+            remaining = held_qty - sell_qty
+            if remaining > 0:
+                p["qty"] = remaining
+                p["partial_sold"] = True
+            else:
+                del d["positions"][code]
+            with open(POSITIONS_FILE, "w", encoding="utf-8") as f:
+                json.dump(d, f, ensure_ascii=False, indent=2)
+            return f"🟢 자동매매(한투 모의) 매도 등록: {name} {sell_qty}주 / {profit:+,.0f}원"
+        except Exception as e:
+            return f"❌ positions 갱신 오류: {e}"
+
+    elif account == "holdings_local":
+        # 가치주 실 사본 — bot-holdings 스킬과 동기화 필요
+        return (
+            f"⚠️ {name}은 가치주 실 계좌(holdings_local).\n"
+            f"  현재 자동 등록 미지원 — bot-holdings 스킬로 수동 갱신 필요"
+        )
+
+    return f"❌ 알 수 없는 계좌: {account}"
+
+
+def handle_pending_telegram_messages() -> int:
+    """대기 중인 텔레그램 메시지 처리 (자동매수/매도 시작 시 호출).
+
+    매도 명령(자연어/슬래시) 자동 인식 → 해당 계좌 파일 갱신 + 답신.
+    /정지, /재개 등 기본 명령도 처리.
+
+    Returns: 처리된 메시지 수
+    """
+    if not TELEGRAM_TOKEN:
+        return 0
+
+    offset = _load_tg_offset()
+    try:
+        updates = tg_get_updates(offset)
+    except Exception:
+        return 0
+
+    if not updates:
+        return 0
+
+    handled = 0
+    for upd in updates:
+        new_offset = upd["update_id"] + 1
+        offset = max(offset, new_offset)
+        msg = upd.get("message", {})
+        text = (msg.get("text") or "").strip()
+        chat_id = str(msg.get("chat", {}).get("id", ""))
+        if not text:
+            continue
+
+        # 기본 슬래시 명령
+        if text in ("/정지", "/halt", "/stop"):
+            pos = load_positions()
+            pos["halted"] = True
+            save_positions(pos)
+            tg_send("🛑 <b>자동매매 정지됨.</b> 해제: /재개", chat_id)
+            handled += 1
+            continue
+        elif text in ("/재개", "/resume"):
+            pos = load_positions()
+            pos["halted"] = False
+            save_positions(pos)
+            tg_send("▶️ <b>자동매매 재개됨.</b>", chat_id)
+            handled += 1
+            continue
+
+        # 매도 키워드 포함 시 자연어 파싱 시도
+        if any(kw in text for kw in ("매도", "손절", "익절", "팔았", "매각", "정리")):
+            parsed = _parse_sell_message(text)
+            if parsed:
+                result = _apply_sell_to_account(parsed)
+                tg_send(result, chat_id)
+                handled += 1
+                continue
+
+    _save_tg_offset(offset)
+    return handled
+
+
 # ════════════════════════════════════════════════
 # 텔레그램 봇 (인터랙티브 폴링)
 # ════════════════════════════════════════════════
@@ -9288,6 +9590,14 @@ def run_auto_buy():
     텔레그램 다이어트: 차단/안내 알림은 당일 첫 호출(09:00~09:40)에서만 텔레그램,
     이후 호출은 콘솔 로그만 남김 (매수 발생 시 알림은 정상).
     """
+    # 5/29: 대기 중인 텔레그램 메시지 처리 (회장 수동 매도 통보 등)
+    try:
+        n = handle_pending_telegram_messages()
+        if n > 0:
+            print(f"  [autobuy] 대기 메시지 {n}건 처리 완료")
+    except Exception as e:
+        print(f"  [autobuy] 텔레그램 메시지 처리 오류: {e}")
+
     now = _now_kst()
     # 첫 호출 판단 — 09:00~09:40 사이만 텔레그램 차단/안내. 그 외 호출은 콘솔만.
     is_first_call = now.hour == 9 and now.minute < 40
@@ -9751,6 +10061,14 @@ def run_auto_sell():
       • -SWING_STOP_LOSS_PCT 도달 → 잔여 전량 매도 (손절) + 쿨다운 등록
       • 보유 SWING_MAX_HOLD_DAYS 거래일 경과 → 잔여 전량 매도 (시간 정리)
     """
+    # 5/29: 대기 중인 텔레그램 메시지 처리 (회장 수동 매도 통보 등)
+    try:
+        n = handle_pending_telegram_messages()
+        if n > 0:
+            print(f"  [autosell] 대기 메시지 {n}건 처리 완료")
+    except Exception as e:
+        print(f"  [autosell] 텔레그램 메시지 처리 오류: {e}")
+
     client = get_trading_client()
     mode_tag = client.mode_tag()
 
