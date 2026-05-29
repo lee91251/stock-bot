@@ -94,5 +94,21 @@
     "emoji": "📰",
     "title": "DART 📰 SKC 🏠",
     "detail": "대규모기업집단현황공시[연1회공시및1/4분기용(개별회사)]"
+  },
+  {
+    "time": "2026-05-29T15:16:33.356701",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "대규모기업집단현황공시[연1회(동일인용)]"
+  },
+  {
+    "time": "2026-05-29T15:16:33.357082",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 HD한국조선해양 🏠",
+    "detail": "대규모기업집단현황공시[연1회공시및1/4분기용(대표회사)]"
   }
 ]
