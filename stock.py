@@ -78,6 +78,15 @@ from dashboard import (
     _make_allocation_card,
 )
 
+# 5/29 Phase 2 5단계: 학습부 (1차 — AI 어드바이저 로그/정확도 + 트레이딩 일기)
+from learning import (
+    _load_advisor_log, _save_advisor_log,
+    log_advisor_decision,
+    calc_advisor_accuracy,
+    _get_recent_journals,
+    AI_ADVISOR_LOG, AI_ADVISOR_MIN_SAMPLES, AI_ADVISOR_MIN_ACCURACY,
+)
+
 
 # 5/29 영구 차단: yfinance .info 무한 대기 방지 (Linux SIGALRM)
 # 사고 26620221277 (5/29 marketscan 1시간 22분 무한 대기) 진단 결과
@@ -213,12 +222,9 @@ MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
 ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
-AI_ADVISOR_LOG      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai_advisor_log.json")
-
 # AI 매도 어드바이저 v2 (B1 → 신뢰도 검증 → 자동 결정 반영)
-AI_ADVISOR_MIN_SAMPLES   = 30      # 최소 누적 건수 (이 미만이면 default 동작)
-AI_ADVISOR_MIN_ACCURACY  = 0.6     # 자동 활성화 신뢰도 임계 (60%+)
-AI_ADVISOR_OUTCOME_DAYS  = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가
+# AI_ADVISOR_LOG / MIN_SAMPLES / MIN_ACCURACY → learning.py (5단계 학습부)
+AI_ADVISOR_OUTCOME_DAYS  = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가 (track_advisor_outcomes 잔류용)
 
 # B4 자동 가중치 튜닝 (자가학습 — 30건+ 누적 시 권장 알림)
 B4_MIN_SAMPLES           = 30      # 자가학습 최소 표본
@@ -2456,70 +2462,6 @@ def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
         return ""
 
 
-def _load_advisor_log() -> list:
-    """ai_advisor_log.json 로드. AI 매도 의견 + 실제 결과 추적용."""
-    try:
-        if os.path.exists(AI_ADVISOR_LOG):
-            with open(AI_ADVISOR_LOG, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"  [advisor_log] 로드 오류: {e}")
-    return []
-
-
-def _save_advisor_log(log: list) -> None:
-    try:
-        # 최근 200건만 보관 (안전 캡)
-        if len(log) > 200:
-            log = log[-200:]
-        with open(AI_ADVISOR_LOG, "w", encoding="utf-8") as f:
-            json.dump(log, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"  [advisor_log] 저장 오류: {e}")
-
-
-def log_advisor_decision(stock_info: dict, ai_opinion: str,
-                          sell_executed: bool, sell_pct: float) -> None:
-    """매도 시점 AI 의견 + 실제 매도 정보 기록 (B1 → v2 진화 데이터).
-
-    이후 5일 후 가격 추적 → AI 의견 정확도 평가:
-    - "보류 검토" 후 가격 ↑ → AI 정확
-    - "매도 적절" 후 가격 ↓ → AI 정확
-    """
-    if not ai_opinion:
-        return  # AI 호출 실패 시 기록 X
-
-    # 의견 분류: "매도" 키워드 vs "보류" 키워드
-    op_lower = ai_opinion.lower()
-    if "보류" in ai_opinion:
-        opinion_class = "hold"
-    elif "매도" in ai_opinion:
-        opinion_class = "sell"
-    else:
-        opinion_class = "neutral"
-
-    log = _load_advisor_log()
-    log.append({
-        "date":         _today_str(),
-        "time":         _now_kst().strftime("%H:%M"),
-        "code":         stock_info.get("code", ""),
-        "name":         stock_info.get("name", ""),
-        "sell_price":   stock_info.get("curr_price", 0),
-        "sell_pct":     round(sell_pct, 2),
-        "ai_opinion":   ai_opinion[:200],
-        "opinion_class": opinion_class,
-        "sell_executed": sell_executed,
-        # 5일 후 결과 (track_advisor_outcomes에서 채움)
-        "outcome_price":    None,
-        "outcome_date":     None,
-        "outcome_pct":      None,
-        "ai_correct":       None,  # True if AI 정확
-    })
-    _save_advisor_log(log)
-    print(f"  [advisor_log] {opinion_class} 의견 기록 (누적 {len(log)}건)")
-
-
 def track_advisor_outcomes() -> int:
     """AI 어드바이저 로그의 5일 전 의견들 결과 추적 (정확도 평가).
 
@@ -2577,63 +2519,6 @@ def track_advisor_outcomes() -> int:
         print(f"  [advisor] {updated}건 결과 평가 완료")
 
     return updated
-
-
-def calc_advisor_accuracy() -> dict:
-    """AI 어드바이저 누적 정확도 계산.
-
-    Returns: {
-        "total":       전체 평가 완료 건수,
-        "correct":     AI 정확 건수,
-        "accuracy":    정확도 %,
-        "hold_total":  보류 권장 건수,
-        "hold_correct": 보류 권장 정확,
-        "sell_total":  매도 권장 건수,
-        "sell_correct": 매도 권장 정확,
-        "ready_to_activate": 30건+ AND 정확도 60%+ 인지,
-    }
-    """
-    log = _load_advisor_log()
-    evaluated = [e for e in log if e.get("ai_correct") is not None]
-    total = len(evaluated)
-    correct = sum(1 for e in evaluated if e.get("ai_correct"))
-
-    hold = [e for e in evaluated if e.get("opinion_class") == "hold"]
-    sell = [e for e in evaluated if e.get("opinion_class") == "sell"]
-
-    accuracy = (correct / total * 100) if total > 0 else 0
-    ready = total >= AI_ADVISOR_MIN_SAMPLES and accuracy >= AI_ADVISOR_MIN_ACCURACY * 100
-
-    return {
-        "total":          total,
-        "correct":        correct,
-        "accuracy":       round(accuracy, 1),
-        "hold_total":     len(hold),
-        "hold_correct":   sum(1 for e in hold if e.get("ai_correct")),
-        "sell_total":     len(sell),
-        "sell_correct":   sum(1 for e in sell if e.get("ai_correct")),
-        "ready_to_activate": ready,
-        "pending":        len(log) - total,  # 5일 안 된 평가 대기
-    }
-
-
-def _get_recent_journals(limit: int = 5) -> list:
-    """positions.json history에서 최근 매도 N건의 journal 추출 (AI 학습용)."""
-    try:
-        pos = load_positions()
-        history = pos.get("history", [])
-        sells = [h for h in history if h.get("side") == "sell" and h.get("journal")]
-        sells.sort(key=lambda h: (h.get("date", ""), h.get("time", "")), reverse=True)
-        return [
-            {
-                "name":    s.get("name", ""),
-                "pct":     s.get("pct", 0),
-                "journal": s.get("journal", ""),
-            }
-            for s in sells[:limit]
-        ]
-    except Exception:
-        return []
 
 
 def _calc_mdd_from_portfolio(window_days: int = 30) -> dict:
@@ -5720,7 +5605,9 @@ def _calc_swing_score(s: dict) -> tuple | None:
     manipulation = s.get("manipulation_signal", False)
 
     # 필터 — 통과 못 하면 즉시 탈락
-    if not (150 <= vol_ratio <= 350): return None
+    # 5/29 과매수 상한 (백테스트: RSI 70+ 승률 35% / 거래량 200%+ 승률 36% — 가장 잘 지는 구간)
+    if not (150 <= vol_ratio < 200): return None
+    if rsi >= 70: return None
     if ret_1w < -3: return None
     if macd_hist <= 0: return None
     if mktcap < 3_000_0000_0000: return None  # 시가총액 3,000억
@@ -5730,9 +5617,8 @@ def _calc_swing_score(s: dict) -> tuple | None:
     reasons  = []
 
     # 모멘텀 60
-    if vol_ratio >= 200:    momentum += 25; reasons.append(f"거래량 {vol_ratio:.0f}% 폭발")
-    elif vol_ratio >= 150:  momentum += 18; reasons.append(f"거래량 {vol_ratio:.0f}% 강세")
-    elif vol_ratio >= 120:  momentum += 10
+    # 거래량은 필터로 150~200%로 제한됨 (200%+ 과열은 매수 제외) → 통과 시 일괄 가점
+    momentum += 18; reasons.append(f"거래량 {vol_ratio:.0f}% 강세")
 
     if macd_hist > 0 and macd_cross: momentum += 15; reasons.append("MACD 골든+양수")
     elif macd_cross:                  momentum += 10; reasons.append("MACD 골든크로스")

@@ -143,6 +143,18 @@ BT_RET_1M_MIN      = float(os.environ.get("BT_RET_1M_MIN", "-15"))     # 1개월
 BT_OPTIMIZE_MODE   = os.environ.get("BT_OPTIMIZE_MODE", "false").lower() == "true"  # 순차 최적화
 BT_GRID_MODE       = os.environ.get("BT_GRID_MODE", "true").lower() == "true"      # Multi-env Grid (5/12 기본 ON)
 
+# 5/29 갭다운 위험 차단 실험 — "과열 상한" 필터 (회장 통찰: 어제 급등주 추격 = 갭다운 위험)
+# 켜면 매수 후보에서 (당일 급등 과열 / 거래량 과열) 종목 제외. 효과 검증용 토글.
+BT_OVERHEAT_FILTER     = os.environ.get("BT_OVERHEAT_FILTER", "false").lower() == "true"
+BT_MAX_DAY_CHANGE_PCT  = float(os.environ.get("BT_MAX_DAY_CHANGE_PCT", "10"))   # 당일 등락률 이 값 초과 시 제외
+BT_MAX_VOL_RATIO_PCT   = float(os.environ.get("BT_MAX_VOL_RATIO_PCT", "400"))   # 거래량 비율 이 값 초과 시 제외
+
+# 5/29 승률 개선 실험 — "과매수 상한" 필터 (분석: RSI 70+ 승률 35%, 거래량 200%+ 승률 36%)
+# 켜면 매수 후보에서 과매수(RSI 높음 / 거래량 과열) 종목 제외. 효과 검증용 토글. 기본 OFF.
+BT_OVERBOUGHT_FILTER   = os.environ.get("BT_OVERBOUGHT_FILTER", "false").lower() == "true"
+BT_RSI_MAX             = float(os.environ.get("BT_RSI_MAX", "70"))    # 이 RSI 이상 매수 제외
+BT_VOL_RATIO_MAX       = float(os.environ.get("BT_VOL_RATIO_MAX", "200"))  # 이 거래량비율 이상 매수 제외
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -264,6 +276,12 @@ def _compute_features(
     last_vol = float(volumes.iloc[-1])
     vol_ratio = (last_vol / avg_vol * 100) if avg_vol else 100
 
+    # 당일 등락률 (전일 종가 대비) — 과열 필터용
+    change_1d = (
+        (float(closes.iloc[-1]) - float(closes.iloc[-2])) / float(closes.iloc[-2]) * 100
+        if len(closes) >= 2 and float(closes.iloc[-2]) else 0.0
+    )
+
     n = len(closes)
     ret_1w = (float(closes.iloc[-1]) - float(closes.iloc[-5])) / float(closes.iloc[-5]) * 100 if n >= 5 else 0
     ret_1m = (float(closes.iloc[-1]) - float(closes.iloc[-20])) / float(closes.iloc[-20]) * 100 if n >= 20 else 0
@@ -301,6 +319,7 @@ def _compute_features(
         "macd_hist": round(macd_hist, 4),
         "bb_pct": round(bb_pct, 1),
         "vol_ratio": round(vol_ratio, 0),
+        "change_1d": round(change_1d, 2),
         "ret_1w": round(ret_1w, 1),
         "ret_1m": round(ret_1m, 1),
         "ret_3m": round(ret_3m, 1),
@@ -586,8 +605,14 @@ def simulate_track(track: str, months: int = 1) -> dict:
     cooldown = {}
     daily_capital = []
     filter_pass_count = 0  # 트랙 필터 통과 횟수
+    overheat_skips = 0     # 과열 상한 필터로 제외된 매수 후보 수
     score_buckets = {"<50": 0, "50-59": 0, "60-69": 0, "70-79": 0, "80+": 0}
 
+    overbought_skips = 0   # 과매수 상한 필터로 제외된 매수 후보 수
+    if BT_OVERHEAT_FILTER:
+        print(f"  [과열필터 ON] 당일 +{BT_MAX_DAY_CHANGE_PCT:.0f}% 초과 또는 거래량 {BT_MAX_VOL_RATIO_PCT:.0f}% 초과 매수 제외")
+    if BT_OVERBOUGHT_FILTER:
+        print(f"  [과매수필터 ON] RSI {BT_RSI_MAX:.0f}+ 또는 거래량 {BT_VOL_RATIO_MAX:.0f}%+ 매수 제외")
     print(f"[3/3] 시뮬레이션 실행 ({cfg['label']})...")
     for di, today in enumerate(sim_dates):
         if di % 20 == 0 and di > 0:
@@ -669,6 +694,7 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 "qty": sell_qty, "raw_pct": round(pct, 2), "net_pct": round(net_pct, 2),
                 "net_pnl": round(net_pnl, 0), "held_days": held_days,
                 "reason": reason, "score": p.get("score", 0), "sector": p.get("sector", ""),
+                "feat": p.get("feat", {}),
             })
 
             if sell_qty == held_qty:
@@ -705,10 +731,28 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 score_buckets[bucket] += 1
 
             if signal and code not in positions and code not in cooldown:
+                # 5/29 과열 상한 필터 (갭다운 위험 차단) — 토글 ON일 때만
+                if BT_OVERHEAT_FILTER:
+                    ch = features.get("change_1d", 0) or 0
+                    vr = features.get("vol_ratio", 0) or 0
+                    if ch > BT_MAX_DAY_CHANGE_PCT or vr > BT_MAX_VOL_RATIO_PCT:
+                        overheat_skips += 1
+                        continue
+                # 5/29 과매수 상한 필터 (RSI/거래량 과열) — 토글 ON일 때만
+                if BT_OVERBOUGHT_FILTER:
+                    rsi_v = features.get("rsi", 0) or 0
+                    vr2 = features.get("vol_ratio", 0) or 0
+                    if rsi_v >= BT_RSI_MAX or vr2 >= BT_VOL_RATIO_MAX:
+                        overbought_skips += 1
+                        continue
                 candidates.append({
                     "code": code, "name": d["name"], "sector": d["sector"],
                     "score": score, "reasons": reasons,
                     "price": features["price"],
+                    "feat": {k: features.get(k) for k in (
+                        "rsi", "bb_pct", "vol_ratio", "ret_1w", "ret_1m",
+                        "pct_from_high", "change_1d", "macd_hist", "near_support",
+                    )},
                 })
 
         # 점수 높은 순 매수 (일일 한도: 트랙별 차등, 기본 5종목)
@@ -737,6 +781,7 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 "name": c["name"], "qty": qty,
                 "buy_price": buy_price, "buy_date": next_day.strftime("%Y-%m-%d"),
                 "score": c["score"], "sector": c["sector"],
+                "feat": c.get("feat", {}),
             }
             daily_buy_count += 1
 
@@ -759,6 +804,11 @@ def simulate_track(track: str, months: int = 1) -> dict:
     metrics["score_buckets"] = score_buckets
     metrics["open_positions"] = len(positions)
     metrics["trades"] = closed_trades
+    # 5/29 갭다운 실험 지표
+    metrics["overheat_skips"] = overheat_skips
+    metrics["overbought_skips"] = overbought_skips
+    metrics["deep_loss_count"] = sum(1 for t in closed_trades if t.get("net_pct", 0) <= -8)
+    metrics["loss_count"]      = sum(1 for t in closed_trades if t.get("net_pct", 0) < 0)
 
     # 5/29 fix: compute_metrics 키와 run_4track_backtest 키 통일
     metrics["total_return"] = metrics.get("cumulative_return_pct", 0)
