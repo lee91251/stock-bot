@@ -1,7 +1,83 @@
 {
   "date": "2026-06-01",
-  "generated_at": "2026-05-29T14:59:10.053930",
+  "generated_at": "2026-05-29T15:44:42.603802",
   "source_phase": "close_summary",
-  "picks": [],
+  "picks": [
+    {
+      "code": "035420",
+      "name": "NAVER",
+      "sector": "IT",
+      "score_bonus": 10,
+      "today_change": 14.15,
+      "today_vol_ratio": 556.0,
+      "today_score": 62,
+      "reasons": [
+        "오늘 +14.2% 마감",
+        "거래량 평균 +556%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "032640",
+      "name": "LG유플러스",
+      "sector": "통신",
+      "score_bonus": 7,
+      "today_change": 7.03,
+      "today_vol_ratio": 314.0,
+      "today_score": 65,
+      "reasons": [
+        "오늘 +7.0% 마감",
+        "거래량 평균 +314%",
+        "스윙점수 65"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "051910",
+      "name": "LG화학",
+      "sector": "2차전지",
+      "score_bonus": 7,
+      "today_change": 6.53,
+      "today_vol_ratio": 195.0,
+      "today_score": 52,
+      "reasons": [
+        "오늘 +6.5% 마감",
+        "거래량 평균 +195%",
+        "스윙점수 52"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "323410",
+      "name": "카카오뱅크",
+      "sector": "금융",
+      "score_bonus": 5,
+      "today_change": 4.67,
+      "today_vol_ratio": 297.0,
+      "today_score": 72,
+      "reasons": [
+        "오늘 +4.7% 마감",
+        "거래량 평균 +297%",
+        "스윙점수 72"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "373220",
+      "name": "LG에너지솔루션",
+      "sector": "2차전지",
+      "score_bonus": 4,
+      "today_change": 3.62,
+      "today_vol_ratio": 231.0,
+      "today_score": 55,
+      "reasons": [
+        "오늘 +3.6% 마감",
+        "거래량 평균 +231%",
+        "스윙점수 55"
+      ],
+      "source": "close_summary"
+    }
+  ],
   "sector_weights": {}
 }
