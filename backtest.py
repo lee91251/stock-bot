@@ -760,8 +760,15 @@ def simulate_track(track: str, months: int = 1) -> dict:
     metrics["open_positions"] = len(positions)
     metrics["trades"] = closed_trades
 
-    print(f"\n[{cfg['label']}] 완료 — 수익률 {metrics.get('total_return', 0):+.2f}% / "
-          f"매매 {metrics.get('total_trades', 0)}건 / 승률 {metrics.get('win_rate', 0):.1f}% / "
+    # 5/29 fix: compute_metrics 키와 run_4track_backtest 키 통일
+    metrics["total_return"] = metrics.get("cumulative_return_pct", 0)
+    metrics["win_rate"]     = metrics.get("win_rate_pct", 0)
+    metrics["mdd"]          = metrics.get("max_drawdown_pct", 0)
+    metrics["avg_win"]      = metrics.get("avg_win_pct", 0)
+    metrics["avg_loss"]     = metrics.get("avg_loss_pct", 0)
+
+    print(f"\n[{cfg['label']}] 완료 — 수익률 {metrics['total_return']:+.2f}% / "
+          f"매매 {metrics.get('total_trades', 0)}건 / 승률 {metrics['win_rate']:.1f}% / "
           f"필터 통과 {filter_pass_count}회")
     return metrics
 
