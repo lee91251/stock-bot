@@ -65,6 +65,11 @@ from dashboard import (
     _make_personal_coach_card,
     _make_ai_card,
     _make_macro_card,
+    dart_alerts_section_html,
+    _make_market_briefing_card,
+    _make_risk_gauge_html,
+    _make_disclosures_card,
+    _make_dart_card,
 )
 
 
@@ -3668,53 +3673,7 @@ def check_holdings_alerts() -> list:
 # from dashboard import card_html
 
 
-def dart_alerts_section_html(dart_alerts: list) -> str:
-    if not dart_alerts:
-        return ""
-    by_type: dict = {}
-    for a in dart_alerts:
-        by_type.setdefault(a["key"], []).append(a)
-    rows = []
-    for key in ["rights", "buyback", "order", "dividend", "insider"]:
-        entries = by_type.get(key, [])
-        if not entries:
-            continue
-        _, label, is_risk = SIGNAL_DEFS[key]
-        color  = "#e03131" if is_risk else "#2f9e44"
-        bg     = "#fff5f5" if is_risk else "#f0fff4"
-        border = "#ffc9c9" if is_risk else "#b2f2bb"
-        icon   = "⚠️" if is_risk else "✅"
-        items_html = ""
-        for a in entries:
-            for it in a["items"]:
-                dt       = it["date"]
-                date_fmt = f"{dt[:4]}.{dt[4:6]}.{dt[6:]}" if len(dt) == 8 else dt
-                items_html += (
-                    f'<div style="padding:9px 14px;margin:5px 0;background:{bg};'
-                    f'border:1px solid {border};border-radius:8px;font-size:13px;">'
-                    f'<b>{a["name"]}</b>'
-                    f'<span style="margin-left:6px;padding:2px 8px;border-radius:12px;'
-                    f'font-size:11px;background:rgba(0,0,0,0.07);">{a["sector"]}</span>'
-                    f' — {it["title"]} <span style="color:#868e96;">({date_fmt})</span> '
-                    f'<a href="{it["url"]}" style="color:{color};font-size:12px;">공시 보기 →</a>'
-                    f'</div>'
-                )
-        rows.append(
-            f'<div style="margin-bottom:16px;">'
-            f'<div style="font-weight:700;font-size:14px;color:{color};margin-bottom:8px;">'
-            f'{icon} {label}</div>{items_html}</div>'
-        )
-    if not rows:
-        return ""
-    return (
-        f'<div style="padding:20px 16px;">'
-        f'<h2 style="color:#1a3a5c;font-size:20px;margin:0 0 16px;'
-        f'padding-bottom:10px;border-bottom:3px solid #f59f00;">📢 DART 공시 알림 (최근 7일)</h2>'
-        f'<div style="padding:16px 20px;background:white;border-radius:12px;border:1px solid #dee2e6;">'
-        f'{"".join(rows)}'
-        f'<div style="font-size:12px;color:#868e96;margin-top:8px;">'
-        f'* 금융감독원 전자공시시스템(DART) 공시 기준.</div></div></div>'
-    )
+# 5/29 Phase 2 4단계 4차-C: dart_alerts_section_html -> dashboard.py
 
 
 # ════════════════════════════════════════════════
@@ -4219,61 +4178,7 @@ def _load_market_history(max_age_hours: int = 1) -> dict:
     return history
 
 
-def _make_market_briefing_card(mood: dict, fg: dict, history: dict = None) -> str:
-    """시장 브리핑 카드 — 코스피/S&P500/VIX/달러/유가/공포탐욕 + 7일 sparkline."""
-    mood = mood or {}
-    fg = fg or {"score": 50, "label": "중립"}
-    history = history or {}
-    if not mood.get("kospi_price") and not mood.get("vix"):
-        return _empty_section("market", "🌏", "section__icon--market", "시장 브리핑",
-                              "실시간 지표", "데이터 수집 중",
-                              "다음 봇 실행 시 갱신됩니다.")
-
-    def _card(label, value, chg=None, chg_label=None, spark_key=""):
-        chg_html = ""
-        if chg is not None:
-            cls = "up" if chg >= 0 else ("down" if chg < 0 else "flat")
-            arr = "▲" if chg >= 0 else "▼"
-            chg_html = f'<div class="market-card__chg {cls}">{arr} {abs(chg):.2f}%</div>'
-        elif chg_label:
-            chg_html = f'<div class="market-card__chg flat">{chg_label}</div>'
-        spark_html = ""
-        if spark_key and history.get(spark_key, {}).get("values"):
-            spark_html = f'<canvas class="market-card__chart spark-chart" data-key="{spark_key}" width="80" height="40"></canvas>'
-        return (
-            f'<div class="market-card">'
-            f'  <div class="market-card__top">'
-            f'    <div class="market-card__main">'
-            f'      <div class="market-card__label">{label}</div>'
-            f'      <div class="market-card__value">{value}</div>'
-            f'      {chg_html}'
-            f'    </div>'
-            f'    {spark_html}'
-            f'  </div>'
-            f'</div>'
-        )
-
-    cards = [
-        _card("코스피", f"{mood.get('kospi_price',0):,.2f}", mood.get("kospi_chg"), spark_key="kospi"),
-        _card("S&P 500", "전일 대비", mood.get("sp500_chg"), spark_key="sp500"),
-        _card("VIX", f"{mood.get('vix',0):.2f}", chg_label=mood.get("status",""), spark_key="vix"),
-        _card("달러/원 (시장가)", f"{mood.get('usdkrw',0):,.2f}원", spark_key="usdkrw"),
-        _card("WTI 유가", f"${mood.get('wti',0):.2f}", spark_key="wti"),
-        _card("공포탐욕", f"{fg.get('score',50)}", chg_label=fg.get("label","중립")),
-    ]
-
-    return f"""
-<section class="section" id="market" aria-label="시장 브리핑">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--market">🌏</span>
-      <h2>시장 브리핑</h2>
-      <span class="section__badge">실시간 지표 · 7일 추세</span>
-    </div>
-  </div>
-  <div class="market-grid">{"".join(cards)}</div>
-</section>
-"""
+# 5/29 Phase 2 4단계 4차-C: _make_market_briefing_card -> dashboard.py
 
 
 def _md_table_to_html(lines: list) -> str:
@@ -4396,111 +4301,10 @@ def _md_to_html(text: str) -> str:
     return "\n".join(result)
 
 
-def _make_risk_gauge_html(risk: dict) -> str:
-    """시장 위험 지수 게이지 (반원형 SVG) — 자비스 카드 헤더에 표시."""
-    if not risk:
-        return ""
-    score = max(0, min(100, risk.get("score", 0)))
-    level = risk.get("level", "안전")
-    action = risk.get("action", "")
-    # 등급별 색상
-    color_map = {"안전": "#10b981", "주의": "#eab308", "경계": "#f97316", "위험": "#ef4444"}
-    color = color_map.get(level, "#94a3b8")
-    # 반원 게이지: 0~100 → 0~180도
-    angle = score * 1.8  # 0~180
-    # SVG arc — 반원 위 (0~100)
-    cx, cy, r = 100, 100, 80
-    end_x = cx + r * (1 - 2 * (angle / 180.0))  # 단순화: 직선 위치
-    # 더 정확한 SVG arc
-    import math
-    rad = math.radians(180 - angle)
-    end_x = cx - r * math.cos(rad)
-    end_y = cy - r * math.sin(rad)
-    large_arc = 1 if angle > 180 else 0
-    return f"""
-<div class="risk-gauge">
-  <svg viewBox="0 0 200 120" width="200" height="120">
-    <!-- 배경 반원 -->
-    <path d="M 20 100 A 80 80 0 0 1 180 100" stroke="var(--surface-2)" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <!-- 위험도 호 -->
-    <path d="M 20 100 A 80 80 0 {large_arc} 1 {end_x:.2f} {end_y:.2f}" stroke="{color}" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <!-- 중앙 점수 -->
-    <text x="100" y="92" text-anchor="middle" font-size="32" font-weight="700" fill="{color}">{score}</text>
-    <text x="100" y="110" text-anchor="middle" font-size="11" fill="var(--text-2)">/ 100</text>
-  </svg>
-  <div class="risk-gauge__label" style="color:{color};">{level}</div>
-  <div class="risk-gauge__action">{action}</div>
-</div>
-"""
+# 5/29 Phase 2 4단계 4차-C: _make_risk_gauge_html -> dashboard.py
 
 
-def _make_disclosures_card(disclosures: list) -> str:
-    """📢 최근 공시 카드 — 보유 종목 + KR_STOCKS 24시간 새 공시.
-
-    disclosures: [{name, code, title, rcept_dt, url, emoji, is_held}, ...]
-    """
-    if not disclosures:
-        return _empty_section("disclosures", "📢", "section__icon--alert", "최근 공시",
-                              "DART 24시간", "새 공시가 없습니다",
-                              "보유 종목 + 관심종목 100개의 새 공시를 30분마다 자동 수집합니다.")
-
-    held_count = sum(1 for d in disclosures if d.get("is_held"))
-    bad_count  = sum(1 for d in disclosures if d.get("emoji") == "⚠️")
-    good_count = sum(1 for d in disclosures if d.get("emoji") == "✅")
-
-    rows = []
-    for d in disclosures[:30]:  # 최대 30건
-        em = d.get("emoji", "📰")
-        name = d.get("name", "")
-        title = d.get("title", "")
-        url = d.get("url", "#")
-        is_held = d.get("is_held", False)
-        rcept_dt = d.get("rcept_dt", "")
-        # 시간 표시 (YYYYMMDD → MM/DD)
-        time_str = ""
-        if len(rcept_dt) >= 8:
-            time_str = f"{rcept_dt[4:6]}/{rcept_dt[6:8]}"
-        held_badge = '<span class="disc-row__badge disc-row__badge--held">보유</span>' if is_held else ""
-        # 키워드별 색상
-        em_class = ""
-        if em == "⚠️": em_class = "disc-row__emoji--bad"
-        elif em == "✅": em_class = "disc-row__emoji--good"
-
-        rows.append(f"""
-    <a href="{url}" target="_blank" rel="noopener" class="disc-row {'disc-row--held' if is_held else ''}">
-      <span class="disc-row__emoji {em_class}">{em}</span>
-      <div class="disc-row__main">
-        <div class="disc-row__head">
-          <span class="disc-row__name">{name}</span>
-          {held_badge}
-        </div>
-        <div class="disc-row__title">{title}</div>
-      </div>
-      <span class="disc-row__date">{time_str}</span>
-    </a>""")
-
-    more_html = ""
-    if len(disclosures) > 30:
-        more_html = f'<div class="disc-more">외 {len(disclosures) - 30}건 더 — DART 사이트에서 확인</div>'
-
-    return f"""
-<section class="section" id="disclosures" aria-label="최근 공시">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--alert">📢</span>
-      <h2>최근 공시</h2>
-      <span class="section__badge">DART 24h</span>
-      <span class="section__count">{len(disclosures)}건</span>
-    </div>
-    <div style="display:flex;gap:14px;margin-top:10px;font-size:12px;color:var(--text-3);flex-wrap:wrap;">
-      <span>🏠 보유 종목 <b style="color:var(--text-1);">{held_count}</b></span>
-      <span>⚠️ 주의 <b style="color:#ef4444;">{bad_count}</b></span>
-      <span>✅ 호재성 <b style="color:#10b981;">{good_count}</b></span>
-    </div>
-  </div>
-  <div class="disc-list">{"".join(rows)}{more_html}</div>
-</section>
-"""
+# 5/29 Phase 2 4단계 4차-C: _make_disclosures_card -> dashboard.py
 
 
 # Phase 2 4단계 4차-A (5/29): _make_portfolio_history_card -> dashboard.py
@@ -4531,24 +4335,7 @@ def _make_disclosures_card(disclosures: list) -> str:
 # _make_long_term_card / _make_avoid_card → from dashboard import
 
 
-def _make_dart_card(dart_alerts: list) -> str:
-    """DART 공시 알림 카드 — 기존 dart_alerts_section_html 활용."""
-    if not dart_alerts:
-        return ""
-    inner = dart_alerts_section_html(dart_alerts)
-    return f"""
-<section class="section" id="dart" aria-label="DART 공시 알림">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--alert">📢</span>
-      <h2>DART 공시 알림</h2>
-      <span class="section__badge">금융감독원</span>
-      <span class="section__count">{len(dart_alerts)}건</span>
-    </div>
-  </div>
-  <div class="embed-wrap">{inner}</div>
-</section>
-"""
+# 5/29 Phase 2 4단계 4차-C: _make_dart_card -> dashboard.py
 
 
 def _make_sidebar(sections_status: dict, last_update: str) -> str:
