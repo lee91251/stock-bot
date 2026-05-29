@@ -1,17 +1,5 @@
 {
   "positions": {
-    "293490": {
-      "name": "카카오게임즈",
-      "qty": 68,
-      "buy_price": 11610.0,
-      "buy_date": "2026-05-06",
-      "buy_time": "13:00",
-      "buy_amount": 1996920,
-      "partial_sold": true,
-      "rec_date": "2026-05-06",
-      "rec_score": 0,
-      "peak_pct": 0.09
-    },
     "138930": {
       "name": "BNK금융지주",
       "qty": 110,
@@ -76,13 +64,14 @@
       "side": "sell",
       "code": "293490",
       "name": "카카오게임즈",
-      "qty": 104,
+      "qty": 172,
       "buy_price": 11610.0,
       "sell_price": 10250.0,
       "pct": -11.71,
-      "profit": -141440.0,
-      "reason": "회장 수동 손절 (텔레그램 통보)",
-      "manual": true
+      "profit": -233920,
+      "reason": "회장 수동 손절 — 전량 매도 (5/29 정정: 처음 104주로 잘못 입력)",
+      "manual": true,
+      "corrected": true
     }
   ]
 }
