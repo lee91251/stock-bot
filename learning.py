@@ -24,6 +24,9 @@ AI_ADVISOR_LOG          = os.path.join(os.path.dirname(os.path.abspath(__file__)
 AI_ADVISOR_MIN_SAMPLES  = 30      # 최소 누적 건수 (이 미만이면 default 동작)
 AI_ADVISOR_MIN_ACCURACY = 0.6     # 자동 활성화 신뢰도 임계 (60%+)
 
+# 자산 추이 파일 (MDD 계산용) — finance.py로 중앙화 예정
+PORTFOLIO_HISTORY       = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portfolio_history.json")
+
 
 def _load_advisor_log() -> list:
     """ai_advisor_log.json 로드. AI 매도 의견 + 실제 결과 추적용."""
@@ -144,3 +147,66 @@ def _get_recent_journals(limit: int = 5) -> list:
         ]
     except Exception:
         return []
+
+
+def _load_portfolio_history(days: int = 90) -> list:
+    """최근 N일 자산 추이 로드. 차트 데이터용."""
+    try:
+        if not os.path.exists(PORTFOLIO_HISTORY):
+            return []
+        with open(PORTFOLIO_HISTORY, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        history = data.get("history", [])
+        return history[-days:] if len(history) > days else history
+    except Exception:
+        return []
+
+
+def _calc_mdd_from_portfolio(window_days: int = 30) -> dict:
+    """portfolio_history.json 기반 MDD (Maximum Drawdown) 계산.
+
+    Returns: {"mdd_pct", "mdd_amount", "peak_date", "trough_date", "current_dd_pct"}
+    """
+    try:
+        history = _load_portfolio_history(days=window_days)
+        if not history or len(history) < 2:
+            return {"mdd_pct": 0, "mdd_amount": 0, "peak_date": "", "trough_date": "", "current_dd_pct": 0}
+
+        # total 키는 _load_portfolio_history 반환 형식에 따라 다름. 일반적으로 total/value/auto+value
+        def get_total(h):
+            return h.get("total") or h.get("value") or h.get("auto_value") or 0
+
+        peak_amount = 0
+        peak_date   = ""
+        max_dd      = 0
+        max_dd_amt  = 0
+        trough_date = ""
+
+        for h in history:
+            amt = get_total(h)
+            if amt <= 0:
+                continue
+            if amt > peak_amount:
+                peak_amount = amt
+                peak_date   = h.get("date", "")
+            elif peak_amount > 0:
+                dd_pct = (amt - peak_amount) / peak_amount * 100
+                if dd_pct < max_dd:
+                    max_dd      = dd_pct
+                    max_dd_amt  = amt - peak_amount
+                    trough_date = h.get("date", "")
+
+        # 현재 시점 낙폭 (피크 대비)
+        last_amt = get_total(history[-1]) if history else 0
+        current_dd = ((last_amt - peak_amount) / peak_amount * 100) if peak_amount > 0 else 0
+
+        return {
+            "mdd_pct":        round(max_dd, 2),
+            "mdd_amount":     round(max_dd_amt),
+            "peak_date":      peak_date,
+            "trough_date":    trough_date,
+            "current_dd_pct": round(current_dd, 2),
+        }
+    except Exception as e:
+        print(f"  [MDD] 계산 오류: {e}")
+        return {"mdd_pct": 0, "mdd_amount": 0, "peak_date": "", "trough_date": "", "current_dd_pct": 0}
