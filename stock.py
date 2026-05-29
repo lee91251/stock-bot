@@ -14,12 +14,46 @@ import sys
 import json
 import time
 import re
+import sys
+import signal
 import requests
 import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from xml.etree import ElementTree as ET
+
+
+# 5/29 영구 차단: yfinance .info 무한 대기 방지 (Linux SIGALRM)
+# 사고 26620221277 (5/29 marketscan 1시간 22분 무한 대기) 진단 결과
+def _yf_info_with_timeout(ticker: str, timeout_sec: int = 3) -> dict:
+    """yfinance .info를 timeout 보호로 호출 — Linux/GitHub Actions만 작동.
+
+    Args:
+        ticker: '005930.KS' 등 yfinance 형식
+        timeout_sec: 최대 대기 초 (3초 권장)
+
+    Returns: .info dict 또는 None (timeout/오류 시)
+    """
+    if sys.platform == "win32":
+        # Windows 로컬 — SIGALRM 없음. 그대로 호출 (개발 환경 디버깅용).
+        try:
+            return yf.Ticker(ticker).info
+        except Exception:
+            return None
+
+    def _handler(signum, frame):
+        raise TimeoutError(f"yfinance timeout {timeout_sec}s")
+
+    old_handler = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(timeout_sec)
+    try:
+        return yf.Ticker(ticker).info
+    except (TimeoutError, Exception):
+        return None
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
 
 # ════════════════════════════════════════════════
 # 시간대 강제 설정 (KST)
@@ -11180,10 +11214,12 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
                 pass
 
         # yfinance fallback — DART도 못 받은 종목만 (소형주, 미상장 등)
+        # 5/29 영구 차단: yfinance .info 무한 대기 → signal.SIGALRM 3초 timeout
+        # 사고 26620221277: 1시간 22분 무한 대기 → 진단 결과 yfinance 응답 없음 의심
         if per is None and pbr is None and roe <= 0:
             try:
                 yf_ticker = code + (".KS" if mkt == "KOSPI" else ".KQ")
-                yf_info = yf.Ticker(yf_ticker).info
+                yf_info = _yf_info_with_timeout(yf_ticker, timeout_sec=3)
                 if yf_info:
                     yf_per = yf_info.get("trailingPE")
                     yf_pbr = yf_info.get("priceToBook")

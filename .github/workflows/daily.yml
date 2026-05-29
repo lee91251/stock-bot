@@ -384,7 +384,7 @@ jobs:
   market-scan:
     if: github.event.inputs.mode == '--marketscan'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 20  # 5/29: 120분 → 20분 단축 (무한 대기 빠른 감지)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -394,7 +394,7 @@ jobs:
       - name: 패키지 설치
         run: pip install -r requirements.txt
       - name: 시장 전체 스캔
-        run: python stock.py --marketscan
+        run: python -u stock.py --marketscan  # 5/29: -u unbuffered (진행 중 stdout 즉시)
       - name: 스캔 결과 + 대시보드 커밋
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
