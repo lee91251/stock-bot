@@ -160,7 +160,12 @@ SWING_SCORE_MIN          = 65          # 매수 임계 스윙 점수 (5/4: 70→
 SWING_TARGET1_PCT        = 0.06        # +6% 절반 매도
 SWING_TARGET2_PCT        = 0.10        # +10% 전량 매도
 SWING_STOP_LOSS_PCT      = 0.04        # -4% 손절
-SWING_MAX_HOLD_DAYS      = 5           # 5거래일 후 강제 매도
+SWING_MAX_HOLD_DAYS      = 5           # 5거래일 후 강제 매도 (기본)
+# 5/29: 유연 보유 룰 (회장 통찰 — 좋은 종목 더 보유 / 나쁜 종목 빨리 청산)
+SWING_MAX_HOLD_EXTENDED  = 10          # 💚 상승 추세 보유 연장 최대 한도
+SWING_QUICK_EXIT_DAYS    = 3           # 🔴 하락 종목 빨리 청산 (3거래일)
+SWING_EXTEND_MIN_PCT     = 3.0         # 💚 보유 연장 조건: +3% 이상 수익
+SWING_QUICK_EXIT_PCT     = -1.0        # 🔴 빨리 청산 조건: -1% 미만
 SWING_MAX_DAILY_BUY      = 5           # 하루 최대 신규 매수 종목
 SWING_MAX_DAILY_AMT      = 10_000_000  # 하루 최대 매수 금액(원)
 SWING_LOSS_COOLDOWN_DAYS = 3           # 손절 후 같은 종목 재매수 금지 기간
@@ -544,7 +549,12 @@ def _ensure_daily(pos: dict, date: str) -> dict:
 
 
 def _trading_days_between(start_iso: str, end_iso: str) -> int:
-    """시작일~종료일 사이 평일(월~금) 수 (시작일 제외, 종료일 포함)."""
+    """시작일~종료일 사이 실제 거래일 수 (시작일 제외, 종료일 포함).
+
+    5/29 fix: weekday() < 5 단순 체크 → _is_trading_day로 변경
+    - KRX 휴장일 제외 (부처님오신날 대체 5/25 등) — 회장 통찰: "주말 포함 5일 적용된 듯"
+    - 정확한 거래일 카운트 → 시간 강제 매도 정확화
+    """
     try:
         s = datetime.strptime(start_iso, "%Y-%m-%d")
         e = datetime.strptime(end_iso,   "%Y-%m-%d")
@@ -553,7 +563,7 @@ def _trading_days_between(start_iso: str, end_iso: str) -> int:
     days = 0
     d = s + timedelta(days=1)
     while d <= e:
-        if d.weekday() < 5:
+        if _is_trading_day(d):  # 평일 + 휴장일 체크
             days += 1
         d += timedelta(days=1)
     return days
@@ -9805,7 +9815,23 @@ def run_auto_sell():
             half = max(1, held_qty // 2)
             sell_qty = half
             sell_reason = f"+{pct:.1f}% 절반 익절"
+        # 5/29 유연 보유 룰 (회장 통찰)
+        # 🔴 하락 종목 빨리 청산: 3일 + 수익 -1% 미만 (5일 안 기다리고 자금 회수)
+        elif days >= SWING_QUICK_EXIT_DAYS and pct < SWING_QUICK_EXIT_PCT:
+            sell_qty = held_qty
+            sell_reason = f"하락 추세 빨리 청산 ({days}일/{pct:+.1f}%)"
+            is_force = True
         elif days >= SWING_MAX_HOLD_DAYS:
+            # 💚 상승 추세 보유 연장: +3% 이상 + 10일 한도 → 5일 룰 무시
+            # 회장 5/29 의도: 좋은 종목은 익절선(+6) 넘었어도 +10% 향해 더 보유
+            extend = (
+                days < SWING_MAX_HOLD_EXTENDED
+                and pct >= SWING_EXTEND_MIN_PCT
+            )
+            if extend:
+                print(f"  [{p.get('name', code)}] 💚 보유 연장 ({days}일/{pct:+.1f}%) — 상승 추세")
+                continue  # 매도 X, 다음 종목으로
+            # 🟡 정체: 5일 후 청산 (기존 룰)
             sell_qty = held_qty
             sell_reason = f"{days}거래일 경과 강제 매도 ({pct:+.1f}%)"
             is_force = True
