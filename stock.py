@@ -23,6 +23,16 @@ import numpy as np
 from datetime import datetime, timedelta
 from xml.etree import ElementTree as ET
 
+# 5/29 Phase 2 1단계: 재무부 (데이터 read/write 통합)
+from finance import (
+    load_positions, save_positions,
+    load_mirae_paper, save_mirae_paper,
+    load_alerts, save_alerts,
+    _load_alerts, _save_alerts,           # 옛 이름 별칭 (점진 마이그레이션)
+    load_tomorrow_picks, save_tomorrow_picks,
+    _load_tomorrow_picks, _save_tomorrow_picks,  # 옛 이름 별칭
+)
+
 
 # 5/29 영구 차단: yfinance .info 무한 대기 방지 (Linux SIGALRM)
 # 사고 26620221277 (5/29 marketscan 1시간 22분 무한 대기) 진단 결과
@@ -538,37 +548,8 @@ def get_trading_client() -> KisTradingClient:
 # ════════════════════════════════════════════════
 # 자동매매 포지션 / 상태 관리 (positions.json)
 # ════════════════════════════════════════════════
-def load_positions() -> dict:
-    """현재 보유 포지션 + 거래 이력 + 일일 카운터 + 정지 상태."""
-    try:
-        if os.path.exists(POSITIONS_FILE):
-            with open(POSITIONS_FILE, "r", encoding="utf-8") as f:
-                d = json.load(f)
-                d.setdefault("positions",     {})
-                d.setdefault("history",       [])
-                d.setdefault("daily",         {})
-                d.setdefault("loss_cooldown", {})
-                d.setdefault("halted",        False)
-                d.setdefault("pending_cancel", False)
-                return d
-    except Exception:
-        pass
-    return {
-        "positions":      {},
-        "history":        [],
-        "daily":          {},
-        "loss_cooldown":  {},
-        "halted":         False,
-        "pending_cancel": False,
-    }
-
-
-def save_positions(data: dict):
-    try:
-        with open(POSITIONS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2, default=str)
-    except Exception as e:
-        print(f"  [포지션] 저장 실패: {e}")
+# 5/29 Phase 2 1단계: 재무부(finance.py)로 이동
+# load_positions / save_positions → from finance import (아래 import 블록)
 
 
 def _today_str() -> str:
@@ -2649,23 +2630,8 @@ def _calc_mdd_from_portfolio(window_days: int = 30) -> dict:
 # ════════════════════════════════════════════════
 # 미래에셋 모의 (추천 검증용 가치주) — 2번 계좌
 # ════════════════════════════════════════════════
-def load_mirae_paper() -> dict:
-    """mirae_paper.json 로드. 없으면 빈 구조 반환."""
-    try:
-        if os.path.exists(MIRAE_PAPER_FILE):
-            with open(MIRAE_PAPER_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception as e:
-        print(f"  [mirae_paper] 로드 오류: {e}")
-    return {"positions": {}, "history": []}
-
-
-def save_mirae_paper(data: dict) -> None:
-    try:
-        with open(MIRAE_PAPER_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"  [mirae_paper] 저장 오류: {e}")
+# 5/29 Phase 2 1단계: 재무부로 이동
+# load_mirae_paper / save_mirae_paper → from finance import
 
 
 def mirae_paper_buy(code: str, name: str, qty: int, price: float,
@@ -8065,27 +8031,8 @@ def tg_send(text: str, chat_id: str = "", silent: bool = False):
 # ════════════════════════════════════════════════
 # 대시보드 알림 센터 (alerts.json) — 정보성 알림 누적
 # ════════════════════════════════════════════════
-def _load_alerts() -> list:
-    """alerts.json 로드. 24시간 이내 알림만 반환."""
-    try:
-        if os.path.exists(ALERTS_FILE):
-            with open(ALERTS_FILE, "r", encoding="utf-8") as f:
-                alerts = json.load(f)
-            if not isinstance(alerts, list):
-                return []
-            cutoff = (_now_kst() - timedelta(hours=24)).isoformat()
-            return [a for a in alerts if a.get("time", "") >= cutoff]
-    except Exception as e:
-        print(f"  [alerts] 로드 오류: {e}")
-    return []
-
-
-def _save_alerts(alerts: list) -> None:
-    try:
-        with open(ALERTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(alerts, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"  [alerts] 저장 오류: {e}")
+# 5/29 Phase 2 1단계: 재무부로 이동
+# _load_alerts / _save_alerts → from finance import (별칭으로 옛 이름 유지)
 
 
 def log_alert(category: str, level: str, title: str, detail: str = "", emoji: str = "") -> None:
@@ -9430,22 +9377,8 @@ def _pick_tomorrow_candidates() -> dict:
     return data
 
 
-def _load_tomorrow_picks() -> dict:
-    """tomorrow_picks.json 로드. 다음 거래일과 일치하면 반환, 아니면 빈 dict."""
-    try:
-        if not os.path.exists(TOMORROW_PICKS_CACHE):
-            return {}
-        with open(TOMORROW_PICKS_CACHE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        # 신선도 체크 — 오늘 날짜와 일치해야 유효
-        today = _today_str()
-        if data.get("date") != today:
-            print(f"  [tomorrow_picks] 날짜 불일치 ({data.get('date')} ≠ {today}) — 무시")
-            return {}
-        return data
-    except Exception as e:
-        print(f"  [tomorrow_picks] 로드 실패: {e}")
-        return {}
+# 5/29 Phase 2 1단계: 재무부로 이동
+# _load_tomorrow_picks → from finance import (별칭으로 옛 이름 유지)
 
 
 def run_close_summary():
