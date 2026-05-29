@@ -66,8 +66,13 @@ TRACK_CONFIG = {
         "target1_pct": 0.06,   # +6% 절반 익절
         "target2_pct": 0.10,   # +10% 전량 익절
         "stop_pct":    0.04,   # -4% 손절
-        "max_hold":    5,      # 5거래일
+        "max_hold":    5,      # 5거래일 (기본)
         "cooldown":    3,      # 손절 후 3일 쿨다운
+        # 5/29 유연 보유 룰
+        "max_hold_extended": 10,   # 💚 상승 추세 연장 한도
+        "quick_exit_days":   3,    # 🔴 하락 빨리 청산
+        "quick_exit_pct":   -1.0,
+        "extend_min_pct":    3.0,  # 💚 연장 조건: +3% 이상
     },
     "short_term": {
         "label": "📈 단기 (1~3주)",
@@ -77,6 +82,10 @@ TRACK_CONFIG = {
         "stop_pct":    0.05,
         "max_hold":    15,
         "cooldown":    5,
+        "max_hold_extended": 25,
+        "quick_exit_days":   5,
+        "quick_exit_pct":   -2.0,
+        "extend_min_pct":    4.0,
     },
     "mid_term": {
         "label": "📊 중기 (1~3개월)",
@@ -86,6 +95,10 @@ TRACK_CONFIG = {
         "stop_pct":    0.08,
         "max_hold":    60,
         "cooldown":    7,
+        "max_hold_extended": 90,
+        "quick_exit_days":  10,
+        "quick_exit_pct":   -3.0,
+        "extend_min_pct":    7.0,
     },
     "long_term": {
         "label": "💎 장기 (3개월+)",
@@ -95,6 +108,10 @@ TRACK_CONFIG = {
         "stop_pct":    None,   # 장기는 손절 X (헌법)
         "max_hold":    180,
         "cooldown":    0,
+        "max_hold_extended": 365,  # 장기는 1년까지 연장
+        "quick_exit_days":  30,
+        "quick_exit_pct":  -10.0,
+        "extend_min_pct":   15.0,
     },
 }
 
@@ -596,6 +613,11 @@ def simulate_track(track: str, months: int = 1) -> dict:
             sell_qty = 0
             reason = ""
             is_loss = False
+            # 5/29 유연 보유 룰 적용 (stock.py와 동일 로직 — drift 방지)
+            quick_exit_days = cfg.get("quick_exit_days", 3)
+            quick_exit_pct  = cfg.get("quick_exit_pct", -1.0)
+            extend_min_pct  = cfg.get("extend_min_pct", 3.0)
+            extended_max    = cfg.get("max_hold_extended", cfg["max_hold"] * 2)
             if cfg["stop_pct"] and pct <= -cfg["stop_pct"] * 100:
                 sell_qty = held_qty
                 reason = f"손절 ({pct:.1f}%)"
@@ -606,7 +628,15 @@ def simulate_track(track: str, months: int = 1) -> dict:
             elif pct >= cfg["target1_pct"] * 100 and not partial:
                 sell_qty = max(1, held_qty // 2)
                 reason = f"+{pct:.1f}% 절반 익절"
+            # 🔴 NEW: 하락 빨리 청산 (3일+ -1% 미만)
+            elif held_days >= quick_exit_days and pct < quick_exit_pct:
+                sell_qty = held_qty
+                reason = f"하락 빨리 청산 ({held_days}일/{pct:+.1f}%)"
             elif held_days >= cfg["max_hold"]:
+                # 💚 NEW: 상승 추세 보유 연장 (+3% 이상 + 연장 한도 미만)
+                if held_days < extended_max and pct >= extend_min_pct:
+                    continue  # 매도 X, 보유 연장
+                # 🟡 정체: 강제 청산
                 sell_qty = held_qty
                 reason = f"{held_days}일 강제 청산 ({pct:+.1f}%)"
 
