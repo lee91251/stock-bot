@@ -178,5 +178,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-05-29",
+    "time": "09:01",
+    "code": "373220",
+    "name": "LG에너지솔루션",
+    "sell_price": 449500.0,
+    "sell_pct": 6.14,
+    "ai_opinion": "**매도 적절** — +6.1% 익절 트리거에 정확히 도달했고, VIX 15.7·공포탐욕 65(탐욕 구간)로 단기 고점 부담이 있으며 코스피 보합(+0.00%)으로 추가 상승 모멘텀이 약한 상황에서 절반 익절로 수익을 확정하는 것이 적절합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
