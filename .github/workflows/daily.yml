@@ -384,7 +384,7 @@ jobs:
   market-scan:
     if: github.event.inputs.mode == '--marketscan'
     runs-on: ubuntu-latest
-    timeout-minutes: 20  # 5/29: 120분 → 20분 단축 (무한 대기 빠른 감지)
+    timeout-minutes: 35  # 5/29: 120→20→35분 (20분 부족 — DART셋업 5분 + 1500종목 분석 25분 + 여유 5분)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
