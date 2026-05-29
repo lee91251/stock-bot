@@ -1,7 +1,7 @@
 {
   "four_track_mode": true,
   "months": 1,
-  "generated_at": "2026-05-29T14:43:10.718789",
+  "generated_at": "2026-05-29T14:58:41.011464",
   "tracks": {
     "swing": {
       "cumulative_return_pct": -1.79,
@@ -176,7 +176,12 @@
       "start_date": "2026-04-27",
       "end_date": "2026-05-28",
       "filter_pass_count": 179,
-      "open_positions": 2
+      "open_positions": 2,
+      "total_return": -1.79,
+      "win_rate": 32.9,
+      "mdd": -2.31,
+      "avg_win": 11.08,
+      "avg_loss": -5.77
     },
     "short_term": {
       "cumulative_return_pct": -1.75,
@@ -341,7 +346,12 @@
       "start_date": "2026-04-27",
       "end_date": "2026-05-28",
       "filter_pass_count": 334,
-      "open_positions": 7
+      "open_positions": 7,
+      "total_return": -1.75,
+      "win_rate": 25.0,
+      "mdd": -1.83,
+      "avg_win": 15.52,
+      "avg_loss": -5.88
     },
     "mid_term": {
       "cumulative_return_pct": 0.0,
@@ -370,7 +380,12 @@
       "start_date": "2026-04-27",
       "end_date": "2026-05-28",
       "filter_pass_count": 0,
-      "open_positions": 0
+      "open_positions": 0,
+      "total_return": 0.0,
+      "win_rate": 0,
+      "mdd": 0,
+      "avg_win": 0,
+      "avg_loss": 0
     },
     "long_term": {
       "cumulative_return_pct": 0.0,
@@ -399,7 +414,12 @@
       "start_date": "2026-04-27",
       "end_date": "2026-05-28",
       "filter_pass_count": 0,
-      "open_positions": 0
+      "open_positions": 0,
+      "total_return": 0.0,
+      "win_rate": 0,
+      "mdd": 0,
+      "avg_win": 0,
+      "avg_loss": 0
     }
   }
 }
