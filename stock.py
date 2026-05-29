@@ -14,8 +14,9 @@ import sys
 import json
 import time
 import re
-import sys
 import signal
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 import yfinance as yf
 import pandas as pd
@@ -71,6 +72,20 @@ def _yf_info_with_timeout(ticker: str, timeout_sec: int = 3) -> dict:
             return yf.Ticker(ticker).info
         except Exception:
             return None
+
+    # 5/29 병렬화: SIGALRM은 메인 스레드 전용 → 워커 스레드에선 daemon 스레드+join(timeout)
+    # 사고 재발 방지: 멈춘 yfinance 호출은 daemon이라 프로세스 종료를 막지 않음.
+    if threading.current_thread() is not threading.main_thread():
+        result = [None]
+        def _call():
+            try:
+                result[0] = yf.Ticker(ticker).info
+            except Exception:
+                result[0] = None
+        t = threading.Thread(target=_call, daemon=True)
+        t.start()
+        t.join(timeout_sec)
+        return result[0]
 
     def _handler(signum, frame):
         raise TimeoutError(f"yfinance timeout {timeout_sec}s")
@@ -9360,17 +9375,16 @@ _PYKRX_CAP_CACHE:  dict = {}  # (date_str, mkt) → DataFrame or None
 
 
 def _get_market_fundamental_cached(date_str: str, mkt: str):
-    """get_market_fundamental_by_ticker 결과 캐싱 + 3회 재시도."""
+    """get_market_fundamental_by_ticker — KRX 펀더 endpoint 사고(5/9~)로 항상 None.
+
+    5/29: 재시도 자체가 종목당 ~4.5초 낭비(marketscan timeout 주범) → 즉시 None.
+    펀더멘털(PER/PBR/ROE)은 dart_calc_per_pbr_roe가 담당. KRX 복구 시 아래 재시도 부활.
+    """
     key = (date_str, mkt)
     if key in _PYKRX_FUND_CACHE:
         return _PYKRX_FUND_CACHE[key]
-    df = _pykrx_retry(
-        f"fund_by_ticker({mkt})",
-        _pykrx.get_market_fundamental_by_ticker,
-        date_str, market=mkt,
-    )
-    _PYKRX_FUND_CACHE[key] = df
-    return df
+    _PYKRX_FUND_CACHE[key] = None
+    return None
 
 
 def _get_market_cap_cached(date_str: str, mkt: str):
@@ -9382,17 +9396,12 @@ def _get_market_cap_cached(date_str: str, mkt: str):
     if key in _PYKRX_CAP_CACHE:
         return _PYKRX_CAP_CACHE[key]
 
-    # 1차: pykrx 시도
-    df = _pykrx_retry(
-        f"cap_by_ticker({mkt})",
-        _pykrx.get_market_cap_by_ticker,
-        date_str, market=mkt,
-    )
-
-    # 2차 fallback: FDR (5/15 KRX 전체 endpoint 사고 대응)
-    if (df is None or df.empty) and _FDR_OK:
+    # 5/29: KRX 시총 endpoint 사고(5/9~)로 pykrx는 항상 실패 → 재시도 건너뛰고 FDR 직행.
+    # (이전엔 pykrx 3회 재시도하느라 종목당 ~4.5초 낭비 → marketscan timeout 주범)
+    df = None
+    if _FDR_OK:
         try:
-            print(f"  [fallback] FDR로 {mkt} 시가총액 우회 시도...")
+            print(f"  [fallback] FDR로 {mkt} 시가총액 조회...")
             fdr_df = _fdr.StockListing(mkt)  # 'KOSPI' / 'KOSDAQ'
             if fdr_df is not None and not fdr_df.empty:
                 # FDR 컬럼명을 pykrx 형식으로 변환
@@ -9445,8 +9454,13 @@ def _fetch_top_market_stocks_fdr(n: int = MARKET_SCAN_N) -> list:
 def fetch_top_market_stocks(n: int = MARKET_SCAN_N) -> list:
     """pykrx로 코스피+코스닥 시가총액 상위 n개 종목 리스트 반환 [(code, name, mkt), ...].
 
-    5/15: KRX 전체 endpoint 사고 시 FDR 우회 (시장 600종목 풀 유지 — 회장 결정).
+    5/15: KRX 전체 endpoint 사고 시 FDR 우회 (시장 종목 풀 유지 — 회장 결정).
+    5/29: KRX 시총 endpoint 사고(5/9~) 장기화 → FDR 직행 (pykrx 날짜루프+재시도 ~수분 낭비 제거).
+          KRX 복구 시 아래 pykrx 경로로 되돌리면 됨.
     """
+    if _FDR_OK:
+        return _fetch_top_market_stocks_fdr(n)
+
     if not _PYKRX_OK:
         print("  [pykrx] 미설치 — FDR 우회 시도")
         return _fetch_top_market_stocks_fdr(n)
@@ -9789,17 +9803,25 @@ def run_market_scan(n: int = MARKET_SCAN_N):
 
     kr_codes = {t.split(".")[0] for t in KR_STOCKS}
 
+    # 5/29 병렬화: 종목당 DART/KIS 호출(1~7초)을 8워커 동시 처리 → ~175분 → ~20분.
+    # 사전 캐시 워밍: (date, mkt) 캐시를 단일 스레드에서 미리 채워 워커 경합 방지.
+    _warm_str = _now_kst().strftime("%Y%m%d")
+    for _mkt in ("KOSPI", "KOSDAQ"):
+        _get_market_cap_cached(_warm_str, _mkt)
+        _get_market_fundamental_cached(_warm_str, _mkt)
+
+    targets = [(c, nm, mk) for (c, nm, mk) in stocks if c not in kr_codes]
+    total   = len(targets)
     results = []
-    total   = len(stocks)
-    for i, (code, name, mkt) in enumerate(stocks):
-        if code in kr_codes:
-            continue
-        if (i + 1) % 100 == 0 or i == 0:
-            print(f"  진행: {i+1}/{total}")
-        r = analyze_market_stock(code, name, mkt)
-        if r:
-            results.append(r)
-        time.sleep(0.2)  # KIS API rate limit: 초당 5건 이하 유지
+    # analyze_market_stock은 내부에서 모든 예외를 잡고 None 반환 → ex.map 중단 위험 없음.
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        done = 0
+        for r in ex.map(lambda t: analyze_market_stock(*t), targets):
+            done += 1
+            if done % 100 == 0 or done == 1:
+                print(f"  진행: {done}/{total}")
+            if r:
+                results.append(r)
 
     # 5/14: 4트랙 점수 계산 (스윙/단기/중기/장기) — 각 종목별 추가
     for s in results:
