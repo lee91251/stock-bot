@@ -72,6 +72,10 @@ from dashboard import (
     _make_dart_card,
     _make_hero_header,
     _make_sidebar,
+    _make_total_summary_section,
+    _make_alerts_section,
+    _make_tomorrow_picks_section,
+    _make_allocation_card,
 )
 
 
@@ -3705,62 +3709,7 @@ def _pnl_class(pct: float) -> str:
     return "flat"
 
 
-def _make_total_summary_section(value_holdings: list, auto_positions: list) -> str:
-    """총 자산 요약 섹션 — 가치주+자동매매 합계."""
-    v_value = sum(h.get("value", 0) for h in (value_holdings or []))
-    v_cost  = sum(h.get("cost", 0) for h in (value_holdings or []))
-    v_pnl   = v_value - v_cost
-    v_pct   = (v_pnl / v_cost * 100) if v_cost > 0 else 0
-
-    a_value, a_cost = 0.0, 0.0
-    for p in (auto_positions or []):
-        bp = p.get("buy_price", 0); qty = p.get("qty", 0)
-        cp = p.get("curr_price", 0)
-        a_value += cp * qty
-        a_cost  += bp * qty
-    a_pnl = a_value - a_cost
-    a_pct = (a_pnl / a_cost * 100) if a_cost > 0 else 0
-
-    total_value = v_value + a_value
-    total_cost  = v_cost + a_cost
-    total_pnl   = total_value - total_cost
-    total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
-
-    if total_cost <= 0:
-        return ""
-
-    pnl_cls = _pnl_class(total_pct)
-    pnl_sign = "+" if total_pnl >= 0 else ""
-
-    chips = []
-    if v_cost > 0:
-        v_cls = _pnl_class(v_pct)
-        chips.append(
-            f'<div class="summary__chip"><span class="dot dot--value"></span>'
-            f'가치주 {int(round(v_value)):,}원 '
-            f'<small class="{v_cls}">({"+" if v_pct>=0 else ""}{v_pct:.2f}%)</small></div>'
-        )
-    if a_cost > 0:
-        a_cls = _pnl_class(a_pct)
-        chips.append(
-            f'<div class="summary__chip"><span class="dot dot--auto"></span>'
-            f'자동매매 {int(round(a_value)):,}원 '
-            f'<small class="{a_cls}">({"+" if a_pct>=0 else ""}{a_pct:.2f}%)</small></div>'
-        )
-    split_html = (
-        f'<div class="summary__split">{"".join(chips)}</div>'
-        if len(chips) >= 2 else ""
-    )
-
-    return f"""
-<section class="summary" aria-label="총 평가 자산">
-  <div class="summary__label">💼 총 평가 자산</div>
-  <div class="summary__total">{int(round(total_value)):,}원</div>
-  <div class="summary__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원
-    <small>({pnl_sign}{total_pct:.2f}%)</small></div>
-  {split_html}
-</section>
-"""
+# 5/29 Phase 2 4단계 6차: _make_total_summary_section -> dashboard.py
 
 
 # Phase 2 4단계 3차 (5/29): _make_value_holdings_section / _make_auto_positions_section
@@ -3770,83 +3719,7 @@ def _make_total_summary_section(value_holdings: list, auto_positions: list) -> s
 # Phase 2 4단계 4차-A (5/29): _make_b4_learning_card / _make_advisor_stats_card / _make_compare_card -> dashboard.py
 
 
-def _make_alerts_section() -> str:
-    """📢 최근 알림 카드 — alerts.json 기반 (24시간 이내).
-
-    텔레그램 다이어트 후 정보성 알림(임박/공시/브리핑/추천/위험)이 여기로 모임.
-    카테고리별 이모지 + 시간순 (최신 위).
-    """
-    alerts = _load_alerts()
-    if not alerts:
-        return _empty_section(
-            "alerts", "📢", "section__icon--auto", "최근 알림",
-            "24시간 누적", "최근 24시간 누적된 알림이 없습니다",
-            "임박 알림 / 공시 / 브리핑 / 추천 변화 / 위험 등급 등이 여기에 자동 기록됩니다.",
-        )
-
-    # 시간 역순 (최신 위)
-    sorted_alerts = sorted(alerts, key=lambda a: a.get("time", ""), reverse=True)
-    # 최근 30건만 표시
-    sorted_alerts = sorted_alerts[:30]
-
-    rows = []
-    for a in sorted_alerts:
-        emoji   = a.get("emoji", "🔵")
-        title   = a.get("title", "")
-        detail  = a.get("detail", "")
-        level   = a.get("level", "info")
-        time_iso = a.get("time", "")
-
-        # 시간 표시 (HH:MM)
-        try:
-            dt = datetime.fromisoformat(time_iso)
-            time_str = dt.strftime("%m/%d %H:%M")
-        except Exception:
-            time_str = ""
-
-        # 레벨별 색상
-        color_map = {
-            "info":    "#0369a1",
-            "warning": "#d97706",
-            "danger":  "#dc2626",
-        }
-        color = color_map.get(level, "#0369a1")
-
-        rows.append(f"""
-    <div class="row">
-      <div class="row__main">
-        <div class="row__name">{emoji} {title}</div>
-        <div class="row__sub" style="color:{color}">{detail} · <small>{time_str}</small></div>
-      </div>
-    </div>""")
-
-    # 카테고리별 카운트
-    cat_counts = {}
-    for a in alerts:
-        cat = a.get("category", "기타")
-        cat_counts[cat] = cat_counts.get(cat, 0) + 1
-    cat_summary = " · ".join(
-        f"{c}: {n}"
-        for c, n in sorted(cat_counts.items(), key=lambda x: -x[1])
-    )
-
-    return f"""
-<section class="section" id="alerts" aria-label="최근 알림">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--auto">📢</span>
-      <h2>최근 알림</h2>
-      <span class="section__badge">최근 24h</span>
-      <span class="section__count">{len(alerts)}건</span>
-    </div>
-    <div class="section__subtitle">
-      <div class="section__amount">{cat_summary}</div>
-    </div>
-  </div>
-  <div class="section__body">{"".join(rows)}
-  </div>
-</section>
-"""
+# 5/29 Phase 2 4단계 6차: _make_alerts_section -> dashboard.py
 
 
 # Phase 2 4단계 3차 (5/29): _make_paper_mirae_section → dashboard.py 로 이동.
@@ -3855,72 +3728,7 @@ def _make_alerts_section() -> str:
 # Phase 2 4단계 4차-A (5/29): _make_trade_history_card / _make_performance_card -> dashboard.py
 
 
-def _make_tomorrow_picks_section(tp_data: dict) -> str:
-    """내일/오늘 사전 후보 섹션 — tomorrow_picks.json 기반.
-
-    어제 장마감/미장마감 분석으로 추출된 강세 후보. autobuy 우선 매수 대상.
-    카드에는 점수 보너스 + 사유 + 섹터 가중치 표시.
-    """
-    if not tp_data or not tp_data.get("picks"):
-        return _empty_section(
-            "tomorrow", "🎯", "section__icon--auto", "사전 매수 후보",
-            "tomorrow_picks", "아직 사전 후보가 없습니다",
-            "평일 15:35 장 마감 분석 후 다음 거래일 강세 종목 TOP 20이 자동 등록됩니다.",
-        )
-    picks  = tp_data.get("picks", [])
-    date   = tp_data.get("date", "")
-    sw     = tp_data.get("sector_weights", {})
-    rows = []
-    for p in picks:
-        name   = p.get("name", "?")
-        sector = p.get("sector", "")
-        bonus  = p.get("score_bonus", 0)
-        chg    = p.get("today_change", 0)
-        score  = p.get("today_score", 0)
-        sec_w  = sw.get(sector, 0)
-        # 섹터 가중치 표시
-        sec_tag = ""
-        if sec_w > 0:
-            sec_tag = f' · <span style="color:#16a34a">섹터 +{sec_w}</span>'
-        elif sec_w < 0:
-            sec_tag = f' · <span style="color:#dc2626">섹터 {sec_w}</span>'
-        rows.append(f"""
-    <div class="row">
-      <div class="row__main">
-        <div class="row__name">🎯 {name}</div>
-        <div class="row__sub">{sector} · 어제 +{chg:.1f}% / 점수 {score} · 보너스 +{bonus}{sec_tag}</div>
-      </div>
-      <div class="row__price">
-        <div class="row__current" style="color:#0369a1">+{bonus}점</div>
-        <div class="row__pnl"><small>가산</small></div>
-      </div>
-    </div>""")
-
-    # 섹터 가중치 요약 (TOP 영향 섹터)
-    sw_summary = ""
-    if sw:
-        sw_sorted = sorted(sw.items(), key=lambda x: -abs(x[1]))[:5]
-        sw_parts = [
-            f'<span style="color:{"#16a34a" if v>0 else "#dc2626"}">{k} {"+" if v>0 else ""}{v}</span>'
-            for k, v in sw_sorted
-        ]
-        sw_summary = f'<div class="section__subtitle"><div class="section__amount">섹터 영향:</div><div>{" · ".join(sw_parts)}</div></div>'
-
-    return f"""
-<section class="section" id="tomorrow" aria-label="사전 매수 후보">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--auto">🎯</span>
-      <h2>사전 매수 후보</h2>
-      <span class="section__badge">{date} 우선순위</span>
-      <span class="section__count">{len(picks)}종목</span>
-    </div>
-    {sw_summary}
-  </div>
-  <div class="section__body">{"".join(rows)}
-  </div>
-</section>
-"""
+# 5/29 Phase 2 4단계 6차: _make_tomorrow_picks_section -> dashboard.py
 
 
 # 5/29 Phase 2 4단계: 대시보드부로 이동
@@ -3930,60 +3738,7 @@ def _make_tomorrow_picks_section(tp_data: dict) -> str:
 # 5/29 Phase 2 4단계 5차: _make_hero_header -> dashboard.py
 
 
-def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
-    """자산 배분 카드 — 가치주 vs 자동매매 비중 (도넛 차트 + progress bar)."""
-    v_value = sum(h.get("value", 0) for h in (value_holdings or []))
-    a_value = sum((p.get("curr_price", 0) * p.get("qty", 0)) for p in (auto_positions or []))
-    total = v_value + a_value
-    if total <= 0:
-        return ""
-    v_pct = v_value / total * 100
-    a_pct = a_value / total * 100
-    total_man = total / 10000  # 만원 단위
-
-    return f"""
-<section class="section" id="allocation" aria-label="자산 배분">
-  <div class="section__head">
-    <div class="section__title">
-      <span class="section__icon section__icon--macro">📊</span>
-      <h2>자산 배분</h2>
-      <span class="section__count">총 {int(round(total)):,}원</span>
-    </div>
-  </div>
-  <div class="allocation">
-    <div class="allocation__chart-wrap">
-      <canvas id="alloc-chart" width="200" height="200"
-        data-value="{v_value:.0f}" data-auto="{a_value:.0f}"></canvas>
-      <div class="allocation__chart-center">
-        <div class="allocation__chart-label">총 자산</div>
-        <div class="allocation__chart-total">{total_man:,.0f}만원</div>
-      </div>
-    </div>
-    <div class="allocation__detail">
-      <div class="allocation__bar">
-        <div class="allocation__seg allocation__seg--value" style="width:{v_pct:.1f}%"></div>
-        <div class="allocation__seg allocation__seg--auto" style="width:{a_pct:.1f}%"></div>
-      </div>
-      <div class="allocation__legend">
-        <div class="allocation__item">
-          <div class="allocation__item-left">
-            <span class="allocation__dot allocation__dot--value"></span>
-            <span class="allocation__name">가치주<span class="allocation__pct">{v_pct:.1f}%</span></span>
-          </div>
-          <span class="allocation__amount">{int(round(v_value)):,}원</span>
-        </div>
-        <div class="allocation__item">
-          <div class="allocation__item-left">
-            <span class="allocation__dot allocation__dot--auto"></span>
-            <span class="allocation__name">자동매매<span class="allocation__pct">{a_pct:.1f}%</span></span>
-          </div>
-          <span class="allocation__amount">{int(round(a_value)):,}원</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-"""
+# 5/29 Phase 2 4단계 6차: _make_allocation_card -> dashboard.py
 
 
 _HISTORY_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history_cache.json")
