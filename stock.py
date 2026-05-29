@@ -10687,10 +10687,33 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
         except Exception:
             pass
 
-        # 5/15 fix: KRX 펀더멘털 사고 시 yfinance fallback (단기/중기/장기 트랙 작동 보장)
-        # KRX get_market_fundamental_by_ticker 사고로 PER/PBR None → 4트랙 단기/중기/장기 0종목 사고
-        # yfinance .info에서 trailingPE / priceToBook / dividendYield / returnOnEquity 가져옴
-        if per is None and pbr is None:
+        # 시가총액 — 모듈 캐시 사용 (5/13 사고 방지)
+        cap_df = _get_market_cap_cached(end_str, mkt)
+        if cap_df is not None and code in cap_df.index:
+            try:
+                mktcap = float(cap_df.loc[code, "시가총액"])
+            except Exception:
+                pass
+
+        # 5/29 최적화: DART 우선 (한국 종목 정확) → yfinance fallback만 (DART 실패 시)
+        # 이전(5/15): pykrx → yfinance(항상) → DART(또) → 1398종목 × 5초 = ~2시간 타임아웃 위험
+        # 신(5/29): pykrx → DART(빠름+정확) → yfinance(DART 매핑 X 종목만)
+        # 효과: 종목당 호출 1초로 단축, marketscan 10분 내 완료
+        if (per is None or pbr is None) and mktcap > 0:
+            try:
+                dart_pp = dart_calc_per_pbr_roe(code, mktcap)
+                if dart_pp:
+                    if per is None and "per" in dart_pp:
+                        per = dart_pp["per"]
+                    if pbr is None and "pbr" in dart_pp:
+                        pbr = dart_pp["pbr"]
+                    if roe <= 0 and "roe" in dart_pp:
+                        roe = dart_pp["roe"]
+            except Exception:
+                pass
+
+        # yfinance fallback — DART도 못 받은 종목만 (소형주, 미상장 등)
+        if per is None and pbr is None and roe <= 0:
             try:
                 yf_ticker = code + (".KS" if mkt == "KOSPI" else ".KQ")
                 yf_info = yf.Ticker(yf_ticker).info
@@ -10704,34 +10727,9 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
                     if yf_pbr and yf_pbr > 0:
                         pbr = round(float(yf_pbr), 2)
                     if yf_div:
-                        # yfinance dividendYield는 소수 (0.025 = 2.5%) 또는 % 단위 — 둘 다 처리
                         div = round(float(yf_div) * 100, 2) if yf_div < 1 else round(float(yf_div), 2)
                     if yf_roe:
                         roe = round(float(yf_roe) * 100, 1) if yf_roe < 1 else round(float(yf_roe), 1)
-            except Exception:
-                pass
-
-        # 시가총액 — 모듈 캐시 사용 (5/13 사고 방지)
-        cap_df = _get_market_cap_cached(end_str, mkt)
-        if cap_df is not None and code in cap_df.index:
-            try:
-                mktcap = float(cap_df.loc[code, "시가총액"])
-            except Exception:
-                pass
-
-        # 5/29 fix: yfinance도 PER/PBR 미제공(한국 종목 구조적 한계) → DART 직접 계산
-        # 공식: PER = 시가총액 / 당기순이익, PBR = 시가총액 / 자기자본
-        # 효과: 중기/장기 트랙 작동 (KRX 펀더 endpoint 사고 영구 우회)
-        if (per is None or pbr is None) and mktcap > 0:
-            try:
-                dart_pp = dart_calc_per_pbr_roe(code, mktcap)
-                if dart_pp:
-                    if per is None and "per" in dart_pp:
-                        per = dart_pp["per"]
-                    if pbr is None and "pbr" in dart_pp:
-                        pbr = dart_pp["pbr"]
-                    if roe <= 0 and "roe" in dart_pp:
-                        roe = dart_pp["roe"]
             except Exception:
                 pass
 
