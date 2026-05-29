@@ -563,6 +563,61 @@ def _trading_days_between(start_iso: str, end_iso: str) -> int:
 # DART API
 # ════════════════════════════════════════════════
 _corp_cache: dict = {}
+_DART_CORP_MAP_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dart_corp_map.json")
+_corp_map_loaded: bool = False  # corpCode.xml 매핑 로드 여부
+
+
+def dart_load_corp_code_map() -> int:
+    """5/29: DART corpCode.xml 일괄 다운로드 → 전체 상장사 corp_code 매핑 캐시.
+
+    1398종목 marketscan 시 API 호출 1,398회 → *1회*로 감소.
+    파일 캐시(dart_corp_map.json) 사용 — 한 번 다운로드 후 재사용.
+
+    Returns: 로드된 매핑 수
+    """
+    global _corp_cache, _corp_map_loaded
+    if _corp_map_loaded:
+        return len(_corp_cache)
+
+    # 파일 캐시 확인
+    if os.path.exists(_DART_CORP_MAP_FILE):
+        try:
+            with open(_DART_CORP_MAP_FILE, "r", encoding="utf-8") as f:
+                cached = json.load(f)
+            _corp_cache.update(cached)
+            _corp_map_loaded = True
+            print(f"  [DART] corp_code 매핑 캐시 로드: {len(_corp_cache)}종목")
+            return len(_corp_cache)
+        except Exception as e:
+            print(f"  [DART] 캐시 로드 실패: {e}")
+
+    # API에서 다운로드
+    if not DART_API_KEY:
+        return 0
+    try:
+        import zipfile, io
+        from xml.etree import ElementTree as ET
+        r = requests.get(f"{DART_BASE}/corpCode.xml",
+                        params={"crtfc_key": DART_API_KEY}, timeout=30)
+        z = zipfile.ZipFile(io.BytesIO(r.content))
+        xml_data = z.read(z.namelist()[0]).decode("utf-8")
+        root = ET.fromstring(xml_data)
+        loaded = 0
+        for entry in root.findall("list"):
+            stock_code = (entry.findtext("stock_code") or "").strip()
+            corp_code  = (entry.findtext("corp_code")  or "").strip()
+            if stock_code and len(stock_code) == 6 and corp_code:
+                _corp_cache[stock_code] = corp_code
+                loaded += 1
+        # 파일로 저장 (재사용)
+        with open(_DART_CORP_MAP_FILE, "w", encoding="utf-8") as f:
+            json.dump(_corp_cache, f, ensure_ascii=False, indent=0)
+        _corp_map_loaded = True
+        print(f"  [DART] corpCode.xml 다운로드 완료: {loaded}종목 매핑")
+        return loaded
+    except Exception as e:
+        print(f"  [DART] corpCode.xml 다운로드 실패: {e}")
+        return 0
 
 SIGNAL_DEFS = {
     "rights":   (["유상증자결정"],
@@ -624,13 +679,14 @@ def dart_financials(corp_code: str) -> dict:
     REVENUE_NM    = {"매출액", "영업수익", "수익(매출액)"}
     OP_INCOME_NM  = {"영업이익", "영업이익(손실)"}
     NET_INCOME_NM = {"당기순이익", "당기순이익(손실)", "분기순이익"}
+    # 5/29: PBR 계산용 자기자본 — DART BS(재무상태표)에서 추출
+    EQUITY_NM     = {"자본총계", "지배기업의 소유주에게 귀속되는 자본", "지배기업소유주지분"}
 
     res = {"year": year, "fs_div": fs_used}
     prev_res: dict = {}
 
     for item in d["list"]:
-        if item.get("sj_div") not in ("IS", "CIS"):
-            continue
+        sj_div = item.get("sj_div")
         acct = item.get("account_nm", "").strip()
         raw  = item.get("thstrm_amount", "0").replace(",", "")
         prev = item.get("frmtrm_amount", "0").replace(",", "")
@@ -639,15 +695,22 @@ def dart_financials(corp_code: str) -> dict:
             pval = int(prev)
         except (ValueError, TypeError):
             continue
-        if acct in REVENUE_NM and "revenue" not in res:
-            res["revenue"]    = val
-            prev_res["revenue"] = pval
-        elif acct in OP_INCOME_NM and "op_income" not in res:
-            res["op_income"]    = val
-            prev_res["op_income"] = pval
-        elif acct in NET_INCOME_NM and "net_income" not in res:
-            res["net_income"]   = val
-            prev_res["net_income"] = pval
+        # 손익계산서 (IS/CIS) 항목
+        if sj_div in ("IS", "CIS"):
+            if acct in REVENUE_NM and "revenue" not in res:
+                res["revenue"]    = val
+                prev_res["revenue"] = pval
+            elif acct in OP_INCOME_NM and "op_income" not in res:
+                res["op_income"]    = val
+                prev_res["op_income"] = pval
+            elif acct in NET_INCOME_NM and "net_income" not in res:
+                res["net_income"]   = val
+                prev_res["net_income"] = pval
+        # 5/29: 재무상태표 (BS) 자기자본 — PBR 계산용
+        elif sj_div == "BS":
+            if acct in EQUITY_NM and "equity" not in res:
+                res["equity"]      = val
+                prev_res["equity"] = pval
 
     # YoY 성장률
     if "revenue" in res and prev_res.get("revenue", 0) > 0:
@@ -659,6 +722,65 @@ def dart_financials(corp_code: str) -> dict:
             (res["op_income"] - prev_res["op_income"]) / abs(prev_res["op_income"]) * 100, 1
         )
     return res
+
+
+# 5/29: DART 기반 PER/PBR/ROE 직접 계산 — KRX 펀더 endpoint 사고 우회
+# 6/1 작업 예약 → 5/29 복귀 즉시 진행 (회장 결정)
+#
+# 공식:
+#   PER = 시가총액 / 당기순이익 (시가총액·EPS·발행주식수 분자분모 약분)
+#   PBR = 시가총액 / 자기자본
+#   ROE = 당기순이익 / 자기자본 × 100
+#
+# 발행주식수 몰라도 시가총액만 있으면 PER/PBR 계산 가능 (핵심 통찰).
+_DART_FUND_CACHE: dict = {}  # corp_code → financials dict (marketscan 1회 1번만 호출)
+
+
+def dart_calc_per_pbr_roe(stock_code: str, mktcap: float) -> dict:
+    """DART 분기 보고서로 PER/PBR/ROE 직접 계산.
+
+    Args:
+        stock_code: 6자리 종목코드
+        mktcap: 시가총액 (원)
+
+    Returns: {"per": float, "pbr": float, "roe": float} 또는 빈 dict
+    """
+    if not DART_API_KEY or mktcap <= 0:
+        return {}
+
+    corp_code = dart_corp_code(stock_code)
+    if not corp_code:
+        return {}
+
+    # marketscan 1회 내 동일 corp_code 1번만 DART 호출
+    if corp_code in _DART_FUND_CACHE:
+        fin = _DART_FUND_CACHE[corp_code]
+    else:
+        fin = dart_financials(corp_code)
+        _DART_FUND_CACHE[corp_code] = fin
+
+    if not fin:
+        return {}
+
+    result = {}
+    net_income = fin.get("net_income", 0)
+    equity     = fin.get("equity", 0)
+
+    if net_income > 0:
+        per = round(mktcap / net_income, 2)
+        if 0 < per < 1000:  # 비정상 값 차단
+            result["per"] = per
+
+    if equity > 0:
+        pbr = round(mktcap / equity, 2)
+        if 0 < pbr < 50:
+            result["pbr"] = pbr
+        # ROE = 순이익 / 자기자본 × 100
+        roe = round(net_income / equity * 100, 1)
+        if -100 < roe < 200:
+            result["roe"] = roe
+
+    return result
 
 
 def dart_disclosures(corp_code: str, days: int = 7) -> list:
@@ -10597,6 +10719,22 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
             except Exception:
                 pass
 
+        # 5/29 fix: yfinance도 PER/PBR 미제공(한국 종목 구조적 한계) → DART 직접 계산
+        # 공식: PER = 시가총액 / 당기순이익, PBR = 시가총액 / 자기자본
+        # 효과: 중기/장기 트랙 작동 (KRX 펀더 endpoint 사고 영구 우회)
+        if (per is None or pbr is None) and mktcap > 0:
+            try:
+                dart_pp = dart_calc_per_pbr_roe(code, mktcap)
+                if dart_pp:
+                    if per is None and "per" in dart_pp:
+                        per = dart_pp["per"]
+                    if pbr is None and "pbr" in dart_pp:
+                        pbr = dart_pp["pbr"]
+                    if roe <= 0 and "roe" in dart_pp:
+                        roe = dart_pp["roe"]
+            except Exception:
+                pass
+
         # 점수 계산
         score    = 0
         reasons  = []
@@ -10743,6 +10881,10 @@ def run_market_scan(n: int = MARKET_SCAN_N):
     if not _PYKRX_OK:
         print("[오류] pykrx 미설치 -- pip install pykrx")
         return
+
+    # 5/29: DART corpCode.xml 매핑 사전 로드 (1번만 API 호출, 1398종목 lookup 즉시)
+    # 효과: marketscan 중 DART PER/PBR 계산 가능 → 단기/중기/장기 트랙 작동
+    dart_load_corp_code_map()
 
     stocks = fetch_top_market_stocks(n)
     if not stocks:
