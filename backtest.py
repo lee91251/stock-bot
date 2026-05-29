@@ -746,7 +746,7 @@ def simulate_track(track: str, months: int = 1) -> dict:
             for code, p in positions.items()
             if not data[code]["ohlcv"].loc[data[code]["ohlcv"].index == today].empty
         )
-        daily_capital.append({"date": today_str, "capital": cash + holdings_value})
+        daily_capital.append({"date": today_str, "total": cash + holdings_value})  # 5/29 fix: 키 통일
 
     # 메트릭 계산
     metrics = compute_metrics(daily_capital, closed_trades, INITIAL_CAPITAL)
