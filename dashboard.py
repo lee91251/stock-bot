@@ -1522,3 +1522,323 @@ def _make_recommend_card(kr_top: list, ai_insights: dict) -> str:
 </section>
 """
 
+
+# ════════════════════════════════════════════════
+# 보유 카드 (Phase 2 4단계 3차, 5/29)
+# 의존: _pnl_class / _make_sparkline_svg / _safe_float / _kis (stock lazy)
+#       load_mirae_paper (finance lazy) / PAPER_MIRAE_* 상수 (stock lazy)
+# _empty_section 은 dashboard.py 내부 함수 — import 불필요
+# ════════════════════════════════════════════════
+def _make_value_holdings_section(value_holdings: list, sparklines: dict = None,
+                                   diagnosis: dict = None) -> str:
+    """가치주 보유 섹션 — 미래에셋증권 (HOLDINGS_JSON 기반).
+
+    sparklines: {code: {values, labels, change_pct}} — 종목별 7일 종가 추세선 데이터.
+    diagnosis: {name: 'AI 진단 한 줄'} — ai_personal_coach가 만든 종목별 진단.
+    """
+    from stock import _pnl_class, _make_sparkline_svg  # lazy: 순환 import 회피
+    if not value_holdings:
+        return _empty_section("value", "💼", "section__icon--value", "가치주 보유",
+                              "미래에셋증권", "등록된 가치주가 없습니다",
+                              "채팅창에서 '한화에어로 10주 180000원에 샀어' 같이 등록하면 표시됩니다.")
+    sparklines = sparklines or {}
+    diagnosis = diagnosis or {}
+    items = sorted(value_holdings, key=lambda h: h.get("profit", 0), reverse=True)
+    total_value = sum(h.get("value", 0) for h in items)
+    total_cost  = sum(h.get("cost", 0) for h in items)
+    total_pnl   = total_value - total_cost
+    total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    rows = []
+    for h in items:
+        name = h.get("name", h.get("code", ""))
+        code = h.get("code", "")
+        qty = int(h.get("qty", 0))
+        avg = h.get("avg_price", 0)
+        curr = h.get("curr_price", 0)
+        pct = h.get("pct", 0)
+        profit = h.get("profit", 0)
+        cls = _pnl_class(pct)
+        sign = "+" if profit >= 0 else ""
+        atype = h.get("type", "")
+        badge = ""
+        if atype == "손절":
+            badge = '<span class="row__badge row__badge--cut">손절</span>'
+        elif atype == "목표1":
+            badge = '<span class="row__badge row__badge--t1">+10%</span>'
+        elif atype == "목표2":
+            badge = '<span class="row__badge row__badge--t2">+20%</span>'
+        # 7일 sparkline
+        spark = sparklines.get(code, {})
+        spark_svg = _make_sparkline_svg(
+            spark.get("values", []),
+            change_pct=spark.get("change_pct", 0),
+        ) if spark else ""
+        spark_label = ""
+        if spark.get("change_pct") is not None:
+            chg = spark.get("change_pct", 0)
+            chg_color = "#10b981" if chg > 0 else ("#ef4444" if chg < 0 else "#94a3b8")
+            spark_label = f'<div class="row__sparkline-label" style="color:{chg_color};">7일 {chg:+.1f}%</div>'
+
+        # AI 진단 한 줄 (있으면)
+        diag_text = diagnosis.get(name) or ""
+        diag_html = ""
+        if diag_text:
+            # 키워드별 색상 (홀드/매수/매도/주의)
+            d_color = "#10b981" if any(k in diag_text for k in ("홀드", "보유", "유망", "강세", "매수")) \
+                else ("#ef4444" if any(k in diag_text for k in ("매도", "주의", "약세", "차익", "리스크")) \
+                else "#94a3b8")
+            diag_html = (f'<div class="row__diag" style="color:{d_color};">'
+                         f'🤖 {diag_text}</div>')
+
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">{name}{badge}</div>
+        <div class="row__sub">{qty:,}주 · 평단 {avg:,.0f}원</div>
+        {diag_html}
+      </div>
+      <div class="row__sparkline">
+        {spark_svg}
+        {spark_label}
+      </div>
+      <div class="row__price">
+        <div class="row__current">{curr:,.0f}원</div>
+        <div class="row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      </div>
+    </div>""")
+
+    return f"""
+<section class="section" id="value" aria-label="가치주 보유">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--value">💼</span>
+      <h2>가치주 보유</h2>
+      <span class="section__badge">미래에셋증권</span>
+      <span class="section__count">{len(items)}종목</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount">{int(round(total_value)):,}원</div>
+      <div class="section__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
+def _make_auto_positions_section(auto_positions: list) -> str:
+    """자동매매 보유 섹션 — 한국투자증권 모의투자 (positions.json 기반)."""
+    from stock import _pnl_class, _safe_float, _kis  # lazy: 순환 import 회피
+    if not auto_positions:
+        return _empty_section("auto", "🤖", "section__icon--auto", "자동매매 보유",
+                              "한국투자증권 (모의)", "아직 매수된 종목이 없습니다",
+                              "평일 09:10 첫 자동매수 후 표시됩니다. 보유 풀 = KR_STOCKS 26종목 + 시장 스캔 상위 50종목.")
+    enriched = []
+    for p in auto_positions:
+        bp = p.get("buy_price", 0); qty = p.get("qty", 0)
+        cp = p.get("curr_price", 0)
+        if cp <= 0:
+            try:
+                if _kis.available():
+                    pi = _kis.get_price(p.get("code", ""))
+                    cp = _safe_float(pi.get("stck_prpr")) if pi else 0
+            except Exception:
+                cp = 0
+        pct = ((cp - bp) / bp * 100) if (cp and bp) else 0
+        profit = (cp - bp) * qty if (cp and bp and qty) else 0
+        enriched.append({**p, "curr_price": cp, "pct": pct, "profit": profit,
+                         "value": cp * qty, "cost": bp * qty})
+    enriched.sort(key=lambda x: x["profit"], reverse=True)
+    total_value = sum(e["value"] for e in enriched)
+    total_cost  = sum(e["cost"] for e in enriched)
+    total_pnl   = total_value - total_cost
+    total_pct   = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    rows = []
+    for e in enriched:
+        name = e.get("name", e.get("code", ""))
+        qty = int(e.get("qty", 0))
+        bp = e.get("buy_price", 0)
+        cp = e.get("curr_price", 0)
+        pct = e.get("pct", 0)
+        profit = e.get("profit", 0)
+        cls = _pnl_class(pct)
+        sign = "+" if profit >= 0 else ""
+        partial = " · 1차매도완료" if e.get("partial_sold") else ""
+        # 매수 일시 (B3+ — 시간대별 성과 검증용)
+        bd = e.get("buy_date", "")
+        bt = e.get("buy_time", "")
+        when = ""
+        if bd:
+            when = f" · 매수 {bd[5:].replace('-', '/')}"
+            if bt:
+                when += f" {bt}"
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">{name}</div>
+        <div class="row__sub">{qty:,}주 · 매수가 {bp:,.0f}원{when}{partial}</div>
+      </div>
+      <div class="row__price">
+        <div class="row__current">{cp:,.0f}원</div>
+        <div class="row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      </div>
+    </div>""")
+
+    return f"""
+<section class="section" id="auto" aria-label="자동매매 보유">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🤖</span>
+      <h2>자동매매 보유</h2>
+      <span class="section__badge">한국투자증권 모의</span>
+      <span class="section__count">{len(enriched)}종목</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount">{int(round(total_value)):,}원</div>
+      <div class="section__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
+
+def _make_paper_mirae_section() -> str:
+    """미래에셋 모의 (추천 검증용) 카드.
+
+    봇이 추천한 가치주를 모의로 매수해서 추천 정확도 검증.
+    가치주 룰: -7% 손절 / +10% 1차 / +20% 2차 / +40% 장기.
+    각 종목별 매도시점 도달 여부를 시각적으로 표시.
+    """
+    from stock import (  # lazy: 순환 import 회피
+        _pnl_class, _safe_float, _kis,
+        PAPER_MIRAE_STOP_LOSS_PCT, PAPER_MIRAE_TARGET1_PCT,
+        PAPER_MIRAE_TARGET2_PCT, PAPER_MIRAE_TARGET3_PCT,
+    )
+    from finance import load_mirae_paper
+    data = load_mirae_paper()
+    positions = data.get("positions", {})
+
+    if not positions:
+        return _empty_section(
+            "paper-mirae", "🧪", "section__icon--auto", "미래에셋 모의 (추천 검증)",
+            "가치주 검증", "아직 등록된 종목 없음",
+            "봇 추천 가치주를 모의로 매수해서 정확도 검증. 채팅 또는 텔레그램으로 등록.",
+        )
+
+    rows = []
+    total_cost   = 0
+    total_value  = 0
+
+    for code, p in positions.items():
+        name      = p.get("name", code)
+        qty       = p.get("qty", 0)
+        bp        = p.get("buy_price", 0)
+        partial   = p.get("partial_sold", False)
+        peak_pct  = p.get("peak_pct", 0)
+        rec_score = p.get("rec_score", 0)
+        buy_date  = p.get("buy_date", "")
+        rec_date  = p.get("rec_date", "")
+
+        # 시세 조회
+        cur_price = 0
+        try:
+            info = _kis.get_price(code) if _kis.available() else {}
+            cur_price = _safe_float(info.get("stck_prpr")) if info else 0
+        except Exception:
+            pass
+
+        cost = bp * qty
+        value = cur_price * qty if cur_price > 0 else cost
+        profit = value - cost
+        pct = ((cur_price - bp) / bp * 100) if (cur_price and bp) else 0
+        total_cost  += cost
+        total_value += value
+
+        # 매도시점 도달 표시
+        cls = _pnl_class(pct)
+        sign = "+" if profit >= 0 else ""
+
+        target_tag = ""
+        if pct <= -PAPER_MIRAE_STOP_LOSS_PCT * 100:
+            target_tag = f' <span style="color:#dc2626;font-weight:700">🔴 손절 도달</span>'
+        elif pct >= PAPER_MIRAE_TARGET3_PCT * 100:
+            target_tag = f' <span style="color:#16a34a;font-weight:700">🏆 +40% 장기 목표!</span>'
+        elif pct >= PAPER_MIRAE_TARGET2_PCT * 100:
+            target_tag = f' <span style="color:#16a34a;font-weight:700">🟢 2차 목표 (+20%)</span>'
+        elif pct >= PAPER_MIRAE_TARGET1_PCT * 100:
+            if partial:
+                target_tag = f' <span style="color:#0369a1">🟢 1차 매도 완료 — 잔여 +20% 까지</span>'
+            else:
+                target_tag = f' <span style="color:#16a34a;font-weight:700">🟢 1차 목표 (+10%) — 절반 매도 권장</span>'
+
+        # 매도시점까지 거리 표시 (도달 안 한 경우)
+        progress_html = ""
+        if pct < PAPER_MIRAE_TARGET1_PCT * 100 and pct > -PAPER_MIRAE_STOP_LOSS_PCT * 100:
+            to_t1 = PAPER_MIRAE_TARGET1_PCT * 100 - pct
+            to_sl = pct - (-PAPER_MIRAE_STOP_LOSS_PCT * 100)
+            progress_html = f'<small>1차까지 +{to_t1:.1f}%p · 손절까지 -{to_sl:.1f}%p</small>'
+        elif PAPER_MIRAE_TARGET1_PCT * 100 <= pct < PAPER_MIRAE_TARGET2_PCT * 100:
+            to_t2 = PAPER_MIRAE_TARGET2_PCT * 100 - pct
+            progress_html = f'<small>2차까지 +{to_t2:.1f}%p</small>'
+
+        # peak_pct 표시 (트레일링 정보)
+        peak_html = ""
+        if peak_pct > pct + 2:  # 최고가에서 2%p 이상 빠진 경우만 표시
+            peak_html = f' <small style="color:#888">(최고 +{peak_pct:.1f}%)</small>'
+
+        partial_html = " · 1차매도완료" if partial else ""
+        bt_str = p.get("buy_time", "")
+        when = ""
+        if buy_date:
+            when = buy_date[5:].replace('-', '/')
+            if bt_str:
+                when += f" {bt_str}"
+        rec_html = ""
+        if rec_date:
+            rec_html = f" · 추천일 {rec_date[5:].replace('-', '/')}"
+
+        rows.append(f"""
+    <div class="row">
+      <div class="row__main">
+        <div class="row__name">🧪 {name}{target_tag}</div>
+        <div class="row__sub">{qty}주 · 매수 {bp:,.0f}원 ({when}{rec_html}){partial_html}<br>{progress_html}</div>
+      </div>
+      <div class="row__price">
+        <div class="row__current">{cur_price:,.0f}원{peak_html}</div>
+        <div class="row__pnl {cls}">{sign}{int(round(profit)):,}원<small>({sign}{pct:.2f}%)</small></div>
+      </div>
+    </div>""")
+
+    total_pnl = total_value - total_cost
+    total_pct = (total_pnl / total_cost * 100) if total_cost > 0 else 0
+    pnl_cls = _pnl_class(total_pct)
+    pnl_sign = "+" if total_pnl >= 0 else ""
+
+    return f"""
+<section class="section" id="paper-mirae" aria-label="미래에셋 모의">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🧪</span>
+      <h2>미래에셋 모의 (추천 검증)</h2>
+      <span class="section__badge">가치주 룰 -7/+10/+20/+40</span>
+      <span class="section__count">{len(positions)}종목</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount">{int(round(total_value)):,}원</div>
+      <div class="section__pnl {pnl_cls}">{pnl_sign}{int(round(total_pnl)):,}원 ({pnl_sign}{total_pct:.2f}%)</div>
+    </div>
+  </div>
+  <div class="section__body">{"".join(rows)}
+  </div>
+</section>
+"""
+
