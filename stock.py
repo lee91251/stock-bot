@@ -4517,6 +4517,73 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text-1);
   .section__amount { font-size: 19px; }
   .hero__kpi-value { font-size: 20px; }
 }
+
+/* ──────────────────────────────────────────────
+   5/29 디자인 개선 — 빈 카드 컴팩트 + 펼침 + 가독성
+   회장 통찰: "누가 봐도 보기 쉽고 멋지게"
+   ────────────────────────────────────────────── */
+
+/* 빈 카드 컴팩트 — 큰 빈 박스 대신 한 줄 안내 */
+.section--compact {
+  padding: 8px 0;
+  opacity: 0.85;
+}
+.section--compact .section__head {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.section--compact .section__head::after {
+  content: none;
+}
+
+/* details/summary 펼침 (거래 이력 더보기) */
+details > summary {
+  list-style: none;
+  user-select: none;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  transition: background 0.15s, border-color 0.15s;
+}
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before {
+  content: "▶ ";
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+details[open] > summary::before {
+  transform: rotate(90deg);
+}
+details > summary:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+
+/* 섹션 간격 일관 (위계 명확) */
+.main > section {
+  margin-bottom: 16px;
+}
+.main > section.section--compact {
+  margin-bottom: 8px;
+}
+
+/* 카드 hover 부드러운 강조 (멋진 인터랙션) */
+.section:not(.section--compact):hover {
+  box-shadow: var(--shadow-lg);
+  transition: box-shadow 0.2s ease;
+}
+
+/* 모바일 (회장 폰 5분 점검 친화) */
+@media (max-width: 768px) {
+  .main { padding: 12px; }
+  .section { border-radius: var(--radius-sm); }
+  .section__head h2 { font-size: 16px; }
+  .section__body { padding: 12px; }
+  details > summary { padding: 8px 10px; font-size: 13px; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
@@ -5736,22 +5803,34 @@ def _make_trade_history_card(limit: int = 30) -> str:
         profit_color  = "#16a34a" if total_profit >= 0 else "#dc2626"
         profit_sign   = "+" if total_profit >= 0 else ""
 
+        # 5/29: 거래 이력 압축 — 5건 펼침 + 나머지 접힘
+        visible_rows = rows[:5]
+        hidden_rows  = rows[5:]
+        hidden_html = ""
+        if hidden_rows:
+            hidden_html = f"""
+  <details style="margin-top:8px;padding:8px 16px;cursor:pointer;">
+    <summary style="color:var(--text-2);font-size:13px;font-weight:600;">
+      📂 이전 {len(hidden_rows)}건 더 보기
+    </summary>
+    <div style="margin-top:8px;">{"".join(hidden_rows)}</div>
+  </details>"""
+
         return f"""
 <section class="section" id="trades" aria-label="거래 이력">
   <div class="section__head">
     <div class="section__title">
       <span class="section__icon section__icon--auto">📜</span>
       <h2>거래 이력</h2>
-      <span class="section__badge">최근 {len(recent)}건</span>
-      <span class="section__count">총 매수 {total_buys} / 매도 {total_sells}</span>
+      <span class="section__badge">최근 {len(visible_rows)}건 표시 / 총 {len(history)}건</span>
     </div>
     <div class="section__subtitle">
       <div class="section__amount" style="color:{profit_color}">{profit_sign}{total_profit:,.0f}원</div>
-      <div>매도 누적 손익 (실현 분만)</div>
+      <div>매도 누적 손익 (매수 {total_buys} / 매도 {total_sells})</div>
     </div>
   </div>
-  <div class="section__body">{"".join(rows)}
-  </div>
+  <div class="section__body">{"".join(visible_rows)}</div>
+  {hidden_html}
 </section>
 """
     except Exception as e:
@@ -5985,20 +6064,22 @@ def _make_tomorrow_picks_section(tp_data: dict) -> str:
 
 def _empty_section(sid: str, icon: str, icon_cls: str, title: str, badge: str,
                    empty_title: str, empty_desc: str) -> str:
-    """데이터가 없을 때 안내 메시지를 띄우는 빈 섹션."""
+    """5/29: 빈 섹션 컴팩트 모드 — 큰 빈 박스 대신 한 줄 안내.
+
+    회장 통찰: 빈 카드(단기/중기 추천 등)가 페이지 절반 차지 → 핵심 정보 가려짐
+    fix: 1줄 컴팩트 헤더만 표시. 클릭 시 자세히 보기 가능.
+    """
     return f"""
-<section class="section" id="{sid}" aria-label="{title}">
-  <div class="section__head">
+<section class="section section--compact" id="{sid}" aria-label="{title}">
+  <div class="section__head" style="padding-bottom:8px;">
     <div class="section__title">
-      <span class="section__icon {icon_cls}">{icon}</span>
-      <h2>{title}</h2>
-      <span class="section__badge">{badge}</span>
+      <span class="section__icon {icon_cls}" style="opacity:0.4;">{icon}</span>
+      <h2 style="opacity:0.6;">{title}</h2>
+      <span class="section__badge" style="opacity:0.6;">{badge}</span>
     </div>
-  </div>
-  <div class="empty">
-    <div class="empty__icon">{icon}</div>
-    <div class="empty__title">{empty_title}</div>
-    <div class="empty__desc">{empty_desc}</div>
+    <div style="font-size:12px;color:var(--text-3);padding:4px 16px 0;">
+      ⏳ {empty_title}
+    </div>
   </div>
 </section>
 """
@@ -7550,30 +7631,41 @@ def build_and_save_dashboard(
 <div class="app">
 {sidebar_html}
 <main class="main">
+<!-- 5/29 대시보드 재정리 — 정보 계층 명확 + 중복 제거 -->
+<!-- ① 매일 첫 확인: 자산 + 손익 + 코치 한 줄 -->
 {hero_html}
 {coach_html}
-{history_html}
-{allocation_html}
-{value_html}
-{paper_mirae_html}
-{auto_html}
-{trades_html}
-{performance_html}
-{compare_html}
-{advisor_html}
-{learning_html}
-{tomorrow_html}
+
+<!-- ② 오늘 매수 후보 (4트랙 추천) — 회장 결정 우선 -->
 {recommend_html}
 {short_term_html}
 {mid_term_html}
 {long_term_html}
-{avoid_html}
+{tomorrow_html}
+
+<!-- ③ 보유 종목 현황 -->
+{value_html}
+{paper_mirae_html}
+{auto_html}
+{allocation_html}
+
+<!-- ④ 봇 성적표 + 시장 환경 -->
+{performance_html}
+{compare_html}
+{history_html}
 {market_html}
 {macro_html}
+
+<!-- ⑤ AI 분석 + 공시 통합 (중복 제거: dart_html은 alerts_html에 흡수, disclosures_html이 메인 공시) -->
 {ai_html}
-{alerts_html}
-{dart_html}
 {disclosures_html}
+{alerts_html}
+
+<!-- ⑥ 부수 정보 + 경고 -->
+{avoid_html}
+{advisor_html}
+{learning_html}
+{trades_html}
 <div class="footer">
   ⚠️ 본 대시보드는 자동 분석된 참고 정보입니다. 최종 투자 판단은 본인이 직접 하세요.<br>
   투자 손익의 책임은 전적으로 투자자 본인에게 있으며 어떤 수익도 보장하지 않습니다.<br>
