@@ -1,19 +1,405 @@
 {
   "four_track_mode": true,
   "months": 1,
-  "generated_at": "2026-05-29T14:27:12.006128",
+  "generated_at": "2026-05-29T14:43:10.718789",
   "tracks": {
     "swing": {
-      "error": "'total'"
+      "cumulative_return_pct": -1.79,
+      "annualized_return_pct": -21.05,
+      "annualized_vol_pct": 6.23,
+      "max_drawdown_pct": -2.31,
+      "sharpe_ratio": -3.94,
+      "total_trades": 70,
+      "win_rate_pct": 32.9,
+      "avg_win_pct": 11.08,
+      "avg_loss_pct": -5.77,
+      "avg_holding_days": 2.0,
+      "best_trade": {
+        "code": "004170",
+        "name": "신세계",
+        "buy_date": "2026-05-13",
+        "sell_date": "2026-05-15",
+        "buy_price": 468467.99999999994,
+        "sell_price": 573000.0,
+        "qty": 4,
+        "raw_pct": 14.2,
+        "net_pct": 21.95,
+        "net_pnl": 411371.0,
+        "held_days": 1,
+        "reason": "+14.2% 전량 익절",
+        "score": 87,
+        "sector": "유통"
+      },
+      "worst_trade": {
+        "code": "247540",
+        "name": "에코프로비엠",
+        "buy_date": "2026-05-07",
+        "sell_date": "2026-05-13",
+        "buy_price": 229729.49999999997,
+        "sell_price": 203000.0,
+        "qty": 8,
+        "raw_pct": -10.55,
+        "net_pct": -11.9,
+        "net_pnl": -218624.0,
+        "held_days": 3,
+        "reason": "손절 (-10.5%)",
+        "score": 85,
+        "sector": "2차전지"
+      },
+      "score_buckets": {
+        "<50": 0,
+        "50-59": 2,
+        "60-69": 41,
+        "70-79": 70,
+        "80+": 66
+      },
+      "sector_stats": {
+        "소비재": {
+          "count": 4,
+          "win_rate": 0.0,
+          "avg_pct": -4.4
+        },
+        "철강": {
+          "count": 4,
+          "win_rate": 50.0,
+          "avg_pct": 0.68
+        },
+        "자동차": {
+          "count": 7,
+          "win_rate": 28.6,
+          "avg_pct": 1.71
+        },
+        "물류": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -3.94
+        },
+        "에너지": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -6.56
+        },
+        "엔터": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -5.74
+        },
+        "전력": {
+          "count": 2,
+          "win_rate": 50.0,
+          "avg_pct": 0.82
+        },
+        "IT": {
+          "count": 4,
+          "win_rate": 50.0,
+          "avg_pct": 2.26
+        },
+        "게임": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -5.66
+        },
+        "신재생": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -7.88
+        },
+        "보험": {
+          "count": 4,
+          "win_rate": 100.0,
+          "avg_pct": 12.82
+        },
+        "종합": {
+          "count": 3,
+          "win_rate": 66.7,
+          "avg_pct": 7.86
+        },
+        "유통": {
+          "count": 8,
+          "win_rate": 50.0,
+          "avg_pct": 4.4
+        },
+        "로봇": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -3.6
+        },
+        "방산": {
+          "count": 3,
+          "win_rate": 33.3,
+          "avg_pct": -4.89
+        },
+        "2차전지": {
+          "count": 4,
+          "win_rate": 25.0,
+          "avg_pct": -4.06
+        },
+        "조선": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -5.94
+        },
+        "반도체": {
+          "count": 8,
+          "win_rate": 50.0,
+          "avg_pct": -0.12
+        },
+        "원전": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -3.28
+        },
+        "항공": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -6.62
+        },
+        "음식료": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -3.44
+        },
+        "바이오": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -6.18
+        },
+        "화학": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -6.43
+        }
+      },
+      "track": "swing",
+      "track_label": "🚀 스윙 (1~5일)",
+      "months": 1,
+      "start_date": "2026-04-27",
+      "end_date": "2026-05-28",
+      "filter_pass_count": 179,
+      "open_positions": 2
     },
     "short_term": {
-      "error": "'total'"
+      "cumulative_return_pct": -1.75,
+      "annualized_return_pct": -21.86,
+      "annualized_vol_pct": 5.38,
+      "max_drawdown_pct": -1.83,
+      "sharpe_ratio": -4.71,
+      "total_trades": 40,
+      "win_rate_pct": 25.0,
+      "avg_win_pct": 15.52,
+      "avg_loss_pct": -5.88,
+      "avg_holding_days": 3.6,
+      "best_trade": {
+        "code": "012330",
+        "name": "현대모비스",
+        "buy_date": "2026-05-08",
+        "sell_date": "2026-05-12",
+        "buy_price": 458958.49999999994,
+        "sell_price": 595000.0,
+        "qty": 2,
+        "raw_pct": 20.49,
+        "net_pct": 29.26,
+        "net_pnl": 268575.0,
+        "held_days": 1,
+        "reason": "+20.5% 전량 익절",
+        "score": 60,
+        "sector": "자동차"
+      },
+      "worst_trade": {
+        "code": "086280",
+        "name": "현대글로비스",
+        "buy_date": "2026-05-18",
+        "sell_date": "2026-05-20",
+        "buy_price": 239238.99999999997,
+        "sell_price": 214000.0,
+        "qty": 8,
+        "raw_pct": -10.55,
+        "net_pct": -10.81,
+        "net_pnl": -206959.0,
+        "held_days": 1,
+        "reason": "손절 (-10.5%)",
+        "score": 60,
+        "sector": "물류"
+      },
+      "score_buckets": {
+        "<50": 175,
+        "50-59": 96,
+        "60-69": 51,
+        "70-79": 12,
+        "80+": 0
+      },
+      "sector_stats": {
+        "소비재": {
+          "count": 3,
+          "win_rate": 33.3,
+          "avg_pct": 0.8
+        },
+        "바이오": {
+          "count": 3,
+          "win_rate": 0.0,
+          "avg_pct": -6.07
+        },
+        "엔터": {
+          "count": 3,
+          "win_rate": 0.0,
+          "avg_pct": -5.94
+        },
+        "IT": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -7.33
+        },
+        "게임": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -5.82
+        },
+        "물류": {
+          "count": 3,
+          "win_rate": 66.7,
+          "avg_pct": 6.54
+        },
+        "자동차": {
+          "count": 5,
+          "win_rate": 80.0,
+          "avg_pct": 13.84
+        },
+        "신재생": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -3.63
+        },
+        "에너지": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -5.76
+        },
+        "음식료": {
+          "count": 3,
+          "win_rate": 0.0,
+          "avg_pct": -4.31
+        },
+        "반도체": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -7.62
+        },
+        "조선": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -3.84
+        },
+        "금융": {
+          "count": 2,
+          "win_rate": 0.0,
+          "avg_pct": -6.91
+        },
+        "보험": {
+          "count": 2,
+          "win_rate": 100.0,
+          "avg_pct": 16.31
+        },
+        "유통": {
+          "count": 3,
+          "win_rate": 33.3,
+          "avg_pct": -3.55
+        },
+        "2차전지": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -6.28
+        },
+        "헬스케어": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -9.28
+        },
+        "통신": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -3.68
+        },
+        "항공": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -0.59
+        },
+        "로봇": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -2.83
+        },
+        "화학": {
+          "count": 1,
+          "win_rate": 0.0,
+          "avg_pct": -7.62
+        }
+      },
+      "track": "short_term",
+      "track_label": "📈 단기 (1~3주)",
+      "months": 1,
+      "start_date": "2026-04-27",
+      "end_date": "2026-05-28",
+      "filter_pass_count": 334,
+      "open_positions": 7
     },
     "mid_term": {
-      "error": "'total'"
+      "cumulative_return_pct": 0.0,
+      "annualized_return_pct": 0.0,
+      "annualized_vol_pct": 0.0,
+      "max_drawdown_pct": 0,
+      "sharpe_ratio": 0,
+      "total_trades": 0,
+      "win_rate_pct": 0,
+      "avg_win_pct": 0,
+      "avg_loss_pct": 0,
+      "avg_holding_days": 0,
+      "best_trade": null,
+      "worst_trade": null,
+      "score_buckets": {
+        "<50": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 0,
+        "80+": 0
+      },
+      "sector_stats": {},
+      "track": "mid_term",
+      "track_label": "📊 중기 (1~3개월)",
+      "months": 1,
+      "start_date": "2026-04-27",
+      "end_date": "2026-05-28",
+      "filter_pass_count": 0,
+      "open_positions": 0
     },
     "long_term": {
-      "error": "'total'"
+      "cumulative_return_pct": 0.0,
+      "annualized_return_pct": 0.0,
+      "annualized_vol_pct": 0.0,
+      "max_drawdown_pct": 0,
+      "sharpe_ratio": 0,
+      "total_trades": 0,
+      "win_rate_pct": 0,
+      "avg_win_pct": 0,
+      "avg_loss_pct": 0,
+      "avg_holding_days": 0,
+      "best_trade": null,
+      "worst_trade": null,
+      "score_buckets": {
+        "<50": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 0,
+        "80+": 0
+      },
+      "sector_stats": {},
+      "track": "long_term",
+      "track_label": "💎 장기 (3개월+)",
+      "months": 1,
+      "start_date": "2026-04-27",
+      "end_date": "2026-05-28",
+      "filter_pass_count": 0,
+      "open_positions": 0
     }
   }
 }
