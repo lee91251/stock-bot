@@ -3031,13 +3031,13 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             buy_hour_stats.setdefault(bucket, []).append(r)
         buy_hour_perf = []
         for bucket, lst in buy_hour_stats.items():
-            wins = sum(1 for r in lst if r["pnl_pct"] > 0)
-            avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
+            hour_wins = sum(1 for r in lst if r["pnl_pct"] > 0)
+            hour_avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
             buy_hour_perf.append({
                 "bucket":   bucket,
                 "trades":   len(lst),
-                "win_rate": round(wins / len(lst) * 100, 1),
-                "avg_pnl":  round(avg, 2),
+                "win_rate": round(hour_wins / len(lst) * 100, 1),
+                "avg_pnl":  round(hour_avg, 2),
             })
         # 시간 순 정렬
         bucket_order = ["09-11시 (개장)", "11-13시 (점심)", "13-15시 (오후)", "15시+ (마감)"]
@@ -3052,13 +3052,13 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             sell_hour_stats.setdefault(bucket, []).append(r)
         sell_hour_perf = []
         for bucket, lst in sell_hour_stats.items():
-            wins = sum(1 for r in lst if r["pnl_pct"] > 0)
-            avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
+            hour_wins = sum(1 for r in lst if r["pnl_pct"] > 0)
+            hour_avg  = sum(r["pnl_pct"] for r in lst) / len(lst)
             sell_hour_perf.append({
                 "bucket":   bucket,
                 "trades":   len(lst),
-                "win_rate": round(wins / len(lst) * 100, 1),
-                "avg_pnl":  round(avg, 2),
+                "win_rate": round(hour_wins / len(lst) * 100, 1),
+                "avg_pnl":  round(hour_avg, 2),
             })
         sell_hour_perf.sort(key=lambda x: bucket_order.index(x["bucket"]) if x["bucket"] in bucket_order else 99)
 
