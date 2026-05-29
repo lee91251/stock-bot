@@ -70,6 +70,8 @@ from dashboard import (
     _make_risk_gauge_html,
     _make_disclosures_card,
     _make_dart_card,
+    _make_hero_header,
+    _make_sidebar,
 )
 
 
@@ -3925,62 +3927,7 @@ def _make_tomorrow_picks_section(tp_data: dict) -> str:
 # _empty_section → from dashboard import (아래 import 블록)
 
 
-def _make_hero_header(today: str, time_str: str, mood: dict, fg: dict,
-                      total_value: float, total_pnl: float, total_pct: float) -> str:
-    """대시보드 상단 Hero 헤더 — 그라데이션 배경 + 핵심 KPI."""
-    pnl_cls = _pnl_class(total_pct)
-    sign = "+" if total_pnl >= 0 else ""
-    m = mood or {}
-    f = fg or {"score": 50, "label": "중립"}
-    advice = m.get("advice", "") or ""
-    advice_html = f'<div class="hero__advice">{advice}</div>' if advice else ""
-
-    kospi_price = m.get("kospi_price", 0)
-    kospi_chg = m.get("kospi_chg", 0)
-    kospi_arr = "▲" if kospi_chg >= 0 else "▼"
-    fg_score = f.get("score", 50)
-    fg_label = f.get("label", "중립")
-
-    if total_value > 0:
-        kpi_main = f"""
-    <div class="hero__kpi">
-      <div class="hero__kpi-label">💼 총 평가 자산</div>
-      <div class="hero__kpi-value">{int(round(total_value)):,}원</div>
-      <div class="hero__kpi-pnl">{sign}{int(round(total_pnl)):,}원<small>({sign}{total_pct:.2f}%)</small></div>
-    </div>"""
-    else:
-        kpi_main = """
-    <div class="hero__kpi">
-      <div class="hero__kpi-label">💼 총 평가 자산</div>
-      <div class="hero__kpi-value">데이터 준비 중</div>
-      <div class="hero__kpi-pnl"><small>봇 첫 실행 후 표시</small></div>
-    </div>"""
-
-    return f"""
-<header class="hero" id="overview">
-  <div class="hero__top">
-    <div>
-      <div class="hero__greeting">투자 비서 v6.0</div>
-      <h1 class="hero__title">대시보드</h1>
-      <div class="hero__date">{today} · {time_str} KST</div>
-    </div>
-    {advice_html}
-  </div>
-  <div class="hero__kpi-grid">
-    {kpi_main}
-    <div class="hero__kpi hero__kpi--small">
-      <div class="hero__kpi-label">코스피</div>
-      <div class="hero__kpi-value">{kospi_price:,.2f}</div>
-      <div class="hero__kpi-pnl">{kospi_arr} {abs(kospi_chg):.2f}%</div>
-    </div>
-    <div class="hero__kpi hero__kpi--small">
-      <div class="hero__kpi-label">공포탐욕</div>
-      <div class="hero__kpi-value">{fg_score}</div>
-      <div class="hero__kpi-pnl"><small>{fg_label}</small></div>
-    </div>
-  </div>
-</header>
-"""
+# 5/29 Phase 2 4단계 5차: _make_hero_header -> dashboard.py
 
 
 def _make_allocation_card(value_holdings: list, auto_positions: list) -> str:
@@ -4338,74 +4285,7 @@ def _md_to_html(text: str) -> str:
 # 5/29 Phase 2 4단계 4차-C: _make_dart_card -> dashboard.py
 
 
-def _make_sidebar(sections_status: dict, last_update: str) -> str:
-    """좌측 사이드바 — 섹션 네비게이션 (활성/비활성 표시)."""
-    # 카드 그룹별 정렬 (대시보드 카드 순서와 일치)
-    items = [
-        ("overview", "🏠", "개요", True),
-        # [요약]
-        ("coach",       "🦾", "AI 비서",       sections_status.get("coach", False)),
-        ("history",     "📈", "자산 추이",     sections_status.get("history", False)),
-        ("allocation",  "📊", "자산 배분",     sections_status.get("allocation", False)),
-        # [내 계좌]
-        ("value",        "💼", "가치주(1번)",       sections_status.get("value", False)),
-        ("paper-mirae",  "🧪", "모의 검증(2번)",    True),
-        ("auto",         "🤖", "자동매매(3번)",     sections_status.get("auto", False)),
-        # [매매·학습·추천]
-        ("trades",      "📜", "거래 이력",      True),
-        ("performance", "📈", "봇 성적표",      True),
-        ("compare",     "📊", "봇 vs 코스피",   True),
-        ("advisor",     "🤖", "AI 신뢰도",      True),
-        ("learning",    "🧠", "자가학습",       True),
-        ("tomorrow",    "🎯", "사전 후보",      True),
-        ("recommend",   "🚀", "스윙 (1~5일)",   sections_status.get("recommend", False)),
-        ("short-term",  "📈", "단기 (1~3주)",   True),
-        ("mid-term",    "📊", "중기 (1~3개월)", True),
-        ("long-term",   "💎", "장기 (가치주)",  True),
-        ("avoid",       "🚫", "회피",          sections_status.get("avoid", False)),
-        # [시장]
-        ("market",      "🌏", "시장",          sections_status.get("market", False)),
-        ("macro",       "📈", "매크로",        sections_status.get("macro", False)),
-        ("ai",          "🤖", "AI 분석",       sections_status.get("ai", False)),
-        # [공시·알림]
-        ("alerts",      "📢", "최근 알림",      True),
-        ("dart",        "🚨", "DART",          sections_status.get("dart", False)),
-        ("disclosures", "📰", "공시 목록",      sections_status.get("disclosures", False)),
-    ]
-    badge_html = '<span class="sidebar__link-badge">대기</span>'
-    links = []
-    for sid, icon, label, active in items:
-        cls = "sidebar__link"
-        attr = f'data-target="{sid}" href="#{sid}"'
-        if not active:
-            cls += " is-disabled"
-            attr = ''  # 클릭 비활성
-        suffix = "" if active else badge_html
-        links.append(
-            f'<a class="{cls}" {attr}>'
-            f'<span class="sidebar__link-icon">{icon}</span>'
-            f'<span class="sidebar__link-label">{label}</span>'
-            f'{suffix}'
-            f'</a>'
-        )
-
-    return f"""
-<aside class="sidebar">
-  <div class="sidebar__brand">
-    <span class="sidebar__brand-icon">📊</span>
-    <span>투자 비서</span>
-  </div>
-  <nav class="sidebar__nav">
-    <div class="sidebar__section-title">대시보드</div>
-    {"".join(links)}
-  </nav>
-  <div class="sidebar__footer">
-    <span>마지막 갱신</span>
-    <span style="color:rgba(255,255,255,0.7);font-weight:600;">{last_update}</span>
-  </div>
-</aside>
-<div class="sidebar-backdrop"></div>
-"""
+# 5/29 Phase 2 4단계 5차: _make_sidebar -> dashboard.py
 
 
 def _record_portfolio_value(value_total: float, value_cost: float,
