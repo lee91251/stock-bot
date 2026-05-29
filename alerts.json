@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-05-28T09:01:31.327291",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 현대바이오 -3.92% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
     "time": "2026-05-29T06:01:00.362824",
     "category": "briefing",
     "level": "info",
@@ -22,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.7 / 공포탐욕 65(탐욕)"
+  },
+  {
+    "time": "2026-05-29T09:40:46.876636",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 한화오션",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
