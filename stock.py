@@ -6236,6 +6236,39 @@ def run_auto_buy():
             tg_send(f"🛑 일일 매매 횟수 한도 도달 ({SWING_DAILY_TRADE_CAP}건) — 비정상 폭주 차단")
             break
 
+        # ── 6단계: 검증부 게이트 (shadow → enforce) — 4사분면 비교 ──
+        # 위치: 후보 선정+일일슬롯 통과 직후, regime/new_rules 가드 *앞*.
+        # → 인라인 가드가 막을 종목까지 검증부 판정을 기록 → 인라인 vs 검증부 차이 분석 가능.
+        # shadow(기본): 로그+통계만, 매수는 인라인 그대로. enforce(VERIFY_ENFORCE=true): reject 시 차단.
+        _verify_ok = True
+        try:
+            _vreq = {
+                "code":           code,
+                "name":           s["name"],
+                "qty":            qty,
+                "price":          price,
+                "amount":         amt,
+                "score":          s.get("score", 0),
+                "sector":         s.get("sector", ""),
+                "curr_price":     price,
+                "day_change_pct": s.get("today_change", s.get("change_pct", 0)) or 0,
+                "market_risk":    risk.get("score", 0),
+            }
+            _vres = verify_buy(_vreq)
+            log_verify_result(_vreq, _vres, side="buy")
+            _verify_ok = _vres.get("ok", True)
+            if not _verify_ok:
+                _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
+                if VERIFY_ENFORCE:
+                    print(f"  [verify] {s['name']} 검증부 차단(enforce): {_vreasons}")
+                    continue
+                print(f"  [verify-shadow] {s['name']} 검증부 reject: {_vreasons}")
+            else:
+                print(f"  [verify-shadow] {s['name']} 검증부 통과")
+        except Exception as e:
+            # 검증부 오류가 매수를 막지 않도록 (shadow 안전) — enforce에서도 오류 시 통과
+            print(f"  [verify] 검증부 오류(매수 계속 진행): {e}")
+
         # ── 한국 스윙 확률 룰 가드 (5/12, NEW_RULES_ENABLED 토글) ──
         # 백테스트 검증된 룰만 활성화. 검증 전 false (기본).
         if NEW_RULES_ENABLED:
@@ -6288,36 +6321,6 @@ def run_auto_buy():
                 print(f"  [regime] {s['name']} 당일 +{today_change:.1f}% > 한도 +{chase_max}% "
                       f"({thresholds['label']}) — 추격매수 차단")
                 continue
-
-        # ── 6단계: 검증부 게이트 (shadow → enforce) ──
-        # 여기 도달 = 인라인 가드 전부 통과(=매수 승인). 검증부도 같은 판정인지 확인.
-        # shadow(기본): 결과 로그+통계만, 매수는 그대로. enforce: reject 시 실제 차단.
-        try:
-            _vreq = {
-                "code":           code,
-                "name":           s["name"],
-                "qty":            qty,
-                "price":          price,
-                "amount":         amt,
-                "score":          s.get("score", 0),
-                "sector":         s.get("sector", ""),
-                "curr_price":     price,
-                "day_change_pct": s.get("today_change", s.get("change_pct", 0)) or 0,
-                "market_risk":    risk.get("score", 0),
-            }
-            _vres = verify_buy(_vreq)
-            log_verify_result(_vreq, _vres, side="buy")
-            if not _vres.get("ok"):
-                _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
-                if VERIFY_ENFORCE:
-                    print(f"  [verify] {s['name']} 검증부 차단(enforce): {_vreasons}")
-                    continue
-                print(f"  [verify-shadow] {s['name']} 검증부 reject(인라인은 통과): {_vreasons}")
-            else:
-                print(f"  [verify-shadow] {s['name']} 검증부 통과")
-        except Exception as e:
-            # 검증부 오류가 매수를 막지 않도록 (shadow 안전) — enforce에서도 오류 시 통과
-            print(f"  [verify] 검증부 오류(매수 계속 진행): {e}")
 
         result = client.buy(code, qty)
         if result.get("ok"):
