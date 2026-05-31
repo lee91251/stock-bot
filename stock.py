@@ -86,6 +86,9 @@ from learning import (
     _get_recent_journals,
     _load_portfolio_history, _calc_mdd_from_portfolio,  # 2차
     analyze_trading_performance,  # 3차
+    calc_weight_recommendations as _lrn_calc_weight_recommendations,  # 4차 (swing_score_min 주입)
+    B4_MIN_SAMPLES, B4_SECTOR_MIN_TRADES, B4_HOUR_MIN_TRADES,
+    B4_GAP_HIGH, B4_WEAK_WIN_RATE, B4_STRONG_WIN_RATE,
     AI_ADVISOR_LOG, AI_ADVISOR_MIN_SAMPLES, AI_ADVISOR_MIN_ACCURACY,
 )
 
@@ -228,13 +231,7 @@ ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 # AI_ADVISOR_LOG / MIN_SAMPLES / MIN_ACCURACY → learning.py (5단계 학습부)
 AI_ADVISOR_OUTCOME_DAYS  = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가 (track_advisor_outcomes 잔류용)
 
-# B4 자동 가중치 튜닝 (자가학습 — 30건+ 누적 시 권장 알림)
-B4_MIN_SAMPLES           = 30      # 자가학습 최소 표본
-B4_SECTOR_MIN_TRADES     = 3       # 섹터 권장 최소 매매 건수
-B4_HOUR_MIN_TRADES       = 3       # 시간대 권장 최소 매매 건수
-B4_GAP_HIGH              = 20      # 점수대 승률 차이 20%p 이상 — 임계 조정 권장
-B4_WEAK_WIN_RATE         = 30      # 30% 미만 승률 — 회피 권장
-B4_STRONG_WIN_RATE       = 70      # 70%+ 승률 — 우대 권장
+# B4 자동 가중치 튜닝 상수 (B4_*) → learning.py (4차 학습부). 위 from learning import로 재참조.
 
 # 미래에셋 모의 (추천 검증용 가치주) — 가치주 룰 적용
 PAPER_MIRAE_STOP_LOSS_PCT  = 0.07   # -7% 손절
@@ -3709,127 +3706,13 @@ def _record_portfolio_value(value_total: float, value_cost: float,
 
 
 def calc_weight_recommendations() -> dict:
-    """B4 자가학습 — 매매 데이터 누적 분석 → 가중치 자동 조정 권장 (#5).
+    """B4 자가학습 권장 (학습부 위임). 매매 파라미터 SWING_SCORE_MIN을 주입해 호출.
 
-    데이터 30건+ 누적 시 활성화. positions.json history 기반.
-    분석 항목:
-      1. 점수 임계 (70+ vs 60-64 승률 차이 → SWING_SCORE_MIN 조정)
-      2. 섹터 우대/회피 (승률 70%+ → 우대 / 30% 미만 → 회피)
-      3. 시간대 회피 (특정 시간대 승률 30% 미만 → 매수 회차 조정)
-
-    Returns: {
-        "ready": True if 30건+ else False,
-        "trades": 누적 건수,
-        "remaining": 활성화까지 남은 건수,
-        "win_rate": 전체 승률,
-        "recommendations": [
-            {"type", "reason", "current", "recommended", "level"}, ...
-        ],
-    }
+    실제 로직은 learning.py로 이관(4차). 여기선 stock.py가 보유한 매수 임계
+    SWING_SCORE_MIN만 인자로 넘겨 순환 import를 피한다. 호출부(브리핑/대시보드)는
+    인자 없이 그대로 사용.
     """
-    perf = analyze_trading_performance(window_days=90)
-    total = perf.get("trades", 0)
-
-    base = {
-        "trades":      total,
-        "remaining":   max(0, B4_MIN_SAMPLES - total),
-        "win_rate":    perf.get("win_rate", 0),
-        "ready":       total >= B4_MIN_SAMPLES,
-        "recommendations": [],
-    }
-
-    if total < B4_MIN_SAMPLES:
-        return base
-
-    recs = []
-
-    # 1) 점수 임계 조정 권장
-    sb = perf.get("score_buckets", {})
-    bucket_70 = sb.get("70+", {})
-    bucket_60 = sb.get("60-64", {})
-    if bucket_70.get("trades", 0) >= 5 and bucket_60.get("trades", 0) >= 5:
-        wr_70 = bucket_70.get("win_rate", 0)
-        wr_60 = bucket_60.get("win_rate", 0)
-        gap = wr_70 - wr_60
-        if gap >= B4_GAP_HIGH:
-            recs.append({
-                "type":        "score_threshold",
-                "level":       "high",
-                "title":       f"매수 점수 임계 {SWING_SCORE_MIN} → 70 권장",
-                "reason":      f"70점+ 승률 {wr_70:.0f}% vs 60-64점 {wr_60:.0f}% (차이 +{gap:.0f}%p)",
-                "current":     SWING_SCORE_MIN,
-                "recommended": 70,
-                "code_var":    "SWING_SCORE_MIN",
-            })
-        elif wr_60 - wr_70 >= B4_GAP_HIGH:
-            # 역으로 60점대가 더 잘 나오는 이상 케이스
-            recs.append({
-                "type":        "score_threshold_lower",
-                "level":       "medium",
-                "title":       f"매수 점수 임계 완화 검토",
-                "reason":      f"60-64점 승률 {wr_60:.0f}% > 70점+ {wr_70:.0f}% — 표본 더 필요",
-                "current":     SWING_SCORE_MIN,
-                "recommended": SWING_SCORE_MIN,
-                "code_var":    "SWING_SCORE_MIN",
-            })
-
-    # 2) 섹터별 권장
-    sector_perf = perf.get("sector_perf", [])
-    weak_sectors = [s for s in sector_perf
-                    if s.get("win_rate", 0) < B4_WEAK_WIN_RATE
-                    and s.get("trades", 0) >= B4_SECTOR_MIN_TRADES]
-    strong_sectors = [s for s in sector_perf
-                      if s.get("win_rate", 0) >= B4_STRONG_WIN_RATE
-                      and s.get("trades", 0) >= B4_SECTOR_MIN_TRADES]
-
-    for s in weak_sectors[:3]:
-        recs.append({
-            "type":     "sector_avoid",
-            "level":    "medium",
-            "title":    f"🚫 {s['sector']} 섹터 회피 권장",
-            "reason":   f"승률 {s['win_rate']:.0f}% ({s['trades']}건) — 평균 손익 {s.get('avg_pnl', 0):+.1f}%",
-            "sector":   s["sector"],
-        })
-    for s in strong_sectors[:3]:
-        recs.append({
-            "type":   "sector_boost",
-            "level":  "low",
-            "title":  f"🎯 {s['sector']} 섹터 우대 권장",
-            "reason": f"승률 {s['win_rate']:.0f}% ({s['trades']}건) — 평균 손익 {s.get('avg_pnl', 0):+.1f}%",
-            "sector": s["sector"],
-        })
-
-    # 3) 시간대별 권장
-    bhp = perf.get("buy_hour_perf", [])
-    weak_hours = [h for h in bhp
-                  if h.get("win_rate", 0) < B4_WEAK_WIN_RATE
-                  and h.get("trades", 0) >= B4_HOUR_MIN_TRADES]
-    for h in weak_hours[:2]:
-        recs.append({
-            "type":   "hour_avoid",
-            "level":  "low",
-            "title":  f"⏰ {h['bucket']} 매수 회차 검토",
-            "reason": f"승률 {h['win_rate']:.0f}% ({h['trades']}건) — 평균 손익 {h.get('avg_pnl', 0):+.1f}%",
-            "bucket": h["bucket"],
-        })
-
-    # 4) 보유일 권장 (특정 보유일이 다른 것보다 현저히 낮으면)
-    hp = perf.get("hold_perf", [])
-    if len(hp) >= 2:
-        worst = min(hp, key=lambda x: x.get("win_rate", 0))
-        best  = max(hp, key=lambda x: x.get("win_rate", 0))
-        if worst != best and worst.get("trades", 0) >= 3:
-            wr_gap = best.get("win_rate", 0) - worst.get("win_rate", 0)
-            if wr_gap >= B4_GAP_HIGH:
-                recs.append({
-                    "type":   "hold_days",
-                    "level":  "low",
-                    "title":  f"⏱️ 보유 {best['range']} 우수, {worst['range']} 부진",
-                    "reason": f"{best['range']} 승률 {best['win_rate']:.0f}% / {worst['range']} {worst['win_rate']:.0f}% (차이 {wr_gap:.0f}%p)",
-                })
-
-    base["recommendations"] = recs
-    return base
+    return _lrn_calc_weight_recommendations(SWING_SCORE_MIN)
 
 
 def _calc_bot_kospi_compare(days: int = 30) -> dict:
