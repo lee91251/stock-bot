@@ -64,6 +64,7 @@ from dashboard import (
     _make_b4_learning_card,
     _make_advisor_stats_card,
     _make_verify_card,
+    _make_today_summary,
     _make_compare_card,
     _make_performance_card,
     _make_trade_history_card,
@@ -3897,6 +3898,20 @@ def build_and_save_dashboard(
         learning_html = _make_b4_learning_card()
         # 검증부 게이트 통과율 (Phase 2 6단계 — shadow/enforce)
         verify_html = _make_verify_card()
+        # 오늘의 봇 한 줄 + 부서 상태등 (대시보드 3단계)
+        try:
+            _ts = _make_today_summary(risk)
+            today_line_html = _ts.get("line", "")
+            _lt = _ts.get("lights", {})
+        except Exception:
+            today_line_html = ""
+            _lt = {}
+        _lt_fin = _lt.get("finance", "")
+        _lt_ver = _lt.get("verify", "")
+        _lt_rec = _lt.get("recommend", "")
+        _lt_mkt = _lt.get("market", "")
+        _lt_lrn = _lt.get("learning", "")
+        _lt_alt = _lt.get("alert", "")
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -3974,11 +3989,12 @@ def build_and_save_dashboard(
 
 <!-- 🏠 요약 — 매일 첫 확인 (항상 표시) -->
 {hero_html}
+{today_line_html}
 {coach_html}
 
 <!-- 💰 재무부 — 내 돈·보유 현황 (펼침) -->
 <details class="dept" id="dept-finance" open>
-  <summary class="dept__summary">💰 재무부 <small>내 돈 · 3계좌 보유 · 자산 추이</small></summary>
+  <summary class="dept__summary">{_lt_fin} 💰 재무부 <small>내 돈 · 3계좌 보유 · 자산 추이</small></summary>
   {value_html}
   {paper_mirae_html}
   {auto_html}
@@ -3988,13 +4004,13 @@ def build_and_save_dashboard(
 
 <!-- 🛡️ 검증부 — 매수·매도 게이트 (펼침) -->
 <details class="dept" id="dept-verify" open>
-  <summary class="dept__summary">🛡️ 검증부 <small>매수·매도 게이트 통과율</small></summary>
+  <summary class="dept__summary">{_lt_ver} 🛡️ 검증부 <small>매수·매도 게이트 통과율</small></summary>
   {verify_html}
 </details>
 
 <!-- 📈 추천부 — 오늘의 매수 후보 (펼침, 가치투자자 → 장기 우선) -->
 <details class="dept" id="dept-recommend" open>
-  <summary class="dept__summary">📈 추천부 <small>장기 가치주 우선 · 스윙/단기</small></summary>
+  <summary class="dept__summary">{_lt_rec} 📈 추천부 <small>장기 가치주 우선 · 스윙/단기</small></summary>
   {long_term_html}
   {recommend_html}
   {short_term_html}
@@ -4005,7 +4021,7 @@ def build_and_save_dashboard(
 
 <!-- 🌐 시장정보부 — 시장·매크로·AI 판단 (접힘) -->
 <details class="dept" id="dept-market">
-  <summary class="dept__summary">🌐 시장정보부 <small>시장 · 매크로 · AI 종합 판단</small></summary>
+  <summary class="dept__summary">{_lt_mkt} 🌐 시장정보부 <small>시장 · 매크로 · AI 종합 판단</small></summary>
   {market_html}
   {macro_html}
   {ai_html}
@@ -4013,7 +4029,7 @@ def build_and_save_dashboard(
 
 <!-- 🧠 학습부 — 성적표·신뢰도·자가학습 (접힘) -->
 <details class="dept" id="dept-learning">
-  <summary class="dept__summary">🧠 학습부 <small>성적표 · AI신뢰도 · 자가학습 · 거래이력</small></summary>
+  <summary class="dept__summary">{_lt_lrn} 🧠 학습부 <small>성적표 · AI신뢰도 · 자가학습 · 거래이력</small></summary>
   {performance_html}
   {compare_html}
   {advisor_html}
@@ -4023,7 +4039,7 @@ def build_and_save_dashboard(
 
 <!-- 🔔 알림부 — 알림·공시 (접힘) -->
 <details class="dept" id="dept-alert">
-  <summary class="dept__summary">🔔 알림부 <small>최근 알림 · 공시</small></summary>
+  <summary class="dept__summary">{_lt_alt} 🔔 알림부 <small>최근 알림 · 공시</small></summary>
   {disclosures_html}
   {alerts_html}
 </details>

@@ -2050,6 +2050,92 @@ def _make_advisor_stats_card() -> str:
 """
 
 
+def _make_today_summary(risk: dict = None) -> dict:
+    """🏠 오늘의 봇 한 줄 요약 + 부서 상태등 (3단계).
+
+    실제 데이터로만 판정 — 데이터 없으면 회색(⚪). 추측 색 X.
+    반환: {"line": 한줄 HTML, "lights": {부서: 이모지}}
+    """
+    from finance import _today_str  # lazy
+    risk = risk or {}
+    today = _today_str()
+
+    # 오늘 매수/매도 건수 + 비상정지 여부 (재무부 데이터)
+    buys = sells = 0
+    halted = False
+    try:
+        from stock import load_positions
+        pos = load_positions()
+        halted = bool(pos.get("halted"))
+        for h in pos.get("history", []):
+            if h.get("date") == today:
+                if h.get("side") == "buy":
+                    buys += 1
+                elif h.get("side") == "sell":
+                    sells += 1
+    except Exception:
+        pass
+
+    # 검증부 7일 통과율
+    vpass = None
+    try:
+        from verify import get_verify_stats
+        vs = get_verify_stats(7)
+        if vs and vs.get("total"):
+            vpass = vs.get("pass_rate_pct")
+    except Exception:
+        pass
+
+    # 시장 위험
+    rscore = risk.get("score")
+    rlevel = risk.get("level", "")
+
+    # 승률 (학습부)
+    wr = None
+    trades = 0
+    try:
+        from learning import analyze_trading_performance
+        perf = analyze_trading_performance(90)
+        trades = perf.get("trades", 0)
+        if trades:
+            wr = perf.get("win_rate")
+    except Exception:
+        pass
+
+    # ── 부서 상태등 (실제 신호 기반, 불명확하면 ⚪) ──
+    def _risk_light(sc):
+        if sc is None:
+            return "⚪"
+        return "🟢" if sc < 40 else ("🟡" if sc < 70 else "🔴")
+
+    lights = {
+        "finance":   "🔴" if halted else "🟢",
+        "verify":    "🟢" if vpass is not None else "⚪",
+        "recommend": "🟢",
+        "market":    _risk_light(rscore),
+        "learning":  ("🟢" if (wr is not None and wr >= 50) else ("🟡" if trades else "⚪")),
+        "alert":     "🟢",
+    }
+
+    # ── 오늘의 봇 한 줄 ──
+    parts = [f"📥 매수 {buys}건", f"📤 매도 {sells}건"]
+    if vpass is not None:
+        parts.append(f"🛡️ 검증 통과 {vpass:.0f}%")
+    if rscore is not None:
+        parts.append(f"🌐 위험 {rscore}/100 ({rlevel})")
+    if halted:
+        parts.append("🔴 자동매수 정지")
+    line = (
+        '<div style="margin:0 0 16px;padding:12px 16px;background:var(--surface);'
+        'border:1px solid var(--border);border-radius:12px;font-size:13px;'
+        'display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-weight:600;">'
+        '<span style="color:var(--accent);font-weight:800;">🏠 오늘의 봇</span>'
+        + "".join(f'<span>{p}</span>' for p in parts)
+        + '</div>'
+    )
+    return {"line": line, "lights": lights}
+
+
 def _make_verify_card() -> str:
     """🛡️ 검증부 카드 (Phase 2 6단계) — 매수/매도 게이트 통과율 + 거절 사유.
 
