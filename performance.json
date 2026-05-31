@@ -3,6 +3,10 @@
     "2026-05": {
       "total": 0,
       "wins": 0
+    },
+    "2026-06": {
+      "total": 0,
+      "wins": 0
     }
   },
   "recommendations": [
@@ -904,6 +908,56 @@
       "price": 92800.0,
       "score": 98,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-01",
+      "month": "2026-06",
+      "ticker": "051900.KS",
+      "name": "LG생활건강",
+      "price": 247500.0,
+      "score": 117,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-01",
+      "month": "2026-06",
+      "ticker": "030200.KS",
+      "name": "KT",
+      "price": 52800.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-01",
+      "month": "2026-06",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 38900.0,
+      "score": 99,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-01",
+      "month": "2026-06",
+      "ticker": "138040.KS",
+      "name": "메리츠금융지주",
+      "price": 102900.0,
+      "score": 91,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-01",
+      "month": "2026-06",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 130600.0,
+      "score": 90,
+      "buy_signal": false,
       "result": null
     }
   ]
