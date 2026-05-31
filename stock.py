@@ -34,6 +34,12 @@ from finance import (
     _load_tomorrow_picks, _save_tomorrow_picks,  # 옛 이름 별칭
 )
 
+# 5/29 Phase 2 2단계: 검증부 (매수/매도 실행 직전 게이트)
+from verify import (
+    verify_buy, verify_sell,
+    log_verify_result, get_verify_stats,
+)
+
 # 5/29 Phase 2 3단계: 알림부 (텔레그램 OUT + 알림 센터)
 from notify import (
     tg_send, tg_send_document,
@@ -290,6 +296,11 @@ SWING_DAILY_TRADE_CAP    = 20          # 일일 매매 횟수 한도 (폭주 차
 # 환경변수 NEW_RULES_ENABLED=true 로 활성화 (기본 false — 검증 전 안전)
 NEW_RULES_ENABLED = os.environ.get("NEW_RULES_ENABLED", "false").lower() == "true"
 NEW_RULES_VOL_OVERHEAT_PCT = 500.0  # 거래량 평균 대비 N% 초과 시 과열로 차단
+
+# 6단계 검증부 의무화 — shadow(기록만) → enforce(실제 차단) 2단계
+# 기본 false=shadow: verify_buy/verify_sell 결과를 로그/통계로만 남기고 매매는 그대로.
+# 인라인 가드 판정과 검증부 판정이 일치하는지 모의로 확인 후 true로 enforce 전환.
+VERIFY_ENFORCE = os.environ.get("VERIFY_ENFORCE", "false").lower() == "true"
 
 # 비상정지 임계 (5/13 추가, 회장 부재 안전망)
 # 회장 결정 (4단계 검증부 체크리스트): 일일 -3% / MDD -15%
@@ -6277,6 +6288,36 @@ def run_auto_buy():
                 print(f"  [regime] {s['name']} 당일 +{today_change:.1f}% > 한도 +{chase_max}% "
                       f"({thresholds['label']}) — 추격매수 차단")
                 continue
+
+        # ── 6단계: 검증부 게이트 (shadow → enforce) ──
+        # 여기 도달 = 인라인 가드 전부 통과(=매수 승인). 검증부도 같은 판정인지 확인.
+        # shadow(기본): 결과 로그+통계만, 매수는 그대로. enforce: reject 시 실제 차단.
+        try:
+            _vreq = {
+                "code":           code,
+                "name":           s["name"],
+                "qty":            qty,
+                "price":          price,
+                "amount":         amt,
+                "score":          s.get("score", 0),
+                "sector":         s.get("sector", ""),
+                "curr_price":     price,
+                "day_change_pct": s.get("today_change", s.get("change_pct", 0)) or 0,
+                "market_risk":    risk.get("score", 0),
+            }
+            _vres = verify_buy(_vreq)
+            log_verify_result(_vreq, _vres, side="buy")
+            if not _vres.get("ok"):
+                _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
+                if VERIFY_ENFORCE:
+                    print(f"  [verify] {s['name']} 검증부 차단(enforce): {_vreasons}")
+                    continue
+                print(f"  [verify-shadow] {s['name']} 검증부 reject(인라인은 통과): {_vreasons}")
+            else:
+                print(f"  [verify-shadow] {s['name']} 검증부 통과")
+        except Exception as e:
+            # 검증부 오류가 매수를 막지 않도록 (shadow 안전) — enforce에서도 오류 시 통과
+            print(f"  [verify] 검증부 오류(매수 계속 진행): {e}")
 
         result = client.buy(code, qty)
         if result.get("ok"):
