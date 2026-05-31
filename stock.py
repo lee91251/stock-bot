@@ -3964,6 +3964,12 @@ def build_and_save_dashboard(
 .dept__summary small{{font-size:12px;font-weight:500;color:#9ca3af;}}
 .dept__summary::after{{content:"\\25be";margin-left:auto;font-size:14px;color:#9ca3af;transition:transform .2s;}}
 .dept[open] .dept__summary::after{{transform:rotate(180deg);}}
+.card-detail{{border-top:1px solid #dee2e6;}}
+.card-detail__summary{{cursor:pointer;padding:11px 20px;font-weight:700;font-size:13px;color:#2d6a9f;background:#f8f9fa;list-style:none;display:flex;align-items:center;gap:6px;}}
+.card-detail__summary::-webkit-details-marker{{display:none;}}
+.card-detail__summary::after{{content:"\\25be";margin-left:auto;color:#868e96;transition:transform .2s;}}
+.card-detail[open] .card-detail__summary::after{{transform:rotate(180deg);}}
+.card-detail[open] .card-detail__summary{{border-bottom:1px solid #dee2e6;}}
 </style>
 
 <!-- 🏠 요약 — 매일 첫 확인 (항상 표시) -->

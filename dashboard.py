@@ -498,6 +498,8 @@ def card_html(rank: int, s: dict, ai_insight: str = "", period_override: str | N
     </div>
   </div>
 
+  <details class="card-detail">
+  <summary class="card-detail__summary">📋 상세 분석 보기 — 지표·재무·매수 시뮬·전략</summary>
   <div style="padding:18px 20px;">
     <div style="margin-bottom:16px;">
       <div style="font-weight:700;font-size:15px;color:#1a3a5c;margin-bottom:8px;">이 종목을 추천하는 이유</div>
@@ -596,6 +598,7 @@ def card_html(rank: int, s: dict, ai_insight: str = "", period_override: str | N
 
     {dart_sig_html}
   </div>
+  </details>
 </div>"""
 
 
