@@ -6513,6 +6513,33 @@ def run_auto_sell():
         except Exception as e:
             print(f"  [자동매도] AI 의견 조회 오류: {e}")
 
+        # ── 6단계: 검증부 매도 게이트 (shadow → enforce) ──
+        # shadow(기본): 검증부 판정을 로그+통계로만 기록, 매도는 인라인 룰 그대로.
+        # enforce(VERIFY_ENFORCE=true): reject(미보유/수량초과/장시간 등) 시 매도 스킵.
+        # 주의: 손절/익절은 verify에서 reject가 아닌 warning이라 enforce여도 매도를 막지 않음.
+        try:
+            _vreq = {
+                "code":        code,
+                "name":        p.get("name", code),
+                "qty":         sell_qty,
+                "price":       cur_price,
+                "pct":         pct,
+                "sell_reason": sell_reason,
+            }
+            _vres = verify_sell(_vreq)
+            log_verify_result(_vreq, _vres, side="sell")
+            if not _vres.get("ok"):
+                _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
+                if VERIFY_ENFORCE:
+                    print(f"  [verify] {p.get('name','?')} 검증부 매도 차단(enforce): {_vreasons}")
+                    continue
+                print(f"  [verify-shadow] {p.get('name','?')} 검증부 매도 reject: {_vreasons}")
+            else:
+                print(f"  [verify-shadow] {p.get('name','?')} 검증부 매도 통과")
+        except Exception as e:
+            # 검증부 오류가 매도를 막지 않도록 (특히 손절 보호)
+            print(f"  [verify] 검증부 매도 오류(매도 계속 진행): {e}")
+
         # KIS API 호출 try/except로 감싸서 timeout 등 예외 시 다음 종목 진행 보장
         # (5/7 사고: 카카오뱅크 timeout 시 미래에셋 매도 commit이 누락됨 → race)
         try:
