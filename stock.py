@@ -91,6 +91,8 @@ from learning import (
     B4_GAP_HIGH, B4_WEAK_WIN_RATE, B4_STRONG_WIN_RATE,
     track_advisor_outcomes as _lrn_track_advisor_outcomes,  # 5차 (fetch_price 주입)
     AI_ADVISOR_OUTCOME_DAYS,
+    ai_sell_advisor as _lrn_ai_sell_advisor,  # 6차 (ai_complete 주입)
+    ai_trade_journal as _lrn_ai_trade_journal,  # 6차
     AI_ADVISOR_LOG, AI_ADVISOR_MIN_SAMPLES, AI_ADVISOR_MIN_ACCURACY,
 )
 
@@ -2228,6 +2230,27 @@ def _get_ai_client():
     return _ai_client
 
 
+def _ai_complete(prompt: str, max_tokens: int) -> str:
+    """단발 Claude 호출 (캐싱 system + 동적 날짜). 학습부 ai_complete 주입용.
+
+    client 없으면/예외면 "" 반환. 학습부(learning.py)는 이 콜백만 받아 Claude 무관.
+    """
+    client = _get_ai_client()
+    if not client:
+        return ""
+    try:
+        resp = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=max_tokens,
+            system=_ai_system_messages(),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp.content[0].text.strip()
+    except Exception as e:
+        print(f"  [AI] 호출 오류: {e}")
+        return ""
+
+
 def ai_market_summary(mood: dict, kr_top: list, us_top: list, fg: dict) -> str:
     """AI 시장 종합 판단 (오늘 사도 되는 시장인지)"""
     client = _get_ai_client()
@@ -2348,118 +2371,23 @@ def ai_us_macro_impact(macro: dict, mood: dict) -> str:
 
 
 def ai_sell_advisor(stock_info: dict, mood: dict, sell_reason: str, pct: float, days: int) -> str:
-    """매도 트리거 직전 AI 의견 조회 (참고용 — 자동 매도 룰은 그대로 진행).
+    """매도 트리거 직전 AI 의견 (학습부 위임). Claude 호출(_ai_complete)을 주입.
 
-    텔레그램 매도 알림에 1~2 문장 의견 추가. 1~2주 운영 후 신뢰도 검증되면
-    AI 의견을 자동 매도 결정에 반영하는 단계로 진화 가능.
-
-    Args:
-        stock_info: {"name", "code", "sector", "buy_price", "curr_price"}
-        mood: 시장 데이터 (kospi_chg, vix, fg_score)
-        sell_reason: "+6.5% 절반 익절", "-4.2% 손절" 등
-        pct: 손익률 %
-        days: 보유 거래일
-
-    Returns:
-        1~2 문장 의견 (빈 문자열이면 호출 실패).
+    프롬프트 구성 로직은 learning.py로 이관(6차). 여기선 client/model/system을 묶은
+    _ai_complete 콜백만 넘긴다 → 학습부는 Claude API 무관.
     """
-    client = _get_ai_client()
-    if not client:
-        return ""
-    try:
-        prompt = (
-            f"보유 종목: {stock_info.get('name', '?')} ({stock_info.get('sector', '')})\n"
-            f"매수가 {stock_info.get('buy_price', 0):,.0f}원 → 현재가 {stock_info.get('curr_price', 0):,.0f}원 ({pct:+.1f}%)\n"
-            f"보유: {days}거래일 / 매도 트리거: {sell_reason}\n\n"
-            f"시장 상황:\n"
-            f"- 코스피: {mood.get('kospi_chg', 0):+.2f}%\n"
-            f"- VIX: {mood.get('vix', 20):.1f}\n"
-            f"- 공포탐욕: {mood.get('fg_score', 50)}\n\n"
-            f"위 매도 트리거에 따라 자동 매도 예정. 시장 상황·손익·보유 기간 종합해서 "
-            f"매도가 적절한지 1~2문장으로 의견.\n"
-            f"형식: \"매도 적절 — 짧은 이유\" 또는 \"보류 검토 — 짧은 이유\""
-        )
-        resp = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=150,
-            system=_ai_system_messages(),
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text.strip()
-    except Exception as e:
-        print(f"  [AI 매도] 호출 오류: {e}")
-        return ""
+    return _lrn_ai_sell_advisor(stock_info, mood, sell_reason, pct, days, _ai_complete)
 
 
 def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
                       sell_reason: str, mood: dict,
                       past_journals: list = None) -> str:
-    """매도 후 AI 자동 회고 — '왜 이겼나/졌나' 1줄 일기.
+    """매도 후 AI 회고 일기 (학습부 위임). Claude 호출(_ai_complete)을 주입.
 
-    핵심: 과거 일기를 함께 전달 → AI가 패턴 학습 → 다음 매매 인사이트 누적.
-    거래 이력에 누적되어 사용자 + AI 둘 다 학습 자료로 활용.
-
-    Args:
-        stock_info: {"name", "sector", "buy_price", "curr_price", "buy_time", "sell_time"}
-        hold_days: 보유 거래일
-        pct: 수익률 %
-        sell_reason: 매도 사유 (예: "+6.0% 절반 익절")
-        mood: 시장 데이터 (kospi_chg, vix, fg_score)
-        past_journals: 최근 5건 일기 (AI 학습 컨텍스트용, [{name, pct, journal}, ...])
-
-    Returns:
-        1~2 문장 회고. 빈 문자열이면 호출 실패/AI 비활성.
+    프롬프트 구성 로직은 learning.py로 이관(6차). 호출부는 인자 그대로 사용.
     """
-    client = _get_ai_client()
-    if not client:
-        return ""
-    try:
-        # 과거 일기 컨텍스트 (학습 효과 — AI가 비슷한 패턴 떠올리며 통찰)
-        past_text = ""
-        if past_journals:
-            past_lines = []
-            for j in past_journals[:5]:
-                past_lines.append(
-                    f"  - {j.get('name', '')} {j.get('pct', 0):+.1f}% "
-                    f"({j.get('journal', '')[:60]})"
-                )
-            if past_lines:
-                past_text = "\n\n[최근 5건 매매 일기 — 패턴 참고]\n" + "\n".join(past_lines)
-
-        # 결과 분류
-        if pct >= 6.0:
-            outcome = "익절 성공"
-        elif pct <= -3.5:
-            outcome = "손절"
-        elif pct > 0:
-            outcome = "소폭 수익"
-        else:
-            outcome = "소폭 손실"
-
-        prompt = (
-            f"[방금 매도한 매매 데이터]\n"
-            f"종목: {stock_info.get('name', '?')} ({stock_info.get('sector', '')})\n"
-            f"매수가 {stock_info.get('buy_price', 0):,.0f}원 ({stock_info.get('buy_time', '')}) → "
-            f"매도가 {stock_info.get('curr_price', 0):,.0f}원 ({stock_info.get('sell_time', '')})\n"
-            f"수익률: {pct:+.2f}% ({outcome}) / 보유 {hold_days}거래일 / {sell_reason}\n\n"
-            f"[당시 시장]\n"
-            f"코스피 {mood.get('kospi_chg', 0):+.2f}% / VIX {mood.get('vix', 20):.1f} / "
-            f"공포탐욕 {mood.get('fg_score', 50)}\n"
-            f"{past_text}\n\n"
-            f"위 매매를 1~2문장으로 회고하세요. 핵심: '무엇이 잘 됐고/잘못됐나'를 짚고, "
-            f"가능하면 과거 일기와 연결해 패턴 발견.\n"
-            f"형식: '✅ 잘된 점 — 핵심' 또는 '⚠️ 아쉬운 점 — 핵심'"
-        )
-        resp = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=200,
-            system=_ai_system_messages(),
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text.strip()
-    except Exception as e:
-        print(f"  [AI 일기] 호출 오류: {e}")
-        return ""
+    return _lrn_ai_trade_journal(stock_info, hold_days, pct, sell_reason, mood,
+                                 _ai_complete, past_journals)
 
 
 def track_advisor_outcomes() -> int:
