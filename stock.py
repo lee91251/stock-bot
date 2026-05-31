@@ -3956,42 +3956,71 @@ def build_and_save_dashboard(
 <div class="app">
 {sidebar_html}
 <main class="main">
-<!-- 5/29 대시보드 재정리 — 정보 계층 명확 + 중복 제거 -->
-<!-- ① 매일 첫 확인: 자산 + 손익 + 코치 한 줄 -->
+<!-- 5/31 대시보드 부서별 재편 — 코드 구조(부서 분리)와 화면 일치 + 핵심만 펼침 -->
+<style>
+.dept{{margin:16px 0;border-top:2px solid rgba(124,58,237,.22);}}
+.dept__summary{{cursor:pointer;font-size:17px;font-weight:800;padding:13px 4px;color:#7c3aed;list-style:none;display:flex;align-items:center;gap:8px;}}
+.dept__summary::-webkit-details-marker{{display:none;}}
+.dept__summary small{{font-size:12px;font-weight:500;color:#9ca3af;}}
+.dept__summary::after{{content:"\\25be";margin-left:auto;font-size:14px;color:#9ca3af;transition:transform .2s;}}
+.dept[open] .dept__summary::after{{transform:rotate(180deg);}}
+</style>
+
+<!-- 🏠 요약 — 매일 첫 확인 (항상 표시) -->
 {hero_html}
 {coach_html}
 
-<!-- ② 오늘 매수 후보 (4트랙 추천) — 회장 결정 우선 -->
-{recommend_html}
-{short_term_html}
-{mid_term_html}
-{long_term_html}
-{tomorrow_html}
+<!-- 💰 재무부 — 내 돈·보유 현황 (펼침) -->
+<details class="dept" id="dept-finance" open>
+  <summary class="dept__summary">💰 재무부 <small>내 돈 · 3계좌 보유 · 자산 추이</small></summary>
+  {value_html}
+  {paper_mirae_html}
+  {auto_html}
+  {allocation_html}
+  {history_html}
+</details>
 
-<!-- ③ 보유 종목 현황 -->
-{value_html}
-{paper_mirae_html}
-{auto_html}
-{allocation_html}
+<!-- 🛡️ 검증부 — 매수·매도 게이트 (펼침) -->
+<details class="dept" id="dept-verify" open>
+  <summary class="dept__summary">🛡️ 검증부 <small>매수·매도 게이트 통과율</small></summary>
+  {verify_html}
+</details>
 
-<!-- ④ 봇 성적표 + 시장 환경 -->
-{performance_html}
-{compare_html}
-{history_html}
-{market_html}
-{macro_html}
+<!-- 📈 추천부 — 오늘의 매수 후보 (펼침, 가치투자자 → 장기 우선) -->
+<details class="dept" id="dept-recommend" open>
+  <summary class="dept__summary">📈 추천부 <small>장기 가치주 우선 · 스윙/단기</small></summary>
+  {long_term_html}
+  {recommend_html}
+  {short_term_html}
+  {mid_term_html}
+  {tomorrow_html}
+  {avoid_html}
+</details>
 
-<!-- ⑤ AI 분석 + 공시 통합 (중복 제거: dart_html은 alerts_html에 흡수, disclosures_html이 메인 공시) -->
-{ai_html}
-{disclosures_html}
-{alerts_html}
+<!-- 🌐 시장정보부 — 시장·매크로·AI 판단 (접힘) -->
+<details class="dept" id="dept-market">
+  <summary class="dept__summary">🌐 시장정보부 <small>시장 · 매크로 · AI 종합 판단</small></summary>
+  {market_html}
+  {macro_html}
+  {ai_html}
+</details>
 
-<!-- ⑥ 부수 정보 + 경고 -->
-{avoid_html}
-{verify_html}
-{advisor_html}
-{learning_html}
-{trades_html}
+<!-- 🧠 학습부 — 성적표·신뢰도·자가학습 (접힘) -->
+<details class="dept" id="dept-learning">
+  <summary class="dept__summary">🧠 학습부 <small>성적표 · AI신뢰도 · 자가학습 · 거래이력</small></summary>
+  {performance_html}
+  {compare_html}
+  {advisor_html}
+  {learning_html}
+  {trades_html}
+</details>
+
+<!-- 🔔 알림부 — 알림·공시 (접힘) -->
+<details class="dept" id="dept-alert">
+  <summary class="dept__summary">🔔 알림부 <small>최근 알림 · 공시</small></summary>
+  {disclosures_html}
+  {alerts_html}
+</details>
 <div class="footer">
   ⚠️ 본 대시보드는 자동 분석된 참고 정보입니다. 최종 투자 판단은 본인이 직접 하세요.<br>
   투자 손익의 책임은 전적으로 투자자 본인에게 있으며 어떤 수익도 보장하지 않습니다.<br>

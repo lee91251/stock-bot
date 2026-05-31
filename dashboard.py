@@ -1163,9 +1163,12 @@ details > summary:hover {
     window.addEventListener('scroll', setActive, { passive: true });
     setActive();
 
-    // 사이드바 링크 클릭 시 모바일에서 사이드바 닫기
+    // 사이드바 링크 클릭 시: 접힌 부서(details) 펼치기 + 모바일 사이드바 닫기
     links.forEach(function (l) {
       l.addEventListener('click', function () {
+        var t = l.getAttribute('data-target');
+        var tgt = t ? document.getElementById(t) : null;
+        if (tgt && tgt.tagName === 'DETAILS') tgt.open = true;
         if (window.innerWidth <= 900 && sidebar) {
           sidebar.classList.remove('is-open');
           if (backdrop) backdrop.classList.remove('is-open');
@@ -3055,38 +3058,20 @@ def _make_hero_header(today: str, time_str: str, mood: dict, fg: dict,
 
 
 def _make_sidebar(sections_status: dict, last_update: str) -> str:
-    """좌측 사이드바 — 섹션 네비게이션 (활성/비활성 표시)."""
-    # 카드 그룹별 정렬 (대시보드 카드 순서와 일치)
+    """좌측 사이드바 — 부서별 네비게이션 (5/31 부서 재편).
+
+    화면이 부서별 <details> 섹션으로 묶여 있어 사이드바도 부서 단위로 이동.
+    클릭 시 접힌 부서는 JS가 자동으로 펼침 (dashboard JS).
+    """
+    # 부서 단위 네비 (각 부서 <details id="dept-..."> 앵커로 이동)
     items = [
-        ("overview", "🏠", "개요", True),
-        # [요약]
-        ("coach",       "🦾", "AI 비서",       sections_status.get("coach", False)),
-        ("history",     "📈", "자산 추이",     sections_status.get("history", False)),
-        ("allocation",  "📊", "자산 배분",     sections_status.get("allocation", False)),
-        # [내 계좌]
-        ("value",        "💼", "가치주(1번)",       sections_status.get("value", False)),
-        ("paper-mirae",  "🧪", "모의 검증(2번)",    True),
-        ("auto",         "🤖", "자동매매(3번)",     sections_status.get("auto", False)),
-        # [매매·학습·추천]
-        ("trades",      "📜", "거래 이력",      True),
-        ("performance", "📈", "봇 성적표",      True),
-        ("compare",     "📊", "봇 vs 코스피",   True),
-        ("advisor",     "🤖", "AI 신뢰도",      True),
-        ("learning",    "🧠", "자가학습",       True),
-        ("tomorrow",    "🎯", "사전 후보",      True),
-        ("recommend",   "🚀", "스윙 (1~5일)",   sections_status.get("recommend", False)),
-        ("short-term",  "📈", "단기 (1~3주)",   True),
-        ("mid-term",    "📊", "중기 (1~3개월)", True),
-        ("long-term",   "💎", "장기 (가치주)",  True),
-        ("avoid",       "🚫", "회피",          sections_status.get("avoid", False)),
-        # [시장]
-        ("market",      "🌏", "시장",          sections_status.get("market", False)),
-        ("macro",       "📈", "매크로",        sections_status.get("macro", False)),
-        ("ai",          "🤖", "AI 분석",       sections_status.get("ai", False)),
-        # [공시·알림]
-        ("alerts",      "📢", "최근 알림",      True),
-        ("dart",        "🚨", "DART",          sections_status.get("dart", False)),
-        ("disclosures", "📰", "공시 목록",      sections_status.get("disclosures", False)),
+        ("overview",       "🏠", "요약",       True),
+        ("dept-finance",   "💰", "재무부",     True),
+        ("dept-verify",    "🛡️", "검증부",     True),
+        ("dept-recommend", "📈", "추천부",     True),
+        ("dept-market",    "🌐", "시장정보부", True),
+        ("dept-learning",  "🧠", "학습부",     True),
+        ("dept-alert",     "🔔", "알림부",     True),
     ]
     badge_html = '<span class="sidebar__link-badge">대기</span>'
     links = []
