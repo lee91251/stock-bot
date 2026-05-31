@@ -63,6 +63,7 @@ from dashboard import (
     _make_paper_mirae_section,
     _make_b4_learning_card,
     _make_advisor_stats_card,
+    _make_verify_card,
     _make_compare_card,
     _make_performance_card,
     _make_trade_history_card,
@@ -3894,6 +3895,8 @@ def build_and_save_dashboard(
         advisor_html = _make_advisor_stats_card()
         # 자가학습 가중치 권장 (#5 — B4)
         learning_html = _make_b4_learning_card()
+        # 검증부 게이트 통과율 (Phase 2 6단계 — shadow/enforce)
+        verify_html = _make_verify_card()
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -3985,6 +3988,7 @@ def build_and_save_dashboard(
 
 <!-- ⑥ 부수 정보 + 경고 -->
 {avoid_html}
+{verify_html}
 {advisor_html}
 {learning_html}
 {trades_html}

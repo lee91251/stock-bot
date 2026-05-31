@@ -403,6 +403,17 @@ def get_verify_stats(window_days: int = 7) -> dict:
                 reject_counts[gate] = reject_counts.get(gate, 0) + 1
         top_rejects = sorted(reject_counts.items(), key=lambda x: -x[1])[:5]
 
+        # 매수/매도 구분 집계 (shadow 분석용)
+        def _side_stat(side: str) -> dict:
+            sub = [e for e in recent if e.get("side") == side]
+            sp = sum(1 for e in sub if e.get("ok"))
+            return {
+                "total": len(sub),
+                "passed": sp,
+                "rejected": len(sub) - sp,
+                "pass_rate_pct": round(sp / len(sub) * 100, 1) if sub else 0,
+            }
+
         return {
             "window_days": window_days,
             "total": total,
@@ -410,6 +421,8 @@ def get_verify_stats(window_days: int = 7) -> dict:
             "rejected": rejected,
             "pass_rate_pct": round(passed / total * 100, 1) if total else 0,
             "top_rejects": top_rejects,
+            "buy": _side_stat("buy"),
+            "sell": _side_stat("sell"),
         }
     except Exception:
         return {}

@@ -2044,6 +2044,87 @@ def _make_advisor_stats_card() -> str:
 """
 
 
+def _make_verify_card() -> str:
+    """🛡️ 검증부 카드 (Phase 2 6단계) — 매수/매도 게이트 통과율 + 거절 사유.
+
+    shadow 모드: 검증부가 인라인 가드와 별도로 내린 판정을 집계해서 보여줌.
+    enforce 모드: 실제 차단 중임을 표시. 데이터 없으면 누적 중 안내.
+    """
+    from verify import get_verify_stats  # lazy: 순환 import 회피
+    try:
+        from stock import VERIFY_ENFORCE  # lazy
+    except Exception:
+        VERIFY_ENFORCE = False
+
+    stats = get_verify_stats(window_days=7)
+    total = stats.get("total", 0)
+
+    mode_badge = "🔴 enforce(실제 차단)" if VERIFY_ENFORCE else "🟡 shadow(기록만)"
+
+    if not stats or total == 0:
+        return _empty_section(
+            "verify", "🛡️", "section__icon--auto", "검증부 게이트",
+            mode_badge, "데이터 누적 중",
+            "다음 평일 자동매수·매도 때 검증부 판정이 쌓입니다. "
+            "shadow 모드라 실제 매매는 인라인 룰 그대로 — 판정만 기록.",
+        )
+
+    passed     = stats.get("passed", 0)
+    rejected   = stats.get("rejected", 0)
+    pass_rate  = stats.get("pass_rate_pct", 0)
+    top_rejects = stats.get("top_rejects", [])
+    buy        = stats.get("buy", {})
+    sell       = stats.get("sell", {})
+    window     = stats.get("window_days", 7)
+
+    rate_color = "#16a34a" if pass_rate >= 80 else ("#d97706" if pass_rate >= 50 else "#dc2626")
+
+    # 거절 사유 TOP
+    if top_rejects:
+        reject_lines = " · ".join(f"{gate} {cnt}건" for gate, cnt in top_rejects)
+    else:
+        reject_lines = "거절 0건 (전부 통과)"
+
+    return f"""
+<section class="section" id="verify">
+  <div class="section__head">
+    <div class="section__title">
+      <span class="section__icon section__icon--auto">🛡️</span>
+      <h2>검증부 게이트</h2>
+      <span class="section__badge">{mode_badge}</span>
+    </div>
+    <div class="section__subtitle">
+      <div class="section__amount" style="color:{rate_color}">통과율 {pass_rate:.0f}%</div>
+      <div>최근 {window}일 · {passed}통과 / {rejected}거절</div>
+    </div>
+  </div>
+  <div class="section__body">
+    <div style="padding:10px">
+      <div class="row">
+        <div class="row__main">
+          <div class="row__name">📥 매수 게이트(15) / 📤 매도 게이트(8)</div>
+          <div class="row__sub">
+            매수: {buy.get('passed',0)}/{buy.get('total',0)} 통과 ({buy.get('pass_rate_pct',0):.0f}%)
+            · 매도: {sell.get('passed',0)}/{sell.get('total',0)} 통과 ({sell.get('pass_rate_pct',0):.0f}%)
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row__main">
+          <div class="row__name">🚫 거절 사유 TOP</div>
+          <div class="row__sub">{reject_lines}</div>
+        </div>
+      </div>
+      <div style="background:#fef9c3;border:1px solid #d97706;padding:10px;border-radius:8px;margin-top:10px;font-size:13px">
+        ℹ️ <b>{mode_badge}</b> — shadow는 검증부 판정을 기록만 하고 매매는 인라인 룰대로 진행합니다.
+        판정이 인라인과 일치하는지 확인 후 enforce(실제 차단)로 전환합니다.
+      </div>
+    </div>
+  </div>
+</section>
+"""
+
+
 def _make_compare_card(compare_data: dict) -> str:
     """봇 vs 코스피 비교 카드 (#3) — Chart.js 라인 차트 + 초과수익 시각화."""
     if not compare_data or not compare_data.get("bot_pct"):
