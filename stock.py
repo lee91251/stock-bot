@@ -89,6 +89,8 @@ from learning import (
     calc_weight_recommendations as _lrn_calc_weight_recommendations,  # 4차 (swing_score_min 주입)
     B4_MIN_SAMPLES, B4_SECTOR_MIN_TRADES, B4_HOUR_MIN_TRADES,
     B4_GAP_HIGH, B4_WEAK_WIN_RATE, B4_STRONG_WIN_RATE,
+    track_advisor_outcomes as _lrn_track_advisor_outcomes,  # 5차 (fetch_price 주입)
+    AI_ADVISOR_OUTCOME_DAYS,
     AI_ADVISOR_LOG, AI_ADVISOR_MIN_SAMPLES, AI_ADVISOR_MIN_ACCURACY,
 )
 
@@ -227,9 +229,8 @@ MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
 ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
-# AI 매도 어드바이저 v2 (B1 → 신뢰도 검증 → 자동 결정 반영)
-# AI_ADVISOR_LOG / MIN_SAMPLES / MIN_ACCURACY → learning.py (5단계 학습부)
-AI_ADVISOR_OUTCOME_DAYS  = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가 (track_advisor_outcomes 잔류용)
+# AI 매도 어드바이저 v2 (B1) 상수 → learning.py (학습부). 위 from learning import로 재참조.
+# (AI_ADVISOR_LOG / MIN_SAMPLES / MIN_ACCURACY / OUTCOME_DAYS)
 
 # B4 자동 가중치 튜닝 상수 (B4_*) → learning.py (4차 학습부). 위 from learning import로 재참조.
 
@@ -2462,62 +2463,16 @@ def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
 
 
 def track_advisor_outcomes() -> int:
-    """AI 어드바이저 로그의 5일 전 의견들 결과 추적 (정확도 평가).
+    """AI 어드바이저 5일 결과 추적 (학습부 위임). KIS 현재가 조회 콜백을 주입.
 
-    daily(08:00) 또는 close_summary에서 호출 → 5일 전 매도들의 현재가 비교.
-    Returns: 갱신된 건수
+    실제 로직은 learning.py로 이관(5차). KIS API(_kis)와 _safe_float에 의존하는
+    현재가 조회만 stock.py에서 클로저로 묶어 넘긴다 → 학습부는 KIS 무관.
     """
-    log = _load_advisor_log()
-    if not log:
-        return 0
+    def _fetch_price(code: str) -> float:
+        info = _kis.get_price(code) if _kis.available() else {}
+        return _safe_float(info.get("stck_prpr")) if info else 0
 
-    today = _now_kst()
-    cutoff = (today - timedelta(days=AI_ADVISOR_OUTCOME_DAYS)).strftime("%Y-%m-%d")
-    updated = 0
-
-    for entry in log:
-        if entry.get("ai_correct") is not None:
-            continue  # 이미 평가됨
-        entry_date = entry.get("date", "")
-        if entry_date > cutoff:
-            continue  # 5일 미만 — 아직 평가 X
-
-        try:
-            code = entry.get("code", "")
-            sell_price = entry.get("sell_price", 0)
-            if not code or sell_price <= 0:
-                continue
-
-            # 현재가 조회 (5일 후 가격)
-            info = _kis.get_price(code) if _kis.available() else {}
-            cur = _safe_float(info.get("stck_prpr")) if info else 0
-            if cur <= 0:
-                continue
-
-            outcome_pct = (cur - sell_price) / sell_price * 100
-            entry["outcome_price"] = round(cur)
-            entry["outcome_date"]  = today.strftime("%Y-%m-%d")
-            entry["outcome_pct"]   = round(outcome_pct, 2)
-
-            # AI 정확도 판정
-            #   "hold" (보류) → 5일 후 +1% 이상이면 정확 (안 팔길 잘했다)
-            #   "sell" (매도) → 5일 후 -1% 이상 하락이면 정확 (잘 팔았다)
-            cls = entry.get("opinion_class", "neutral")
-            if cls == "hold":
-                entry["ai_correct"] = outcome_pct >= 1.0
-            elif cls == "sell":
-                entry["ai_correct"] = outcome_pct <= -1.0
-            else:
-                entry["ai_correct"] = abs(outcome_pct) < 1.0  # neutral은 정체일 때 맞음
-            updated += 1
-        except Exception as e:
-            print(f"  [advisor] 결과 추적 오류 ({entry.get('name', '?')}): {e}")
-
-    if updated > 0:
-        _save_advisor_log(log)
-        print(f"  [advisor] {updated}건 결과 평가 완료")
-
-    return updated
+    return _lrn_track_advisor_outcomes(_fetch_price)
 
 
 # ════════════════════════════════════════════════

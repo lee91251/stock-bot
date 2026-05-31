@@ -13,9 +13,9 @@ finance.py에만 단방향 의존 (순환 import 없음).
   - _load_portfolio_history / _calc_mdd_from_portfolio (2차)
   - analyze_trading_performance (3차, B3 성적표)
   - calc_weight_recommendations (4차, B4 자가학습 — swing_score_min 주입형)
+  - track_advisor_outcomes (5차, fetch_price 콜백 주입 — KIS 의존 분리)
 
 stock.py 잔류 (다음 차수 대상):
-  - track_advisor_outcomes (_kis 의존)
   - ai_sell_advisor / ai_trade_journal (Claude API)
 """
 import os
@@ -28,6 +28,7 @@ from finance import load_positions, _now_kst, _today_str
 AI_ADVISOR_LOG          = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai_advisor_log.json")
 AI_ADVISOR_MIN_SAMPLES  = 30      # 최소 누적 건수 (이 미만이면 default 동작)
 AI_ADVISOR_MIN_ACCURACY = 0.6     # 자동 활성화 신뢰도 임계 (60%+)
+AI_ADVISOR_OUTCOME_DAYS = 5       # AI 의견 후 N일 가격 추적 → 정확도 평가
 
 # 자산 추이 파일 (MDD 계산용) — finance.py로 중앙화 예정
 PORTFOLIO_HISTORY       = os.path.join(os.path.dirname(os.path.abspath(__file__)), "portfolio_history.json")
@@ -562,3 +563,64 @@ def calc_weight_recommendations(swing_score_min: int) -> dict:
 
     base["recommendations"] = recs
     return base
+
+
+def track_advisor_outcomes(fetch_price) -> int:
+    """AI 어드바이저 로그의 5일 전 의견들 결과 추적 (정확도 평가).
+
+    daily(08:00) 또는 close_summary에서 호출 → 5일 전 매도들의 현재가 비교.
+
+    fetch_price: code(str) → 현재가(float, 조회 실패 시 0). stock.py가 _kis/_safe_float를
+                 묶어 주입 (KIS API 의존을 학습부 밖에 둠).
+    Returns: 갱신된 건수
+    """
+    log = _load_advisor_log()
+    if not log:
+        return 0
+
+    today = _now_kst()
+    cutoff = (today - timedelta(days=AI_ADVISOR_OUTCOME_DAYS)).strftime("%Y-%m-%d")
+    updated = 0
+
+    for entry in log:
+        if entry.get("ai_correct") is not None:
+            continue  # 이미 평가됨
+        entry_date = entry.get("date", "")
+        if entry_date > cutoff:
+            continue  # 5일 미만 — 아직 평가 X
+
+        try:
+            code = entry.get("code", "")
+            sell_price = entry.get("sell_price", 0)
+            if not code or sell_price <= 0:
+                continue
+
+            # 현재가 조회 (5일 후 가격) — 주입된 콜백 사용
+            cur = fetch_price(code) or 0
+            if cur <= 0:
+                continue
+
+            outcome_pct = (cur - sell_price) / sell_price * 100
+            entry["outcome_price"] = round(cur)
+            entry["outcome_date"]  = today.strftime("%Y-%m-%d")
+            entry["outcome_pct"]   = round(outcome_pct, 2)
+
+            # AI 정확도 판정
+            #   "hold" (보류) → 5일 후 +1% 이상이면 정확 (안 팔길 잘했다)
+            #   "sell" (매도) → 5일 후 -1% 이상 하락이면 정확 (잘 팔았다)
+            cls = entry.get("opinion_class", "neutral")
+            if cls == "hold":
+                entry["ai_correct"] = outcome_pct >= 1.0
+            elif cls == "sell":
+                entry["ai_correct"] = outcome_pct <= -1.0
+            else:
+                entry["ai_correct"] = abs(outcome_pct) < 1.0  # neutral은 정체일 때 맞음
+            updated += 1
+        except Exception as e:
+            print(f"  [advisor] 결과 추적 오류 ({entry.get('name', '?')}): {e}")
+
+    if updated > 0:
+        _save_advisor_log(log)
+        print(f"  [advisor] {updated}건 결과 평가 완료")
+
+    return updated
