@@ -70,5 +70,21 @@
     "emoji": "📰",
     "title": "DART 📰 GS건설 🏠",
     "detail": "투자판단관련주요경영사항              "
+  },
+  {
+    "time": "2026-06-01T13:46:34.903662+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "투자판단관련주요경영사항              "
+  },
+  {
+    "time": "2026-06-01T13:46:52.514536+09:00",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "💎 LG에너지솔루션 +9.09% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
   }
 ]
