@@ -14,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.3 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-06-01T09:11:43.400363+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 두산에너빌리티 🏠",
+    "detail": "기업지배구조보고서공시              "
   }
 ]
