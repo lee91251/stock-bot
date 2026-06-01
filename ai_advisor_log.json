@@ -193,5 +193,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-01",
+    "time": "10:11",
+    "code": "019550",
+    "name": "SBI인베스트먼트",
+    "sell_price": 1055.0,
+    "sell_pct": -10.59,
+    "ai_opinion": "**매도 적절** — 손절 기준(-10.6%) 정확히 도달했고, VIX 15.3·공포탐욕 60의 안정적 시장에서도 추가 반등 촉매가 불명확한 기타 섹터 소형주인 만큼 룰대로 손절 후 자금을 재배치하는 것이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
