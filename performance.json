@@ -959,6 +959,56 @@
       "score": 90,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-06-02",
+      "month": "2026-06",
+      "ticker": "298000.KS",
+      "name": "효성화학",
+      "price": 38900.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-02",
+      "month": "2026-06",
+      "ticker": "453340.KS",
+      "name": "현대그린푸드",
+      "price": 16250.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-02",
+      "month": "2026-06",
+      "ticker": "096760.KS",
+      "name": "JW홀딩스",
+      "price": 3670.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-02",
+      "month": "2026-06",
+      "ticker": "051500.KQ",
+      "name": "CJ프레시웨이",
+      "price": 22100.0,
+      "score": 109,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-02",
+      "month": "2026-06",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 735.0,
+      "score": 109,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
