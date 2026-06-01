@@ -114,10 +114,10 @@
     "ai_opinion": "**매도 적절** — 6거래일 강제 매도 룰 도달에 +9.0% 수익 중이며, VIX 16.6·공포탐욕 50의 중립 시장에서 추가 상승 모멘텀 근거가 부족하므로 규칙대로 익절이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 7220,
+    "outcome_date": "2026-06-01",
+    "outcome_pct": -18.23,
+    "ai_correct": true
   },
   {
     "date": "2026-05-26",
@@ -129,10 +129,10 @@
     "ai_opinion": "**매도 적절** — 6거래일 강제 매도 룰 도달, 수익률 +1.1%로 소폭 플러스 마감이며 VIX 16.6·공포탐욕 50의 중립 시장에서 특별한 추가 상승 모멘텀이 없으므로 룰대로 청산이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 9360,
+    "outcome_date": "2026-06-01",
+    "outcome_pct": -6.21,
+    "ai_correct": true
   },
   {
     "date": "2026-05-26",
@@ -144,10 +144,10 @@
     "ai_opinion": "**매도 적절** — 5거래일 룰 도달 + 수익률 +0.7%로 추가 상승 모멘텀이 약하고, 코스피 보합·중립적 시장 환경에서 기타 섹터 도시가스주의 단기 촉매가 없어 규칙대로 익절 마감이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 21100,
+    "outcome_date": "2026-06-01",
+    "outcome_pct": -7.25,
+    "ai_correct": true
   },
   {
     "date": "2026-05-28",
