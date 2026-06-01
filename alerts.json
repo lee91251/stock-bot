@@ -126,5 +126,21 @@
     "emoji": "📰",
     "title": "DART 📰 LG에너지솔루션 🏠",
     "detail": "기업지배구조보고서공시              "
+  },
+  {
+    "time": "2026-06-01T15:17:33.391086+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "대규모기업집단현황공시[연1회공시및1/4분기용(개별회사)]"
+  },
+  {
+    "time": "2026-06-01T15:17:33.391467+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "대규모기업집단현황공시[연1회(동일인용)]"
   }
 ]
