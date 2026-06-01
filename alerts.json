@@ -86,5 +86,21 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "💎 LG에너지솔루션 +9.09% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
+  },
+  {
+    "time": "2026-06-01T14:13:43.220792+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 HD한국조선해양 🏠",
+    "detail": "기업지배구조보고서공시              "
+  },
+  {
+    "time": "2026-06-01T14:13:43.221051+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한미사이언스 🏠",
+    "detail": "기업지배구조보고서공시              "
   }
 ]
