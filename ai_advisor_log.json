@@ -208,5 +208,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-01",
+    "time": "14:28",
+    "code": "032640",
+    "name": "LG유플러스",
+    "sell_price": 16030.0,
+    "sell_pct": -4.55,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 초과 이탈했고, 코스피 보합·VIX 안정(15.3)·공포탐욕 60의 리스크온 환경에서도 LG유플러스가 반등 모멘텀을 보이지 못한다면 손절 룰대로 즉시 매도하는 것이 적합합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
