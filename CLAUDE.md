@@ -40,69 +40,32 @@
 - `5/15 02:00 KST` cron-job.org marketscan 트리거 → 새 캐시 + 대시보드 + GitHub Pages 자동 갱신
 - 4트랙 백테스트: GitHub UI `workflow_dispatch` → `--backtest4track` 모드
 
-## 🚀 다음 세션 시작 시 가장 먼저 확인 (5/29 마지막)
+## 🚀 다음 세션 시작 시 가장 먼저 확인 (6/2 마지막)
 
-### 진행 중 작업
-- 🔄 **marketscan Run 26622326142** (5/29 15:38 KST 시작, 35분 timeout, 16:13쯤 종료 예상)
-  - 명령: `cd files && gh run view 26622326142 --json status,conclusion`
-  - 성공 시: 4트랙 종목 분포 분석 (스윙/단기/중기/장기 통과 종목 수)
-  - 실패 시: 로그 확인 + 추가 진단
-
-### 5/29 복귀 후 완료된 20 커밋 (시간순)
-| # | 커밋 | 영역 |
+### Phase 2 14부서 분리 — 6/2 진행도
+| 단계 | 파일/작업 | 진행도 |
 |---|---|---|
-| 1 | `7b31290` | 카카오게임즈 5/19 손매도 기록 |
-| 2 | `ed3b597`→`5bb5a51` | DART API + 순서 최적화 |
-| 3 | `8fb6027` | CLAUDE.md §0 복귀 갱신 |
-| 4 | `f7d5d9d` | 유연 보유 룰 (회장 통찰) |
-| 5 | `ef5b636` | 백테스트 유연 룰 적용 |
-| 6 | `4659b44` | 텔레그램 자동 매도 통보 |
-| 7 | `f2787b5` | 백테스트 'total' KeyError fix |
-| 8 | `66d4c07` | 대시보드 디자인 재정리 |
-| 9 | `f86c7c7` | 백테스트 키 매핑 fix |
-| 10 | `2422f81` | marketscan yfinance SIGALRM (영구 차단) |
-| 11 | `8e44e29` | 텔레그램 매도 입력 검증 강화 |
-| 12 | `6b599e0` | 카카오게임즈 *전량* 정정 (172주) |
-| 13 | `65e961b` | **Phase 2 1단계: 재무부 (finance.py)** |
-| 14 | `cd4430d` | **Phase 2 2단계: 검증부 (verify.py)** |
-| 15 | `10a8b2e` | **Phase 2 3단계: 알림부 (notify.py)** |
-| 16 | `d11f57b` | marketscan timeout 35분 |
-| 17 | `05dfa4e` | **Phase 2 4단계 1차: 대시보드부 (dashboard.py)** |
+| ✅ 1단계 | `finance.py` (재무부) | 100% |
+| ✅ 2단계 | `verify.py` (검증부, 게이트 15+8) | 100% |
+| ✅ 3단계 | `notify.py` (알림부) | 100% |
+| ✅ 4단계 | `dashboard.py` (대시보드부) | 100% (1~6차 완료) |
+| ✅ 5단계 | `learning.py` (학습부) | 100% (1~6차 완료) |
+| 🔄 6단계 | 매수부+매도부 verify 호출 의무화 | **shadow 연결 완료** (enforce 대기) |
+| ⏳ 7단계 | 본부장 (orchestrator, 단일 git push) | 대기 |
 
-### Phase 2 14부서 분리 — 5/29 진행도
-| 단계 | 파일 | 진행도 |
-|---|---|---|
-| ✅ 1단계 | `finance.py` | 100% (재무부) |
-| ✅ 2단계 | `verify.py` | 100% (게이트 15+8) |
-| ✅ 3단계 | `notify.py` | 100% (텔레그램 OUT) |
-| 🔄 4단계 | `dashboard.py` | **1/6차** (헬퍼+4트랙 카드+avoid) |
-| ⏳ 5단계 | (학습부) | 대기 |
-| ⏳ 6단계 | (매수부+매도부) | verify 호출 의무화 |
-| ⏳ 7단계 | (본부장) | 단일 git push |
-
-**4단계 점진 계획** (다음 세션):
-- 2차: `card_html` (400+줄) + `_make_recommend_card` + `_dashboard_css`
-- 3차: 보유 카드 (`_make_value/auto_positions/paper_mirae`)
-- 4차: 시장/AI/성적표 카드
-- 5차: `_make_sidebar`
-- 6차: `build_and_save_dashboard` (메인)
-
-### 5/29 영구 차단 사고 4건 (메모리 기록 완료)
-1. **텔레그램 매도 입력 오류** (`8e44e29`): 자연어 전량 키워드 + cross-check 답신
-2. **손익비 1:2.89 결함** (`f7d5d9d`): 유연 보유 룰 + 거래일 공휴일 정확
-3. **marketscan 무한 대기** (`2422f81`): yfinance SIGALRM 3초 + workflow 35분
-4. **백테스트 key 매핑 2단계 사고** (`f2787b5`+`f86c7c7`): total/cumulative_return_pct 매핑
-
-### 부재 기간 5/17~5/29 봇 결과
-- 자동매매: 매수 6건 / 매도 7건 / **승률 71%** / 손익비 1:2.89 / -39,220원
-- 가치주 모의: 카카오게임즈 -233,920원 (전량 손절)
-- 워크플로우 200건 / 성공 195 / 실패 0
-- **총 실현 손익: -273,140원**
+### 6/2 마지막 상태 (이번 세션 핵심)
+- ✅ **승률 개선 흑자전환** (`d6adfac`) — `_calc_swing_score`에 과매수 필터(RSI70+/거래량200%+ 제외). 백테스트 1/3/6개월 모두 개선, 6개월 연환산 ~+9% (은행이자 추월).
+- ✅ **학습부(learning.py) 1~6차 완성** — advisor 로그/성적표/B4자가학습/track_outcomes/AI일기 전부 이관. 매매값(SWING_SCORE_MIN)·KIS·Claude 의존은 콜백/인자 **주입**으로 분리, stock.py는 얇은 래퍼만.
+- ✅ **검증부 6단계 shadow** (`57e97bd`~`490dcb1`) — `run_auto_buy`/`run_auto_sell` 실행 직전 `verify_buy`/`verify_sell` 호출. `VERIFY_ENFORCE` 토글 **기본 false=shadow**(판정 기록만, 매매 무변경). 매수부는 4사분면 비교 위치(가드 앞). 검증부 대시보드 카드 추가.
+- ✅ **대시보드 부서별 재편 1~3단계** (`78ffe20`~`842194e`) — 화면을 부서 `<details>`로 묶음(재무/검증/추천 펼침, 시장/학습/알림 접힘) + 거대 종목카드 압축(상세 접기) + "오늘의 봇" 한 줄 + 부서 상태등 🟢🟡🔴. 사이드바도 부서 7개 네비.
 
 ### 다음 세션 권장 작업 순서
-1. **marketscan 결과 확인** (Run 26622326142) — 4트랙 종목 분포
-2. **Phase 2 4단계 2차** — `card_html` 이동 (1~2h)
-3. 또는 회장 결정 따라 다른 작업
+1. **평일 자동매매 로그 관찰** — verify_log.json / 대시보드 검증부 카드에서 "인라인 판정 = 검증부 판정" 일치 확인 (모의도 실전처럼)
+2. 일치 확인되면 **`VERIFY_ENFORCE=true` enforce 전환** (workflow env 또는 Secret)
+3. 그 후 매수부/매도부를 `buy.py`/`sell.py`로 모듈 분리 → 7단계 본부장
+- 메모리: `project_phase2_verify_enforce` + `project_phase2_learning_split` 참고
+
+🔖 **마지막 커밋**: `842194e` (대시보드 3단계: 오늘의 봇 + 부서 상태등)
 
 ## 🚨 5/15 영구 차단 사고 5건 + DART API 작업 예약 ⭐⭐⭐⭐⭐
 
