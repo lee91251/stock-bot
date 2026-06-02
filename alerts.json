@@ -1,85 +1,5 @@
 [
   {
-    "time": "2026-06-01T13:31:37.848264+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "투자판단관련주요경영사항              "
-  },
-  {
-    "time": "2026-06-01T13:46:34.903662+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "투자판단관련주요경영사항              "
-  },
-  {
-    "time": "2026-06-01T13:46:52.514536+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 LG에너지솔루션 +9.09% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-06-01T14:13:43.220792+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 HD한국조선해양 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
-    "time": "2026-06-01T14:13:43.221051+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한미사이언스 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
-    "time": "2026-06-01T14:28:30.715898+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
-    "time": "2026-06-01T14:31:41.933039+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 LG에너지솔루션 +9.45% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-06-01T14:47:31.858973+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 LG에너지솔루션 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
-    "time": "2026-06-01T15:17:33.391086+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "대규모기업집단현황공시[연1회공시및1/4분기용(개별회사)]"
-  },
-  {
-    "time": "2026-06-01T15:17:33.391467+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "대규모기업집단현황공시[연1회(동일인용)]"
-  },
-  {
     "time": "2026-06-02T06:00:56.991174+09:00",
     "category": "briefing",
     "level": "info",
@@ -118,5 +38,13 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-06-03T06:00:55.031449+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.13% / 나스닥 +0.03% / VIX 15.77 / 환율 1,517원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
