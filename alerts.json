@@ -1,45 +1,5 @@
 [
   {
-    "time": "2026-06-01T10:11:33.613638+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "대규모기업집단현황공시[연1회공시및1/4분기용(대표회사)]"
-  },
-  {
-    "time": "2026-06-01T10:11:33.613921+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
-    "time": "2026-06-01T11:01:38.393324+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
-    "time": "2026-06-01T11:31:38.796812+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-06-01T11:31:38.797132+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
     "time": "2026-06-01T13:31:37.848264+09:00",
     "category": "disclosure",
     "level": "info",
@@ -142,5 +102,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🔴 한미사이언스 -3.32% — 손절 임박 (기준 -4%, 자동 매도)"
+  },
+  {
+    "time": "2026-06-02T11:55:45.837215+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
