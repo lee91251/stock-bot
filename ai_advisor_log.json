@@ -223,5 +223,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-02",
+    "time": "09:01",
+    "code": "373220",
+    "name": "LG에너지솔루션",
+    "sell_price": 467000.0,
+    "sell_pct": 10.27,
+    "ai_opinion": "**매도 적절** — +10% 전량 익절 룰 정확히 충족했고, VIX 16·공포탐욕 중립(50)으로 추가 급등 모멘텀보다 룰 준수가 우선이며 3거래일 내 목표 달성은 전략대로 종료가 맞습니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
