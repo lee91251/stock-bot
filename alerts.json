@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-06-01T09:11:43.400363+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 두산에너빌리티 🏠",
-    "detail": "기업지배구조보고서공시              "
-  },
-  {
     "time": "2026-06-01T10:11:33.613638+09:00",
     "category": "disclosure",
     "level": "info",
@@ -142,5 +134,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.1 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-06-02T09:31:24.180913+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 한미사이언스 -3.32% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
