@@ -1,46 +1,23 @@
 {
-  "date": "2026-06-02",
-  "generated_at": "2026-06-01T15:44:50.997119",
+  "date": "2026-06-04",
+  "generated_at": "2026-06-02T15:44:10.411457",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "008930",
-      "name": "한미사이언스",
-      "sector": "헬스케어",
-      "score_bonus": 4,
-      "today_change": 4.41,
-      "today_vol_ratio": 254.0,
-      "today_score": 60,
+      "code": "073560",
+      "name": "우리손에프앤지",
+      "sector": "기타",
+      "score_bonus": 7,
+      "today_change": 6.61,
+      "today_vol_ratio": 283.0,
+      "today_score": 64,
       "reasons": [
-        "오늘 +4.4% 마감",
-        "거래량 평균 +254%",
-        "스윙점수 60"
+        "오늘 +6.6% 마감",
+        "거래량 평균 +283%",
+        "스윙점수 64"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 1,
-    "IT": 3,
-    "통신": 3,
-    "AI": 3,
-    "에너지": 3,
-    "정유": 3,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "자동차": -3,
-    "유통": -3
-  },
-  "us_etf_changes": {
-    "SOXX": 0.5,
-    "XLK": 2.48,
-    "XLF": -0.29,
-    "XLE": 1.79,
-    "XLV": -1.09,
-    "XLI": -0.42,
-    "XLB": -0.45,
-    "XLY": -2.22
-  },
-  "sector_updated_at": "2026-06-02T06:00:58.822737"
+  "sector_weights": {}
 }
