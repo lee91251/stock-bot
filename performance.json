@@ -1059,6 +1059,56 @@
       "score": 105,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-05",
+      "month": "2026-06",
+      "ticker": "298000.KS",
+      "name": "효성화학",
+      "price": 38900.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-05",
+      "month": "2026-06",
+      "ticker": "058860.KS",
+      "name": "KTis",
+      "price": 2610.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-05",
+      "month": "2026-06",
+      "ticker": "067160.KQ",
+      "name": "SOOP",
+      "price": 49250.0,
+      "score": 106,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-05",
+      "month": "2026-06",
+      "ticker": "215200.KQ",
+      "name": "메가스터디교육",
+      "price": 39000.0,
+      "score": 105,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-05",
+      "month": "2026-06",
+      "ticker": "096760.KS",
+      "name": "JW홀딩스",
+      "price": 3715.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
