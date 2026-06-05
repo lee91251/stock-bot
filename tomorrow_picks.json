@@ -1,49 +1,23 @@
 {
-  "date": "2026-06-04",
-  "generated_at": "2026-06-02T15:44:10.411457",
+  "date": "2026-06-08",
+  "generated_at": "2026-06-05T15:43:04.659603",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "073560",
-      "name": "우리손에프앤지",
-      "sector": "기타",
-      "score_bonus": 7,
-      "today_change": 6.61,
-      "today_vol_ratio": 283.0,
-      "today_score": 64,
+      "code": "403870",
+      "name": "HPSP",
+      "sector": "반도체",
+      "score_bonus": 6,
+      "today_change": 5.89,
+      "today_vol_ratio": 308.0,
+      "today_score": 56,
       "reasons": [
-        "오늘 +6.6% 마감",
-        "거래량 평균 +283%",
-        "스윙점수 64"
+        "오늘 +5.9% 마감",
+        "거래량 평균 +308%",
+        "스윙점수 56"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 2,
-    "통신": -1,
-    "AI": -1,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 1.76,
-    "XLK": -1.0,
-    "XLF": -1.15,
-    "XLE": 1.29,
-    "XLV": 0.79,
-    "XLI": -0.08,
-    "XLB": 0.21,
-    "XLY": -0.73
-  },
-  "sector_updated_at": "2026-06-04T06:01:08.798086"
+  "sector_weights": {}
 }
