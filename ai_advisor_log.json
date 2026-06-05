@@ -238,5 +238,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-05",
+    "time": "09:26",
+    "code": "008930",
+    "name": "한미사이언스",
+    "sell_price": 32200.0,
+    "sell_pct": -2.87,
+    "ai_opinion": "**매도 적절** — VIX 15.4·공포탐욕 60으로 시장 환경은 양호하나, 3거래일 보유 중 -2.9% 하락 추세가 지속되고 코스피 보합에서도 반등 모멘텀이 없어 룰대로 손절 청산이 타당합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
