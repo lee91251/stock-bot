@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-06-04T13:58:32.845276+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "정보보호현황(자율공시)              "
-  },
-  {
     "time": "2026-06-04T15:01:55.954641+09:00",
     "category": "imminent",
     "level": "danger",
@@ -54,5 +46,13 @@
     "emoji": "📰",
     "title": "DART 📰 한미약품 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-06-05T14:13:19.308937+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ DL이앤씨",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
