@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-06-04T12:46:37.991381+09:00",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 한미사이언스 -3.17% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
     "time": "2026-06-04T13:58:32.845276+09:00",
     "category": "disclosure",
     "level": "info",
@@ -53,6 +45,14 @@
     "level": "info",
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-06-05T13:46:21.555106+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한미약품 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
