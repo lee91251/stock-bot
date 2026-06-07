@@ -1,58 +1,10 @@
 [
   {
-    "time": "2026-06-04T15:01:55.954641+09:00",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 한미사이언스 -3.17% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-06-05T06:00:51.288824+09:00",
+    "time": "2026-06-08T06:00:52.956251+09:00",
     "category": "briefing",
-    "level": "info",
+    "level": "warning",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +0.41% / 나스닥 -0.09% / VIX 15.40 / 환율 1,533원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-06-05T08:50:50.546972+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.4 / 공포탐욕 60(탐욕)"
-  },
-  {
-    "time": "2026-06-05T11:12:03.200769+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-06-05T11:12:03.201074+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-06-05T13:46:21.555106+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한미약품 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-06-05T14:13:19.308937+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ DL이앤씨",
-    "detail": "단일판매ㆍ공급계약체결              "
+    "detail": "S&P -2.64% / 나스닥 -4.18% / VIX 21.51 / 환율 1,559원 · ⚠️ 미국 급락 — 오늘 코스피 동조 하락 주의. 신규 매수 자제."
   }
 ]
