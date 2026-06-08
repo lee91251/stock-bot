@@ -14,5 +14,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 21.5 / 공포탐욕 40(중립)"
+  },
+  {
+    "time": "2026-06-08T09:01:46.293396+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-06-08T09:01:46.293725+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 현대건설",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
