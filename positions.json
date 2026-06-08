@@ -532,7 +532,7 @@
   },
   "halted": false,
   "pending_cancel": false,
-  "last_risk_level": "안전",
+  "last_risk_level": "주의",
   "_algorithm_reset_date": "2026-05-13",
   "_algorithm_version": "v2_regime_adaptive"
 }
