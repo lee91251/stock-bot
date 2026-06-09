@@ -1209,6 +1209,56 @@
       "score": 110,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-10",
+      "month": "2026-06",
+      "ticker": "136490.KS",
+      "name": "선진",
+      "price": 9320.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-10",
+      "month": "2026-06",
+      "ticker": "298000.KS",
+      "name": "효성화학",
+      "price": 38900.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-10",
+      "month": "2026-06",
+      "ticker": "000540.KS",
+      "name": "흥국화재",
+      "price": 3630.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-10",
+      "month": "2026-06",
+      "ticker": "073240.KS",
+      "name": "금호타이어",
+      "price": 4655.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-10",
+      "month": "2026-06",
+      "ticker": "267290.KS",
+      "name": "경동도시가스",
+      "price": 19970.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
