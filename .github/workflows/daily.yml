@@ -254,6 +254,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           [ -f positions.json ] && git add positions.json || true
+          [ -f verify_log.json ] && git add verify_log.json || true
           [ -d docs ] && git add docs/ || true
           [ -f alerts.json ] && git add alerts.json || true
           [ -f ai_advisor_log.json ] && git add ai_advisor_log.json || true
@@ -301,6 +302,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           [ -f positions.json ] && git add positions.json || true
+          [ -f verify_log.json ] && git add verify_log.json || true
           [ -d docs ] && git add docs/ || true
           [ -f dart_seen.json ] && git add dart_seen.json || true
           [ -f alerts.json ] && git add alerts.json || true
