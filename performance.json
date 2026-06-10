@@ -1259,6 +1259,56 @@
       "score": 106,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-11",
+      "month": "2026-06",
+      "ticker": "298000.KS",
+      "name": "효성화학",
+      "price": 38900.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-11",
+      "month": "2026-06",
+      "ticker": "073240.KS",
+      "name": "금호타이어",
+      "price": 4585.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-11",
+      "month": "2026-06",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 36400.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-11",
+      "month": "2026-06",
+      "ticker": "136490.KS",
+      "name": "선진",
+      "price": 9170.0,
+      "score": 110,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-11",
+      "month": "2026-06",
+      "ticker": "007330.KQ",
+      "name": "푸른저축은행",
+      "price": 10070.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
