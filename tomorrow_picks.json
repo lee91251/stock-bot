@@ -1,52 +1,7 @@
 {
-  "date": "2026-06-08",
-  "generated_at": "2026-06-05T15:43:04.659603",
+  "date": "2026-06-11",
+  "generated_at": "2026-06-10T15:43:02.751981",
   "source_phase": "close_summary",
-  "picks": [
-    {
-      "code": "403870",
-      "name": "HPSP",
-      "sector": "반도체",
-      "score_bonus": 6,
-      "today_change": 5.89,
-      "today_vol_ratio": 308.0,
-      "today_score": 56,
-      "reasons": [
-        "오늘 +5.9% 마감",
-        "거래량 평균 +308%",
-        "스윙점수 56"
-      ],
-      "source": "close_summary"
-    }
-  ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -5,
-    "AI": -5,
-    "에너지": -3,
-    "정유": -3,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": -3,
-    "소재": -3,
-    "철강": -3,
-    "자동차": -3,
-    "유통": -3
-  },
-  "us_etf_changes": {
-    "SOXX": -10.44,
-    "XLK": -6.66,
-    "XLF": 0.21,
-    "XLE": -1.84,
-    "XLV": 0.61,
-    "XLI": -1.12,
-    "XLB": -1.92,
-    "XLY": -2.05
-  },
-  "sector_updated_at": "2026-06-08T06:00:54.228269"
+  "picks": [],
+  "sector_weights": {}
 }
