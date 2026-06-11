@@ -1,36 +1,143 @@
 {
-  "date": "2026-06-11",
-  "generated_at": "2026-06-10T15:43:02.751981",
+  "date": "2026-06-12",
+  "generated_at": "2026-06-11T15:42:41.092986",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -3,
-    "AI": -3,
-    "에너지": 3,
-    "정유": 3,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": -5,
-    "방산": -5,
-    "기계": -5,
-    "화학": -3,
-    "소재": -3,
-    "철강": -3,
-    "자동차": -3,
-    "유통": -3
-  },
-  "us_etf_changes": {
-    "SOXX": -3.67,
-    "XLK": -2.29,
-    "XLF": -0.44,
-    "XLE": 1.5,
-    "XLV": -1.11,
-    "XLI": -3.38,
-    "XLB": -2.3,
-    "XLY": -2.05
-  },
-  "sector_updated_at": "2026-06-11T06:00:57.554064"
+  "picks": [
+    {
+      "code": "041510",
+      "name": "에스엠",
+      "sector": "엔터",
+      "score_bonus": 10,
+      "today_change": 21.15,
+      "today_vol_ratio": 378.0,
+      "today_score": 71,
+      "reasons": [
+        "오늘 +21.1% 마감",
+        "거래량 평균 +378%",
+        "스윙점수 71"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "122870",
+      "name": "YG엔터테인먼트",
+      "sector": "엔터",
+      "score_bonus": 10,
+      "today_change": 10.01,
+      "today_vol_ratio": 213.0,
+      "today_score": 53,
+      "reasons": [
+        "오늘 +10.0% 마감",
+        "거래량 평균 +213%",
+        "스윙점수 53"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "214150",
+      "name": "클래시스",
+      "sector": "헬스케어",
+      "score_bonus": 8,
+      "today_change": 8.2,
+      "today_vol_ratio": 213.0,
+      "today_score": 51,
+      "reasons": [
+        "오늘 +8.2% 마감",
+        "거래량 평균 +213%",
+        "스윙점수 51"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "035900",
+      "name": "JYP Ent.",
+      "sector": "엔터",
+      "score_bonus": 6,
+      "today_change": 5.98,
+      "today_vol_ratio": 205.0,
+      "today_score": 53,
+      "reasons": [
+        "오늘 +6.0% 마감",
+        "거래량 평균 +205%",
+        "스윙점수 53"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "151860",
+      "name": "KG에코솔루션",
+      "sector": "기타",
+      "score_bonus": 5,
+      "today_change": 4.99,
+      "today_vol_ratio": 291.0,
+      "today_score": 53,
+      "reasons": [
+        "오늘 +5.0% 마감",
+        "거래량 평균 +291%",
+        "스윙점수 53"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "136480",
+      "name": "하림",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 3.6,
+      "today_vol_ratio": 763.0,
+      "today_score": 68,
+      "reasons": [
+        "오늘 +3.6% 마감",
+        "거래량 평균 +763%",
+        "스윙점수 68"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "036530",
+      "name": "SNT홀딩스",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 4.26,
+      "today_vol_ratio": 340.0,
+      "today_score": 62,
+      "reasons": [
+        "오늘 +4.3% 마감",
+        "거래량 평균 +340%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "403870",
+      "name": "HPSP",
+      "sector": "반도체",
+      "score_bonus": 4,
+      "today_change": 3.58,
+      "today_vol_ratio": 202.0,
+      "today_score": 52,
+      "reasons": [
+        "오늘 +3.6% 마감",
+        "거래량 평균 +202%",
+        "스윙점수 52"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "192400",
+      "name": "쿠쿠홀딩스",
+      "sector": "기타",
+      "score_bonus": 3,
+      "today_change": 3.38,
+      "today_vol_ratio": 270.0,
+      "today_score": 62,
+      "reasons": [
+        "오늘 +3.4% 마감",
+        "거래량 평균 +270%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
