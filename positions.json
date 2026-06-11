@@ -592,7 +592,7 @@
   },
   "halted": false,
   "pending_cancel": false,
-  "last_risk_level": "경계",
+  "last_risk_level": "위험",
   "_algorithm_reset_date": "2026-05-13",
   "_algorithm_version": "v2_regime_adaptive"
 }
