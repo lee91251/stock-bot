@@ -14,5 +14,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 22.2 / 공포탐욕 30(공포)"
+  },
+  {
+    "time": "2026-06-11T09:01:53.262154+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "효력발생안내( 2026.5.26. 제출 증권신고서(지분증권) )"
+  },
+  {
+    "time": "2026-06-11T09:01:53.262419+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "투자설명서"
   }
 ]
