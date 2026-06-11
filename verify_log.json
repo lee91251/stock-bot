@@ -36,5 +36,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-11T11:42:16.793580+09:00",
+    "side": "buy",
+    "code": "136480",
+    "name": "하림",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
