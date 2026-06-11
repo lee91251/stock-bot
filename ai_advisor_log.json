@@ -268,5 +268,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-11",
+    "time": "09:57",
+    "code": "194370",
+    "name": "제이에스코퍼레이션",
+    "sell_price": 11900.0,
+    "sell_pct": 6.34,
+    "ai_opinion": "**매도 적절** — +6.3%로 절반 익절 트리거 도달, VIX 22·공포탐욕 30으로 시장 심리 불안정한 상황에서 1거래일 만에 목표 수익 달성했으므로 규칙대로 절반 매도가 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
