@@ -117,5 +117,25 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-12T14:14:09.871545+09:00",
+    "side": "buy",
+    "code": "058470",
+    "name": "리노공업",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
+  },
+  {
+    "time": "2026-06-12T14:14:09.872599+09:00",
+    "side": "buy",
+    "code": "029780",
+    "name": "삼성카드",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

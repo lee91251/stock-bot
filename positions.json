@@ -13,6 +13,19 @@
       "sector": "기타",
       "order_no": "0000034087",
       "imminent_state": ""
+    },
+    "029780": {
+      "name": "삼성카드",
+      "qty": 39,
+      "buy_price": 50400.0,
+      "buy_date": "2026-06-12",
+      "buy_time": "14:14",
+      "buy_amount": 1965600.0,
+      "partial_sold": false,
+      "score": 89,
+      "swing_score": 65,
+      "sector": "기타",
+      "order_no": "0000034748"
     }
   },
   "history": [
@@ -481,6 +494,19 @@
       "profit": 63190,
       "ai_opinion": "**매도 적절** — +6.3%로 절반 익절 트리거 도달, VIX 22·공포탐욕 30으로 시장 심리 불안정한 상황에서 1거래일 만에 목표 수익 달성했으므로 규칙대로 절반 매도가 합리적입니다.",
       "journal": "✅ **잘된 점 — +6% 절반 익절 룰이 정확히 작동, 1거래일 단기 스윙 성공**\n\nSBI인베스트먼트(-10.6%) 등 기타 섹터 소형주에서 반복 대손절을 겪던 패턴을 깨고, 같은 기타 섹터에서 룰 기반 익절로 마무리한 점이 의미 있음 — 섹터 문제가 아니라 **진입 근거와 매도 규율**이 핵심임을 재확인."
+    },
+    {
+      "date": "2026-06-12",
+      "time": "14:14",
+      "side": "buy",
+      "code": "029780",
+      "name": "삼성카드",
+      "qty": 39,
+      "price": 50400.0,
+      "amount": 1965600.0,
+      "reason": "swing_score 65",
+      "sector": "기타",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -580,9 +606,9 @@
       "trade_count": 1
     },
     "2026-06-12": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 1965600.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
