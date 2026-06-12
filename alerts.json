@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-06-11T09:01:53.262154+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "효력발생안내( 2026.5.26. 제출 증권신고서(지분증권) )"
-  },
-  {
-    "time": "2026-06-11T09:01:53.262419+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "투자설명서"
-  },
-  {
     "time": "2026-06-11T09:24:55.803461+09:00",
     "category": "disclosure",
     "level": "info",
@@ -150,5 +134,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 19.4 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-06-12T09:02:50.053596+09:00",
+    "category": "risk",
+    "level": "info",
+    "emoji": "✅",
+    "title": "위험 등급 하락: 경계 → 안전",
+    "detail": "5/100 — 정상화 추세"
   }
 ]
