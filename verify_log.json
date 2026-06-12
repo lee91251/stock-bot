@@ -137,5 +137,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-12T14:28:53.898358+09:00",
+    "side": "buy",
+    "code": "058470",
+    "name": "리노공업",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]
