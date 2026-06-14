@@ -1359,6 +1359,56 @@
       "score": 105,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-06-15",
+      "month": "2026-06",
+      "ticker": "298000.KS",
+      "name": "효성화학",
+      "price": 38900.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-15",
+      "month": "2026-06",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 37650.0,
+      "score": 114,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-15",
+      "month": "2026-06",
+      "ticker": "016800.KS",
+      "name": "퍼시스",
+      "price": 26800.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-15",
+      "month": "2026-06",
+      "ticker": "215200.KQ",
+      "name": "메가스터디교육",
+      "price": 40400.0,
+      "score": 107,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-15",
+      "month": "2026-06",
+      "ticker": "000540.KS",
+      "name": "흥국화재",
+      "price": 3650.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
     }
   ]
 }
