@@ -1,74 +1,10 @@
 [
   {
-    "time": "2026-06-11T15:02:37.398236+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 종근당",
-    "detail": "신규시설투자등              "
-  },
-  {
-    "time": "2026-06-12T06:01:05.798911+09:00",
+    "time": "2026-06-15T06:01:03.651264+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +1.75% / 나스닥 +2.54% / VIX 19.44 / 환율 1,515원 · ✅ 미국 강세 — 오늘 코스피 상승 출발 예상. 관심 종목 체크."
-  },
-  {
-    "time": "2026-06-12T08:50:55.945071+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 19.4 / 공포탐욕 60(탐욕)"
-  },
-  {
-    "time": "2026-06-12T09:02:50.053596+09:00",
-    "category": "risk",
-    "level": "info",
-    "emoji": "✅",
-    "title": "위험 등급 하락: 경계 → 안전",
-    "detail": "5/100 — 정상화 추세"
-  },
-  {
-    "time": "2026-06-12T13:17:05.336723+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화솔루션 🏠",
-    "detail": "유상증자신주발행가액(안내공시)              "
-  },
-  {
-    "time": "2026-06-12T13:46:29.153326+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화솔루션 🏠",
-    "detail": "[기재정정]주요사항보고서(유상증자결정)"
-  },
-  {
-    "time": "2026-06-12T14:36:13.731613+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화",
-    "detail": "[기재정정]유상증자결정(종속회사의주요경영사항)              "
-  },
-  {
-    "time": "2026-06-12T14:46:36.668549+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "[발행조건확정]증권신고서(지분증권)"
-  },
-  {
-    "time": "2026-06-12T15:01:45.413746+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성카드 🏠",
-    "detail": "[기재정정]일괄신고서"
+    "detail": "S&P +0.50% / 나스닥 +0.31% / VIX 17.68 / 환율 1,518원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
