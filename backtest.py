@@ -155,6 +155,22 @@ BT_OVERBOUGHT_FILTER   = os.environ.get("BT_OVERBOUGHT_FILTER", "false").lower()
 BT_RSI_MAX             = float(os.environ.get("BT_RSI_MAX", "70"))    # 이 RSI 이상 매수 제외
 BT_VOL_RATIO_MAX       = float(os.environ.get("BT_VOL_RATIO_MAX", "200"))  # 이 거래량비율 이상 매수 제외
 
+# 6/9 대형주 돌파 포착 실험 (회장 아이디어) — 현재 스윙룰이 거르는 거래량 급증 돌파주를
+# *추가로* 매수 후보에 넣음(스윙트랙만, 가치주/장기 X). KR_STOCKS=대형/중형 큐레이션 풀이라
+# "대형주 돌파"에 해당. 추격매수가 통계적 불리 구간이라 반드시 baseline과 숫자 비교 후 채택.
+BT_BREAKOUT            = os.environ.get("BT_BREAKOUT", "false").lower() == "true"
+BT_BREAKOUT_VOL_MIN    = float(os.environ.get("BT_BREAKOUT_VOL_MIN", "200"))  # 거래량비율 이상 = 돌파 거래량
+BT_BREAKOUT_CHG_MIN    = float(os.environ.get("BT_BREAKOUT_CHG_MIN", "3"))    # 당일 등락률 이상 = 강세 돌파
+BT_BREAKOUT_RSI_MAX    = float(os.environ.get("BT_BREAKOUT_RSI_MAX", "80"))   # RSI 이 미만 (완전 과열 제외)
+# 정교화 (6/9): 질 필터 + 별도 슬롯
+BT_BREAKOUT_NEAR_HIGH  = float(os.environ.get("BT_BREAKOUT_NEAR_HIGH", "-8"))  # 52주 고점 대비 이 % 이상(=고점 근처 신고가 돌파만, 죽은고양이반등 제외)
+BT_BREAKOUT_RET1M_MIN  = float(os.environ.get("BT_BREAKOUT_RET1M_MIN", "0"))   # 1개월 수익률 이상(=하락추세 종목 제외)
+BT_BREAKOUT_SLOTS      = int(os.environ.get("BT_BREAKOUT_SLOTS", "2"))         # 돌파 전용 일일 슬롯(일반 슬롯과 분리 → 안 밀어냄)
+
+# 6/9 슬롯/보유일 실험 (회장 아이디어) — 스윙트랙만
+BT_MAX_DAILY_OVERRIDE  = int(os.environ.get("BT_MAX_DAILY_OVERRIDE", "0"))     # >0이면 스윙 일일 매수 슬롯 수 덮어씀(기본 5)
+BT_FORCE_HOLD_DAYS     = int(os.environ.get("BT_FORCE_HOLD_DAYS", "0"))        # >0이면 N일 후 무조건 매도(유연보유 연장 무시). 1=다음날 매도 후 재진입 가능
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -609,6 +625,9 @@ def simulate_track(track: str, months: int = 1) -> dict:
     score_buckets = {"<50": 0, "50-59": 0, "60-69": 0, "70-79": 0, "80+": 0}
 
     overbought_skips = 0   # 과매수 상한 필터로 제외된 매수 후보 수
+    breakout_signals = 0   # 대형주 돌파 포착 후보로 추가된 수
+    if BT_BREAKOUT and track == "swing":
+        print(f"  [대형주 돌파 ON] 거래량 {BT_BREAKOUT_VOL_MIN:.0f}%+ · 당일 +{BT_BREAKOUT_CHG_MIN:.0f}%+ · RSI<{BT_BREAKOUT_RSI_MAX:.0f} · MACD+ 돌파주 추가 포착")
     if BT_OVERHEAT_FILTER:
         print(f"  [과열필터 ON] 당일 +{BT_MAX_DAY_CHANGE_PCT:.0f}% 초과 또는 거래량 {BT_MAX_VOL_RATIO_PCT:.0f}% 초과 매수 제외")
     if BT_OVERBOUGHT_FILTER:
@@ -653,6 +672,11 @@ def simulate_track(track: str, months: int = 1) -> dict:
             elif pct >= cfg["target1_pct"] * 100 and not partial:
                 sell_qty = max(1, held_qty // 2)
                 reason = f"+{pct:.1f}% 절반 익절"
+            # 🟠 강제 보유일 (toggle): N일 후 무조건 매도 (다음날 재진입 가능). 손절/익절은 위에서 먼저 처리됨.
+            elif BT_FORCE_HOLD_DAYS and held_days >= BT_FORCE_HOLD_DAYS:
+                sell_qty = held_qty
+                reason = f"{BT_FORCE_HOLD_DAYS}일 보유 매도 ({pct:+.1f}%)"
+                is_loss = pct < 0
             # 🔴 NEW: 하락 빨리 청산 (3일+ -1% 미만)
             elif held_days >= quick_exit_days and pct < quick_exit_pct:
                 sell_qty = held_qty
@@ -695,6 +719,7 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 "net_pnl": round(net_pnl, 0), "held_days": held_days,
                 "reason": reason, "score": p.get("score", 0), "sector": p.get("sector", ""),
                 "feat": p.get("feat", {}),
+                "breakout": p.get("breakout", False),
             })
 
             if sell_qty == held_qty:
@@ -755,13 +780,48 @@ def simulate_track(track: str, months: int = 1) -> dict:
                     )},
                 })
 
+            # 6/9 대형주 돌파 포착 (toggle·스윙만) — 현재 룰이 거른 거래량 급증 강세돌파주 추가.
+            elif (BT_BREAKOUT and track == "swing" and not signal
+                  and code not in positions and code not in cooldown):
+                vr = features.get("vol_ratio", 0) or 0
+                chg = features.get("change_1d", 0) or 0
+                rsi_b = features.get("rsi", 50) or 50
+                mh = features.get("macd_hist", 0) or 0
+                pfh = features.get("pct_from_high", -100) or -100  # 52주 고점 대비 %
+                r1m = features.get("ret_1m", 0) or 0
+                if (vr >= BT_BREAKOUT_VOL_MIN and chg >= BT_BREAKOUT_CHG_MIN
+                        and rsi_b < BT_BREAKOUT_RSI_MAX and mh > 0
+                        and pfh >= BT_BREAKOUT_NEAR_HIGH       # 고점 근처 = 진짜 신고가 돌파
+                        and r1m >= BT_BREAKOUT_RET1M_MIN       # 하락추세 종목 제외
+                        and not features.get("manipulation_signal")):
+                    breakout_signals += 1
+                    candidates.append({
+                        "code": code, "name": d["name"], "sector": d["sector"],
+                        "score": 65 + min(15, chg),  # 돌파 강도 반영 (65~80)
+                        "reasons": [f"대형주 돌파(거래량 {vr:.0f}% / 당일 +{chg:.1f}%)"],
+                        "price": features["price"],
+                        "breakout": True,
+                        "feat": {k: features.get(k) for k in (
+                            "rsi", "bb_pct", "vol_ratio", "ret_1w", "ret_1m",
+                            "pct_from_high", "change_1d", "macd_hist", "near_support",
+                        )},
+                    })
+
         # 점수 높은 순 매수 (일일 한도: 트랙별 차등, 기본 5종목)
+        # 돌파주는 별도 슬롯(BT_BREAKOUT_SLOTS) — 일반주를 안 밀어냄
         candidates.sort(key=lambda c: -c["score"])
-        daily_buy_count = 0
+        normal_bought = 0
+        breakout_bought = 0
         max_daily = 5 if track == "swing" else 3 if track == "short_term" else 2
+        if BT_MAX_DAILY_OVERRIDE and track == "swing":
+            max_daily = BT_MAX_DAILY_OVERRIDE
         for c in candidates:
-            if daily_buy_count >= max_daily:
-                break
+            is_brk = c.get("breakout", False)
+            if is_brk:
+                if breakout_bought >= BT_BREAKOUT_SLOTS:
+                    continue
+            elif normal_bought >= max_daily:
+                continue
             # 다음 영업일 시초가로 매수
             next_idx = di + 1
             if next_idx >= len(sim_dates):
@@ -782,8 +842,12 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 "buy_price": buy_price, "buy_date": next_day.strftime("%Y-%m-%d"),
                 "score": c["score"], "sector": c["sector"],
                 "feat": c.get("feat", {}),
+                "breakout": c.get("breakout", False),
             }
-            daily_buy_count += 1
+            if is_brk:
+                breakout_bought += 1
+            else:
+                normal_bought += 1
 
         # 일별 자산
         holdings_value = sum(
@@ -807,6 +871,16 @@ def simulate_track(track: str, months: int = 1) -> dict:
     # 5/29 갭다운 실험 지표
     metrics["overheat_skips"] = overheat_skips
     metrics["overbought_skips"] = overbought_skips
+    metrics["breakout_signals"] = breakout_signals
+    # 돌파 거래만 따로 성과 측정
+    _bt = [t for t in closed_trades if t.get("breakout")]
+    if _bt:
+        _bw = [t for t in _bt if t.get("net_pct", 0) > 0]
+        metrics["breakout_trades"] = len(_bt)
+        metrics["breakout_win_rate"] = round(len(_bw) / len(_bt) * 100, 1)
+        metrics["breakout_avg_pct"] = round(sum(t.get("net_pct", 0) for t in _bt) / len(_bt), 2)
+    else:
+        metrics["breakout_trades"] = 0
     metrics["deep_loss_count"] = sum(1 for t in closed_trades if t.get("net_pct", 0) <= -8)
     metrics["loss_count"]      = sum(1 for t in closed_trades if t.get("net_pct", 0) < 0)
 
