@@ -1,4 +1,17 @@
 {
-  "history": [],
-  "updated": "2026-06-16"
+  "history": [
+    {
+      "date": "2026-06-16",
+      "value_total": 0,
+      "value_cost": 0,
+      "value_pnl": 0,
+      "value_pct": 0,
+      "auto_total": 0,
+      "auto_cost": 2961510,
+      "auto_pnl": -2961510,
+      "total": 0,
+      "total_pnl": -2961510
+    }
+  ],
+  "updated": "2026-06-16 08:06:15"
 }
