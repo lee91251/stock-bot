@@ -221,7 +221,7 @@ CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
 # 환경변수 KR_ONLY=false 로 설정하면 해외 종목도 다시 분석.
 KR_ONLY = os.environ.get("KR_ONLY", "true").lower() in ("true", "1", "yes", "on")
 
-INVEST_PER_STOCK = 2_000_000
+INVEST_PER_STOCK = 1_000_000   # 6/16: 200만→100만 (같은 1,000만을 2배 잘게 분산 → 갭하락 데미지 반감, 안 잃기)
 STOP_LOSS_PCT    = 0.07
 TARGET1_PCT      = 0.10
 TARGET2_PCT      = 0.20
@@ -285,8 +285,8 @@ SWING_MAX_HOLD_EXTENDED  = 10          # 💚 상승 추세 보유 연장 최대
 SWING_QUICK_EXIT_DAYS    = 3           # 🔴 하락 종목 빨리 청산 (3거래일)
 SWING_EXTEND_MIN_PCT     = 3.0         # 💚 보유 연장 조건: +3% 이상 수익
 SWING_QUICK_EXIT_PCT     = -1.0        # 🔴 빨리 청산 조건: -1% 미만
-SWING_MAX_DAILY_BUY      = 5           # 하루 최대 신규 매수 종목
-SWING_MAX_DAILY_AMT      = 10_000_000  # 하루 최대 매수 금액(원)
+SWING_MAX_DAILY_BUY      = 10          # 6/16: 5→10 (종목당 100만으로 줄여 같은 금액 2배 분산)
+SWING_MAX_DAILY_AMT      = 10_000_000  # 하루 최대 매수 금액(원) — 총액은 그대로 1,000만
 SWING_LOSS_COOLDOWN_DAYS = 3           # 손절 후 같은 종목 재매수 금지 기간
 SWING_PRE_ALERT_SEC      = 30          # 매수 직전 사전 알림 + /취소 대기 시간
 SWING_DAILY_TRADE_CAP    = 20          # 일일 매매 횟수 한도 (폭주 차단)
@@ -5819,7 +5819,7 @@ def _get_dynamic_thresholds(risk_level: str) -> dict:
     if risk_level == "안전":  # 0~30: 강세장
         return {
             "score_min": 45, "rsi_max": 65, "vol_min": 100,
-            "daily_buy_limit": 5, "daily_amt_limit": 10_000_000,
+            "daily_buy_limit": 10, "daily_amt_limit": 10_000_000,  # 6/16: 5→10종목 (종목당 100만, 총액 동일)
             "chase_max_pct": 5.0,  # 당일 +5%까지 추격 매수 OK
             "allow_momentum": True,  # momentum_signal로도 매수 가능
             "label": "🟢 강세장 (적극)", "regime": "강세"
@@ -5827,7 +5827,7 @@ def _get_dynamic_thresholds(risk_level: str) -> dict:
     elif risk_level == "주의":  # 30~50: 중립
         return {
             "score_min": 50, "rsi_max": 65, "vol_min": 150,
-            "daily_buy_limit": 4, "daily_amt_limit": 8_000_000,
+            "daily_buy_limit": 8, "daily_amt_limit": 8_000_000,  # 6/16: 4→8종목 (종목당 100만, 총액 동일)
             "chase_max_pct": 3.0,
             "allow_momentum": True,
             "label": "🟡 중립 (중간)", "regime": "중립"
@@ -5835,7 +5835,7 @@ def _get_dynamic_thresholds(risk_level: str) -> dict:
     elif risk_level == "경계":  # 50~70: 약세장
         return {
             "score_min": 55, "rsi_max": 60, "vol_min": 200,
-            "daily_buy_limit": 3, "daily_amt_limit": 6_000_000,
+            "daily_buy_limit": 6, "daily_amt_limit": 6_000_000,  # 6/16: 3→6종목 (종목당 100만, 총액 동일)
             "chase_max_pct": 2.0,
             "allow_momentum": False,  # 약세장: momentum_signal 차단 (swing_signal만)
             "label": "🟠 약세장 (보수)", "regime": "약세"
