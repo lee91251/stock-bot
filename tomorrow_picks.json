@@ -1,95 +1,53 @@
 {
-  "date": "2026-06-15",
-  "generated_at": "2026-06-12T15:43:40.922271",
+  "date": "2026-06-16",
+  "generated_at": "2026-06-15T15:44:13.333835",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "000990",
-      "name": "DB하이텍",
+      "code": "003490",
+      "name": "대한항공",
+      "sector": "항공",
+      "score_bonus": 10,
+      "today_change": 12.78,
+      "today_vol_ratio": 463.0,
+      "today_score": 62,
+      "reasons": [
+        "오늘 +12.8% 마감",
+        "거래량 평균 +463%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "403870",
+      "name": "HPSP",
       "sector": "반도체",
       "score_bonus": 10,
-      "today_change": 12.31,
-      "today_vol_ratio": 308.0,
+      "today_change": 16.78,
+      "today_vol_ratio": 512.0,
       "today_score": 52,
       "reasons": [
-        "오늘 +12.3% 마감",
-        "거래량 평균 +308%",
+        "오늘 +16.8% 마감",
+        "거래량 평균 +512%",
         "스윙점수 52"
       ],
       "source": "close_summary"
     },
     {
-      "code": "484870",
-      "name": "엠앤씨솔루션",
+      "code": "067160",
+      "name": "SOOP",
       "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 24.31,
-      "today_vol_ratio": 412.0,
-      "today_score": 51,
+      "score_bonus": 7,
+      "today_change": 6.74,
+      "today_vol_ratio": 237.0,
+      "today_score": 76,
       "reasons": [
-        "오늘 +24.3% 마감",
-        "거래량 평균 +412%",
-        "스윙점수 51"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "015760",
-      "name": "한국전력",
-      "sector": "신재생",
-      "score_bonus": 5,
-      "today_change": 4.87,
-      "today_vol_ratio": 168.0,
-      "today_score": 59,
-      "reasons": [
-        "오늘 +4.9% 마감",
-        "거래량 평균 +168%",
-        "스윙점수 59"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "215200",
-      "name": "메가스터디교육",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.86,
-      "today_vol_ratio": 231.0,
-      "today_score": 56,
-      "reasons": [
-        "오늘 +3.9% 마감",
-        "거래량 평균 +231%",
-        "스윙점수 56"
+        "오늘 +6.7% 마감",
+        "거래량 평균 +237%",
+        "스윙점수 76"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 3,
-    "소재": 3,
-    "철강": 3
-  },
-  "us_etf_changes": {
-    "SOXX": 1.59,
-    "XLK": 0.87,
-    "XLF": 1.37,
-    "XLE": 0.75,
-    "XLV": -0.18,
-    "XLI": 0.59,
-    "XLB": 1.87,
-    "XLY": 0.26
-  },
-  "sector_updated_at": "2026-06-15T06:01:06.166294"
+  "sector_weights": {}
 }

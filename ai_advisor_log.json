@@ -264,10 +264,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-11%) 정확히 도달했고, 바이오 특성상 추가 하락 시 낙폭이 빠르게 커질 수 있으며 코스피 보합·VIX 21.5의 불안정한 환경에서 반등 근거도 불분명하므로 원칙대로 손절 실행이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 420500,
+    "outcome_date": "2026-06-15",
+    "outcome_pct": -6.76,
+    "ai_correct": true
   },
   {
     "date": "2026-06-11",
