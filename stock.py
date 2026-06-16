@@ -6204,6 +6204,10 @@ def run_auto_buy():
         )
 
     # 일일 잔여 슬롯만큼만 selected (나머지는 다음 호출 회차에서 처리)
+    # 6/16 fix: regime(시장상황) 가드를 selected 단계에서 미리 적용 → 사전알림 = 실제 매수 일치.
+    # (예전엔 매수 루프에서만 차단 → 사전알림 후 조용히 매수 안 되는 문제: HL만도/하림 등 tomorrow_picks가
+    #  당일 추격한도/ RSI/ 거래량에 걸려 알림만 가고 매수 X)
+    _thr = _get_dynamic_thresholds(risk['level'])
     remaining_slots = SWING_MAX_DAILY_BUY - daily["buy_count"]
     selected = []
     for s in candidates:
@@ -6214,6 +6218,21 @@ def run_auto_buy():
             continue
         if cooldown.get(code) and today_iso < cooldown[code]:
             continue
+        # regime 가드 (매수 루프와 동일 조건을 사전에 적용 — 알림 정확성)
+        if _thr:
+            if s.get("score", 0) < _thr["score_min"]:
+                continue
+            _vr = s.get("vol_ratio", 0)
+            if _vr and _vr < _thr["vol_min"]:
+                continue
+            _rsi = s.get("rsi", 50)
+            if _rsi and _rsi >= _thr["rsi_max"]:
+                continue
+            if not _thr.get("allow_momentum", True) and s.get("momentum_signal") and not s.get("swing_signal"):
+                continue
+            _tc = s.get("today_change", s.get("change_pct", 0)) or 0
+            if _tc > _thr.get("chase_max_pct", 5.0):
+                continue
         selected.append(s)
         if len(selected) >= remaining_slots:
             break
