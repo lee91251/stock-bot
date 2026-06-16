@@ -187,6 +187,13 @@ BT_REV_SLOTS           = int(os.environ.get("BT_REV_SLOTS", "2"))          # 반
 # ohlcv만 로드(invest는 어차피 {} 전달·미사용, fund 스킵)해 속도 확보.
 BT_UNIVERSE_TOP        = int(os.environ.get("BT_UNIVERSE_TOP", "0"))        # >0이면 시총 상위 N종목 유니버스
 
+# 6/16 이벤트스윙 3단계 — 레짐연동 풀 확대. 풀 확대는 베타 증폭기(좋은장↑ 나쁜장↓)라
+# 회장 "안 잃기" 원칙과 충돌 → 좋은 장에서만 확장풀을, 나쁜 장엔 큐레이션(KR_STOCKS)만 매수.
+# 시장 레짐 = KOSPI(KS11) 종가 > N일 이동평균이면 "좋은 장"(확장 ON), 아니면 "나쁜 장"(큐레이션만).
+# BT_UNIVERSE_TOP과 함께 켜야 의미 있음(확장풀 존재 전제). KR_STOCKS는 항상 유니버스 포함.
+BT_REGIME_GATE         = os.environ.get("BT_REGIME_GATE", "false").lower() == "true"
+BT_REGIME_MA           = int(os.environ.get("BT_REGIME_MA", "20"))          # KOSPI 레짐 판정 이동평균 일수
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -264,6 +271,47 @@ def load_fundamental(ticker: str, start: str, end: str) -> pd.DataFrame:
     except Exception as e:
         print(f"  [load_fundamental] {ticker} 실패: {e}")
         return pd.DataFrame()
+
+
+def load_kospi_index(start: str, end: str) -> pd.DataFrame:
+    """KOSPI 지수(KS11) 일봉 — 레짐 판정용. FDR(KRX 지수 endpoint 사고 우회). 캐시."""
+    _ensure_cache_dir()
+    cache = _cache_path("KS11", f"index_{start}_{end}")
+    if os.path.exists(cache):
+        try:
+            return pd.read_csv(cache, parse_dates=["날짜"], index_col="날짜")
+        except Exception:
+            pass
+    try:
+        import FinanceDataReader as _fdr
+        s = f"{start[:4]}-{start[4:6]}-{start[6:]}"
+        e = f"{end[:4]}-{end[4:6]}-{end[6:]}"
+        df = _fdr.DataReader("KS11", s, e)
+        if df is None or df.empty:
+            return pd.DataFrame()
+        out = df[["Close"]].copy()
+        out.index.name = "날짜"
+        out.to_csv(cache, encoding="utf-8")
+        return out
+    except Exception as ex:
+        print(f"  [load_kospi_index] 실패: {ex}")
+        return pd.DataFrame()
+
+
+def build_regime_map(s_str: str, e_str: str, ma: int) -> dict:
+    """{Timestamp(날짜): True(좋은장)/False(나쁜장)}. KOSPI 종가 > N일 이평 = 좋은 장."""
+    idx = load_kospi_index(s_str, e_str)
+    if idx.empty:
+        print("  [regime] KOSPI 지수 로드 실패 — 전부 좋은장 처리(게이트 무력)")
+        return {}
+    sma = idx["Close"].rolling(ma).mean()
+    regime = {}
+    for dt in idx.index:
+        v, m = idx.loc[dt, "Close"], sma.loc[dt]
+        regime[pd.Timestamp(dt)] = True if pd.isna(m) else bool(v > m)
+    up = sum(1 for x in regime.values() if x)
+    print(f"  [regime] KOSPI {ma}일 이평 기준 — 좋은장 {up}일 / 나쁜장 {len(regime)-up}일")
+    return regime
 
 
 def build_expanded_universe(n: int, end_str: str) -> dict:
@@ -636,6 +684,13 @@ def simulate_track(track: str, months: int = 1, end_offset_days: int = 0) -> dic
 
     # 데이터 로드
     _universe = build_expanded_universe(BT_UNIVERSE_TOP, e_str) if BT_UNIVERSE_TOP > 0 else dict(KR_STOCKS)
+    _curated_codes = {t.split(".")[0] for t in KR_STOCKS}
+    # 레짐게이트 검증 시 KR_STOCKS를 항상 유니버스에 포함(나쁜 장에 매수할 큐레이션 풀 보장)
+    if BT_REGIME_GATE:
+        for t, v in KR_STOCKS.items():
+            c = t.split(".")[0]
+            if c not in {x.split(".")[0] for x in _universe}:
+                _universe[t] = v
     _lite = BT_UNIVERSE_TOP > 0  # 확장 시 fund 스킵(반등은 ohlcv 파생 feature만 사용)
     print(f"[1/3] {len(_universe)}종목 데이터 로드...{' (lite: ohlcv만)' if _lite else ''}")
     data = {}
@@ -646,11 +701,15 @@ def simulate_track(track: str, months: int = 1, end_offset_days: int = 0) -> dic
         if ohlcv.empty:
             continue
         fund = pd.DataFrame() if _lite else load_fundamental(code, s_str, e_str)
-        data[code] = {"name": name, "sector": sector, "ohlcv": ohlcv, "fund": fund}
+        data[code] = {"name": name, "sector": sector, "ohlcv": ohlcv, "fund": fund,
+                      "curated": code in _curated_codes}
         if i % 100 == 0:
             print(f"  로드 진행: {i}/{len(_universe)}")
         time.sleep(0.05 if _lite else 0.1)
     print(f"  → {len(data)}/{len(_universe)}종목 로드 완료\n")
+
+    # 레짐 맵 (좋은 장/나쁜 장) — 레짐게이트 ON일 때만
+    regime_up = build_regime_map(s_str, e_str, BT_REGIME_MA) if BT_REGIME_GATE else {}
 
     all_dates = sorted(set().union(*[set(d["ohlcv"].index) for d in data.values()]))
     sim_dates = [d for d in all_dates if d >= pd.Timestamp(sim_start)]
@@ -778,8 +837,12 @@ def simulate_track(track: str, months: int = 1, end_offset_days: int = 0) -> dic
                 positions[code]["partial_sold"] = True
 
         # 매수 점검
+        # 레짐게이트: 나쁜 장이면 확장풀(비큐레이션) 종목은 매수 후보에서 제외 → 큐레이션만 매수
+        _today_good = regime_up.get(pd.Timestamp(today), True) if BT_REGIME_GATE else True
         candidates = []
         for code, d in data.items():
+            if BT_REGIME_GATE and not _today_good and not d.get("curated", False):
+                continue
             ohlcv = d["ohlcv"]
             today_idx = ohlcv.index <= today
             ohlcv_slice = ohlcv[today_idx]
