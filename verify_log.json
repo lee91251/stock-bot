@@ -157,5 +157,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-16T11:30:38.717230+09:00",
+    "side": "buy",
+    "code": "204320",
+    "name": "HL만도",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]
