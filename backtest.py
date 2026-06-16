@@ -181,6 +181,12 @@ BT_REV_VOL_MIN         = float(os.environ.get("BT_REV_VOL_MIN", "250"))    # 거
 BT_REV_RSI_MAX         = float(os.environ.get("BT_REV_RSI_MAX", "55"))     # RSI 이 미만(=반등 초입, 아직 안 과열)
 BT_REV_SLOTS           = int(os.environ.get("BT_REV_SLOTS", "2"))          # 반등 전용 일일 슬롯
 
+# 6/16 이벤트스윙 2단계 — 유니버스 확장. KR_STOCKS(큐레이션 100)는 대형/중형 위주라
+# 과매도 반등(SK오션플랜트형)이 거의 안 나옴(1단계 6개월 3건뿐 → 표본부족 판단보류).
+# >0이면 시총 상위 N종목으로 유니버스 교체 → 반등신호를 충분한 표본으로 검증.
+# ohlcv만 로드(invest는 어차피 {} 전달·미사용, fund 스킵)해 속도 확보.
+BT_UNIVERSE_TOP        = int(os.environ.get("BT_UNIVERSE_TOP", "0"))        # >0이면 시총 상위 N종목 유니버스
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -258,6 +264,26 @@ def load_fundamental(ticker: str, start: str, end: str) -> pd.DataFrame:
     except Exception as e:
         print(f"  [load_fundamental] {ticker} 실패: {e}")
         return pd.DataFrame()
+
+
+def build_expanded_universe(n: int, end_str: str) -> dict:
+    """시총 상위 n종목(코스피+코스닥)을 KR_STOCKS와 동일 형태 dict로 반환.
+    이벤트스윙 2단계 — 큐레이션 100 밖의 종목까지 반등신호를 검증하기 위함.
+    KRX 시총 endpoint 사고(5/9~) → stock.py의 FDR 우회 헬퍼 재사용(이미 검증됨)."""
+    try:
+        from stock import _fetch_top_market_stocks_fdr
+        rows = _fetch_top_market_stocks_fdr(n)  # [(code, name, mkt), ...]
+    except Exception as e:
+        print(f"  [universe] FDR 헬퍼 로드 실패: {e}")
+        rows = []
+    if not rows:
+        print("  [universe] 시총 조회 실패 — KR_STOCKS 폴백")
+        return dict(KR_STOCKS)
+    uni = {}
+    for code, name, _mkt in rows[:n]:
+        uni[code] = (name or code, "스윙", "기타")
+    print(f"  [universe] 확장 유니버스 = 시총 상위 {len(uni)}종목 (FDR)")
+    return uni
 
 
 # ════════════════════════════════════════════════
@@ -574,12 +600,13 @@ def calc_swing_score_at(
 # ════════════════════════════════════════════════
 # 시뮬레이션 엔진
 # ════════════════════════════════════════════════
-def simulate_track(track: str, months: int = 1) -> dict:
+def simulate_track(track: str, months: int = 1, end_offset_days: int = 0) -> dict:
     """5/14 4트랙 백테스트 — 트랙별 점수 + 매수/매도 룰 분리.
 
     Args:
         track: "swing" / "short_term" / "mid_term" / "long_term"
         months: 백테스트 기간 (개월)
+        end_offset_days: 현재로부터 N일 이전을 끝점으로 (out-of-sample 검증용)
 
     Returns: metrics dict (수익률 / 승률 / MDD / 매매 기록)
     """
@@ -592,6 +619,7 @@ def simulate_track(track: str, months: int = 1) -> dict:
 
     # 기간 설정
     base_end = _now_kst().replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    base_end = base_end - timedelta(days=end_offset_days)  # out-of-sample 끝점 이동
     start_dt = base_end - timedelta(days=months * 31 + 60)
     sim_start = base_end - timedelta(days=months * 31)
 
@@ -606,19 +634,23 @@ def simulate_track(track: str, months: int = 1) -> dict:
     s_str = start_dt.strftime("%Y%m%d")
     e_str = base_end.strftime("%Y%m%d")
 
-    # 데이터 로드 (KR_STOCKS 26개)
-    print(f"[1/3] {len(KR_STOCKS)}종목 데이터 로드...")
+    # 데이터 로드
+    _universe = build_expanded_universe(BT_UNIVERSE_TOP, e_str) if BT_UNIVERSE_TOP > 0 else dict(KR_STOCKS)
+    _lite = BT_UNIVERSE_TOP > 0  # 확장 시 fund 스킵(반등은 ohlcv 파생 feature만 사용)
+    print(f"[1/3] {len(_universe)}종목 데이터 로드...{' (lite: ohlcv만)' if _lite else ''}")
     data = {}
-    for i, (ticker, val) in enumerate(KR_STOCKS.items(), 1):
+    for i, (ticker, val) in enumerate(_universe.items(), 1):
         name, period, sector = val
         code = ticker.split(".")[0]
         ohlcv = load_ohlcv(code, s_str, e_str)
-        fund = load_fundamental(code, s_str, e_str)
         if ohlcv.empty:
             continue
+        fund = pd.DataFrame() if _lite else load_fundamental(code, s_str, e_str)
         data[code] = {"name": name, "sector": sector, "ohlcv": ohlcv, "fund": fund}
-        time.sleep(0.1)
-    print(f"  → {len(data)}/{len(KR_STOCKS)}종목 로드 완료\n")
+        if i % 100 == 0:
+            print(f"  로드 진행: {i}/{len(_universe)}")
+        time.sleep(0.05 if _lite else 0.1)
+    print(f"  → {len(data)}/{len(_universe)}종목 로드 완료\n")
 
     all_dates = sorted(set().union(*[set(d["ohlcv"].index) for d in data.values()]))
     sim_dates = [d for d in all_dates if d >= pd.Timestamp(sim_start)]
