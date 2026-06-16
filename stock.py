@@ -236,6 +236,7 @@ except Exception:
 
 PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
 MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
+MARKET_BREADTH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_breadth_history.json")
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
 ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
@@ -7642,6 +7643,74 @@ def analyze_market_stock(code: str, name: str, mkt: str) -> dict:
         return None
 
 
+# ════════════════════════════════════════════════
+# 6/16 이벤트스윙 — 시장폭(레짐) 게이트
+# 백테스트 검증완료: 시장폭(전종목 전일대비 상승비율) 5일평균 ≥50% = 좋은장(확장풀 매수),
+# <50% = 나쁜장(큐레이션만). 3구간 일관 합격(좋은장 수익↑·나쁜장 안잃음).
+# 1단계는 shadow(판정만 기록·알림), 2단계에서 BREADTH_GATE_ENFORCE=true로 매수 반영.
+# ════════════════════════════════════════════════
+BREADTH_MA_DAYS      = 5
+BREADTH_GOOD_MIN     = 50.0
+BREADTH_GATE_ENFORCE = os.environ.get("BREADTH_GATE_ENFORCE", "false").lower() == "true"
+
+
+def compute_and_save_breadth(results: list) -> dict:
+    """시장폭 = 분석 종목 중 전일대비 상승 비율(%). 5일평균으로 레짐 판정 + history 저장."""
+    changes = [r.get("change") for r in results if r and r.get("change") is not None]
+    if not changes:
+        return None
+    up = sum(1 for c in changes if c > 0)
+    breadth = round(up / len(changes) * 100, 1)
+
+    hist = []
+    if os.path.exists(MARKET_BREADTH_FILE):
+        try:
+            with open(MARKET_BREADTH_FILE, encoding="utf-8") as f:
+                hist = json.load(f).get("history", [])
+        except Exception:
+            hist = []
+    today = _now_kst().strftime("%Y-%m-%d")
+    hist = [h for h in hist if h.get("date") != today]   # 같은 날 재실행 시 갱신
+    hist.append({"date": today, "breadth": breadth, "n": len(changes)})
+    hist = hist[-30:]
+
+    recent   = [h["breadth"] for h in hist[-BREADTH_MA_DAYS:]]
+    smoothed = round(sum(recent) / len(recent), 1)
+    regime   = "good" if smoothed >= BREADTH_GOOD_MIN else "bad"
+
+    payload = {
+        "updated":     _now_kst().strftime("%Y-%m-%d %H:%M"),
+        "breadth":     breadth,
+        "smoothed_5d": smoothed,
+        "ma_days":     len(recent),
+        "regime":      regime,
+        "good_min":    BREADTH_GOOD_MIN,
+        "enforce":     BREADTH_GATE_ENFORCE,
+        "history":     hist,
+    }
+    try:
+        with open(MARKET_BREADTH_FILE, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [시장폭] 저장 실패: {e}")
+    return {"breadth": breadth, "smoothed": smoothed, "regime": regime,
+            "n": len(changes), "ma_days": len(recent)}
+
+
+def get_market_regime() -> dict:
+    """저장된 시장폭 레짐 로드 (run_auto_buy 게이트용). 없으면 좋은장 기본(안전: 기존동작)."""
+    if os.path.exists(MARKET_BREADTH_FILE):
+        try:
+            with open(MARKET_BREADTH_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            return {"regime": d.get("regime", "good"),
+                    "smoothed": d.get("smoothed_5d"),
+                    "ma_days": d.get("ma_days", 0)}
+        except Exception:
+            pass
+    return {"regime": "good", "smoothed": None, "ma_days": 0}
+
+
 def run_market_scan(n: int = MARKET_SCAN_N):
     """코스피/코스닥 시가총액 상위 n종목 분석 → 상위 50개를 market_scan_cache.json에 저장"""
     if _skip_if_holiday("시장 스캔"):
@@ -7735,6 +7804,22 @@ def run_market_scan(n: int = MARKET_SCAN_N):
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
     print(f"캐시 저장 완료: {MARKET_SCAN_CACHE}")
+
+    # 시장폭(레짐) 계산 + shadow 알림 (이벤트스윙 게이트 1단계 — 관찰용, 매수 미반영)
+    try:
+        _bd = compute_and_save_breadth(results)
+        if _bd:
+            _rg   = "🟢 좋은장(확장 매수 적합)" if _bd["regime"] == "good" else "🔴 나쁜장(방어 적합)"
+            _mode = "실제적용 ON" if BREADTH_GATE_ENFORCE else "관찰(shadow)"
+            print(f"  [시장폭] 오늘 {_bd['breadth']}% / {_bd['ma_days']}일평균 {_bd['smoothed']}% → {_rg} [{_mode}]")
+            tg_send(
+                f"📊 <b>시장폭 레짐 ({_mode})</b>\n"
+                f"오늘 상승비율 {_bd['breadth']}% (표본 {_bd['n']})\n"
+                f"{_bd['ma_days']}일평균 {_bd['smoothed']}% → {_rg}\n"
+                + ("" if BREADTH_GATE_ENFORCE else "<i>※ 관찰용 — 매수에 아직 미반영</i>")
+            )
+    except Exception as e:
+        print(f"  [시장폭] 계산 오류: {e}")
 
     # 대시보드 갱신 (스캔 결과 반영)
     try:

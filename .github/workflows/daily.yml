@@ -405,6 +405,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add market_scan_cache.json docs/ || true
+          [ -f market_breadth_history.json ] && git add market_breadth_history.json || true
           git diff --staged --quiet && exit 0
           git commit -m "chore: 시장 스캔 + 대시보드 $(date '+%Y-%m-%d')"
           # 5/15 fix: git push retry (5/6 메모리 영구 차단 적용 — marketscan에 누락됐던 부분)
