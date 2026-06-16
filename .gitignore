@@ -13,3 +13,10 @@ history_cache.json
 # GitHub Actions runner가 stateless라 commit 안 하면 캐시가 매번 사라짐.
 # daily(08:00)가 만든 풀 데이터를 이후 autobuy 14번 등이 읽어 dashboard 보충 → commit 필수.
 
+
+# 환경변수/시크릿 (절대 커밋 금지)
+.env
+.env.*
+*.key
+dart_corp_map.json
+__pycache__/
