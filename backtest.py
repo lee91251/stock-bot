@@ -193,6 +193,11 @@ BT_UNIVERSE_TOP        = int(os.environ.get("BT_UNIVERSE_TOP", "0"))        # >0
 # BT_UNIVERSE_TOP과 함께 켜야 의미 있음(확장풀 존재 전제). KR_STOCKS는 항상 유니버스 포함.
 BT_REGIME_GATE         = os.environ.get("BT_REGIME_GATE", "false").lower() == "true"
 BT_REGIME_MA           = int(os.environ.get("BT_REGIME_MA", "20"))          # KOSPI 레짐 판정 이동평균 일수
+# 레짐 판정 방식: index(KOSPI 이평) / breadth(시장폭=풀 상승종목비율).
+# index는 "지수↑ 개별종목↓" 구간에서 실패 → breadth는 개별종목 환경을 직접 측정.
+BT_REGIME_MODE         = os.environ.get("BT_REGIME_MODE", "index").lower()  # index | breadth
+BT_BREADTH_MIN         = float(os.environ.get("BT_BREADTH_MIN", "50"))      # 상승종목 비율 이 % 이상 = 좋은 장
+BT_BREADTH_MA          = int(os.environ.get("BT_BREADTH_MA", "5"))          # 시장폭 평활 일수(노이즈 제거)
 
 
 # ════════════════════════════════════════════════
@@ -311,6 +316,27 @@ def build_regime_map(s_str: str, e_str: str, ma: int) -> dict:
         regime[pd.Timestamp(dt)] = True if pd.isna(m) else bool(v > m)
     up = sum(1 for x in regime.values() if x)
     print(f"  [regime] KOSPI {ma}일 이평 기준 — 좋은장 {up}일 / 나쁜장 {len(regime)-up}일")
+    return regime
+
+
+def build_breadth_regime(data: dict, ma: int, thresh: float) -> dict:
+    """{Timestamp(날짜): True/False}. 시장폭(풀 종목 당일 상승비율) N일평활 >= 임계 = 좋은 장.
+    지수와 달리 개별종목 환경을 직접 측정 → "지수↑ 개별종목↓" 구간도 포착."""
+    ups = {}
+    for code, d in data.items():
+        c = d["ohlcv"].get("종가")
+        if c is None or len(c) < 2:
+            continue
+        ups[code] = (c > c.shift(1)).astype(float)  # 전일 대비 상승=1
+    if not ups:
+        print("  [regime-breadth] 데이터 없음 — 전부 좋은장 처리")
+        return {}
+    df = pd.DataFrame(ups)
+    breadth = df.mean(axis=1) * 100.0  # 날짜별 상승종목 비율 %
+    smoothed = breadth.rolling(ma, min_periods=1).mean()
+    regime = {pd.Timestamp(dt): bool(smoothed.loc[dt] >= thresh) for dt in smoothed.index}
+    good = sum(1 for x in regime.values() if x)
+    print(f"  [regime-breadth] 시장폭 {ma}일평활·임계{thresh:.0f}% — 좋은장 {good}일 / 나쁜장 {len(regime)-good}일")
     return regime
 
 
@@ -709,7 +735,13 @@ def simulate_track(track: str, months: int = 1, end_offset_days: int = 0) -> dic
     print(f"  → {len(data)}/{len(_universe)}종목 로드 완료\n")
 
     # 레짐 맵 (좋은 장/나쁜 장) — 레짐게이트 ON일 때만
-    regime_up = build_regime_map(s_str, e_str, BT_REGIME_MA) if BT_REGIME_GATE else {}
+    if BT_REGIME_GATE:
+        if BT_REGIME_MODE == "breadth":
+            regime_up = build_breadth_regime(data, BT_BREADTH_MA, BT_BREADTH_MIN)
+        else:
+            regime_up = build_regime_map(s_str, e_str, BT_REGIME_MA)
+    else:
+        regime_up = {}
 
     all_dates = sorted(set().union(*[set(d["ohlcv"].index) for d in data.values()]))
     sim_dates = [d for d in all_dates if d >= pd.Timestamp(sim_start)]
