@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "date": "2026-06-16",
+    "time": "10:46",
+    "code": "029780",
+    "name": "삼성카드",
+    "sell_price": 53800.0,
+    "sell_pct": 6.75,
+    "ai_opinion": "**매도 적절** — +6.7% 익절 트리거 정확히 충족했고, VIX 16·공포탐욕 60의 안정적 환경에서 절반 익절로 수익 확보 후 나머지 보유하는 전략이 리스크 관리상 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
+  }
+]
