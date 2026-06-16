@@ -171,6 +171,16 @@ BT_BREAKOUT_SLOTS      = int(os.environ.get("BT_BREAKOUT_SLOTS", "2"))         #
 BT_MAX_DAILY_OVERRIDE  = int(os.environ.get("BT_MAX_DAILY_OVERRIDE", "0"))     # >0이면 스윙 일일 매수 슬롯 수 덮어씀(기본 5)
 BT_FORCE_HOLD_DAYS     = int(os.environ.get("BT_FORCE_HOLD_DAYS", "0"))        # >0이면 N일 후 무조건 매도(유연보유 연장 무시). 1=다음날 매도 후 재진입 가능
 
+# 6/16 과매도 반등(이벤트 스윙) 실험 — 현재 룰이 거르는 "떨어지다 거래량 터지며 반등" 잡기.
+# 현 필터(ret_1w<-3, MACD<0)는 하락주를 거르지만, 그게 V반등(SK오션플랜트형)을 놓치는 원인.
+# 반등주는 별도 슬롯·별도 태깅으로 따로 성과 측정. 떨어지는 칼 위험 → 반드시 baseline 대비 검증.
+BT_REVERSAL            = os.environ.get("BT_REVERSAL", "false").lower() == "true"
+BT_REV_RET1M_MAX       = float(os.environ.get("BT_REV_RET1M_MAX", "-8"))   # 1개월 수익률 이 이하(=한달간 하락했던 종목)
+BT_REV_CHG_MIN         = float(os.environ.get("BT_REV_CHG_MIN", "5"))      # 당일 등락률 이상(=오늘 강하게 반등)
+BT_REV_VOL_MIN         = float(os.environ.get("BT_REV_VOL_MIN", "250"))    # 거래량비율 이상(=촉매성 폭발)
+BT_REV_RSI_MAX         = float(os.environ.get("BT_REV_RSI_MAX", "55"))     # RSI 이 미만(=반등 초입, 아직 안 과열)
+BT_REV_SLOTS           = int(os.environ.get("BT_REV_SLOTS", "2"))          # 반등 전용 일일 슬롯
+
 
 # ════════════════════════════════════════════════
 # 데이터 로드 (pykrx)
@@ -626,6 +636,9 @@ def simulate_track(track: str, months: int = 1) -> dict:
 
     overbought_skips = 0   # 과매수 상한 필터로 제외된 매수 후보 수
     breakout_signals = 0   # 대형주 돌파 포착 후보로 추가된 수
+    reversal_signals = 0   # 과매도 반등 포착 후보로 추가된 수
+    if BT_REVERSAL and track == "swing":
+        print(f"  [과매도 반등 ON] 1개월 {BT_REV_RET1M_MAX:.0f}%↓ · 당일 +{BT_REV_CHG_MIN:.0f}%↑ · 거래량 {BT_REV_VOL_MIN:.0f}%↑ · RSI<{BT_REV_RSI_MAX:.0f} 반등주 포착")
     if BT_BREAKOUT and track == "swing":
         print(f"  [대형주 돌파 ON] 거래량 {BT_BREAKOUT_VOL_MIN:.0f}%+ · 당일 +{BT_BREAKOUT_CHG_MIN:.0f}%+ · RSI<{BT_BREAKOUT_RSI_MAX:.0f} · MACD+ 돌파주 추가 포착")
     if BT_OVERHEAT_FILTER:
@@ -720,6 +733,7 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 "reason": reason, "score": p.get("score", 0), "sector": p.get("sector", ""),
                 "feat": p.get("feat", {}),
                 "breakout": p.get("breakout", False),
+                "reversal": p.get("reversal", False),
             })
 
             if sell_qty == held_qty:
@@ -807,18 +821,46 @@ def simulate_track(track: str, months: int = 1) -> dict:
                         )},
                     })
 
+            # 6/16 과매도 반등(이벤트 스윙) — 현재 룰이 거른 "하락→거래량 폭발 반등" 포착 (스윙만)
+            elif (BT_REVERSAL and track == "swing" and not signal
+                  and code not in positions and code not in cooldown):
+                r1m = features.get("ret_1m", 0) or 0
+                chg = features.get("change_1d", 0) or 0
+                vr = features.get("vol_ratio", 0) or 0
+                rsi_r = features.get("rsi", 50) or 50
+                if (r1m <= BT_REV_RET1M_MAX and chg >= BT_REV_CHG_MIN
+                        and vr >= BT_REV_VOL_MIN and rsi_r < BT_REV_RSI_MAX
+                        and not features.get("manipulation_signal")):
+                    reversal_signals += 1
+                    candidates.append({
+                        "code": code, "name": d["name"], "sector": d["sector"],
+                        "score": 66 + min(14, chg),  # 반등 강도 반영
+                        "reasons": [f"과매도 반등(1개월 {r1m:.0f}% / 당일 +{chg:.1f}% / 거래량 {vr:.0f}%)"],
+                        "price": features["price"],
+                        "reversal": True,
+                        "feat": {k: features.get(k) for k in (
+                            "rsi", "bb_pct", "vol_ratio", "ret_1w", "ret_1m",
+                            "pct_from_high", "change_1d", "macd_hist", "near_support",
+                        )},
+                    })
+
         # 점수 높은 순 매수 (일일 한도: 트랙별 차등, 기본 5종목)
         # 돌파주는 별도 슬롯(BT_BREAKOUT_SLOTS) — 일반주를 안 밀어냄
         candidates.sort(key=lambda c: -c["score"])
         normal_bought = 0
         breakout_bought = 0
+        reversal_bought = 0
         max_daily = 5 if track == "swing" else 3 if track == "short_term" else 2
         if BT_MAX_DAILY_OVERRIDE and track == "swing":
             max_daily = BT_MAX_DAILY_OVERRIDE
         for c in candidates:
             is_brk = c.get("breakout", False)
+            is_rev = c.get("reversal", False)
             if is_brk:
                 if breakout_bought >= BT_BREAKOUT_SLOTS:
+                    continue
+            elif is_rev:
+                if reversal_bought >= BT_REV_SLOTS:
                     continue
             elif normal_bought >= max_daily:
                 continue
@@ -843,9 +885,12 @@ def simulate_track(track: str, months: int = 1) -> dict:
                 "score": c["score"], "sector": c["sector"],
                 "feat": c.get("feat", {}),
                 "breakout": c.get("breakout", False),
+                "reversal": c.get("reversal", False),
             }
             if is_brk:
                 breakout_bought += 1
+            elif is_rev:
+                reversal_bought += 1
             else:
                 normal_bought += 1
 
@@ -881,6 +926,16 @@ def simulate_track(track: str, months: int = 1) -> dict:
         metrics["breakout_avg_pct"] = round(sum(t.get("net_pct", 0) for t in _bt) / len(_bt), 2)
     else:
         metrics["breakout_trades"] = 0
+    metrics["reversal_signals"] = reversal_signals
+    # 과매도 반등 거래만 따로 성과 측정
+    _rv = [t for t in closed_trades if t.get("reversal")]
+    if _rv:
+        _rw = [t for t in _rv if t.get("net_pct", 0) > 0]
+        metrics["reversal_trades"] = len(_rv)
+        metrics["reversal_win_rate"] = round(len(_rw) / len(_rv) * 100, 1)
+        metrics["reversal_avg_pct"] = round(sum(t.get("net_pct", 0) for t in _rv) / len(_rv), 2)
+    else:
+        metrics["reversal_trades"] = 0
     metrics["deep_loss_count"] = sum(1 for t in closed_trades if t.get("net_pct", 0) <= -8)
     metrics["loss_count"]      = sum(1 for t in closed_trades if t.get("net_pct", 0) < 0)
 
