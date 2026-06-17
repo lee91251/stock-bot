@@ -1,0 +1,16 @@
+{
+  "updated": "2026-06-17 16:05",
+  "breadth": 45.4,
+  "smoothed_5d": 45.4,
+  "ma_days": 1,
+  "regime": "bad",
+  "good_min": 50.0,
+  "enforce": false,
+  "history": [
+    {
+      "date": "2026-06-17",
+      "breadth": 45.4,
+      "n": 1398
+    }
+  ]
+}
