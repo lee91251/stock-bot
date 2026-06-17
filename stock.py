@@ -6210,6 +6210,11 @@ def run_auto_buy():
     #  당일 추격한도/ RSI/ 거래량에 걸려 알림만 가고 매수 X)
     _thr = _get_dynamic_thresholds(risk['level'])
     remaining_slots = SWING_MAX_DAILY_BUY - daily["buy_count"]
+    # 6/17 fix: 일일 *금액* 한도도 selected 단계에 예측 반영 → 사전알림 = 실제 매수 일치.
+    # (6/16엔 regime 점수/거래량/RSI/추격만 옮김. 금액 한도는 매수루프 break에만 남아 있어,
+    #  앞 종목이 한도를 채우면 예고된 뒤 종목이 조용히 매수 안 되던 경로가 잔존 — 한화오션 6/17 사고.)
+    _amt_limit   = _thr.get("daily_amt_limit", SWING_MAX_DAILY_AMT) if _thr else SWING_MAX_DAILY_AMT
+    _running_amt = daily["buy_amount"]
     selected = []
     for s in candidates:
         code = s["ticker"].split(".")[0]
@@ -6234,6 +6239,13 @@ def run_auto_buy():
             _tc = s.get("today_change", s.get("change_pct", 0)) or 0
             if _tc > _thr.get("chase_max_pct", 5.0):
                 continue
+        # 일일 금액 한도 예측 (매수루프 break와 동일 기준 — 예고=매수 보장)
+        _sp = s["price"]
+        _sq = max(1, int(INVEST_PER_STOCK * qty_factor / _sp))
+        _sa = _sp * _sq
+        if _running_amt + _sa > _amt_limit:
+            continue
+        _running_amt += _sa
         selected.append(s)
         if len(selected) >= remaining_slots:
             break
@@ -6281,6 +6293,11 @@ def run_auto_buy():
     # Regime-Adaptive 임계 미리 1회 계산 (루프 안 매 종목 재계산 X)
     thresholds = _get_dynamic_thresholds(risk['level'])
 
+    # 6/17 진단: 예고(selected)했는데 실제 매수 안 된 종목 + 이유 추적 → 루프 끝에 텔레그램 경고.
+    # "예고는 갔는데 조용히 매수 안 됨"(한화오션 6/17)을 즉시 가시화 → 원인 추측 불필요.
+    _bought_codes = set()
+    _buy_skip: dict = {}
+
     for s in selected:
         # 정지 명령 중간 체크 (사용자가 /정지 보냈을 수도)
         pos = load_positions()
@@ -6302,12 +6319,15 @@ def run_auto_buy():
             _dyn_daily_buy = thresholds.get("daily_buy_limit", SWING_MAX_DAILY_BUY)
             _dyn_daily_amt = thresholds.get("daily_amt_limit", SWING_MAX_DAILY_AMT)
         if daily["buy_amount"] + amt > _dyn_daily_amt:
+            _buy_skip[code] = f"일일 금액한도({_dyn_daily_amt//10000}만원) 도달"
             tg_send(f"🛑 일일 매수 한도 도달 ({_dyn_daily_amt//10000}만원, {thresholds['label'] if thresholds else ''}) — 추가 매수 중단")
             break
         if daily["buy_count"] >= _dyn_daily_buy:
+            _buy_skip[code] = f"일일 종목한도({_dyn_daily_buy}개) 도달"
             tg_send(f"🛑 일일 종목 한도 도달 ({_dyn_daily_buy}개, {thresholds['label'] if thresholds else ''}) — 추가 매수 중단")
             break
         if daily["trade_count"] >= SWING_DAILY_TRADE_CAP:
+            _buy_skip[code] = f"일일 매매횟수 한도({SWING_DAILY_TRADE_CAP}건)"
             tg_send(f"🛑 일일 매매 횟수 한도 도달 ({SWING_DAILY_TRADE_CAP}건) — 비정상 폭주 차단")
             break
 
@@ -6335,6 +6355,7 @@ def run_auto_buy():
             if not _verify_ok:
                 _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
                 if VERIFY_ENFORCE:
+                    _buy_skip[code] = f"검증부 차단: {_vreasons}"
                     print(f"  [verify] {s['name']} 검증부 차단(enforce): {_vreasons}")
                     continue
                 print(f"  [verify-shadow] {s['name']} 검증부 reject: {_vreasons}")
@@ -6350,12 +6371,14 @@ def run_auto_buy():
             # 외국인+기관 3일 합산 매수 검증
             f_sum, i_sum, ok = _check_foreign_inst_3day(code)
             if not ok:
+                _buy_skip[code] = f"외인/기관 3일 매도세 ({f_sum:+.0f}/{i_sum:+.0f}억)"
                 print(f"  [new_rules] {s['name']} 외인 {f_sum:+.0f}억 / 기관 {i_sum:+.0f}억 — "
                       f"둘 다 3일 합산 매도세, 매수 차단")
                 continue
             # 거래량 과열 차단 (analyze 결과의 vol_ratio 사용)
             vol_ratio = s.get("vol_ratio", 0)
             if vol_ratio > NEW_RULES_VOL_OVERHEAT_PCT:
+                _buy_skip[code] = f"거래량 과열 +{vol_ratio:.0f}%"
                 print(f"  [new_rules] {s['name']} 거래량 +{vol_ratio:.0f}% 과열 — 매수 차단")
                 continue
 
@@ -6366,17 +6389,20 @@ def run_auto_buy():
         if thresholds:
             real_score = s.get("score", 0)  # 진짜 점수 (보너스 제외)
             if real_score < thresholds["score_min"]:
+                _buy_skip[code] = f"점수 {real_score}<{thresholds['score_min']} ({thresholds['label']})"
                 print(f"  [regime] {s['name']} 진짜 점수 {real_score} < {thresholds['score_min']} "
                       f"({thresholds['label']}) — 매수 차단")
                 continue
             vol_ratio_check = s.get("vol_ratio", 0)
             if vol_ratio_check and vol_ratio_check < thresholds["vol_min"]:
+                _buy_skip[code] = f"거래량 {vol_ratio_check:.0f}%<{thresholds['vol_min']}%"
                 print(f"  [regime] {s['name']} 거래량 {vol_ratio_check:.0f}% < {thresholds['vol_min']}% "
                       f"({thresholds['label']}) — 매수 차단")
                 continue
             # RSI는 analyze에서 이미 차단되지만 추가 보수 (약세장 RSI<60)
             rsi_check = s.get("rsi", 50)
             if rsi_check and rsi_check >= thresholds["rsi_max"]:
+                _buy_skip[code] = f"RSI {rsi_check:.0f}≥{thresholds['rsi_max']}"
                 print(f"  [regime] {s['name']} RSI {rsi_check:.1f} ≥ {thresholds['rsi_max']} "
                       f"({thresholds['label']}) — 매수 차단")
                 continue
@@ -6385,6 +6411,7 @@ def run_auto_buy():
             # swing_signal(진짜 점수 + 안전조건)으로 통과한 종목만 매수
             if not thresholds.get("allow_momentum", True):
                 if s.get("momentum_signal") and not s.get("swing_signal"):
+                    _buy_skip[code] = f"{thresholds['label']} 모멘텀 추격 차단"
                     print(f"  [regime] {s['name']} momentum_signal만 통과 — "
                           f"{thresholds['label']} 모멘텀 추격 차단")
                     continue
@@ -6393,6 +6420,7 @@ def run_auto_buy():
             today_change = s.get("today_change", s.get("change_pct", 0)) or 0
             chase_max = thresholds.get("chase_max_pct", 5.0)
             if today_change > chase_max:
+                _buy_skip[code] = f"추격매수 당일+{today_change:.1f}%>한도+{chase_max}%"
                 print(f"  [regime] {s['name']} 당일 +{today_change:.1f}% > 한도 +{chase_max}% "
                       f"({thresholds['label']}) — 추격매수 차단")
                 continue
@@ -6424,14 +6452,27 @@ def run_auto_buy():
             daily["buy_count"]   += 1
             daily["buy_amount"]  += amt
             daily["trade_count"] += 1
+            _bought_codes.add(code)
             tg_send(
                 f"✅ {mode_tag} 매수 체결: <b>{s['name']}</b> {qty}주 @ 약 {price:,}원 "
                 f"(총 {amt:,}원 / 스윙점수 {s.get('swing_score',0)})"
             )
         else:
+            _buy_skip[code] = f"체결 실패: {result.get('msg','')}"
             tg_send(f"❌ {mode_tag} 매수 실패: {s['name']} — {result.get('msg','')}")
         save_positions(pos)
         time.sleep(1)
+
+    # 6/17 진단: 예고(selected)했는데 실제 매수 안 된 종목 + 이유 텔레그램 (예고=매수 점검).
+    # _bought_codes(성공)에 없는 selected 종목을 _buy_skip 이유와 함께 알림 → 조용한 미체결 0.
+    _not_bought = [s for s in selected if s["ticker"].split(".")[0] not in _bought_codes]
+    if _not_bought:
+        _lines = ["⚠️ <b>예고했지만 매수 안 됨</b>"]
+        for s in _not_bought:
+            _c = s["ticker"].split(".")[0]
+            _lines.append(f"• {s['name']} — {_buy_skip.get(_c, '한도 소진/기타(로그 확인)')}")
+        _lines.append("<i>※ 예고=매수 일치 점검용 (사고 재발 방지)</i>")
+        tg_send("\n".join(_lines))
 
     # 대시보드 갱신 (보유 종목 변경 반영)
     try:
