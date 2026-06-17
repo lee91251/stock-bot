@@ -13,5 +13,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-17",
+    "time": "09:17",
+    "code": "194370",
+    "name": "제이에스코퍼레이션",
+    "sell_price": 11490.0,
+    "sell_pct": 2.68,
+    "ai_opinion": "**매도 적절** — 5거래일 강제 매도 룰에 해당하며, +2.7% 수익 실현은 코스피 보합·VIX 중립(20) 환경에서 합리적인 출구이고 추가 상승 모멘텀이 불분명한 기타 섹터 종목이므로 룰대로 매도가 바람직합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
