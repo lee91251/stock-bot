@@ -28,5 +28,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-17",
+    "time": "14:47",
+    "code": "029780",
+    "name": "삼성카드",
+    "sell_price": 49850.0,
+    "sell_pct": -1.09,
+    "ai_opinion": "**매도 적절** — VIX 16.4, 공포탐욕 45로 시장 환경은 중립적이나, 3거래일 보유에도 -1.1% 하락 추세 지속 중이며 손절 기준(-4%)까지 여유가 있어도 모멘텀 부재 상황에서 규칙대로 청산하는 것이 자본 효율상 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]

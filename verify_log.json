@@ -186,5 +186,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-17T14:47:29.375595+09:00",
+    "side": "sell",
+    "code": "029780",
+    "name": "삼성카드",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
