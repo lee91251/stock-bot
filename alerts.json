@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-06-17T09:08:57.365058+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 케이씨씨 🏠",
-    "detail": "기타경영사항(자율공시)              (배당기준일 안내)"
-  },
-  {
     "time": "2026-06-18T06:01:02.818398+09:00",
     "category": "briefing",
     "level": "info",
@@ -22,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.4 / 공포탐욕 45(중립)"
+  },
+  {
+    "time": "2026-06-18T09:19:21.876832+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 한화생명 -3.29% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
