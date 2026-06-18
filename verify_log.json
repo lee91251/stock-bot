@@ -195,5 +195,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-18T11:16:22.750520+09:00",
+    "side": "sell",
+    "code": "088350",
+    "name": "한화생명",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

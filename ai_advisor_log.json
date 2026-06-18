@@ -43,5 +43,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-18",
+    "time": "11:16",
+    "code": "088350",
+    "name": "한화생명",
+    "sell_price": 5530.0,
+    "sell_pct": -4.33,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 이미 초과했고, 코스피 보합·VIX 18.4로 시장 반등 모멘텀도 뚜렷하지 않아 룰대로 손절 후 재기회를 노리는 것이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
