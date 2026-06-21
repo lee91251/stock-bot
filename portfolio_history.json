@@ -35,7 +35,19 @@
       "auto_pnl": 0,
       "total": 25371600,
       "total_pnl": 4523897
+    },
+    {
+      "date": "2026-06-22",
+      "value_total": 24830150,
+      "value_cost": 20847703,
+      "value_pnl": 3982447,
+      "value_pct": 19.1,
+      "auto_total": 0,
+      "auto_cost": 0,
+      "auto_pnl": 0,
+      "total": 24830150,
+      "total_pnl": 3982447
     }
   ],
-  "updated": "2026-06-19 08:10:22"
+  "updated": "2026-06-22 08:10:14"
 }
