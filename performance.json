@@ -1609,6 +1609,56 @@
       "score": 113,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-06-23",
+      "month": "2026-06",
+      "ticker": "035150.KS",
+      "name": "백산",
+      "price": 9920.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-23",
+      "month": "2026-06",
+      "ticker": "009780.KQ",
+      "name": "엠에스씨",
+      "price": 5920.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-23",
+      "month": "2026-06",
+      "ticker": "227840.KS",
+      "name": "현대코퍼레이션홀딩스",
+      "price": 11480.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-23",
+      "month": "2026-06",
+      "ticker": "058860.KS",
+      "name": "KTis",
+      "price": 2495.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-23",
+      "month": "2026-06",
+      "ticker": "000120.KS",
+      "name": "CJ대한통운",
+      "price": 76800.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
