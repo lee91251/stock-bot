@@ -1659,6 +1659,56 @@
       "score": 108,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-24",
+      "month": "2026-06",
+      "ticker": "051900.KS",
+      "name": "LG생활건강",
+      "price": 225500.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-24",
+      "month": "2026-06",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 36250.0,
+      "score": 107,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-06-24",
+      "month": "2026-06",
+      "ticker": "293490.KQ",
+      "name": "카카오게임즈",
+      "price": 8730.0,
+      "score": 102,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-24",
+      "month": "2026-06",
+      "ticker": "097950.KS",
+      "name": "CJ제일제당",
+      "price": 185800.0,
+      "score": 100,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-24",
+      "month": "2026-06",
+      "ticker": "004370.KS",
+      "name": "농심",
+      "price": 335000.0,
+      "score": 97,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
