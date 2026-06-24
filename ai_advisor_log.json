@@ -58,5 +58,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-24",
+    "time": "14:25",
+    "code": "002450",
+    "name": "삼익악기",
+    "sell_price": 1180.0,
+    "sell_pct": -4.22,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4.2%) 정확히 도달했고, 코스피 보합·VIX 19.5의 중립적 환경에서 추가 반등 트리거 없이 버티는 것은 리스크 대비 실익이 없음.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]

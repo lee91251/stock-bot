@@ -222,5 +222,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-24T14:25:25.043310+09:00",
+    "side": "sell",
+    "code": "002450",
+    "name": "삼익악기",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
