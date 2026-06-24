@@ -1709,6 +1709,56 @@
       "score": 97,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-25",
+      "month": "2026-06",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 114400.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-25",
+      "month": "2026-06",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 8830.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-25",
+      "month": "2026-06",
+      "ticker": "036580.KS",
+      "name": "팜스코",
+      "price": 2320.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-25",
+      "month": "2026-06",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 36750.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-25",
+      "month": "2026-06",
+      "ticker": "051900.KS",
+      "name": "LG생활건강",
+      "price": 225000.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
