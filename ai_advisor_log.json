@@ -9,10 +9,10 @@
     "ai_opinion": "**매도 적절** — +6.7% 익절 트리거 정확히 충족했고, VIX 16·공포탐욕 60의 안정적 환경에서 절반 익절로 수익 확보 후 나머지 보유하는 전략이 리스크 관리상 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 45800,
+    "outcome_date": "2026-06-24",
+    "outcome_pct": -14.87,
+    "ai_correct": true
   },
   {
     "date": "2026-06-17",
@@ -24,10 +24,10 @@
     "ai_opinion": "**매도 적절** — 5거래일 강제 매도 룰에 해당하며, +2.7% 수익 실현은 코스피 보합·VIX 중립(20) 환경에서 합리적인 출구이고 추가 상승 모멘텀이 불분명한 기타 섹터 종목이므로 룰대로 매도가 바람직합니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 11350,
+    "outcome_date": "2026-06-24",
+    "outcome_pct": -1.22,
+    "ai_correct": true
   },
   {
     "date": "2026-06-17",
@@ -39,10 +39,10 @@
     "ai_opinion": "**매도 적절** — VIX 16.4, 공포탐욕 45로 시장 환경은 중립적이나, 3거래일 보유에도 -1.1% 하락 추세 지속 중이며 손절 기준(-4%)까지 여유가 있어도 모멘텀 부재 상황에서 규칙대로 청산하는 것이 자본 효율상 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 45800,
+    "outcome_date": "2026-06-24",
+    "outcome_pct": -8.12,
+    "ai_correct": true
   },
   {
     "date": "2026-06-18",
@@ -54,10 +54,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 이미 초과했고, 코스피 보합·VIX 18.4로 시장 반등 모멘텀도 뚜렷하지 않아 룰대로 손절 후 재기회를 노리는 것이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 4660,
+    "outcome_date": "2026-06-24",
+    "outcome_pct": -15.73,
+    "ai_correct": true
   },
   {
     "date": "2026-06-24",

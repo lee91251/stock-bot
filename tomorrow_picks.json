@@ -1,82 +1,38 @@
 {
-  "date": "2026-06-16",
-  "generated_at": "2026-06-15T15:44:13.333835",
+  "date": "2026-06-25",
+  "generated_at": "2026-06-24T15:44:07.617377",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "003490",
-      "name": "대한항공",
-      "sector": "항공",
+      "code": "196170",
+      "name": "알테오젠",
+      "sector": "바이오",
       "score_bonus": 10,
-      "today_change": 12.78,
-      "today_vol_ratio": 463.0,
-      "today_score": 62,
+      "today_change": 11.56,
+      "today_vol_ratio": 151.0,
+      "today_score": 55,
       "reasons": [
-        "오늘 +12.8% 마감",
-        "거래량 평균 +463%",
-        "스윙점수 62"
+        "오늘 +11.6% 마감",
+        "거래량 평균 +151%",
+        "스윙점수 55"
       ],
       "source": "close_summary"
     },
     {
-      "code": "403870",
-      "name": "HPSP",
-      "sector": "반도체",
-      "score_bonus": 10,
-      "today_change": 16.78,
-      "today_vol_ratio": 512.0,
-      "today_score": 52,
-      "reasons": [
-        "오늘 +16.8% 마감",
-        "거래량 평균 +512%",
-        "스윙점수 52"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "067160",
-      "name": "SOOP",
+      "code": "023410",
+      "name": "유진기업",
       "sector": "기타",
-      "score_bonus": 7,
-      "today_change": 6.74,
-      "today_vol_ratio": 237.0,
-      "today_score": 76,
+      "score_bonus": 9,
+      "today_change": 8.51,
+      "today_vol_ratio": 462.0,
+      "today_score": 67,
       "reasons": [
-        "오늘 +6.7% 마감",
-        "거래량 평균 +237%",
-        "스윙점수 76"
+        "오늘 +8.5% 마감",
+        "거래량 평균 +462%",
+        "스윙점수 67"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 5,
-    "AI": 5,
-    "에너지": -5,
-    "정유": -5,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1,
-    "자동차": 3,
-    "유통": 3
-  },
-  "us_etf_changes": {
-    "SOXX": 5.4,
-    "XLK": 3.78,
-    "XLF": 0.41,
-    "XLE": -3.48,
-    "XLV": -0.6,
-    "XLI": 1.42,
-    "XLB": 0.61,
-    "XLY": 1.69
-  },
-  "sector_updated_at": "2026-06-16T06:01:00.957410"
+  "sector_weights": {}
 }
