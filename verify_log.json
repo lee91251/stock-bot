@@ -213,5 +213,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-24T12:56:49.781681+09:00",
+    "side": "buy",
+    "code": "023410",
+    "name": "유진기업",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

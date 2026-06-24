@@ -12,6 +12,19 @@
       "swing_score": 69,
       "sector": "기타",
       "order_no": "0000024449"
+    },
+    "023410": {
+      "name": "유진기업",
+      "qty": 299,
+      "buy_price": 3335.0,
+      "buy_date": "2026-06-24",
+      "buy_time": "12:56",
+      "buy_amount": 997165.0,
+      "partial_sold": false,
+      "score": 98,
+      "swing_score": 70,
+      "sector": "기타",
+      "order_no": "0000040636"
     }
   },
   "history": [
@@ -106,6 +119,19 @@
       "price": 1232.0,
       "amount": 999152.0,
       "reason": "swing_score 69",
+      "sector": "기타",
+      "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-06-24",
+      "time": "12:56",
+      "side": "buy",
+      "code": "023410",
+      "name": "유진기업",
+      "qty": 299,
+      "price": 3335.0,
+      "amount": 997165.0,
+      "reason": "swing_score 70",
       "sector": "기타",
       "tag": "🚀 급등"
     }
@@ -247,9 +273,9 @@
       "trade_count": 0
     },
     "2026-06-24": {
-      "buy_count": 1,
-      "buy_amount": 999152.0,
-      "trade_count": 1
+      "buy_count": 2,
+      "buy_amount": 1996317.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
