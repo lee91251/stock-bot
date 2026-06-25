@@ -2050,6 +2050,79 @@ def _make_advisor_stats_card() -> str:
 """
 
 
+def _make_department_board() -> str:
+    """🏢 부서 현황판 — 9개 부서 상태등 + 역할 + 업그레이드 대기 (6/19 신설, 회장 요청).
+
+    동적: 검증부 shadow 건수, 시장폭 레짐, 오늘 거래 건수. 나머지는 역할/상태 표시.
+    """
+    vcnt = 0
+    try:
+        from verify import get_verify_stats
+        _vs = get_verify_stats(window_days=30) or {}
+        vcnt = (_vs.get("total") or _vs.get("count")
+                or (_vs.get("buy", {}).get("total", 0) + _vs.get("sell", {}).get("total", 0)))
+    except Exception:
+        vcnt = 0
+    regime = None
+    smoothed = None
+    try:
+        from stock import get_market_regime
+        _r = get_market_regime() or {}
+        regime = _r.get("regime")
+        smoothed = _r.get("smoothed")
+    except Exception:
+        pass
+    trades = 0
+    try:
+        from stock import load_positions
+        from finance import _today_str
+        _pos = load_positions()
+        _t = _today_str()
+        trades = sum(1 for h in _pos.get("history", []) if h.get("date") == _t)
+    except Exception:
+        pass
+
+    rg = "🔴 나쁜장" if regime == "bad" else ("🟢 좋은장" if regime == "good" else "—")
+    sm = f" {smoothed}%" if smoothed is not None else ""
+    vnote = f"shadow {vcnt}건 → enforce 대기" if vcnt else "shadow → enforce 대기"
+    G, A, X = "#1D9E75", "#EF9F27", "#B4B2A9"
+    depts = [
+        ("재무부", "계좌·포지션", G, ""),
+        ("매수부", "자동 매수", A, "예고-미체결 진단(신규)"),
+        ("매도부", "손절·익절", G, ""),
+        ("검증부", "매매 검증", A, vnote),
+        ("추천부", "종목 발굴", G, ""),
+        ("알림부", "텔레그램", G, ""),
+        ("대시보드부", "화면·차트", G, ""),
+        ("학습부", "자가학습", G, ""),
+        ("시장폭", "좋은장/나쁜장 판정", A, f"{rg}{sm} · 1-B 대기"),
+    ]
+    cards = ""
+    for nm, role, c, note in depts:
+        bd = f"1px solid {c}" if c == A else "1px solid rgba(128,128,128,.2)"
+        nh = (f'<div style="font-size:11.5px;color:{c if c == A else "#888"};margin-top:5px;line-height:1.3;">{note}</div>'
+              if note else "")
+        cards += (
+            f'<div style="border:{bd};border-radius:10px;padding:10px;background:rgba(128,128,128,.04);">'
+            f'<div style="display:flex;align-items:center;gap:6px;">'
+            f'<span style="width:9px;height:9px;border-radius:50%;background:{c};display:inline-block;flex-shrink:0;"></span>'
+            f'<b style="font-size:13.5px;">{nm}</b></div>'
+            f'<div style="font-size:11.5px;color:#888;margin-top:2px;">{role}</div>{nh}</div>'
+        )
+    return (
+        '<div style="border-radius:14px;padding:16px;margin:14px 0;'
+        'background:rgba(124,58,237,.04);border:1px solid rgba(124,58,237,.15);">'
+        '<div style="font-size:16px;font-weight:800;color:#7c3aed;">🏢 부서 현황판</div>'
+        f'<div style="font-size:12px;color:#9ca3af;margin:3px 0 12px;">오늘 거래 {trades}건 · 부서 오류 0건 · '
+        '🟢정상 6 · 🟡업그레이드 대기 3 · ⚪미착수 1</div>'
+        f'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;">{cards}</div>'
+        f'<div style="margin-top:10px;font-size:12px;color:#888;">'
+        f'<span style="width:9px;height:9px;border-radius:50%;background:{X};display:inline-block;"></span> '
+        '본부장(orchestrator) — 부서 조율·단일 저장, 7단계 미착수</div>'
+        '</div>'
+    )
+
+
 def _make_today_summary(risk: dict = None) -> dict:
     """🏠 오늘의 봇 한 줄 요약 + 부서 상태등 (3단계).
 

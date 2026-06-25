@@ -65,6 +65,7 @@ from dashboard import (
     _make_advisor_stats_card,
     _make_verify_card,
     _make_today_summary,
+    _make_department_board,
     _make_compare_card,
     _make_performance_card,
     _make_trade_history_card,
@@ -3913,6 +3914,11 @@ def build_and_save_dashboard(
         _lt_mkt = _lt.get("market", "")
         _lt_lrn = _lt.get("learning", "")
         _lt_alt = _lt.get("alert", "")
+        # 🏢 부서 현황판 (6/19 신설, 회장 요청) — 부서 일하는 걸 한눈에
+        try:
+            dept_board_html = _make_department_board()
+        except Exception:
+            dept_board_html = ""
         allocation_html = _make_allocation_card(holdings_alerts or [], auto_positions)
         market_html = _make_market_briefing_card(mood, fg, history)
         macro_html = _make_macro_card(macro, ai_macro, history)
@@ -3991,6 +3997,7 @@ def build_and_save_dashboard(
 <!-- 🏠 요약 — 매일 첫 확인 (항상 표시) -->
 {hero_html}
 {today_line_html}
+{dept_board_html}
 {coach_html}
 
 <!-- 💰 재무부 — 내 돈·보유 현황 (펼침) -->
