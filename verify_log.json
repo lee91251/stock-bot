@@ -251,5 +251,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-06-25T11:10:55.356883+09:00",
+    "side": "sell",
+    "code": "003200",
+    "name": "일신방직",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

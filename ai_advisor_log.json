@@ -88,5 +88,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-25",
+    "time": "11:11",
+    "code": "003200",
+    "name": "일신방직",
+    "sell_price": 9820.0,
+    "sell_pct": -4.1,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4.1%) 정확히 도달했고, 코스피 보합·VIX 18.6(중립)·공포탐욕 50(중립) 등 시장 환경도 특별히 반등을 기대할 촉매가 없으므로 룰대로 손절 실행이 바람직합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
