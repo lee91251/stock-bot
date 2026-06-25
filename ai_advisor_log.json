@@ -73,5 +73,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-25",
+    "time": "09:10",
+    "code": "023410",
+    "name": "유진기업",
+    "sell_price": 4015.0,
+    "sell_pct": 20.39,
+    "ai_opinion": "**매도 적절** — +20.4% 수익 실현 조건(+10% 전량 익절 기준 초과)이며, VIX 18.6·공포탐욕 50으로 중립적인 시장 환경에서 1거래일 만에 목표 수익률을 달성한 만큼 즉시 익절이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
