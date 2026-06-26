@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-06-25T10:58:48.976546+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화솔루션 🏠",
-    "detail": "유상증자결정(종속회사의주요경영사항)              "
-  },
-  {
     "time": "2026-06-26T06:01:01.157222+09:00",
     "category": "briefing",
     "level": "info",
@@ -22,5 +14,29 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.9 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-06-26T14:31:40.081692+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 LG화학 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
+  },
+  {
+    "time": "2026-06-26T14:31:40.081977+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 HD한국조선해양 🏠",
+    "detail": "생산중단(자회사의 주요경영사항)              "
+  },
+  {
+    "time": "2026-06-26T14:31:40.082361+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 HD한국조선해양 🏠",
+    "detail": "유형자산처분결정(자회사의 주요경영사항)              "
   }
 ]
