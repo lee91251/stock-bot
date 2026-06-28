@@ -1809,6 +1809,56 @@
       "score": 110,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-29",
+      "month": "2026-06",
+      "ticker": "136490.KS",
+      "name": "선진",
+      "price": 8600.0,
+      "score": 120,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-29",
+      "month": "2026-06",
+      "ticker": "472850.KQ",
+      "name": "폰드그룹",
+      "price": 3910.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-29",
+      "month": "2026-06",
+      "ticker": "023590.KS",
+      "name": "다우기술",
+      "price": 33800.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-29",
+      "month": "2026-06",
+      "ticker": "043150.KQ",
+      "name": "바텍",
+      "price": 17130.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-29",
+      "month": "2026-06",
+      "ticker": "031440.KS",
+      "name": "신세계푸드",
+      "price": 38950.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
