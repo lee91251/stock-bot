@@ -1859,6 +1859,56 @@
       "score": 110,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-06-30",
+      "month": "2026-06",
+      "ticker": "214320.KS",
+      "name": "이노션",
+      "price": 18180.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-30",
+      "month": "2026-06",
+      "ticker": "000430.KS",
+      "name": "대원강업",
+      "price": 3950.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-30",
+      "month": "2026-06",
+      "ticker": "053580.KQ",
+      "name": "웹케시",
+      "price": 6380.0,
+      "score": 103,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-30",
+      "month": "2026-06",
+      "ticker": "000540.KS",
+      "name": "흥국화재",
+      "price": 3215.0,
+      "score": 100,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-06-30",
+      "month": "2026-06",
+      "ticker": "148150.KQ",
+      "name": "세경하이테크",
+      "price": 3225.0,
+      "score": 100,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
