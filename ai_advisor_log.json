@@ -103,5 +103,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-29",
+    "time": "09:01",
+    "code": "073240",
+    "name": "금호타이어",
+    "sell_price": 4990.0,
+    "sell_pct": 7.89,
+    "ai_opinion": "**매도 적절** — +7.9%로 절반 익절 트리거 정확히 도달했고, VIX 18.4·공포탐욕 50의 중립 시장에서 추가 상승 모멘텀이 불분명하므로 룰대로 절반 익절 후 나머지 잔량으로 추가 수익 여지를 남기는 것이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
