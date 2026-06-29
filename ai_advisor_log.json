@@ -118,5 +118,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-06-29",
+    "time": "09:16",
+    "code": "073240",
+    "name": "금호타이어",
+    "sell_price": 5430.0,
+    "sell_pct": 17.41,
+    "ai_opinion": "**매도 적절** — 1거래일 만에 +17.4% 달성으로 단기 목표 수익 충분히 실현했으며, VIX 18.4·공포탐욕 중립(50) 환경에서 코스피 보합세를 감안하면 추가 모멘텀보다 확정 수익 우선이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
