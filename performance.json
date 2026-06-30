@@ -7,6 +7,10 @@
     "2026-06": {
       "total": 0,
       "wins": 0
+    },
+    "2026-07": {
+      "total": 0,
+      "wins": 0
     }
   },
   "recommendations": [
@@ -1907,6 +1911,56 @@
       "name": "세경하이테크",
       "price": 3225.0,
       "score": 100,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "ticker": "333430.KQ",
+      "name": "일승",
+      "price": 3390.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 64400.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "ticker": "105630.KS",
+      "name": "한세실업",
+      "price": 8100.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "ticker": "089470.KS",
+      "name": "HDC현대EP",
+      "price": 3745.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-01",
+      "month": "2026-07",
+      "ticker": "036580.KS",
+      "name": "팜스코",
+      "price": 2400.0,
+      "score": 108,
       "buy_signal": true,
       "result": null
     }
