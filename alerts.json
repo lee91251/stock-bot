@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-06-30T14:32:35.571189+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
     "time": "2026-06-30T14:46:27.466064+09:00",
     "category": "disclosure",
     "level": "info",
@@ -77,6 +69,14 @@
     "level": "info",
     "emoji": "📰",
     "title": "DART 📰 롯데에너지머티리얼즈 🏠",
+    "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-07-01T14:32:44.403238+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SKC 🏠",
     "detail": "주식등의대량보유상황보고서(약식)"
   }
 ]
