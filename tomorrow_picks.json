@@ -1,31 +1,38 @@
 {
-  "date": "2026-07-01",
-  "generated_at": "2026-06-30T15:43:02.750008",
+  "date": "2026-07-02",
+  "generated_at": "2026-07-01T15:43:36.060605",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 5,
-    "AI": 5,
-    "에너지": -1,
-    "정유": -1,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 4.3,
-    "XLK": 2.76,
-    "XLF": -0.2,
-    "XLE": -0.88,
-    "XLV": -1.29,
-    "XLI": 1.35,
-    "XLB": 0.34,
-    "XLY": 0.14
-  },
-  "sector_updated_at": "2026-07-01T06:01:06.980432"
+  "picks": [
+    {
+      "code": "006360",
+      "name": "GS건설",
+      "sector": "건설",
+      "score_bonus": 10,
+      "today_change": 19.92,
+      "today_vol_ratio": 422.0,
+      "today_score": 62,
+      "reasons": [
+        "오늘 +19.9% 마감",
+        "거래량 평균 +422%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "089860",
+      "name": "롯데렌탈",
+      "sector": "기타",
+      "score_bonus": 10,
+      "today_change": 13.7,
+      "today_vol_ratio": 332.0,
+      "today_score": 60,
+      "reasons": [
+        "오늘 +13.7% 마감",
+        "거래량 평균 +332%",
+        "스윙점수 60"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
