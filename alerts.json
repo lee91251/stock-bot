@@ -1,37 +1,5 @@
 [
   {
-    "time": "2026-06-30T14:46:27.466064+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "[기재정정]사업보고서 (2023.12)"
-  },
-  {
-    "time": "2026-06-30T15:01:41.665796+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "[기재정정]분기보고서 (2024.03)"
-  },
-  {
-    "time": "2026-06-30T15:01:41.666040+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-06-30T15:01:41.666352+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 LG화학 🏠",
-    "detail": "지속가능경영보고서등관련사항(자율공시)              "
-  },
-  {
     "time": "2026-07-01T06:01:05.126428+09:00",
     "category": "briefing",
     "level": "info",
@@ -78,5 +46,13 @@
     "emoji": "📰",
     "title": "DART 📰 SKC 🏠",
     "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-07-02T06:01:02.675861+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P -0.22% / 나스닥 -0.66% / VIX 16.59 / 환율 1,551원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
