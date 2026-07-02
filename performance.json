@@ -1963,6 +1963,56 @@
       "score": 108,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-03",
+      "month": "2026-07",
+      "ticker": "214180.KQ",
+      "name": "헥토이노베이션",
+      "price": 13340.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-03",
+      "month": "2026-07",
+      "ticker": "035890.KQ",
+      "name": "서희건설",
+      "price": 2095.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-03",
+      "month": "2026-07",
+      "ticker": "036830.KQ",
+      "name": "솔브레인홀딩스",
+      "price": 35850.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-03",
+      "month": "2026-07",
+      "ticker": "333430.KQ",
+      "name": "일승",
+      "price": 3365.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-03",
+      "month": "2026-07",
+      "ticker": "136490.KS",
+      "name": "선진",
+      "price": 9020.0,
+      "score": 109,
+      "buy_signal": false,
+      "result": null
     }
   ]
 }
