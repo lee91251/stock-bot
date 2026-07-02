@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-07-01T11:12:03.404462+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-07-01T13:29:07.973425+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "주식등의대량보유상황보고서(약식)"
-  },
-  {
     "time": "2026-07-01T14:13:32.745426+09:00",
     "category": "disclosure",
     "level": "info",
@@ -94,5 +78,13 @@
     "emoji": "✅",
     "title": "DART ✅ 삼성중공업",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-07-02T14:05:31.261874+09:00",
+    "category": "risk",
+    "level": "danger",
+    "emoji": "🚨",
+    "title": "위험 등급 상승: 안전 → 주의",
+    "detail": "40/100 · 매수량 25% 축소 · 공포탐욕 35 공포 · 코스피 -5.5% 폭락"
   }
 ]
