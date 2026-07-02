@@ -46,5 +46,45 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.6 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-07-02T09:16:32.438267+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "[기재정정]반기보고서 (2025.06)"
+  },
+  {
+    "time": "2026-07-02T09:16:32.438603+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "[기재정정]분기보고서 (2025.09)"
+  },
+  {
+    "time": "2026-07-02T09:16:32.438991+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "[기재정정]사업보고서 (2025.12)"
+  },
+  {
+    "time": "2026-07-02T09:16:32.439293+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 GS건설 🏠",
+    "detail": "[기재정정]분기보고서 (2026.03)"
+  },
+  {
+    "time": "2026-07-02T09:16:32.439618+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ 에코프로비엠",
+    "detail": "특수관계인의유상증자참여"
   }
 ]
