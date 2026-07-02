@@ -434,7 +434,7 @@
   },
   "halted": false,
   "pending_cancel": false,
-  "last_risk_level": "주의",
+  "last_risk_level": "안전",
   "_algorithm_reset_date": "2026-06-16",
   "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)"
 }
