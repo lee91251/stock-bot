@@ -133,5 +133,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-03",
+    "time": "09:31",
+    "code": "072870",
+    "name": "메가스터디",
+    "sell_price": 13020.0,
+    "sell_pct": -1.36,
+    "ai_opinion": "**매도 적절** — VIX 16.1, 공포탐욕 50으로 시장 환경은 중립적이나, 3거래일 보유에도 -1.4% 하락 추세가 지속 중이고 손절 기준(-4%)에 여유가 있더라도 모멘텀 부재 종목은 기회비용 측면에서 조기 청산이 유효합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]

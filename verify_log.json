@@ -296,5 +296,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-03T09:31:27.654930+09:00",
+    "side": "sell",
+    "code": "072870",
+    "name": "메가스터디",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
