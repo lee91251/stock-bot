@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-07-02T14:05:31.261874+09:00",
-    "category": "risk",
-    "level": "danger",
-    "emoji": "🚨",
-    "title": "위험 등급 상승: 안전 → 주의",
-    "detail": "40/100 · 매수량 25% 축소 · 공포탐욕 35 공포 · 코스피 -5.5% 폭락"
-  },
-  {
-    "time": "2026-07-02T14:16:17.692629+09:00",
-    "category": "risk",
-    "level": "info",
-    "emoji": "✅",
-    "title": "위험 등급 하락: 주의 → 안전",
-    "detail": "5/100 — 정상화 추세"
-  },
-  {
     "time": "2026-07-03T06:01:08.370894+09:00",
     "category": "briefing",
     "level": "info",
@@ -545,6 +529,38 @@
   },
   {
     "time": "2026-07-03T14:02:16.132242+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-03T14:16:33.923851+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-03T14:16:33.924644+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-03T14:16:33.925447+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-03T14:16:33.926156+09:00",
     "category": "disclosure",
     "level": "info",
     "emoji": "📰",
