@@ -305,5 +305,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-03T10:57:12.961952+09:00",
+    "side": "buy",
+    "code": "069620",
+    "name": "대웅제약",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
