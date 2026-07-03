@@ -12,6 +12,19 @@
       "swing_score": 51,
       "sector": "바이오",
       "order_no": "0000018777"
+    },
+    "035890": {
+      "name": "서희건설",
+      "qty": 448,
+      "buy_price": 2230.0,
+      "buy_date": "2026-07-03",
+      "buy_time": "14:28",
+      "buy_amount": 999040.0,
+      "partial_sold": false,
+      "score": 93,
+      "swing_score": 66,
+      "sector": "기타",
+      "order_no": "0000033732"
     }
   },
   "history": [
@@ -275,6 +288,19 @@
       "reason": "swing_score 51",
       "sector": "바이오",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-07-03",
+      "time": "14:28",
+      "side": "buy",
+      "code": "035890",
+      "name": "서희건설",
+      "qty": 448,
+      "price": 2230.0,
+      "amount": 999040.0,
+      "reason": "swing_score 66",
+      "sector": "기타",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -449,9 +475,9 @@
       "trade_count": 0
     },
     "2026-07-03": {
-      "buy_count": 1,
-      "buy_amount": 912100.0,
-      "trade_count": 2
+      "buy_count": 2,
+      "buy_amount": 1911140.0,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {

@@ -314,5 +314,23 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-03T14:28:42.099102+09:00",
+    "side": "buy",
+    "code": "011370",
+    "name": "서한",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
+  },
+  {
+    "time": "2026-07-03T14:28:44.786409+09:00",
+    "side": "buy",
+    "code": "035890",
+    "name": "서희건설",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
