@@ -2013,6 +2013,56 @@
       "score": 109,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-07-06",
+      "month": "2026-07",
+      "ticker": "036830.KQ",
+      "name": "솔브레인홀딩스",
+      "price": 36600.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-06",
+      "month": "2026-07",
+      "ticker": "136490.KS",
+      "name": "선진",
+      "price": 9160.0,
+      "score": 110,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-07-06",
+      "month": "2026-07",
+      "ticker": "000540.KS",
+      "name": "흥국화재",
+      "price": 3230.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-06",
+      "month": "2026-07",
+      "ticker": "012030.KS",
+      "name": "DB",
+      "price": 1581.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-06",
+      "month": "2026-07",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 9370.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
