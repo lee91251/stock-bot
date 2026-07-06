@@ -14,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-07-06T10:59:08.445168+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ DL이앤씨",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
