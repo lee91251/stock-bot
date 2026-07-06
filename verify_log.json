@@ -341,5 +341,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-06T13:46:20.873259+09:00",
+    "side": "buy",
+    "code": "005880",
+    "name": "대한해운",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
