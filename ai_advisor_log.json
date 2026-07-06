@@ -148,5 +148,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-06",
+    "time": "09:27",
+    "code": "069620",
+    "name": "대웅제약",
+    "sell_price": 138200.0,
+    "sell_pct": 6.06,
+    "ai_opinion": "**매도 적절** — +6.1% 절반 익절 트리거 정확히 충족했고, VIX 15.8·공포탐욕 60으로 시장 과열 우려는 없으나 1거래일 단기 급등 후 코스피 보합 상황에서 일부 차익 실현은 리스크 관리 측면에서 타당합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
