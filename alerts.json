@@ -30,5 +30,21 @@
     "emoji": "📰",
     "title": "DART 📰 대한해운 🏠",
     "detail": "주식등의대량보유상황보고서(일반)"
+  },
+  {
+    "time": "2026-07-06T14:28:51.419279+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 오리온",
+    "detail": "현금ㆍ현물배당결정              "
+  },
+  {
+    "time": "2026-07-06T14:28:51.419564+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 오리온",
+    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
   }
 ]
