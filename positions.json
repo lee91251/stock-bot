@@ -38,6 +38,19 @@
       "swing_score": 72,
       "sector": "기타",
       "order_no": "0000034316"
+    },
+    "042660": {
+      "name": "한화오션",
+      "qty": 8,
+      "buy_price": 116300.0,
+      "buy_date": "2026-07-06",
+      "buy_time": "14:26",
+      "buy_amount": 930400.0,
+      "partial_sold": false,
+      "score": 61,
+      "swing_score": 65,
+      "sector": "조선",
+      "order_no": "0000037618"
     }
   },
   "history": [
@@ -344,6 +357,19 @@
       "reason": "swing_score 72",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-07-06",
+      "time": "14:26",
+      "side": "buy",
+      "code": "042660",
+      "name": "한화오션",
+      "qty": 8,
+      "price": 116300.0,
+      "amount": 930400.0,
+      "reason": "swing_score 65",
+      "sector": "조선",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -523,9 +549,9 @@
       "trade_count": 3
     },
     "2026-07-06": {
-      "buy_count": 1,
-      "buy_amount": 998186.0,
-      "trade_count": 2
+      "buy_count": 2,
+      "buy_amount": 1928586.0,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {

@@ -350,5 +350,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-06T14:26:55.292814+09:00",
+    "side": "buy",
+    "code": "042660",
+    "name": "한화오션",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]
