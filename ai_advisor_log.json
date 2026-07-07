@@ -178,5 +178,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-07",
+    "time": "12:31",
+    "code": "035890",
+    "name": "서희건설",
+    "sell_price": 2140.0,
+    "sell_pct": -4.04,
+    "ai_opinion": "**매도 적절** — 손절 트리거(-4.0%) 정확히 도달했고, 코스피 보합·VIX 안정 환경임에도 반등 모멘텀이 없는 상황에서 룰 준수가 우선이며, 2거래일 보유로 추가 하락 시 손실 확대 리스크가 있어 원칙대로 매도가 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
