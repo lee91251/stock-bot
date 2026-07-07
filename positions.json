@@ -24,7 +24,8 @@
       "score": 93,
       "swing_score": 66,
       "sector": "기타",
-      "order_no": "0000033732"
+      "order_no": "0000033732",
+      "imminent_state": "near_stop"
     },
     "005880": {
       "name": "대한해운",

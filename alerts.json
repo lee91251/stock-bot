@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-07-06T08:51:06.679335+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 60(탐욕)"
-  },
-  {
-    "time": "2026-07-06T10:59:08.445168+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ DL이앤씨",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-07-06T14:01:45.395718+09:00",
     "category": "disclosure",
     "level": "info",
@@ -54,5 +38,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.6 / 공포탐욕 65(탐욕)"
+  },
+  {
+    "time": "2026-07-07T12:15:47.030264+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 서희건설 -3.59% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
