@@ -2113,6 +2113,56 @@
       "score": 106,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-08",
+      "month": "2026-07",
+      "ticker": "264450.KQ",
+      "name": "유비쿼스",
+      "price": 9590.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-08",
+      "month": "2026-07",
+      "ticker": "064820.KQ",
+      "name": "케이프",
+      "price": 8560.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-08",
+      "month": "2026-07",
+      "ticker": "333430.KQ",
+      "name": "일승",
+      "price": 3190.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-08",
+      "month": "2026-07",
+      "ticker": "035000.KS",
+      "name": "HS애드",
+      "price": 6700.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-08",
+      "month": "2026-07",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 5990.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
