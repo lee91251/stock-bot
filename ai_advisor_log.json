@@ -163,5 +163,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-07",
+    "time": "09:10",
+    "code": "042660",
+    "name": "한화오션",
+    "sell_price": 91400.0,
+    "sell_pct": -21.41,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%) 대비 이미 -21.4%로 크게 이탈한 상태이며, 1거래일 만에 발생한 급락은 수급 이탈 신호로 추가 하락 리스크가 크므로 룰대로 즉시 손절이 타당합니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
