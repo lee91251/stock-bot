@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-07-07T12:15:47.030264+09:00",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 서희건설 -3.59% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
     "time": "2026-07-07T15:17:28.400349+09:00",
     "category": "disclosure",
     "level": "warning",
@@ -38,5 +30,13 @@
     "emoji": "✅",
     "title": "DART ✅ 삼성중공업",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-07-08T14:47:31.717579+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
   }
 ]
