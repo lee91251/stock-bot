@@ -381,5 +381,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-08T11:46:19.675087+09:00",
+    "side": "buy",
+    "code": "008930",
+    "name": "한미사이언스",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]
