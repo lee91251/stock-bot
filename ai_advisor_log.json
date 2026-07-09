@@ -193,5 +193,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-09",
+    "time": "09:28",
+    "code": "008930",
+    "name": "한미사이언스",
+    "sell_price": 31400.0,
+    "sell_pct": -4.7,
+    "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 이미 초과한 -4.7%로 룰 기반 손절 실행이 맞으며, 코스피 보합·VIX 16.9의 중립 시장에서 헬스케어 반등 모멘텀이 불분명해 추가 손실 방지가 우선입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]
