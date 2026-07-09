@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-07-08T10:14:45.129831+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-07-08T14:47:31.717579+09:00",
     "category": "disclosure",
     "level": "info",
@@ -38,5 +30,13 @@
     "emoji": "📰",
     "title": "DART 📰 LG화학 🏠",
     "detail": "기업설명회(IR)개최(안내공시)              "
+  },
+  {
+    "time": "2026-07-09T11:15:13.767606+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ HD한국조선해양 🏠",
+    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
   }
 ]
