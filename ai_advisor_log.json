@@ -208,5 +208,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-09",
+    "time": "10:26",
+    "code": "005880",
+    "name": "대한해운",
+    "sell_price": 1905.0,
+    "sell_pct": -1.14,
+    "ai_opinion": "**매도 적절** — VIX 16.9·공포탐욕 50으로 시장은 중립적이나, 대한해운은 3거래일간 뚜렷한 반등 없이 -1.1% 하락세 지속 중이므로 트리거 기준대로 조기 청산하는 것이 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]

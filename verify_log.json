@@ -401,5 +401,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-09T10:26:33.436194+09:00",
+    "side": "sell",
+    "code": "005880",
+    "name": "대한해운",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
