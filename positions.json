@@ -596,6 +596,11 @@
       "buy_count": 1,
       "buy_amount": 988500.0,
       "trade_count": 1
+    },
+    "2026-07-09": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 0
     }
   },
   "loss_cooldown": {
