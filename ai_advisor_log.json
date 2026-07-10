@@ -223,5 +223,20 @@
     "outcome_date": null,
     "outcome_pct": null,
     "ai_correct": null
+  },
+  {
+    "date": "2026-07-10",
+    "time": "09:01",
+    "code": "069620",
+    "name": "대웅제약",
+    "sell_price": 131500.0,
+    "sell_pct": 0.92,
+    "ai_opinion": "**매도 적절** — 5거래일 보유 규칙 충족, +0.9% 소폭 수익이나 코스피 횡보·바이오 모멘텀 부재 상황에서 추가 상승 근거 희박하므로 규칙대로 익절 매도가 합리적입니다.",
+    "opinion_class": "sell",
+    "sell_executed": true,
+    "outcome_price": null,
+    "outcome_date": null,
+    "outcome_pct": null,
+    "ai_correct": null
   }
 ]

@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-07-09T08:51:21.597173+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.9 / 공포탐욕 50(중립)"
-  },
-  {
     "time": "2026-07-09T10:04:22.158432+09:00",
     "category": "disclosure",
     "level": "info",
@@ -38,5 +30,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 65(탐욕)"
+  },
+  {
+    "time": "2026-07-10T09:02:04.631687+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ SK하이닉스",
+    "detail": "[기재정정]주요사항보고서(유상증자결정)"
   }
 ]
