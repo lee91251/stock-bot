@@ -2263,6 +2263,56 @@
       "score": 108,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-13",
+      "month": "2026-07",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 36200.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-13",
+      "month": "2026-07",
+      "ticker": "148150.KQ",
+      "name": "세경하이테크",
+      "price": 3085.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-07-13",
+      "month": "2026-07",
+      "ticker": "348950.KS",
+      "name": "제이알글로벌리츠",
+      "price": 1182.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-13",
+      "month": "2026-07",
+      "ticker": "019010.KQ",
+      "name": "베뉴지",
+      "price": 4600.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-13",
+      "month": "2026-07",
+      "ticker": "106190.KQ",
+      "name": "하이텍팜",
+      "price": 11980.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
