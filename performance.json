@@ -2313,6 +2313,56 @@
       "score": 98,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-14",
+      "month": "2026-07",
+      "ticker": "036830.KQ",
+      "name": "솔브레인홀딩스",
+      "price": 32850.0,
+      "score": 107,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-14",
+      "month": "2026-07",
+      "ticker": "053300.KQ",
+      "name": "한국정보인증",
+      "price": 4060.0,
+      "score": 102,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-14",
+      "month": "2026-07",
+      "ticker": "051370.KQ",
+      "name": "인터플렉스",
+      "price": 6670.0,
+      "score": 102,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-14",
+      "month": "2026-07",
+      "ticker": "297890.KQ",
+      "name": "HB솔루션",
+      "price": 1621.0,
+      "score": 102,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-14",
+      "month": "2026-07",
+      "ticker": "011200.KS",
+      "name": "HMM",
+      "price": 19550.0,
+      "score": 101,
+      "buy_signal": false,
+      "result": null
     }
   ]
 }
