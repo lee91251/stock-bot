@@ -2363,6 +2363,56 @@
       "score": 101,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-07-15",
+      "month": "2026-07",
+      "ticker": "200670.KQ",
+      "name": "휴메딕스",
+      "price": 25700.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-15",
+      "month": "2026-07",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 60700.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-15",
+      "month": "2026-07",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 33950.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-07-15",
+      "month": "2026-07",
+      "ticker": "017370.KS",
+      "name": "우신시스템",
+      "price": 4150.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-15",
+      "month": "2026-07",
+      "ticker": "036830.KQ",
+      "name": "솔브레인홀딩스",
+      "price": 31750.0,
+      "score": 107,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
