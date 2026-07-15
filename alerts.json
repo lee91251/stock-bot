@@ -22,5 +22,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.5 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-07-15T09:12:05.181478+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ SK하이닉스",
+    "detail": "유상증자또는주식관련사채등의발행결과(자율공시)              "
   }
 ]
