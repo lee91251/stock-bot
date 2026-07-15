@@ -2413,6 +2413,56 @@
       "score": 107,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-16",
+      "month": "2026-07",
+      "ticker": "071320.KS",
+      "name": "지역난방공사",
+      "price": 64700.0,
+      "score": 109,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-16",
+      "month": "2026-07",
+      "ticker": "000120.KS",
+      "name": "CJ대한통운",
+      "price": 71700.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-16",
+      "month": "2026-07",
+      "ticker": "031440.KS",
+      "name": "신세계푸드",
+      "price": 38950.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-16",
+      "month": "2026-07",
+      "ticker": "002380.KS",
+      "name": "KCC",
+      "price": 431500.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-16",
+      "month": "2026-07",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 33900.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
     }
   ]
 }
