@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-07-15T09:12:05.181478+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ SK하이닉스",
-    "detail": "유상증자또는주식관련사채등의발행결과(자율공시)              "
-  },
-  {
-    "time": "2026-07-15T09:25:35.372905+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 한화오션",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-07-15T12:14:02.465442+09:00",
     "category": "disclosure",
     "level": "info",
@@ -46,5 +30,13 @@
     "emoji": "📰",
     "title": "DART 📰 GS건설 🏠",
     "detail": "[기재정정]타인에대한채무보증결정              "
+  },
+  {
+    "time": "2026-07-16T09:41:49.726107+09:00",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🟢 흥아해운 +5.57% — 1차 익절 임박 (목표 +6%, 절반 매도)"
   }
 ]
