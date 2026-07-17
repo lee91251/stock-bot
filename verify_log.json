@@ -673,5 +673,23 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-17T13:57:39.116117+09:00",
+    "side": "buy",
+    "code": "294870",
+    "name": "IPARK현대산업개발",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
+  },
+  {
+    "time": "2026-07-17T13:57:51.134966+09:00",
+    "side": "buy",
+    "code": "271980",
+    "name": "제일약품",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
