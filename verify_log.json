@@ -610,5 +610,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-17T12:16:19.748660+09:00",
+    "side": "sell",
+    "code": "003280",
+    "name": "흥아해운",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
