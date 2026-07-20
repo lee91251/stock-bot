@@ -70,5 +70,37 @@
     "emoji": "⚠️",
     "title": "DART ⚠️ 한화",
     "detail": "[기재정정]유상증자결정(종속회사의주요경영사항)              "
+  },
+  {
+    "time": "2026-07-20T14:29:21.396668+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "[발행조건확정]증권신고서(지분증권)"
+  },
+  {
+    "time": "2026-07-20T14:29:21.396915+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SKC 🏠",
+    "detail": "결산실적공시예고(안내공시)              "
+  },
+  {
+    "time": "2026-07-20T14:29:21.397435+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SKC 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
+  },
+  {
+    "time": "2026-07-20T14:29:21.397936+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SKC 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
   }
 ]
