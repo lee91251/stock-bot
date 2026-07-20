@@ -30,5 +30,21 @@
     "emoji": "✅",
     "title": "DART ✅ 현대건설",
     "detail": "[기재정정]단일판매ㆍ공급계약체결(자율공시)              "
+  },
+  {
+    "time": "2026-07-20T13:16:29.943652+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ 한화솔루션 🏠",
+    "detail": "[기재정정]주요사항보고서(유상증자결정)"
+  },
+  {
+    "time": "2026-07-20T13:16:29.943940+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ 한화솔루션 🏠",
+    "detail": "유상증자신주발행가액(안내공시)              "
   }
 ]
