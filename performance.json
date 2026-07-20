@@ -2563,6 +2563,56 @@
       "score": 100,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-21",
+      "month": "2026-07",
+      "ticker": "031440.KS",
+      "name": "신세계푸드",
+      "price": 39100.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-21",
+      "month": "2026-07",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 60000.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-21",
+      "month": "2026-07",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 33000.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-07-21",
+      "month": "2026-07",
+      "ticker": "011170.KS",
+      "name": "롯데케미칼",
+      "price": 57600.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-21",
+      "month": "2026-07",
+      "ticker": "004020.KS",
+      "name": "현대제철",
+      "price": 25250.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
