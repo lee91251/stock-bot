@@ -745,5 +745,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-20T11:43:23.620359+09:00",
+    "side": "buy",
+    "code": "036530",
+    "name": "SNT홀딩스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

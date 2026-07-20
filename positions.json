@@ -13,6 +13,19 @@
       "sector": "기타",
       "order_no": "0000013510",
       "imminent_state": ""
+    },
+    "036530": {
+      "name": "SNT홀딩스",
+      "qty": 18,
+      "buy_price": 53900.0,
+      "buy_date": "2026-07-20",
+      "buy_time": "11:43",
+      "buy_amount": 970200.0,
+      "partial_sold": false,
+      "score": 97,
+      "swing_score": 61,
+      "sector": "기타",
+      "order_no": "0000018157"
     }
   },
   "history": [
@@ -443,6 +456,19 @@
       "reason": "swing_score 51",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-07-20",
+      "time": "11:43",
+      "side": "buy",
+      "code": "036530",
+      "name": "SNT홀딩스",
+      "qty": 18,
+      "price": 53900.0,
+      "amount": 970200.0,
+      "reason": "swing_score 61",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -672,9 +698,9 @@
       "trade_count": 0
     },
     "2026-07-20": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 970200.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
