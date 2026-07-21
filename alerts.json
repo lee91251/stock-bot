@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-07-20T11:16:28.392910+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대건설",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결(자율공시)              "
-  },
-  {
     "time": "2026-07-20T13:16:29.943652+09:00",
     "category": "disclosure",
     "level": "warning",
@@ -142,5 +134,13 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "[기재정정]임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-21T11:16:39.900629+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
