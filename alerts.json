@@ -1,85 +1,5 @@
 [
   {
-    "time": "2026-07-20T13:16:29.943652+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화솔루션 🏠",
-    "detail": "[기재정정]주요사항보고서(유상증자결정)"
-  },
-  {
-    "time": "2026-07-20T13:16:29.943940+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화솔루션 🏠",
-    "detail": "유상증자신주발행가액(안내공시)              "
-  },
-  {
-    "time": "2026-07-20T13:31:41.402514+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "주식등의대량보유상황보고서(일반)"
-  },
-  {
-    "time": "2026-07-20T14:01:55.953287+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-07-20T14:01:55.953607+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화",
-    "detail": "[기재정정]유상증자결정(종속회사의주요경영사항)              "
-  },
-  {
-    "time": "2026-07-20T14:29:21.396668+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "[발행조건확정]증권신고서(지분증권)"
-  },
-  {
-    "time": "2026-07-20T14:29:21.396915+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SKC 🏠",
-    "detail": "결산실적공시예고(안내공시)              "
-  },
-  {
-    "time": "2026-07-20T14:29:21.397435+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SKC 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-07-20T14:29:21.397936+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SKC 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-07-20T14:32:46.553793+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "[기재정정]투자설명서"
-  },
-  {
     "time": "2026-07-21T06:01:09.661721+09:00",
     "category": "briefing",
     "level": "info",
@@ -142,5 +62,13 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-22T06:01:07.720534+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.89% / 나스닥 +1.29% / VIX 17.05 / 환율 1,481원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
