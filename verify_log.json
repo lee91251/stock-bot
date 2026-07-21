@@ -790,5 +790,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-21T09:18:27.230023+09:00",
+    "side": "sell",
+    "code": "036530",
+    "name": "SNT홀딩스",
+    "ok": true,
+    "rejects": [],
+    "warnings": [
+      "손절선 도달 (-7.88% ≤ -7%) — 즉시 매도"
+    ]
   }
 ]
