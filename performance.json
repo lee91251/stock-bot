@@ -2613,6 +2613,56 @@
       "score": 108,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-22",
+      "month": "2026-07",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 59800.0,
+      "score": 120,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-22",
+      "month": "2026-07",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 5610.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-22",
+      "month": "2026-07",
+      "ticker": "004020.KS",
+      "name": "현대제철",
+      "price": 25300.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-22",
+      "month": "2026-07",
+      "ticker": "000370.KS",
+      "name": "한화손해보험",
+      "price": 5550.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-22",
+      "month": "2026-07",
+      "ticker": "041190.KQ",
+      "name": "우리기술투자",
+      "price": 4365.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
