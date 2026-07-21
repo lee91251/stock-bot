@@ -238,6 +238,7 @@ except Exception:
 PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "performance.json")
 MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
 MARKET_BREADTH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_breadth_history.json")
+CCSTR_LOG_FILE      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ccstr_log.json")
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
 ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
@@ -7778,6 +7779,65 @@ def get_market_regime() -> dict:
     return {"regime": "good", "smoothed": None, "ma_days": 0}
 
 
+def run_ccstr_log():
+    """체결강도(선행지표) 로거 — 장중 관심종목 체결강도 스냅샷 기록.
+    실시간판 백테스트: 며칠 모아 '체결강도 100+ 이후 주가 올랐나' 예측력 실측용.
+    KIS inquire-price output의 cttr(체결강도)를 사용. 상위 25종목만 저장(로그 다이어트)."""
+    if _skip_if_holiday("체결강도 로거"):
+        return
+    now = _now_kst()
+    if not _is_market_open(now):
+        print("  [체결강도] 장 시간 아님 — 스킵")
+        return
+    if not _kis.available():
+        print("  [체결강도] KIS 키 없음 — 스킵")
+        return
+    pool = _load_auto_buy_pool()
+    snap = []
+    for i, (ticker, val) in enumerate(pool.items()):
+        if i >= 80:   # KIS rate limit 보호 — 상위 80종목만
+            break
+        code = ticker.split(".")[0]
+        name = val[0] if isinstance(val, (list, tuple)) else str(ticker)
+        try:
+            p = _kis.get_price(code)
+        except Exception:
+            p = {}
+        if not p:
+            continue
+        cttr  = _safe_float(p.get("cttr"))          # 체결강도 (100 넘으면 매수체결 우위)
+        price = _safe_float(p.get("stck_prpr"))     # 현재가
+        chg   = _safe_float(p.get("prdy_ctrt"))     # 전일대비율
+        if cttr > 0 and price > 0:
+            snap.append({"code": code, "name": name, "cttr": round(cttr, 1),
+                         "price": price, "chg": round(chg, 2)})
+        time.sleep(0.12)
+
+    if not snap:
+        print("  [체결강도] 데이터 없음 (KIS 응답 비어있음)")
+        return
+    snap.sort(key=lambda x: -x["cttr"])
+    top = snap[:25]
+
+    log = []
+    if os.path.exists(CCSTR_LOG_FILE):
+        try:
+            with open(CCSTR_LOG_FILE, encoding="utf-8") as f:
+                log = json.load(f).get("log", [])
+        except Exception:
+            log = []
+    log.append({"time": now.strftime("%Y-%m-%d %H:%M"), "top": top})
+    log = log[-260:]   # 최근 ~3일치(5분×78회×3)
+    try:
+        with open(CCSTR_LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump({"updated": now.strftime("%Y-%m-%d %H:%M"), "log": log},
+                      f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [체결강도] 저장 실패: {e}")
+    print(f"  [체결강도] {now.strftime('%H:%M')} 스냅샷 — 상위 {len(top)}종목 "
+          f"(최고 {top[0]['name']} {top[0]['cttr']})")
+
+
 def run_market_scan(n: int = MARKET_SCAN_N):
     """코스피/코스닥 시가총액 상위 n종목 분석 → 상위 50개를 market_scan_cache.json에 저장"""
     if _skip_if_holiday("시장 스캔"):
@@ -8210,6 +8270,8 @@ if __name__ == "__main__":
             run_auto_buy()
         elif mode == "--autosell":
             run_auto_sell()
+        elif mode == "--ccstrlog":
+            run_ccstr_log()
         else:
             run()
     except Exception as e:
