@@ -345,22 +345,32 @@ class KisClient:
     def _ensure_token(self):
         if not self.available() or _now_kst() < self._token_exp:
             return
-        try:
-            r = requests.post(
-                f"{KIS_BASE}/oauth2/tokenP",
-                json={"grant_type": "client_credentials",
-                      "appkey": KIS_APP_KEY, "appsecret": KIS_APP_SECRET},
-                timeout=10,
-            )
-            d = r.json()
-            self._token     = d.get("access_token", "")
-            self._token_exp = _now_kst() + timedelta(
-                seconds=int(d.get("expires_in", 86400)) - 600
-            )
-            if not self._token:
-                print(f"  [KIS] 토큰 발급 오류: access_token 없음 — {d}")
-        except Exception as e:
-            print(f"  [KIS] 토큰 발급 실패: {e}")
+        # EGW00133 = KIS 토큰 발급 1분당 1회 제한. 여러 mode가 새 프로세스로 돌며
+        # 1분 내 재발급 시 발생 → 65초 대기 후 1회 재시도(조회 실패로 매도 못 하는 사고 방지).
+        for _attempt in range(2):
+            try:
+                r = requests.post(
+                    f"{KIS_BASE}/oauth2/tokenP",
+                    json={"grant_type": "client_credentials",
+                          "appkey": KIS_APP_KEY, "appsecret": KIS_APP_SECRET},
+                    timeout=10,
+                )
+                d = r.json()
+                self._token = d.get("access_token", "")
+                if self._token:
+                    self._token_exp = _now_kst() + timedelta(
+                        seconds=int(d.get("expires_in", 86400)) - 600
+                    )
+                    return
+                if d.get("error_code") == "EGW00133" and _attempt == 0:
+                    print("  [KIS] 토큰 발급 1분 제한(EGW00133) — 65초 대기 후 재시도")
+                    time.sleep(65)
+                    continue
+                print(f"  [KIS] 토큰 발급 오류: {d.get('msg1') or d.get('error_description', 'access_token 없음')}")
+                return
+            except Exception as e:
+                print(f"  [KIS] 토큰 발급 실패: {e}")
+                return
 
     def _get(self, path: str, tr_id: str, params: dict) -> dict:
         if not self.available():
@@ -503,22 +513,31 @@ class KisTradingClient:
     def _ensure_token(self):
         if not self.available() or _now_kst() < self._token_exp:
             return
-        try:
-            r = requests.post(
-                f"{self.base}/oauth2/tokenP",
-                json={"grant_type": "client_credentials",
-                      "appkey": self.app_key, "appsecret": self.app_secret},
-                timeout=10,
-            )
-            d = r.json()
-            self._token     = d.get("access_token", "")
-            self._token_exp = _now_kst() + timedelta(
-                seconds=int(d.get("expires_in", 86400)) - 600
-            )
-            if not self._token:
-                print(f"  [매매{self.mode_tag()}] 토큰 발급 오류: {d.get('msg1','access_token 없음')}")
-        except Exception as e:
-            print(f"  [매매{self.mode_tag()}] 토큰 발급 실패: {e}")
+        # EGW00133 = KIS 토큰 발급 1분당 1회 제한 → 65초 대기 후 재시도 (매도 실패 방지)
+        for _attempt in range(2):
+            try:
+                r = requests.post(
+                    f"{self.base}/oauth2/tokenP",
+                    json={"grant_type": "client_credentials",
+                          "appkey": self.app_key, "appsecret": self.app_secret},
+                    timeout=10,
+                )
+                d = r.json()
+                self._token = d.get("access_token", "")
+                if self._token:
+                    self._token_exp = _now_kst() + timedelta(
+                        seconds=int(d.get("expires_in", 86400)) - 600
+                    )
+                    return
+                if d.get("error_code") == "EGW00133" and _attempt == 0:
+                    print(f"  [매매{self.mode_tag()}] 토큰 발급 1분 제한(EGW00133) — 65초 대기 후 재시도")
+                    time.sleep(65)
+                    continue
+                print(f"  [매매{self.mode_tag()}] 토큰 발급 오류: {d.get('msg1') or d.get('error_description', 'access_token 없음')}")
+                return
+            except Exception as e:
+                print(f"  [매매{self.mode_tag()}] 토큰 발급 실패: {e}")
+                return
 
     def _order(self, code: str, qty: int, side: str) -> dict:
         """side: 'buy' or 'sell'. 시장가 주문(ORD_DVSN=01)."""
