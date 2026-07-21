@@ -1,20 +1,5 @@
 {
-  "positions": {
-    "036530": {
-      "name": "SNT홀딩스",
-      "qty": 18,
-      "buy_price": 53900.0,
-      "buy_date": "2026-07-20",
-      "buy_time": "11:43",
-      "buy_amount": 970200.0,
-      "partial_sold": false,
-      "score": 97,
-      "swing_score": 61,
-      "sector": "기타",
-      "order_no": "0000018157",
-      "imminent_state": ""
-    }
-  },
+  "positions": {},
   "history": [
     {
       "date": "2026-06-16",
@@ -473,6 +458,23 @@
       "profit": -17472,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-07-21",
+      "time": "11:33",
+      "side": "sell",
+      "code": "036530",
+      "name": "SNT홀딩스",
+      "qty": 18,
+      "price": 51100.0,
+      "amount": 919800.0,
+      "reason": "손절 (-5.2%)",
+      "pct": -5.19,
+      "sector": "기타",
+      "buy_price": 53900.0,
+      "profit": -50400,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -709,7 +711,7 @@
     "2026-07-21": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
@@ -725,7 +727,8 @@
     "002450": "2026-06-27",
     "003200": "2026-06-28",
     "035890": "2026-07-10",
-    "008930": "2026-07-12"
+    "008930": "2026-07-12",
+    "036530": "2026-07-24"
   },
   "halted": false,
   "pending_cancel": false,
