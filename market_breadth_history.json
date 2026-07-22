@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-21 16:27",
-  "breadth": 58.5,
-  "smoothed_5d": 43.5,
+  "updated": "2026-07-22 16:05",
+  "breadth": 48.4,
+  "smoothed_5d": 48.8,
   "ma_days": 5,
   "regime": "bad",
   "good_min": 50.0,
@@ -125,6 +125,11 @@
     {
       "date": "2026-07-21",
       "breadth": 58.5,
+      "n": 1396
+    },
+    {
+      "date": "2026-07-22",
+      "breadth": 48.4,
       "n": 1396
     }
   ]
