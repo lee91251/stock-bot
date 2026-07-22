@@ -2663,6 +2663,56 @@
       "score": 113,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-23",
+      "month": "2026-07",
+      "ticker": "083930.KQ",
+      "name": "아바코",
+      "price": 9940.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-23",
+      "month": "2026-07",
+      "ticker": "285490.KQ",
+      "name": "노바텍",
+      "price": 10740.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-23",
+      "month": "2026-07",
+      "ticker": "016740.KS",
+      "name": "두올",
+      "price": 3415.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-23",
+      "month": "2026-07",
+      "ticker": "259630.KQ",
+      "name": "엠플러스",
+      "price": 9120.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-23",
+      "month": "2026-07",
+      "ticker": "317450.KS",
+      "name": "명인제약",
+      "price": 40600.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
