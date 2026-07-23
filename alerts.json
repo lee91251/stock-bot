@@ -14,5 +14,37 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.6 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-07-23T13:18:50.781919+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-07-23T13:18:50.782128+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
+  },
+  {
+    "time": "2026-07-23T13:18:50.782616+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ GS건설 🏠",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-07-23T13:18:50.782875+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 신한지주",
+    "detail": "현금ㆍ현물배당결정              (2026년 2분기)"
   }
 ]
