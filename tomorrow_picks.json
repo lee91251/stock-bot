@@ -1,6 +1,6 @@
 {
-  "date": "2026-07-02",
-  "generated_at": "2026-07-01T15:43:36.060605",
+  "date": "2026-07-24",
+  "generated_at": "2026-07-23T15:44:39.760244",
   "source_phase": "close_summary",
   "picks": [
     {
@@ -8,60 +8,31 @@
       "name": "GS건설",
       "sector": "건설",
       "score_bonus": 10,
-      "today_change": 19.92,
-      "today_vol_ratio": 422.0,
-      "today_score": 62,
+      "today_change": 18.21,
+      "today_vol_ratio": 303.0,
+      "today_score": 57,
       "reasons": [
-        "오늘 +19.9% 마감",
-        "거래량 평균 +422%",
-        "스윙점수 62"
+        "오늘 +18.2% 마감",
+        "거래량 평균 +303%",
+        "스윙점수 57"
       ],
       "source": "close_summary"
     },
     {
-      "code": "089860",
-      "name": "롯데렌탈",
+      "code": "214180",
+      "name": "헥토이노베이션",
       "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 13.7,
-      "today_vol_ratio": 332.0,
-      "today_score": 60,
+      "score_bonus": 5,
+      "today_change": 4.71,
+      "today_vol_ratio": 238.0,
+      "today_score": 50,
       "reasons": [
-        "오늘 +13.7% 마감",
-        "거래량 평균 +332%",
-        "스윙점수 60"
+        "오늘 +4.7% 마감",
+        "거래량 평균 +238%",
+        "스윙점수 50"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -5,
-    "AI": -5,
-    "금융": 3,
-    "은행": 3,
-    "보험": 3,
-    "에너지": -1,
-    "정유": -1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -6.41,
-    "XLK": -2.57,
-    "XLF": 2.18,
-    "XLE": -0.56,
-    "XLV": 0.55,
-    "XLI": -1.01,
-    "XLB": 0.37,
-    "XLY": 0.69
-  },
-  "sector_updated_at": "2026-07-02T06:01:04.047874"
+  "sector_weights": {}
 }

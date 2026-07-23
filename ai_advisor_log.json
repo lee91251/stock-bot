@@ -114,10 +114,10 @@
     "ai_opinion": "**매도 적절** — +7.9%로 절반 익절 트리거 정확히 도달했고, VIX 18.4·공포탐욕 50의 중립 시장에서 추가 상승 모멘텀이 불분명하므로 룰대로 절반 익절 후 나머지 잔량으로 추가 수익 여지를 남기는 것이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 6440,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": 29.06,
+    "ai_correct": false
   },
   {
     "date": "2026-06-29",
@@ -129,10 +129,10 @@
     "ai_opinion": "**매도 적절** — 1거래일 만에 +17.4% 달성으로 단기 목표 수익 충분히 실현했으며, VIX 18.4·공포탐욕 중립(50) 환경에서 코스피 보합세를 감안하면 추가 모멘텀보다 확정 수익 우선이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 6440,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": 18.6,
+    "ai_correct": false
   },
   {
     "date": "2026-07-03",
@@ -144,10 +144,10 @@
     "ai_opinion": "**매도 적절** — VIX 16.1, 공포탐욕 50으로 시장 환경은 중립적이나, 3거래일 보유에도 -1.4% 하락 추세가 지속 중이고 손절 기준(-4%)에 여유가 있더라도 모멘텀 부재 종목은 기회비용 측면에서 조기 청산이 유효합니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 12960,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": -0.46,
+    "ai_correct": false
   },
   {
     "date": "2026-07-06",
@@ -159,10 +159,10 @@
     "ai_opinion": "**매도 적절** — +6.1% 절반 익절 트리거 정확히 충족했고, VIX 15.8·공포탐욕 60으로 시장 과열 우려는 없으나 1거래일 단기 급등 후 코스피 보합 상황에서 일부 차익 실현은 리스크 관리 측면에서 타당합니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 123800,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": -10.42,
+    "ai_correct": true
   },
   {
     "date": "2026-07-07",
@@ -174,10 +174,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-4%) 대비 이미 -21.4%로 크게 이탈한 상태이며, 1거래일 만에 발생한 급락은 수급 이탈 신호로 추가 하락 리스크가 크므로 룰대로 즉시 손절이 타당합니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 89900,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": -1.64,
+    "ai_correct": true
   },
   {
     "date": "2026-07-07",
@@ -189,10 +189,10 @@
     "ai_opinion": "**매도 적절** — 손절 트리거(-4.0%) 정확히 도달했고, 코스피 보합·VIX 안정 환경임에도 반등 모멘텀이 없는 상황에서 룰 준수가 우선이며, 2거래일 보유로 추가 하락 시 손실 확대 리스크가 있어 원칙대로 매도가 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 2025,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": -5.37,
+    "ai_correct": true
   },
   {
     "date": "2026-07-09",
@@ -204,10 +204,10 @@
     "ai_opinion": "**매도 적절** — 손절 기준(-4%)을 이미 초과한 -4.7%로 룰 기반 손절 실행이 맞으며, 코스피 보합·VIX 16.9의 중립 시장에서 헬스케어 반등 모멘텀이 불분명해 추가 손실 방지가 우선입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 34350,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": 9.39,
+    "ai_correct": false
   },
   {
     "date": "2026-07-09",
@@ -219,10 +219,10 @@
     "ai_opinion": "**매도 적절** — VIX 16.9·공포탐욕 50으로 시장은 중립적이나, 대한해운은 3거래일간 뚜렷한 반등 없이 -1.1% 하락세 지속 중이므로 트리거 기준대로 조기 청산하는 것이 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 1916,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": 0.58,
+    "ai_correct": false
   },
   {
     "date": "2026-07-10",
@@ -234,9 +234,9 @@
     "ai_opinion": "**매도 적절** — 5거래일 보유 규칙 충족, +0.9% 소폭 수익이나 코스피 횡보·바이오 모멘텀 부재 상황에서 추가 상승 근거 희박하므로 규칙대로 익절 매도가 합리적입니다.",
     "opinion_class": "sell",
     "sell_executed": true,
-    "outcome_price": null,
-    "outcome_date": null,
-    "outcome_pct": null,
-    "ai_correct": null
+    "outcome_price": 123800,
+    "outcome_date": "2026-07-23",
+    "outcome_pct": -5.86,
+    "ai_correct": true
   }
 ]
