@@ -7794,6 +7794,7 @@ def run_ccstr_log():
         return
     pool = _load_auto_buy_pool()
     snap = []
+    _diag = 0
     for i, (ticker, val) in enumerate(pool.items()):
         if i >= 80:   # KIS rate limit 보호 — 상위 80종목만
             break
@@ -7801,8 +7802,17 @@ def run_ccstr_log():
         name = val[0] if isinstance(val, (list, tuple)) else str(ticker)
         try:
             p = _kis.get_price(code)
-        except Exception:
+        except Exception as _e:
             p = {}
+            if _diag < 2:
+                print(f"  [체결강도-진단] {name} get_price 예외: {_e}")
+        # 데이터 0 원인 규명 — 첫 2종목의 토큰상태·응답키·cttr 로깅 (임시)
+        if _diag < 2:
+            _tok = "O" if getattr(_kis, "_token", "") else "X"
+            _keys = (list(p.keys())[:8] if isinstance(p, dict) and p else "빈응답")
+            _has_cttr = (p.get("cttr", "cttr키없음") if isinstance(p, dict) else "-")
+            print(f"  [체결강도-진단] {name} 토큰={_tok} 응답키={_keys} cttr={_has_cttr}")
+            _diag += 1
         if not p:
             continue
         cttr  = _safe_float(p.get("cttr"))          # 체결강도 (100 넘으면 매수체결 우위)
