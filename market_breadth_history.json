@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-23 16:26",
-  "breadth": 91.8,
-  "smoothed_5d": 50.6,
+  "updated": "2026-07-24 16:21",
+  "breadth": 22.9,
+  "smoothed_5d": 49.7,
   "ma_days": 5,
-  "regime": "good",
+  "regime": "bad",
   "good_min": 50.0,
   "enforce": false,
   "history": [
@@ -135,6 +135,11 @@
     {
       "date": "2026-07-23",
       "breadth": 91.8,
+      "n": 1397
+    },
+    {
+      "date": "2026-07-24",
+      "breadth": 22.9,
       "n": 1397
     }
   ]
