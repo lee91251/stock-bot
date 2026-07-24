@@ -7806,34 +7806,18 @@ def run_ccstr_log():
         return
     pool = _load_auto_buy_pool()
     snap = []
-    _diag = 0
     for i, (ticker, val) in enumerate(pool.items()):
         if i >= 80:   # KIS rate limit 보호 — 상위 80종목만
             break
         code = ticker.split(".")[0]
         name = val[0] if isinstance(val, (list, tuple)) else str(ticker)
         try:
-            p = _kis.get_price(code)
-        except Exception as _e:
+            p = _kis.get_ccnl(code)   # 체결조회(inquire-ccnl) — 체결강도(tday_rltv) 포함
+        except Exception:
             p = {}
-            if _diag < 2:
-                print(f"  [체결강도-진단] {name} get_price 예외: {_e}")
-        # 데이터 0 원인 규명 — 첫 2종목의 토큰상태·응답키·cttr 로깅 (임시)
-        if _diag < 1:
-            # 체결조회(inquire-ccnl)에 체결강도 있나 확인
-            try:
-                _c = _kis.get_ccnl(code)
-            except Exception as _e:
-                _c = {}
-                print(f"  [체결강도-진단] get_ccnl 예외: {_e}")
-            _ck = list(_c.keys()) if isinstance(_c, dict) and _c else "빈응답"
-            print(f"  [체결강도-진단] {name} 체결API 전체키={_ck}")
-            for _cand in ("cttr", "tday_rltv", "seln_cntg_csnu", "shnu_cntg_csnu"):
-                print(f"     {_cand} = {_c.get(_cand, '없음') if isinstance(_c, dict) else '-'}")
-            _diag += 1
         if not p:
             continue
-        cttr  = _safe_float(p.get("cttr"))          # 체결강도 (100 넘으면 매수체결 우위)
+        cttr  = _safe_float(p.get("tday_rltv"))     # tday_rltv = 당일 체결강도 (100↑ 매수체결 우위)
         price = _safe_float(p.get("stck_prpr"))     # 현재가
         chg   = _safe_float(p.get("prdy_ctrt"))     # 전일대비율
         if cttr > 0 and price > 0:
