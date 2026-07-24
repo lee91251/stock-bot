@@ -1,53 +1,5 @@
 [
   {
-    "time": "2026-07-23T13:18:50.781919+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-07-23T13:18:50.782128+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-07-23T13:18:50.782616+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-07-23T13:18:50.782875+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 신한지주",
-    "detail": "현금ㆍ현물배당결정              (2026년 2분기)"
-  },
-  {
-    "time": "2026-07-23T14:03:31.543038+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대자동차",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
-  },
-  {
-    "time": "2026-07-23T14:03:31.543266+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대자동차",
-    "detail": "현금ㆍ현물배당결정              "
-  },
-  {
     "time": "2026-07-23T15:19:01.802825+09:00",
     "category": "disclosure",
     "level": "info",
@@ -102,5 +54,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🔴 세진중공업 -3.02% — 손절 임박 (기준 -4%, 자동 매도)"
+  },
+  {
+    "time": "2026-07-24T14:04:24.206100+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ LIG디펜스앤에어로스페이스",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
