@@ -7807,7 +7807,7 @@ def run_ccstr_log():
     pool = _load_auto_buy_pool()
     snap = []
     for i, (ticker, val) in enumerate(pool.items()):
-        if i >= 80:   # KIS rate limit 보호 — 상위 80종목만
+        if i >= 350:   # 풀 전체 커버 (KIS 초당제한 내: 0.12s sleep = 초당 8건, ~300종목 5분 내)
             break
         code = ticker.split(".")[0]
         name = val[0] if isinstance(val, (list, tuple)) else str(ticker)
@@ -7820,16 +7820,17 @@ def run_ccstr_log():
         cttr  = _safe_float(p.get("tday_rltv"))     # tday_rltv = 당일 체결강도 (100↑ 매수체결 우위)
         price = _safe_float(p.get("stck_prpr"))     # 현재가
         chg   = _safe_float(p.get("prdy_ctrt"))     # 전일대비율
+        vol   = _safe_float(p.get("cntg_vol"))      # 체결량 (나중에 거래량 결합 검증용)
         if cttr > 0 and price > 0:
             snap.append({"code": code, "name": name, "cttr": round(cttr, 1),
-                         "price": price, "chg": round(chg, 2)})
+                         "price": price, "chg": round(chg, 2), "vol": vol})
         time.sleep(0.12)
 
     if not snap:
         print("  [체결강도] 데이터 없음 (KIS 응답 비어있음)")
         return
     snap.sort(key=lambda x: -x["cttr"])
-    top = snap[:25]
+    top = snap[:40]   # 상위 40 저장 (검증 표본 확대)
 
     log = []
     if os.path.exists(CCSTR_LOG_FILE):
