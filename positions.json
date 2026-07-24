@@ -12,6 +12,19 @@
       "swing_score": 55,
       "sector": "기타",
       "order_no": "0000032891"
+    },
+    "075580": {
+      "name": "세진중공업",
+      "qty": 77,
+      "buy_price": 12900.0,
+      "buy_date": "2026-07-24",
+      "buy_time": "10:46",
+      "buy_amount": 993300.0,
+      "partial_sold": false,
+      "score": 53,
+      "swing_score": 59,
+      "sector": "기타",
+      "order_no": "0000020235"
     }
   },
   "history": [
@@ -502,6 +515,19 @@
       "reason": "swing_score 55",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-07-24",
+      "time": "10:46",
+      "side": "buy",
+      "code": "075580",
+      "name": "세진중공업",
+      "qty": 77,
+      "price": 12900.0,
+      "amount": 993300.0,
+      "reason": "swing_score 59",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -751,9 +777,9 @@
       "trade_count": 1
     },
     "2026-07-24": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 993300.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
