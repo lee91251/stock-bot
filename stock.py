@@ -7807,11 +7807,12 @@ def run_ccstr_log():
             if _diag < 2:
                 print(f"  [체결강도-진단] {name} get_price 예외: {_e}")
         # 데이터 0 원인 규명 — 첫 2종목의 토큰상태·응답키·cttr 로깅 (임시)
-        if _diag < 2:
-            _tok = "O" if getattr(_kis, "_token", "") else "X"
-            _keys = (list(p.keys())[:8] if isinstance(p, dict) and p else "빈응답")
-            _has_cttr = (p.get("cttr", "cttr키없음") if isinstance(p, dict) else "-")
-            print(f"  [체결강도-진단] {name} 토큰={_tok} 응답키={_keys} cttr={_has_cttr}")
+        if _diag < 1:
+            _allk = list(p.keys()) if isinstance(p, dict) and p else "빈응답"
+            print(f"  [체결강도-진단] {name} 전체{len(p) if isinstance(p, dict) else 0}키={_allk}")
+            # 체결강도 후보 필드값 확인
+            for _cand in ("cttr", "tday_rltv", "seln_cntg_smtn", "shnu_cntg_smtn", "cntg_vol"):
+                print(f"     {_cand} = {p.get(_cand, '없음') if isinstance(p, dict) else '-'}")
             _diag += 1
         if not p:
             continue
