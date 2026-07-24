@@ -7830,7 +7830,7 @@ def run_ccstr_log():
         print("  [체결강도] 데이터 없음 (KIS 응답 비어있음)")
         return
     snap.sort(key=lambda x: -x["cttr"])
-    top = snap[:40]   # 상위 40 저장 (검증 표본 확대)
+    top = snap   # 조회한 전체 저장 — 검증 대조군(낮은 체결강도)+종목 시계열 추적 위해
 
     log = []
     if os.path.exists(CCSTR_LOG_FILE):
