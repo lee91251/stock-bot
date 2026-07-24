@@ -411,6 +411,18 @@ class KisClient:
         )
         return d.get("output", {})
 
+    def get_ccnl(self, code: str) -> dict:
+        """주식현재가 체결 (체결강도 cttr 확인용). output이 배열이면 첫 항목."""
+        d = self._get(
+            "/uapi/domestic-stock/v1/quotations/inquire-ccnl",
+            "FHKST01010300",
+            {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code},
+        )
+        out = d.get("output")
+        if isinstance(out, list):
+            return out[0] if out else {}
+        return out or {}
+
     def get_investor(self, code: str) -> dict:
         d = self._get(
             "/uapi/domestic-stock/v1/quotations/inquire-investor",
@@ -7808,11 +7820,16 @@ def run_ccstr_log():
                 print(f"  [체결강도-진단] {name} get_price 예외: {_e}")
         # 데이터 0 원인 규명 — 첫 2종목의 토큰상태·응답키·cttr 로깅 (임시)
         if _diag < 1:
-            _allk = list(p.keys()) if isinstance(p, dict) and p else "빈응답"
-            print(f"  [체결강도-진단] {name} 전체{len(p) if isinstance(p, dict) else 0}키={_allk}")
-            # 체결강도 후보 필드값 확인
-            for _cand in ("cttr", "tday_rltv", "seln_cntg_smtn", "shnu_cntg_smtn", "cntg_vol"):
-                print(f"     {_cand} = {p.get(_cand, '없음') if isinstance(p, dict) else '-'}")
+            # 체결조회(inquire-ccnl)에 체결강도 있나 확인
+            try:
+                _c = _kis.get_ccnl(code)
+            except Exception as _e:
+                _c = {}
+                print(f"  [체결강도-진단] get_ccnl 예외: {_e}")
+            _ck = list(_c.keys()) if isinstance(_c, dict) and _c else "빈응답"
+            print(f"  [체결강도-진단] {name} 체결API 전체키={_ck}")
+            for _cand in ("cttr", "tday_rltv", "seln_cntg_csnu", "shnu_cntg_csnu"):
+                print(f"     {_cand} = {_c.get(_cand, '없음') if isinstance(_c, dict) else '-'}")
             _diag += 1
         if not p:
             continue
