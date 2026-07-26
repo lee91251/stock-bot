@@ -2763,6 +2763,56 @@
       "score": 102,
       "buy_signal": false,
       "result": null
+    },
+    {
+      "date": "2026-07-27",
+      "month": "2026-07",
+      "ticker": "285490.KQ",
+      "name": "노바텍",
+      "price": 10820.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-27",
+      "month": "2026-07",
+      "ticker": "016740.KS",
+      "name": "두올",
+      "price": 3410.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-27",
+      "month": "2026-07",
+      "ticker": "051360.KQ",
+      "name": "토비스",
+      "price": 16090.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-27",
+      "month": "2026-07",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 35400.0,
+      "score": 110,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-07-27",
+      "month": "2026-07",
+      "ticker": "036830.KQ",
+      "name": "솔브레인홀딩스",
+      "price": 30950.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
