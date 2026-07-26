@@ -1,82 +1,10 @@
 [
   {
-    "time": "2026-07-23T15:19:01.802825+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ KB금융",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
-  },
-  {
-    "time": "2026-07-24T06:01:05.565449+09:00",
+    "time": "2026-07-27T06:01:07.123506+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P -1.21% / 나스닥 -2.15% / VIX 18.70 / 환율 1,475원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-07-24T08:51:04.482133+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 18.7 / 공포탐욕 45(중립)"
-  },
-  {
-    "time": "2026-07-24T09:32:08.836248+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대모비스",
-    "detail": "현금ㆍ현물배당결정              "
-  },
-  {
-    "time": "2026-07-24T09:48:49.330816+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대모비스",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
-  },
-  {
-    "time": "2026-07-24T10:03:55.652025+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 한화솔루션 🏠",
-    "detail": "유상증자또는주식관련사채등의청약결과(자율공시)              "
-  },
-  {
-    "time": "2026-07-24T11:35:33.349115+09:00",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 세진중공업 -3.02% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-07-24T14:04:24.206100+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ LIG디펜스앤에어로스페이스",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-07-24T14:35:37.068866+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 하나금융지주",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
-  },
-  {
-    "time": "2026-07-24T14:48:47.295501+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 하나금융지주",
-    "detail": "현금ㆍ현물배당결정              "
+    "detail": "S&P +0.05% / 나스닥 -0.64% / VIX 18.58 / 환율 1,459원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
