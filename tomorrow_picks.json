@@ -1,65 +1,23 @@
 {
-  "date": "2026-07-24",
-  "generated_at": "2026-07-23T15:44:39.760244",
+  "date": "2026-07-28",
+  "generated_at": "2026-07-27T15:45:01.001473",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "006360",
-      "name": "GS건설",
-      "sector": "건설",
-      "score_bonus": 10,
-      "today_change": 18.21,
-      "today_vol_ratio": 303.0,
-      "today_score": 57,
+      "code": "316140",
+      "name": "우리금융지주",
+      "sector": "금융",
+      "score_bonus": 7,
+      "today_change": 7.29,
+      "today_vol_ratio": 201.0,
+      "today_score": 62,
       "reasons": [
-        "오늘 +18.2% 마감",
-        "거래량 평균 +303%",
-        "스윙점수 57"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "214180",
-      "name": "헥토이노베이션",
-      "sector": "기타",
-      "score_bonus": 5,
-      "today_change": 4.71,
-      "today_vol_ratio": 238.0,
-      "today_score": 50,
-      "reasons": [
-        "오늘 +4.7% 마감",
-        "거래량 평균 +238%",
-        "스윙점수 50"
+        "오늘 +7.3% 마감",
+        "거래량 평균 +201%",
+        "스윙점수 62"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -1,
-    "IT": -1,
-    "통신": -1,
-    "AI": -1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": 3,
-    "방산": 3,
-    "기계": 3,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": -5,
-    "유통": -5
-  },
-  "us_etf_changes": {
-    "SOXX": -0.77,
-    "XLK": -1.01,
-    "XLF": -0.39,
-    "XLE": 0.3,
-    "XLV": 1.26,
-    "XLI": 1.73,
-    "XLB": -1.04,
-    "XLY": -4.61
-  },
-  "sector_updated_at": "2026-07-24T06:01:08.296969"
+  "sector_weights": {}
 }
