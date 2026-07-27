@@ -2813,6 +2813,56 @@
       "score": 108,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-28",
+      "month": "2026-07",
+      "ticker": "016740.KS",
+      "name": "두올",
+      "price": 3410.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-28",
+      "month": "2026-07",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 36200.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-28",
+      "month": "2026-07",
+      "ticker": "259630.KQ",
+      "name": "엠플러스",
+      "price": 9010.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-28",
+      "month": "2026-07",
+      "ticker": "271980.KS",
+      "name": "제일약품",
+      "price": 9700.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-07-28",
+      "month": "2026-07",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 300000.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
