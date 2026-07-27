@@ -14,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.6 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-07-27T09:32:09.699225+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
   }
 ]
