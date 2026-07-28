@@ -1,29 +1,5 @@
 [
   {
-    "time": "2026-07-27T09:32:09.699225+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-07-27T13:18:10.308478+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-07-27T14:07:09.346422+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SKC 🏠",
-    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
-  },
-  {
     "time": "2026-07-28T06:01:12.202676+09:00",
     "category": "briefing",
     "level": "info",
@@ -38,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.7 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-07-29T06:01:11.609399+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.21% / 나스닥 -0.22% / VIX 18.21 / 환율 1,452원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
