@@ -6549,6 +6549,61 @@ def run_auto_buy():
         print(f"[자동매수] 이번 회차 매수 0건 — 요약 메시지 생략 (누적: {daily['buy_count']}종목)")
 
 
+def reconcile_positions(client, pos) -> list:
+    """실제 KIS 잔고 ↔ positions.json 대조 — 봇이 모르는 보유종목 자동 편입.
+    사고(7/29): 매도 '주문 접수'만 확인하고 positions에서 삭제 → 실제 미체결이면
+    종목이 계좌에 남아 손절 관리에서 빠짐(대한해운·세진중공업 -12~-27% 방치).
+    실제 잔고를 진실로 삼으면: 미체결로 지워져도 다음 회차에 재편입 → 재손절 → 방치 불가.
+    편입 종목은 buy_date=오늘(즉시 손절점검 대상, 강제매도 오작동 방지)."""
+    try:
+        bal = client.get_balance()
+    except Exception as e:
+        print(f"  [reconcile] 잔고조회 오류(스킵): {e}")
+        return []
+    if not bal or not bal.get("positions"):
+        return []
+    today = _today_str()
+    seen = pos.setdefault("reconcile_seen", {})   # 종목별 알림 하루 1회(도배 방지)
+    added = []
+    _diag = True
+    for item in bal["positions"]:
+        if not isinstance(item, dict):
+            continue
+        if _diag:
+            print(f"  [reconcile-진단] 잔고 output1 키={list(item.keys())[:24]}")
+            _diag = False
+        code = str(item.get("pdno", "")).strip()
+        qty  = int(_safe_float(item.get("hldg_qty")))
+        if not code or qty <= 0:
+            continue
+        if code in pos["positions"]:
+            # 봇이 아는 종목 — 수량만 실제와 동기화(부분 미체결 대비)
+            if pos["positions"][code].get("qty") != qty:
+                print(f"  [reconcile] {pos['positions'][code].get('name',code)} 수량 보정 "
+                      f"{pos['positions'][code].get('qty')}→{qty}")
+                pos["positions"][code]["qty"] = qty
+            continue
+        name = item.get("prdt_name") or code
+        avg  = _safe_float(item.get("pchs_avg_pric"))
+        if avg <= 0:
+            print(f"  [reconcile] {name}({code}) 매입가 이상 — 편입 보류")
+            continue
+        pos["positions"][code] = {
+            "name": name, "qty": qty,
+            "buy_price": avg, "buy_date": today,
+            "buy_amount": avg * qty, "partial_sold": False,
+            "score": 0, "swing_score": 0, "sector": "미상",
+            "reconciled": True,   # 봇 밖 편입 표시
+        }
+        print(f"  [reconcile] 편입: {name}({code}) {qty}주 @{avg:,.0f}")
+        if seen.get(code) != today:   # 오늘 첫 발견만 텔레그램 알림(미체결 재편입 도배 방지)
+            added.append(f"{name}({qty}주 @{avg:,.0f})")
+            seen[code] = today
+    if pos["positions"]:
+        save_positions(pos)   # 편입/수량보정/seen 저장
+    return added
+
+
 def run_auto_sell():
     """장중 30분 주기 매도 점검.
 
@@ -6589,6 +6644,15 @@ def run_auto_sell():
     if pos.get("halted"):
         print(f"  [자동매도] /정지 상태 — 스킵")
         return
+
+    # 실제 잔고 대조 — 봇이 모르던 보유종목 편입(매도 미체결·봇밖 매수 방치 차단, 7/29 사고)
+    try:
+        _added = reconcile_positions(client, pos)
+        if _added:
+            tg_send(f"🔍 <b>{mode_tag} 봇이 모르던 보유종목 {len(_added)}건 발견</b> → 손절 관리 편입\n"
+                    + "\n".join(f"• {a}" for a in _added))
+    except Exception as e:
+        print(f"  [자동매도] reconcile 오류(매도 계속): {e}")
 
     if not pos.get("positions"):
         print(f"  [자동매도] 보유 종목 없음 — 스킵")
