@@ -915,5 +915,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-07-29T12:14:35.446841+09:00",
+    "side": "buy",
+    "code": "051900",
+    "name": "LG생활건강",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

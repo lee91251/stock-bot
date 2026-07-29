@@ -1,5 +1,19 @@
 {
-  "positions": {},
+  "positions": {
+    "051900": {
+      "name": "LG생활건강",
+      "qty": 3,
+      "buy_price": 263500.0,
+      "buy_date": "2026-07-29",
+      "buy_time": "12:14",
+      "buy_amount": 790500.0,
+      "partial_sold": false,
+      "score": 82,
+      "swing_score": 50,
+      "sector": "소비재",
+      "order_no": "0000031236"
+    }
+  },
   "history": [
     {
       "date": "2026-06-16",
@@ -535,6 +549,19 @@
       "profit": -15120,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-07-29",
+      "time": "12:14",
+      "side": "buy",
+      "code": "051900",
+      "name": "LG생활건강",
+      "qty": 3,
+      "price": 263500.0,
+      "amount": 790500.0,
+      "reason": "swing_score 50",
+      "sector": "소비재",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -799,9 +826,9 @@
       "trade_count": 1
     },
     "2026-07-29": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 790500.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
