@@ -423,6 +423,20 @@ class KisClient:
             return out[0] if out else {}
         return out or {}
 
+    def get_askp(self, code: str) -> dict:
+        """주식현재가 호가 (호가잔량 불균형=선행 매수압력용).
+        output1에 total_bidp_rsqn(총매수호가잔량)/total_askp_rsqn(총매도호가잔량).
+        체결(후행)과 달리 아직 체결 안 된 '대기 주문' = 유일한 선행 후보."""
+        d = self._get(
+            "/uapi/domestic-stock/v1/quotations/inquire-asking-price-exp-ccn",
+            "FHKST01010200",
+            {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code},
+        )
+        out = d.get("output1")
+        if isinstance(out, list):
+            return out[0] if out else {}
+        return out or {}
+
     def get_investor(self, code: str) -> dict:
         d = self._get(
             "/uapi/domestic-stock/v1/quotations/inquire-investor",
@@ -7792,42 +7806,57 @@ def get_market_regime() -> dict:
 
 
 def run_ccstr_log():
-    """체결강도(선행지표) 로거 — 장중 관심종목 체결강도 스냅샷 기록.
-    실시간판 백테스트: 며칠 모아 '체결강도 100+ 이후 주가 올랐나' 예측력 실측용.
-    KIS inquire-price output의 cttr(체결강도)를 사용. 상위 25종목만 저장(로그 다이어트)."""
-    if _skip_if_holiday("체결강도 로거"):
+    """선행지표 로거 — 장중 관심종목 스냅샷 기록 (5분 간격, 며칠 모아 예측력 실측).
+    수집: ① 체결강도(tday_rltv, 후행 — 이미 기각) ② 호가잔량 불균형(imbal, 선행 후보).
+    imbal = 총매수호가잔량/총매도호가잔량. 체결 전 '대기 주문'이라 유일한 선행 신호 후보.
+    조회한 전체 종목 저장(대조군+시계열 추적)."""
+    if _skip_if_holiday("선행지표 로거"):
         return
     now = _now_kst()
     if not _is_market_open(now):
-        print("  [체결강도] 장 시간 아님 — 스킵")
+        print("  [선행로거] 장 시간 아님 — 스킵")
         return
     if not _kis.available():
-        print("  [체결강도] KIS 키 없음 — 스킵")
+        print("  [선행로거] KIS 키 없음 — 스킵")
         return
     pool = _load_auto_buy_pool()
     snap = []
+    _askp_diag = True   # 첫 호가응답 필드명 진단 1회 (tday_rltv 사고 재발 방지)
     for i, (ticker, val) in enumerate(pool.items()):
-        if i >= 350:   # 풀 전체 커버 (KIS 초당제한 내: 0.12s sleep = 초당 8건, ~300종목 5분 내)
+        if i >= 300:   # 풀 커버 (종목당 2호출×0.08s = ~2분, 5분 트리거 내)
             break
         code = ticker.split(".")[0]
         name = val[0] if isinstance(val, (list, tuple)) else str(ticker)
         try:
-            p = _kis.get_ccnl(code)   # 체결조회(inquire-ccnl) — 체결강도(tday_rltv) 포함
+            p = _kis.get_ccnl(code)   # 체결조회(inquire-ccnl) — 체결강도(tday_rltv)
         except Exception:
             p = {}
         if not p:
+            time.sleep(0.08)
             continue
-        cttr  = _safe_float(p.get("tday_rltv"))     # tday_rltv = 당일 체결강도 (100↑ 매수체결 우위)
+        cttr  = _safe_float(p.get("tday_rltv"))     # 당일 체결강도 (100↑ 매수체결 우위, 후행)
         price = _safe_float(p.get("stck_prpr"))     # 현재가
         chg   = _safe_float(p.get("prdy_ctrt"))     # 전일대비율
-        vol   = _safe_float(p.get("cntg_vol"))      # 체결량 (나중에 거래량 결합 검증용)
+        vol   = _safe_float(p.get("cntg_vol"))      # 체결량
+        # 호가잔량 불균형 (선행 후보): 총매수호가잔량 / 총매도호가잔량 (>1 = 매수대기 우위)
+        try:
+            a = _kis.get_askp(code)
+        except Exception:
+            a = {}
+        if _askp_diag and a:
+            print(f"  [선행로거-호가진단] {name} 호가키={list(a.keys())[:24]}")
+            _askp_diag = False
+        bid_rsqn = _safe_float(a.get("total_bidp_rsqn"))   # 총매수호가잔량
+        ask_rsqn = _safe_float(a.get("total_askp_rsqn"))   # 총매도호가잔량
+        imbal = round(bid_rsqn / ask_rsqn, 3) if ask_rsqn > 0 else 0.0
         if cttr > 0 and price > 0:
             snap.append({"code": code, "name": name, "cttr": round(cttr, 1),
-                         "price": price, "chg": round(chg, 2), "vol": vol})
-        time.sleep(0.12)
+                         "price": price, "chg": round(chg, 2), "vol": vol,
+                         "imbal": imbal})
+        time.sleep(0.08)
 
     if not snap:
-        print("  [체결강도] 데이터 없음 (KIS 응답 비어있음)")
+        print("  [선행로거] 데이터 없음 (KIS 응답 비어있음)")
         return
     snap.sort(key=lambda x: -x["cttr"])
     top = snap   # 조회한 전체 저장 — 검증 대조군(낮은 체결강도)+종목 시계열 추적 위해
@@ -7847,8 +7876,9 @@ def run_ccstr_log():
                       f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"  [체결강도] 저장 실패: {e}")
-    print(f"  [체결강도] {now.strftime('%H:%M')} 스냅샷 — 상위 {len(top)}종목 "
-          f"(최고 {top[0]['name']} {top[0]['cttr']})")
+    n_imbal = sum(1 for r in top if r.get("imbal", 0) > 0)
+    print(f"  [선행로거] {now.strftime('%H:%M')} 스냅샷 — {len(top)}종목 "
+          f"(체결강도 최고 {top[0]['name']} {top[0]['cttr']}, 호가불균형 수집 {n_imbal}종목)")
 
 
 def run_market_scan(n: int = MARKET_SCAN_N):
