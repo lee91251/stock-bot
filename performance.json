@@ -2913,6 +2913,56 @@
       "score": 116,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-30",
+      "month": "2026-07",
+      "ticker": "041190.KQ",
+      "name": "우리기술투자",
+      "price": 3990.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-30",
+      "month": "2026-07",
+      "ticker": "214180.KQ",
+      "name": "헥토이노베이션",
+      "price": 12420.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-30",
+      "month": "2026-07",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 18120.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-30",
+      "month": "2026-07",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 57700.0,
+      "score": 120,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-30",
+      "month": "2026-07",
+      "ticker": "032190.KQ",
+      "name": "다우데이타",
+      "price": 16820.0,
+      "score": 120,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
