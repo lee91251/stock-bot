@@ -865,6 +865,11 @@
       "buy_count": 1,
       "buy_amount": 790500.0,
       "trade_count": 1
+    },
+    "2026-07-30": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 0
     }
   },
   "loss_cooldown": {
@@ -886,7 +891,7 @@
   },
   "halted": false,
   "pending_cancel": false,
-  "last_risk_level": "안전",
+  "last_risk_level": "위험",
   "_algorithm_reset_date": "2026-06-16",
   "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)",
   "reconcile_seen": {
