@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-07-29T13:46:08.621486+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ LIG디펜스앤에어로스페이스",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-07-29T14:04:23.612950+09:00",
     "category": "disclosure",
     "level": "info",
@@ -230,5 +222,13 @@
     "emoji": "📰",
     "title": "DART 📰 케이씨씨 🏠",
     "detail": "효력발생안내( 2026.7.20. 제출 증권신고서(채무증권) )"
+  },
+  {
+    "time": "2026-07-30T13:46:50.753329+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
