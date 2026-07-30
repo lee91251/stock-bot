@@ -21,6 +21,7 @@ on:
           - "--autobuy"
           - "--autosell"
           - "--ccstrlog"
+          - "--balance"
           - "--backtest"
           - "--backtest12"
           - "--backtest4track"
@@ -325,6 +326,21 @@ jobs:
           )
 
   # ── 체결강도 로거 (cron-job.org 평일 09:00~15:30, 5분마다) ────
+  balance-check:
+    if: github.event.inputs.mode == '--balance'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+      - name: 잔고 조회 테스트
+        run: python stock.py --balance
+
   ccstr-log:
     if: github.event.inputs.mode == '--ccstrlog'
     runs-on: ubuntu-latest

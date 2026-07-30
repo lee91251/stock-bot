@@ -8379,6 +8379,10 @@ if __name__ == "__main__":
             run_auto_sell()
         elif mode == "--ccstrlog":
             run_ccstr_log()
+        elif mode == "--balance":
+            # 모의계좌 인증·잔고 조회 테스트 (매매 X, 조회만) — 계좌/앱키 갱신 검증용
+            print("=== 잔고 조회 테스트 ===")
+            print(run_balance_report())
         else:
             run()
     except Exception as e:
