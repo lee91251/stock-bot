@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-07-29T08:51:09.714432+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 18.2 / 공포탐욕 50(중립)"
-  },
-  {
     "time": "2026-07-29T12:19:48.882030+09:00",
     "category": "disclosure",
     "level": "info",
@@ -158,5 +150,29 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 20.7 / 공포탐욕 40(중립)"
+  },
+  {
+    "time": "2026-07-30T09:04:42.067007+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "효력발생안내( 2026.7.20. 제출 증권신고서(채무증권) )"
+  },
+  {
+    "time": "2026-07-30T09:04:42.067392+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "투자설명서"
+  },
+  {
+    "time": "2026-07-30T09:04:42.067869+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
   }
 ]

@@ -12,6 +12,42 @@
       "swing_score": 50,
       "sector": "소비재",
       "order_no": "0000031236"
+    },
+    "005880": {
+      "name": "대한해운",
+      "qty": 520,
+      "buy_price": 1920.985,
+      "buy_date": "2026-07-30",
+      "buy_amount": 998912.2,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "미상",
+      "reconciled": true
+    },
+    "075580": {
+      "name": "세진중공업",
+      "qty": 78,
+      "buy_price": 12728.967,
+      "buy_date": "2026-07-30",
+      "buy_amount": 992859.4260000001,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "미상",
+      "reconciled": true
+    },
+    "101730": {
+      "name": "위메이드맥스",
+      "qty": 219,
+      "buy_price": 4668.127,
+      "buy_date": "2026-07-30",
+      "buy_amount": 1022319.8130000001,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "미상",
+      "reconciled": true
     }
   },
   "history": [
@@ -852,5 +888,10 @@
   "pending_cancel": false,
   "last_risk_level": "안전",
   "_algorithm_reset_date": "2026-06-16",
-  "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)"
+  "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)",
+  "reconcile_seen": {
+    "005880": "2026-07-30",
+    "075580": "2026-07-30",
+    "101730": "2026-07-30"
+  }
 }
