@@ -1,20 +1,80 @@
 {
-  "date": "2026-07-28",
-  "generated_at": "2026-07-27T15:45:01.001473",
+  "date": "2026-07-31",
+  "generated_at": "2026-07-30T15:44:15.750386",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "316140",
-      "name": "우리금융지주",
-      "sector": "금융",
-      "score_bonus": 7,
-      "today_change": 7.29,
-      "today_vol_ratio": 201.0,
-      "today_score": 62,
+      "code": "068930",
+      "name": "디지털대성",
+      "sector": "기타",
+      "score_bonus": 10,
+      "today_change": 9.65,
+      "today_vol_ratio": 411.0,
+      "today_score": 65,
       "reasons": [
-        "오늘 +7.3% 마감",
-        "거래량 평균 +201%",
-        "스윙점수 62"
+        "오늘 +9.7% 마감",
+        "거래량 평균 +411%",
+        "스윙점수 65"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "011760",
+      "name": "현대코퍼레이션",
+      "sector": "기타",
+      "score_bonus": 10,
+      "today_change": 14.94,
+      "today_vol_ratio": 326.0,
+      "today_score": 57,
+      "reasons": [
+        "오늘 +14.9% 마감",
+        "거래량 평균 +326%",
+        "스윙점수 57"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "016380",
+      "name": "KG스틸",
+      "sector": "철강",
+      "score_bonus": 8,
+      "today_change": 7.82,
+      "today_vol_ratio": 214.0,
+      "today_score": 50,
+      "reasons": [
+        "오늘 +7.8% 마감",
+        "거래량 평균 +214%",
+        "스윙점수 50"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "259960",
+      "name": "크래프톤",
+      "sector": "게임",
+      "score_bonus": 6,
+      "today_change": 6.15,
+      "today_vol_ratio": 237.0,
+      "today_score": 50,
+      "reasons": [
+        "오늘 +6.2% 마감",
+        "거래량 평균 +237%",
+        "스윙점수 50"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "002840",
+      "name": "미원상사",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 4.1,
+      "today_vol_ratio": 150.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +4.1% 마감",
+        "거래량 평균 +150%",
+        "스윙점수 54"
       ],
       "source": "close_summary"
     }
