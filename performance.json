@@ -2963,6 +2963,56 @@
       "score": 120,
       "buy_signal": true,
       "result": null
+    },
+    {
+      "date": "2026-07-31",
+      "month": "2026-07",
+      "ticker": "123410.KQ",
+      "name": "코리아에프티",
+      "price": 4920.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-31",
+      "month": "2026-07",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 18470.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-31",
+      "month": "2026-07",
+      "ticker": "309960.KQ",
+      "name": "LB인베스트먼트",
+      "price": 3995.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-31",
+      "month": "2026-07",
+      "ticker": "035510.KS",
+      "name": "신세계 I&C",
+      "price": 11440.0,
+      "score": 114,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-07-31",
+      "month": "2026-07",
+      "ticker": "104480.KQ",
+      "name": "티케이케미칼",
+      "price": 1436.0,
+      "score": 114,
+      "buy_signal": true,
+      "result": null
     }
   ]
 }
