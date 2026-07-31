@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-07-30T13:15:28.296969+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "효력발생안내( 2026.7.20. 제출 증권신고서(채무증권) )"
-  },
-  {
-    "time": "2026-07-30T13:46:50.753329+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
     "time": "2026-07-31T06:01:02.798916+09:00",
     "category": "briefing",
     "level": "info",
@@ -54,5 +38,29 @@
     "emoji": "📰",
     "title": "DART 📰 LG화학 🏠",
     "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
+  },
+  {
+    "time": "2026-07-31T14:34:10.977166+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-07-31T14:34:10.977440+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 두산에너빌리티 🏠",
+    "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-07-31T14:34:19.631902+09:00",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🟢 동양이엔피 +5.28% — 1차 익절 임박 (목표 +6%, 절반 매도)"
   }
 ]
