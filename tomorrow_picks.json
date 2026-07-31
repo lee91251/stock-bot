@@ -1,112 +1,38 @@
 {
-  "date": "2026-07-31",
-  "generated_at": "2026-07-30T15:44:15.750386",
+  "date": "2026-08-03",
+  "generated_at": "2026-07-31T15:44:41.538415",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "068930",
-      "name": "디지털대성",
-      "sector": "기타",
+      "code": "103140",
+      "name": "풍산",
+      "sector": "방산",
       "score_bonus": 10,
-      "today_change": 9.65,
-      "today_vol_ratio": 411.0,
-      "today_score": 65,
-      "reasons": [
-        "오늘 +9.7% 마감",
-        "거래량 평균 +411%",
-        "스윙점수 65"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "011760",
-      "name": "현대코퍼레이션",
-      "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 14.94,
-      "today_vol_ratio": 326.0,
-      "today_score": 57,
-      "reasons": [
-        "오늘 +14.9% 마감",
-        "거래량 평균 +326%",
-        "스윙점수 57"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "016380",
-      "name": "KG스틸",
-      "sector": "철강",
-      "score_bonus": 8,
-      "today_change": 7.82,
-      "today_vol_ratio": 214.0,
-      "today_score": 50,
-      "reasons": [
-        "오늘 +7.8% 마감",
-        "거래량 평균 +214%",
-        "스윙점수 50"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "259960",
-      "name": "크래프톤",
-      "sector": "게임",
-      "score_bonus": 6,
-      "today_change": 6.15,
-      "today_vol_ratio": 237.0,
-      "today_score": 50,
-      "reasons": [
-        "오늘 +6.2% 마감",
-        "거래량 평균 +237%",
-        "스윙점수 50"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "002840",
-      "name": "미원상사",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 4.1,
-      "today_vol_ratio": 150.0,
+      "today_change": 18.86,
+      "today_vol_ratio": 231.0,
       "today_score": 54,
       "reasons": [
-        "오늘 +4.1% 마감",
-        "거래량 평균 +150%",
+        "오늘 +18.9% 마감",
+        "거래량 평균 +231%",
         "스윙점수 54"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "194370",
+      "name": "제이에스코퍼레이션",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 3.67,
+      "today_vol_ratio": 218.0,
+      "today_score": 56,
+      "reasons": [
+        "오늘 +3.7% 마감",
+        "거래량 평균 +218%",
+        "스윙점수 56"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 5,
-    "AI": 5,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": -3,
-    "제약": -3,
-    "헬스": -3,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 8.5,
-    "XLK": 5.5,
-    "XLF": 0.56,
-    "XLE": 0.53,
-    "XLV": -1.64,
-    "XLI": 0.98,
-    "XLB": -0.19,
-    "XLY": 0.7
-  },
-  "sector_updated_at": "2026-07-31T06:01:04.030350"
+  "sector_weights": {}
 }
