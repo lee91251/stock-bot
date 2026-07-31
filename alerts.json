@@ -62,5 +62,21 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🟢 동양이엔피 +5.28% — 1차 익절 임박 (목표 +6%, 절반 매도)"
+  },
+  {
+    "time": "2026-07-31T15:19:02.524998+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 포스코인터내셔널",
+    "detail": "현금ㆍ현물배당결정              "
+  },
+  {
+    "time": "2026-07-31T15:19:02.525341+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 포스코인터내셔널",
+    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
   }
 ]
