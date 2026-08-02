@@ -1,82 +1,10 @@
 [
   {
-    "time": "2026-07-31T06:01:02.798916+09:00",
+    "time": "2026-08-03T06:01:02.456853+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +1.66% / 나스닥 +2.78% / VIX 17.09 / 환율 1,423원 · ✅ 미국 강세 — 오늘 코스피 상승 출발 예상. 관심 종목 체크."
-  },
-  {
-    "time": "2026-07-31T08:50:58.686329+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.1 / 공포탐욕 60(탐욕)"
-  },
-  {
-    "time": "2026-07-31T09:02:39.170466+09:00",
-    "category": "risk",
-    "level": "info",
-    "emoji": "✅",
-    "title": "위험 등급 하락: 경계 → 안전",
-    "detail": "5/100 — 정상화 추세"
-  },
-  {
-    "time": "2026-07-31T10:12:56.529265+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 한화오션",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-07-31T13:04:14.338302+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 LG화학 🏠",
-    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
-  },
-  {
-    "time": "2026-07-31T14:34:10.977166+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "주식등의대량보유상황보고서(약식)"
-  },
-  {
-    "time": "2026-07-31T14:34:10.977440+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 두산에너빌리티 🏠",
-    "detail": "주식등의대량보유상황보고서(약식)"
-  },
-  {
-    "time": "2026-07-31T14:34:19.631902+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🟢 동양이엔피 +5.28% — 1차 익절 임박 (목표 +6%, 절반 매도)"
-  },
-  {
-    "time": "2026-07-31T15:19:02.524998+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 포스코인터내셔널",
-    "detail": "현금ㆍ현물배당결정              "
-  },
-  {
-    "time": "2026-07-31T15:19:02.525341+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 포스코인터내셔널",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
+    "detail": "S&P +0.70% / 나스닥 +1.00% / VIX 15.99 / 환율 1,437원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
