@@ -1,17 +1,12 @@
 {
-  "updated": "2026-07-31 16:25",
-  "breadth": 89.2,
-  "smoothed_5d": 42.6,
+  "updated": "2026-08-03 16:05",
+  "breadth": 59.5,
+  "smoothed_5d": 42.2,
   "ma_days": 5,
   "regime": "bad",
   "good_min": 50.0,
   "enforce": false,
   "history": [
-    {
-      "date": "2026-06-19",
-      "breadth": 10.2,
-      "n": 1399
-    },
     {
       "date": "2026-06-22",
       "breadth": 18.7,
@@ -156,6 +151,11 @@
       "date": "2026-07-31",
       "breadth": 89.2,
       "n": 1398
+    },
+    {
+      "date": "2026-08-03",
+      "breadth": 59.5,
+      "n": 1400
     }
   ]
 }
