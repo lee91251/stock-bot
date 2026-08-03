@@ -2,12 +2,12 @@
   "positions": {
     "079960": {
       "name": "동양이엔피",
-      "qty": 26,
+      "qty": 13,
       "buy_price": 18740.0,
       "buy_date": "2026-07-30",
       "buy_time": "12:59",
       "buy_amount": 487240.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 123,
       "swing_score": 66,
       "sector": "기타",
@@ -576,6 +576,23 @@
       "reason": "swing_score 66",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-08-03",
+      "time": "10:32",
+      "side": "sell",
+      "code": "079960",
+      "name": "동양이엔피",
+      "qty": 13,
+      "price": 19910.0,
+      "amount": 258830.0,
+      "reason": "+6.2% 절반 익절",
+      "pct": 6.24,
+      "sector": "기타",
+      "buy_price": 18740.0,
+      "profit": 15210,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -592,7 +609,7 @@
     "2026-08-03": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {},
