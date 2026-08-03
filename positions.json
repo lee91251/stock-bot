@@ -13,6 +13,19 @@
       "sector": "기타",
       "order_no": "0000032650",
       "imminent_state": ""
+    },
+    "028670": {
+      "name": "팬오션",
+      "qty": 202,
+      "buy_price": 4940.0,
+      "buy_date": "2026-08-03",
+      "buy_time": "13:47",
+      "buy_amount": 997880.0,
+      "partial_sold": false,
+      "score": 100,
+      "swing_score": 65,
+      "sector": "기타",
+      "order_no": "0000030967"
     }
   },
   "history": [
@@ -593,6 +606,19 @@
       "profit": 15210,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-08-03",
+      "time": "13:47",
+      "side": "buy",
+      "code": "028670",
+      "name": "팬오션",
+      "qty": 202,
+      "price": 4940.0,
+      "amount": 997880.0,
+      "reason": "swing_score 65",
+      "sector": "기타",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -607,9 +633,9 @@
       "trade_count": 0
     },
     "2026-08-03": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 1
+      "buy_count": 1,
+      "buy_amount": 997880.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {},

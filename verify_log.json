@@ -1101,5 +1101,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-03T13:47:34.271011+09:00",
+    "side": "buy",
+    "code": "028670",
+    "name": "팬오션",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
