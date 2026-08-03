@@ -62,5 +62,37 @@
     "emoji": "📰",
     "title": "DART 📰 한화솔루션 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-08-03T09:46:37.010726+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "[기재정정]임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-08-03T09:46:37.011035+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-08-03T09:46:37.011380+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-08-03T09:46:43.521867+09:00",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🟢 동양이엔피 +5.60% — 1차 익절 임박 (목표 +6%, 절반 매도)"
   }
 ]
