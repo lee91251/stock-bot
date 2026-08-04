@@ -11,59 +11,13 @@
     "2026-07": {
       "total": 0,
       "wins": 0
+    },
+    "2026-08": {
+      "total": 0,
+      "wins": 0
     }
   },
   "recommendations": [
-    {
-      "date": "2026-05-04",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 44500.0,
-      "score": 109,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-04",
-      "month": "2026-05",
-      "ticker": "051900.KS",
-      "name": "LG생활건강",
-      "price": 279500.0,
-      "score": 82,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-04",
-      "month": "2026-05",
-      "ticker": "069620.KS",
-      "name": "대웅제약",
-      "price": 147700.0,
-      "score": 81,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-04",
-      "month": "2026-05",
-      "ticker": "293490.KQ",
-      "name": "카카오게임즈",
-      "price": 11820.0,
-      "score": 79,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-04",
-      "month": "2026-05",
-      "ticker": "316140.KS",
-      "name": "우리금융지주",
-      "price": 33300.0,
-      "score": 75,
-      "buy_signal": false,
-      "result": null
-    },
     {
       "date": "2026-05-06",
       "month": "2026-05",
@@ -3011,6 +2965,56 @@
       "name": "티케이케미칼",
       "price": 1436.0,
       "score": 114,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-05",
+      "month": "2026-08",
+      "ticker": "031440.KS",
+      "name": "신세계푸드",
+      "price": 38150.0,
+      "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-05",
+      "month": "2026-08",
+      "ticker": "016740.KS",
+      "name": "두올",
+      "price": 3280.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-05",
+      "month": "2026-08",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 8390.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-05",
+      "month": "2026-08",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 35150.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-05",
+      "month": "2026-08",
+      "ticker": "036800.KQ",
+      "name": "나이스정보통신",
+      "price": 28150.0,
+      "score": 102,
       "buy_signal": true,
       "result": null
     }
