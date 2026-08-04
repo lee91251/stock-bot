@@ -22,6 +22,7 @@ on:
           - "--autosell"
           - "--ccstrlog"
           - "--balance"
+          - "--insiderscan"
           - "--backtest"
           - "--backtest12"
           - "--backtest4track"
@@ -154,6 +155,7 @@ jobs:
           [ -f alerts.json ] && git add alerts.json || true
           [ -f ai_advisor_log.json ] && git add ai_advisor_log.json || true
           [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
+          [ -f insider_log.json ] && git add insider_log.json || true
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true

@@ -239,6 +239,7 @@ PERFORMANCE_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pe
 MARKET_SCAN_CACHE   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_scan_cache.json")
 MARKET_BREADTH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_breadth_history.json")
 CCSTR_LOG_FILE      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ccstr_log.json")
+INSIDER_LOG_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "insider_log.json")
 TOMORROW_PICKS_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tomorrow_picks.json")
 MIRAE_PAPER_FILE    = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mirae_paper.json")
 ALERTS_FILE         = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts.json")
@@ -979,6 +980,159 @@ def fetch_recent_disclosures_by_stock_codes(stock_codes: set, days: int = 1) -> 
         if sc and sc in stock_codes:
             out.append(item)
     return out
+
+
+def _insider_int(s) -> int:
+    try:
+        return int(str(s).replace(",", "").replace(" ", "").strip())
+    except Exception:
+        return 0
+
+
+def _load_insider_seen() -> set:
+    """이미 처리한 내부자 공시 rcept_no (최근 7일)."""
+    try:
+        if os.path.exists(INSIDER_LOG_FILE):
+            d = json.load(open(INSIDER_LOG_FILE, "r", encoding="utf-8"))
+            cutoff = (_now_kst() - timedelta(days=7)).strftime("%Y%m%d")
+            return set(x for x in d.get("seen", []) if str(x)[:8] >= cutoff)
+    except Exception:
+        pass
+    return set()
+
+
+def _load_insider_log() -> list:
+    try:
+        if os.path.exists(INSIDER_LOG_FILE):
+            return json.load(open(INSIDER_LOG_FILE, "r", encoding="utf-8")).get("records", [])
+    except Exception:
+        pass
+    return []
+
+
+def _write_insider(records=None, seen=None):
+    cur = {}
+    try:
+        if os.path.exists(INSIDER_LOG_FILE):
+            cur = json.load(open(INSIDER_LOG_FILE, "r", encoding="utf-8"))
+    except Exception:
+        cur = {}
+    if records is not None:
+        cur["records"] = records
+    if seen is not None:
+        cur["seen"] = sorted(seen)
+    cur["updated"] = _now_kst().strftime("%Y-%m-%d %H:%M:%S")
+    with open(INSIDER_LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(cur, f, ensure_ascii=False, indent=1)
+
+
+def run_insider_scan(send_telegram: bool = True) -> list:
+    """DART 임원·주요주주 '특정증권등 소유상황보고서' 스캔 → 내부자 순매수(매집) 포착.
+
+    전날 장마감 후 ~ 당일 아침에 접수된 내부자 매수 공시를, 뉴스가 붙기 전에 잡는 선행 신호.
+    자동매매는 건드리지 않음 — 텔레그램 알림 + insider_log.json 축적(다음날 상승 검증용)만.
+    (2026-08-04 회장 요청: 개미보다 빠른 실시간 공시 선행. 최태원 48억 매수 사례 실증.)
+    """
+    if not DART_API_KEY:
+        print("  [내부자] DART 키 없음 — 스킵")
+        return []
+    today = _now_kst()
+    start = (today - timedelta(days=3)).strftime("%Y%m%d")  # 주말·연휴 넘김 여유
+    end   = today.strftime("%Y%m%d")
+
+    # 1) 최근 전체 공시 수집 (여러 페이지)
+    items = []
+    for page in range(1, 8):
+        d = _dart_req("list.json", {
+            "bgn_de": start, "end_de": end,
+            "page_no": str(page), "page_count": "100",
+        })
+        lst = d.get("list", []) if d else []
+        if not lst:
+            break
+        items.extend(lst)
+        if len(lst) < 100:
+            break
+        time.sleep(0.1)
+
+    # 2) 임원·주요주주 특정증권등 소유상황보고서만 (상장 종목)
+    reports = [it for it in items
+               if it.get("stock_code") and "특정증권등소유상황보고서" in it.get("report_nm", "")]
+
+    seen = _load_insider_seen()
+    corp_cache = {}
+    new_records = []
+
+    for it in reports:
+        rno = it.get("rcept_no", "")
+        if not rno or rno in seen:
+            continue
+        seen.add(rno)
+        corp = it.get("corp_code", "")
+        if corp not in corp_cache:
+            el = _dart_req("elestock.json", {"corp_code": corp})
+            corp_cache[corp] = el.get("list", []) if el else []
+            time.sleep(0.08)
+        for e in corp_cache[corp]:
+            if e.get("rcept_no") != rno:
+                continue
+            irds = _insider_int(e.get("sp_stock_lmp_irds_cnt", "0"))
+            if irds <= 0:        # 순매수(증가)만 — 매도·변동없음 제외
+                continue
+            new_records.append({
+                "detected":   today.strftime("%Y-%m-%d %H:%M"),
+                "rcept_dt":   it.get("rcept_dt", ""),
+                "code":       it.get("stock_code", ""),
+                "name":       it.get("corp_name", ""),
+                "insider":    e.get("repror", ""),
+                "position":   e.get("isu_exctv_ofcps", ""),
+                "registered": e.get("isu_exctv_rgist_at", ""),
+                "shares":     irds,
+                "hold":       _insider_int(e.get("sp_stock_lmp_cnt", "0")),
+                "rcept_no":   rno,
+            })
+
+    if not new_records:
+        print("  [내부자] 새 순매수 공시 없음")
+        _write_insider(seen=seen)
+        return []
+
+    # 3) 강한 신호(대표/회장/등기임원 또는 1만주+)만 알림 — 노이즈 방지, 로그엔 전부 저장
+    def _strong(r):
+        pos = r["position"] or ""
+        # 노이즈 방지: 대표·회장·사장급 또는 대량(1만주+)만 알림. (소액 임원은 로그엔 저장, 알림 X)
+        return ("회장" in pos or "대표" in pos or "사장" in pos or r["shares"] >= 10000)
+    strong = [r for r in new_records if _strong(r)]
+
+    # 강한 신호만 금액 추정(FDR 종가)
+    for r in strong:
+        r["amount"] = 0
+        try:
+            import FinanceDataReader as fdr
+            df = fdr.DataReader(r["code"])
+            if len(df):
+                r["amount"] = int(r["shares"] * float(df["Close"].iloc[-1]))
+        except Exception:
+            pass
+
+    if send_telegram and strong:
+        lines = ["🕵️ <b>내부자 매수 포착</b> — 뉴스 전 선행신호"]
+        for r in sorted(strong, key=lambda x: -(x.get("amount", 0) or x["shares"]))[:10]:
+            amt = r.get("amount", 0)
+            val = f"{amt/1e8:.1f}억" if amt else f"{r['shares']:,}주"
+            pos = r["position"] or "임원"
+            lines.append(f"• <b>{r['name']}</b> ({r['code']}) — {pos} {r['insider']} {val} 매수")
+        lines.append("\n※ 다음날 상승 검증용 데이터로 축적 중 (자동매매 아님)")
+        tg_send("\n".join(lines))
+
+    # 4) 로그 저장 (최근 60일치 유지)
+    log = _load_insider_log()
+    log.extend(new_records)
+    cutoff = (_now_kst() - timedelta(days=60)).strftime("%Y-%m-%d")
+    log = [r for r in log if r.get("detected", "")[:10] >= cutoff]
+    _write_insider(records=log, seen=seen)
+    print(f"  [내부자] 순매수 공시 {len(new_records)}건 (강한신호 {len(strong)}건) 기록")
+    return new_records
 
 
 def _load_seen_disclosures() -> set:
@@ -5608,6 +5762,12 @@ def run_premarket_briefing():
         print(f"  [브리핑] 장전 브리핑 오류: {e}")
         tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
 
+    # 내부자 매수 실시간 스캔 (선행신호 — 전날 장마감 후 ~ 아침 공시를 뉴스 전에 포착)
+    try:
+        run_insider_scan(send_telegram=True)
+    except Exception as e:
+        print(f"  [브리핑] 내부자 스캔 오류: {e}")
+
     # 대시보드 갱신 — 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
     try:
         build_and_save_dashboard()
@@ -8379,6 +8539,8 @@ if __name__ == "__main__":
             run_auto_sell()
         elif mode == "--ccstrlog":
             run_ccstr_log()
+        elif mode == "--insiderscan":
+            run_insider_scan(send_telegram=True)
         elif mode == "--balance":
             # 모의계좌 인증·잔고 조회 테스트 (매매 X, 조회만) — 계좌/앱키 갱신 검증용
             print("=== 잔고 조회 테스트 ===")
