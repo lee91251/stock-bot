@@ -614,5 +614,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.9 / 공포탐욕 65(탐욕)"
+  },
+  {
+    "time": "2026-08-04T09:04:32.124087+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 LG화학 🏠",
+    "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-08-04T09:04:32.124753+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
+    "detail": "최대주주등소유주식변동신고서              "
   }
 ]
