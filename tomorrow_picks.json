@@ -1,63 +1,38 @@
 {
-  "date": "2026-08-03",
-  "generated_at": "2026-07-31T15:44:41.538415",
+  "date": "2026-08-05",
+  "generated_at": "2026-08-04T15:44:31.597057",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "103140",
-      "name": "풍산",
-      "sector": "방산",
+      "code": "028670",
+      "name": "팬오션",
+      "sector": "기타",
       "score_bonus": 10,
-      "today_change": 18.86,
-      "today_vol_ratio": 231.0,
-      "today_score": 54,
+      "today_change": 14.29,
+      "today_vol_ratio": 274.0,
+      "today_score": 58,
       "reasons": [
-        "오늘 +18.9% 마감",
-        "거래량 평균 +231%",
-        "스윙점수 54"
+        "오늘 +14.3% 마감",
+        "거래량 평균 +274%",
+        "스윙점수 58"
       ],
       "source": "close_summary"
     },
     {
-      "code": "194370",
-      "name": "제이에스코퍼레이션",
+      "code": "348340",
+      "name": "뉴로메카",
       "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.67,
-      "today_vol_ratio": 218.0,
-      "today_score": 56,
+      "score_bonus": 10,
+      "today_change": 13.72,
+      "today_vol_ratio": 314.0,
+      "today_score": 52,
       "reasons": [
-        "오늘 +3.7% 마감",
-        "거래량 평균 +218%",
-        "스윙점수 56"
+        "오늘 +13.7% 마감",
+        "거래량 평균 +314%",
+        "스윙점수 52"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "에너지": 1,
-    "정유": 1,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": -3,
-    "소재": -3,
-    "철강": -3,
-    "자동차": 5,
-    "유통": 5
-  },
-  "us_etf_changes": {
-    "SOXX": 0.07,
-    "XLK": -0.22,
-    "XLF": -0.11,
-    "XLE": 1.0,
-    "XLV": -0.59,
-    "XLI": 0.81,
-    "XLB": -2.34,
-    "XLY": 3.29
-  },
-  "sector_updated_at": "2026-08-03T06:01:04.130199"
+  "sector_weights": {}
 }
