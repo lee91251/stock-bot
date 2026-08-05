@@ -62,5 +62,21 @@
     "emoji": "📰",
     "title": "DART 📰 KG파이낸셜 🏠",
     "detail": "주식소각결정              "
+  },
+  {
+    "time": "2026-08-05T13:19:24.239116+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-08-05T13:19:24.239390+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
   }
 ]
