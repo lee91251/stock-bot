@@ -1128,5 +1128,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-05T09:17:27.991679+09:00",
+    "side": "sell",
+    "code": "079960",
+    "name": "동양이엔피",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
