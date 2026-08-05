@@ -1137,5 +1137,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-05T12:14:22.942528+09:00",
+    "side": "buy",
+    "code": "046440",
+    "name": "KG파이낸셜",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
