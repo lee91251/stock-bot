@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-05T08:50:56.109956+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.5 / 공포탐욕 60(탐욕)"
-  },
-  {
     "time": "2026-08-05T09:14:48.666424+09:00",
     "category": "disclosure",
     "level": "info",
@@ -78,5 +70,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-08-06T09:14:36.585494+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
+    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
   }
 ]
