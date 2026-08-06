@@ -1099,9 +1099,13 @@ def run_insider_scan(send_telegram: bool = True) -> list:
 
     # 3) 강한 신호(대표/회장/등기임원 또는 1만주+)만 알림 — 노이즈 방지, 로그엔 전부 저장
     def _strong(r):
-        pos = r["position"] or ""
-        # 노이즈 방지: 대표·회장·사장급 또는 대량(1만주+)만 알림. (소액 임원은 로그엔 저장, 알림 X)
-        return ("회장" in pos or "대표" in pos or "사장" in pos or r["shares"] >= 10000)
+        pos = (r["position"] or "").strip()
+        # 법인·최대주주 취득(직위 "-")은 알림 제외 — 임원 '개인'의 장내매수만. (로그엔 전부 저장, 검증용)
+        # 제이케이시냅스 사례: 휴림로봇(법인) 826만주 취득=직위없음=희석/인수라 하락 → 노이즈로 제외.
+        if not pos or pos == "-":
+            return False
+        titles = ("회장", "대표", "사장", "부사장", "전무", "상무", "이사", "본부장", "부문장", "실장", "감사")
+        return any(t in pos for t in titles)
     strong = [r for r in new_records if _strong(r)]
 
     # 강한 신호만 금액 추정(FDR 종가)
