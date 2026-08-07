@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-08-06T10:36:53.442855+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-08-06T14:38:15.551640+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
     "time": "2026-08-07T08:50:55.965583+09:00",
     "category": "briefing",
     "level": "info",
@@ -30,5 +14,13 @@
     "emoji": "✅",
     "title": "DART ✅ GS건설 🏠",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-08-07T14:48:58.679621+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
