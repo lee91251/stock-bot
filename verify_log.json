@@ -1146,5 +1146,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-10T14:28:33.566282+09:00",
+    "side": "buy",
+    "code": "214180",
+    "name": "헥토이노베이션",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
