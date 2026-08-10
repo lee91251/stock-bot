@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-11",
-      "month": "2026-05",
-      "ticker": "185750.KS",
-      "name": "종근당",
-      "price": 82800.0,
-      "score": 93,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-11",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 44050.0,
-      "score": 92,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-11",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 20600.0,
-      "score": 91,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-11",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17900.0,
-      "score": 90,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-11",
-      "month": "2026-05",
-      "ticker": "316140.KS",
-      "name": "우리금융지주",
-      "price": 32850.0,
-      "score": 86,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-05-12",
       "month": "2026-05",
       "ticker": "015760.KS",
@@ -3016,6 +2966,56 @@
       "price": 43300.0,
       "score": 103,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-11",
+      "month": "2026-08",
+      "ticker": "031440.KS",
+      "name": "신세계푸드",
+      "price": 38150.0,
+      "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-11",
+      "month": "2026-08",
+      "ticker": "090850.KQ",
+      "name": "현대이지웰",
+      "price": 5230.0,
+      "score": 109,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-11",
+      "month": "2026-08",
+      "ticker": "215200.KQ",
+      "name": "메가스터디교육",
+      "price": 38950.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-11",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-11",
+      "month": "2026-08",
+      "ticker": "019010.KQ",
+      "name": "베뉴지",
+      "price": 3745.0,
+      "score": 103,
+      "buy_signal": false,
       "result": null
     }
   ]
