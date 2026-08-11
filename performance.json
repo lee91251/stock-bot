@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-12",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 43200.0,
-      "score": 112,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-12",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17640.0,
-      "score": 95,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-12",
-      "month": "2026-05",
-      "ticker": "185750.KS",
-      "name": "종근당",
-      "price": 80900.0,
-      "score": 93,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-12",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 20050.0,
-      "score": 92,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-12",
-      "month": "2026-05",
-      "ticker": "055550.KS",
-      "name": "신한지주",
-      "price": 97200.0,
-      "score": 90,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-05-13",
       "month": "2026-05",
       "ticker": "015760.KS",
@@ -3016,6 +2966,56 @@
       "price": 3745.0,
       "score": 103,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-12",
+      "month": "2026-08",
+      "ticker": "019010.KQ",
+      "name": "베뉴지",
+      "price": 3790.0,
+      "score": 109,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-12",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-12",
+      "month": "2026-08",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 35200.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-12",
+      "month": "2026-08",
+      "ticker": "035890.KQ",
+      "name": "서희건설",
+      "price": 2075.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-12",
+      "month": "2026-08",
+      "ticker": "348950.KS",
+      "name": "제이알글로벌리츠",
+      "price": 1182.0,
+      "score": 98,
+      "buy_signal": true,
       "result": null
     }
   ]
