@@ -49,5 +49,26 @@
       "source": "close_summary"
     }
   ],
-  "sector_weights": {}
+  "sector_weights": {
+    "반도체": 3,
+    "IT": 3,
+    "통신": 1,
+    "AI": 1,
+    "화학": -1,
+    "소재": -1,
+    "철강": -1,
+    "자동차": -1,
+    "유통": -1
+  },
+  "us_etf_changes": {
+    "SOXX": 2.32,
+    "XLK": 1.49,
+    "XLF": 0.21,
+    "XLE": 0.16,
+    "XLV": 0.26,
+    "XLI": 0.1,
+    "XLB": -1.24,
+    "XLY": -1.13
+  },
+  "sector_updated_at": "2026-08-13T06:01:03.583793"
 }
