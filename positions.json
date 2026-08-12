@@ -1,18 +1,5 @@
 {
   "positions": {
-    "046440": {
-      "name": "KG파이낸셜",
-      "qty": 239,
-      "buy_price": 4180.0,
-      "buy_date": "2026-08-05",
-      "buy_time": "12:14",
-      "buy_amount": 999020.0,
-      "partial_sold": false,
-      "score": 97,
-      "swing_score": 61,
-      "sector": "기타",
-      "order_no": "0000022383"
-    },
     "214180": {
       "name": "헥토이노베이션",
       "qty": 67,
@@ -695,6 +682,23 @@
       "reason": "swing_score 61",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-08-12",
+      "time": "10:32",
+      "side": "sell",
+      "code": "046440",
+      "name": "KG파이낸셜",
+      "qty": 239,
+      "price": 4205.0,
+      "amount": 1004995.0,
+      "reason": "5거래일 경과 강제 매도 (+0.6%)",
+      "pct": 0.6,
+      "sector": "기타",
+      "buy_price": 4180.0,
+      "profit": 5975,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -746,7 +750,7 @@
     "2026-08-12": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {},
