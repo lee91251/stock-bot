@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-13",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 41250.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-13",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17480.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-13",
-      "month": "2026-05",
-      "ticker": "055550.KS",
-      "name": "신한지주",
-      "price": 96700.0,
-      "score": 95,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-13",
-      "month": "2026-05",
-      "ticker": "185750.KS",
-      "name": "종근당",
-      "price": 81200.0,
-      "score": 93,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-13",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 19800.0,
-      "score": 93,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-05-14",
       "month": "2026-05",
       "ticker": "015760.KS",
@@ -3014,6 +2964,56 @@
       "ticker": "348950.KS",
       "name": "제이알글로벌리츠",
       "price": 1182.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-13",
+      "month": "2026-08",
+      "ticker": "215200.KQ",
+      "name": "메가스터디교육",
+      "price": 37250.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-13",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-13",
+      "month": "2026-08",
+      "ticker": "418470.KQ",
+      "name": "KT밀리의서재",
+      "price": 10080.0,
+      "score": 101,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-13",
+      "month": "2026-08",
+      "ticker": "000120.KS",
+      "name": "CJ대한통운",
+      "price": 74100.0,
+      "score": 100,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-13",
+      "month": "2026-08",
+      "ticker": "000370.KS",
+      "name": "한화손해보험",
+      "price": 6200.0,
       "score": 98,
       "buy_signal": true,
       "result": null
