@@ -12,6 +12,19 @@
       "swing_score": 61,
       "sector": "기타",
       "order_no": "0000032940"
+    },
+    "015760": {
+      "name": "한국전력",
+      "qty": 30,
+      "buy_price": 32950.0,
+      "buy_date": "2026-08-13",
+      "buy_time": "14:29",
+      "buy_amount": 988500.0,
+      "partial_sold": false,
+      "score": 133,
+      "swing_score": 69,
+      "sector": "신재생",
+      "order_no": "0000035172"
     }
   },
   "history": [
@@ -699,6 +712,19 @@
       "profit": 5975,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-08-13",
+      "time": "14:29",
+      "side": "buy",
+      "code": "015760",
+      "name": "한국전력",
+      "qty": 30,
+      "price": 32950.0,
+      "amount": 988500.0,
+      "reason": "swing_score 69",
+      "sector": "신재생",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -753,9 +779,9 @@
       "trade_count": 1
     },
     "2026-08-13": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 988500.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {},
