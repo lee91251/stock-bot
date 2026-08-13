@@ -14,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 14.6 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-08-13T13:35:35.154114+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 LG화학 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
   }
 ]
