@@ -12,6 +12,19 @@
       "swing_score": 69,
       "sector": "신재생",
       "order_no": "0000035172"
+    },
+    "015890": {
+      "name": "태경산업",
+      "qty": 206,
+      "buy_price": 4850.0,
+      "buy_date": "2026-08-14",
+      "buy_time": "11:04",
+      "buy_amount": 999100.0,
+      "partial_sold": false,
+      "score": 76,
+      "swing_score": 57,
+      "sector": "기타",
+      "order_no": "0000021855"
     }
   },
   "history": [
@@ -729,6 +742,19 @@
       "profit": -11390,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-08-14",
+      "time": "11:04",
+      "side": "buy",
+      "code": "015890",
+      "name": "태경산업",
+      "qty": 206,
+      "price": 4850.0,
+      "amount": 999100.0,
+      "reason": "swing_score 57",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -788,9 +814,9 @@
       "trade_count": 1
     },
     "2026-08-14": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 1
+      "buy_count": 1,
+      "buy_amount": 999100.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {},

@@ -1182,5 +1182,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-14T11:04:06.242985+09:00",
+    "side": "buy",
+    "code": "015890",
+    "name": "태경산업",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
