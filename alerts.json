@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-13T13:35:35.154114+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 LG화학 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
     "time": "2026-08-14T06:01:13.859714+09:00",
     "category": "briefing",
     "level": "info",
@@ -61,6 +53,14 @@
     "level": "info",
     "emoji": "📰",
     "title": "DART 📰 GS건설 🏠",
+    "detail": "지급수단별ㆍ지급기간별지급금액및분쟁조정기구에관한사항"
+  },
+  {
+    "time": "2026-08-14T14:04:17.323643+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
     "detail": "지급수단별ㆍ지급기간별지급금액및분쟁조정기구에관한사항"
   }
 ]
