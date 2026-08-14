@@ -25,6 +25,19 @@
       "swing_score": 57,
       "sector": "기타",
       "order_no": "0000021855"
+    },
+    "090850": {
+      "name": "현대이지웰",
+      "qty": 190,
+      "buy_price": 5250.0,
+      "buy_date": "2026-08-14",
+      "buy_time": "13:19",
+      "buy_amount": 997500.0,
+      "partial_sold": false,
+      "score": 97,
+      "swing_score": 60,
+      "sector": "기타",
+      "order_no": "0000031191"
     }
   },
   "history": [
@@ -755,6 +768,19 @@
       "reason": "swing_score 57",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-08-14",
+      "time": "13:19",
+      "side": "buy",
+      "code": "090850",
+      "name": "현대이지웰",
+      "qty": 190,
+      "price": 5250.0,
+      "amount": 997500.0,
+      "reason": "swing_score 60",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -814,9 +840,9 @@
       "trade_count": 1
     },
     "2026-08-14": {
-      "buy_count": 1,
-      "buy_amount": 999100.0,
-      "trade_count": 2
+      "buy_count": 2,
+      "buy_amount": 1996600.0,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {},
