@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-17T08:50:53.692637+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 14.2 / 공포탐욕 60(탐욕)"
-  },
-  {
     "time": "2026-08-18T06:01:07.161692+09:00",
     "category": "briefing",
     "level": "info",
@@ -22,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.2 / 공포탐욕 55(중립)"
+  },
+  {
+    "time": "2026-08-18T14:33:06.567885+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
   }
 ]
