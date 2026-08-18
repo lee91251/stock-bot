@@ -1,18 +1,5 @@
 {
   "positions": {
-    "015760": {
-      "name": "한국전력",
-      "qty": 30,
-      "buy_price": 32950.0,
-      "buy_date": "2026-08-13",
-      "buy_time": "14:29",
-      "buy_amount": 988500.0,
-      "partial_sold": false,
-      "score": 133,
-      "swing_score": 69,
-      "sector": "신재생",
-      "order_no": "0000035172"
-    },
     "015890": {
       "name": "태경산업",
       "qty": 206,
@@ -781,6 +768,23 @@
       "reason": "swing_score 60",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-08-18",
+      "time": "11:17",
+      "side": "sell",
+      "code": "015760",
+      "name": "한국전력",
+      "qty": 30,
+      "price": 32600.0,
+      "amount": 978000.0,
+      "reason": "하락 추세 빨리 청산 (3일/-1.1%)",
+      "pct": -1.06,
+      "sector": "신재생",
+      "buy_price": 32950.0,
+      "profit": -10500,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -852,7 +856,7 @@
     "2026-08-18": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {},

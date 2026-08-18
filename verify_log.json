@@ -1200,5 +1200,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-18T11:17:33.198875+09:00",
+    "side": "sell",
+    "code": "015760",
+    "name": "한국전력",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
