@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-19",
-      "month": "2026-05",
-      "ticker": "316140.KS",
-      "name": "우리금융지주",
-      "price": 30650.0,
-      "score": 102,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-19",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17260.0,
-      "score": 101,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-19",
-      "month": "2026-05",
-      "ticker": "055550.KS",
-      "name": "신한지주",
-      "price": 93100.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-19",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 19960.0,
-      "score": 93,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-19",
-      "month": "2026-05",
-      "ticker": "185750.KS",
-      "name": "종근당",
-      "price": 79700.0,
-      "score": 88,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-05-20",
       "month": "2026-05",
       "ticker": "011200.KS",
@@ -3015,6 +2965,56 @@
       "name": "현대이지웰",
       "price": 5250.0,
       "score": 103,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-19",
+      "month": "2026-08",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 8240.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-19",
+      "month": "2026-08",
+      "ticker": "025540.KS",
+      "name": "한국단자",
+      "price": 58600.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-19",
+      "month": "2026-08",
+      "ticker": "003030.KS",
+      "name": "세아제강지주",
+      "price": 99600.0,
+      "score": 100,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-19",
+      "month": "2026-08",
+      "ticker": "036580.KS",
+      "name": "팜스코",
+      "price": 2550.0,
+      "score": 100,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-19",
+      "month": "2026-08",
+      "ticker": "009970.KS",
+      "name": "영원무역홀딩스",
+      "price": 183300.0,
+      "score": 99,
       "buy_signal": true,
       "result": null
     }
