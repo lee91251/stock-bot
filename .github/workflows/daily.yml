@@ -344,7 +344,7 @@ jobs:
         run: python stock.py --balance
 
   ccstr-log:
-    if: github.event.inputs.mode == '--ccstrlog'
+    if: false  # 2026-08 중단: 체결강도·imbal 검증 기각 + KIS 5분 접속 카톡 알림 원인 (회장 지시). 되살리려면 원래 조건 복구.
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
