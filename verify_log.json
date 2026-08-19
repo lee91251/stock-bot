@@ -1209,5 +1209,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-19T09:27:25.512735+09:00",
+    "side": "sell",
+    "code": "090850",
+    "name": "현대이지웰",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
