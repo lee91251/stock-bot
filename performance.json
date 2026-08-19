@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-20",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 19820.0,
-      "score": 101,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-20",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17260.0,
-      "score": 97,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-20",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 39150.0,
-      "score": 96,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-20",
-      "month": "2026-05",
-      "ticker": "009830.KS",
-      "name": "한화솔루션",
-      "price": 41300.0,
-      "score": 91,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-20",
-      "month": "2026-05",
-      "ticker": "055550.KS",
-      "name": "신한지주",
-      "price": 93900.0,
-      "score": 90,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-05-21",
       "month": "2026-05",
       "ticker": "316140.KS",
@@ -3014,6 +2964,56 @@
       "ticker": "009970.KS",
       "name": "영원무역홀딩스",
       "price": 183300.0,
+      "score": 99,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-20",
+      "month": "2026-08",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 7780.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-20",
+      "month": "2026-08",
+      "ticker": "194700.KQ",
+      "name": "노바렉스",
+      "price": 11140.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-20",
+      "month": "2026-08",
+      "ticker": "025540.KS",
+      "name": "한국단자",
+      "price": 55600.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-20",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-20",
+      "month": "2026-08",
+      "ticker": "071050.KS",
+      "name": "한국금융지주",
+      "price": 183100.0,
       "score": 99,
       "buy_signal": true,
       "result": null
