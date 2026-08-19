@@ -23,7 +23,8 @@
       "score": 0,
       "swing_score": 0,
       "sector": "미상",
-      "reconciled": true
+      "reconciled": true,
+      "imminent_state": "near_stop"
     }
   },
   "history": [

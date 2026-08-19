@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-08-18T14:33:06.567885+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-08-18T14:49:01.811442+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ POSCO홀딩스",
-    "detail": "현금ㆍ현물배당결정(자회사의 주요경영사항)              "
-  },
-  {
     "time": "2026-08-18T15:17:50.882773+09:00",
     "category": "disclosure",
     "level": "info",
@@ -38,5 +22,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 55(중립)"
+  },
+  {
+    "time": "2026-08-19T15:17:46.943803+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 현대이지웰 -3.05% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
