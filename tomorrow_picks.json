@@ -1,74 +1,7 @@
 {
-  "date": "2026-08-13",
-  "generated_at": "2026-08-12T15:45:09.135141",
+  "date": "2026-08-20",
+  "generated_at": "2026-08-19T15:44:27.417558",
   "source_phase": "close_summary",
-  "picks": [
-    {
-      "code": "066570",
-      "name": "LG전자",
-      "sector": "IT",
-      "score_bonus": 10,
-      "today_change": 12.82,
-      "today_vol_ratio": 235.0,
-      "today_score": 58,
-      "reasons": [
-        "오늘 +12.8% 마감",
-        "거래량 평균 +235%",
-        "스윙점수 58"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "257720",
-      "name": "실리콘투",
-      "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 12.98,
-      "today_vol_ratio": 662.0,
-      "today_score": 52,
-      "reasons": [
-        "오늘 +13.0% 마감",
-        "거래량 평균 +662%",
-        "스윙점수 52"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "071280",
-      "name": "로체시스템즈",
-      "sector": "기타",
-      "score_bonus": 7,
-      "today_change": 7.03,
-      "today_vol_ratio": 269.0,
-      "today_score": 59,
-      "reasons": [
-        "오늘 +7.0% 마감",
-        "거래량 평균 +269%",
-        "스윙점수 59"
-      ],
-      "source": "close_summary"
-    }
-  ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 2.32,
-    "XLK": 1.49,
-    "XLF": 0.21,
-    "XLE": 0.16,
-    "XLV": 0.26,
-    "XLI": 0.1,
-    "XLB": -1.24,
-    "XLY": -1.13
-  },
-  "sector_updated_at": "2026-08-13T06:01:03.583793"
+  "picks": [],
+  "sector_weights": {}
 }
