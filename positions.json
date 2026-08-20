@@ -12,19 +12,6 @@
       "swing_score": 57,
       "sector": "기타",
       "order_no": "0000021855"
-    },
-    "090850": {
-      "name": "현대이지웰",
-      "qty": 78,
-      "buy_price": 5240.0,
-      "buy_date": "2026-08-19",
-      "buy_amount": 408720.0,
-      "partial_sold": false,
-      "score": 0,
-      "swing_score": 0,
-      "sector": "미상",
-      "reconciled": true,
-      "imminent_state": ""
     }
   },
   "history": [
