@@ -577,37 +577,47 @@ class KisTradingClient:
             tr_id = "VTTC0802U" if self.paper else "TTTC0802U"
         else:
             tr_id = "VTTC0801U" if self.paper else "TTTC0801U"
-        try:
-            r = requests.post(
-                f"{self.base}/uapi/domestic-stock/v1/trading/order-cash",
-                headers={
-                    "content-type":  "application/json; charset=utf-8",
-                    "authorization": f"Bearer {self._token}",
-                    "appkey":        self.app_key,
-                    "appsecret":     self.app_secret,
-                    "tr_id":         tr_id,
-                    "custtype":      "P",
-                },
-                json={
-                    "CANO":         cano,
-                    "ACNT_PRDT_CD": prdt,
-                    "PDNO":         code,
-                    "ORD_DVSN":     "01",   # 01: 시장가
-                    "ORD_QTY":      str(qty),
-                    "ORD_UNPR":     "0",
-                },
-                timeout=10,
-            )
-            d = r.json()
-            if d.get("rt_cd") == "0":
-                return {
-                    "ok":       True,
-                    "order_no": d.get("output", {}).get("ODNO", ""),
-                    "msg":      d.get("msg1", ""),
-                }
-            return {"ok": False, "msg": d.get("msg1", "주문 실패")}
-        except Exception as e:
-            return {"ok": False, "msg": str(e)}
+        # KIS 서버 일시 장애(연결 끊김 RemoteDisconnected·읽기 타임아웃) 재시도 —
+        # 손절 미체결 방치 방지 (2026-08 현대이지웰 매도 실패 사고).
+        # 주의: 네트워크 예외만 재시도. KIS가 정상 응답으로 거부(잔고부족 등)하면 재시도 안 함.
+        # (실전 전환 시 재시도 전 잔고 재확인으로 이중주문 방지 보강 필요)
+        last_err = "주문 실패"
+        for _attempt in range(3):
+            try:
+                r = requests.post(
+                    f"{self.base}/uapi/domestic-stock/v1/trading/order-cash",
+                    headers={
+                        "content-type":  "application/json; charset=utf-8",
+                        "authorization": f"Bearer {self._token}",
+                        "appkey":        self.app_key,
+                        "appsecret":     self.app_secret,
+                        "tr_id":         tr_id,
+                        "custtype":      "P",
+                    },
+                    json={
+                        "CANO":         cano,
+                        "ACNT_PRDT_CD": prdt,
+                        "PDNO":         code,
+                        "ORD_DVSN":     "01",   # 01: 시장가
+                        "ORD_QTY":      str(qty),
+                        "ORD_UNPR":     "0",
+                    },
+                    timeout=15,
+                )
+                d = r.json()
+                if d.get("rt_cd") == "0":
+                    return {
+                        "ok":       True,
+                        "order_no": d.get("output", {}).get("ODNO", ""),
+                        "msg":      d.get("msg1", ""),
+                    }
+                # KIS 정상 응답(거부)이면 재시도 무의미 → 즉시 반환
+                return {"ok": False, "msg": d.get("msg1", "주문 실패")}
+            except Exception as e:
+                last_err = str(e)   # 연결 끊김·타임아웃 등 네트워크 예외만 여기 도달 → 재시도
+                if _attempt < 2:
+                    time.sleep(2)
+        return {"ok": False, "msg": f"KIS 연결 재시도 3회 실패: {last_err}"}
 
     def buy(self, code: str, qty: int) -> dict:
         return self._order(code, qty, "buy")
