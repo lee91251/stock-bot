@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-20T13:29:49.802376+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "주식등의대량보유상황보고서(일반)"
-  },
-  {
     "time": "2026-08-21T06:01:05.591276+09:00",
     "category": "briefing",
     "level": "info",
@@ -78,5 +70,13 @@
     "emoji": "✅",
     "title": "DART ✅ 알테오젠",
     "detail": "신규시설투자등              "
+  },
+  {
+    "time": "2026-08-21T13:45:41.877925+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
