@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-20T11:03:08.057229+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "기업가치제고계획(자율공시)              (2026년)"
-  },
-  {
     "time": "2026-08-20T13:29:49.802376+09:00",
     "category": "disclosure",
     "level": "info",
@@ -70,5 +62,13 @@
     "emoji": "⚠️",
     "title": "DART ⚠️ 카카오",
     "detail": "매매거래정지및정지해제(중요내용공시)              "
+  },
+  {
+    "time": "2026-08-21T11:14:02.753055+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 포스코퓨처엠",
+    "detail": "[기재정정]단일판매ㆍ공급계약해지              "
   }
 ]
