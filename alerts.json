@@ -1,90 +1,10 @@
 [
   {
-    "time": "2026-08-21T06:01:05.591276+09:00",
+    "time": "2026-08-24T06:01:04.487134+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P -0.87% / 나스닥 -1.00% / VIX 16.01 / 환율 1,394원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-08-21T08:50:52.095649+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.0 / 공포탐욕 45(중립)"
-  },
-  {
-    "time": "2026-08-21T09:12:49.525986+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 두산에너빌리티 🏠",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-08-21T10:29:40.752496+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-08-21T10:29:40.752727+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-08-21T10:29:40.753028+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-08-21T10:29:40.753290+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 카카오",
-    "detail": "매매거래정지및정지해제(중요내용공시)              "
-  },
-  {
-    "time": "2026-08-21T11:14:02.753055+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 포스코퓨처엠",
-    "detail": "[기재정정]단일판매ㆍ공급계약해지              "
-  },
-  {
-    "time": "2026-08-21T13:28:14.821436+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 알테오젠",
-    "detail": "신규시설투자등              "
-  },
-  {
-    "time": "2026-08-21T13:45:41.877925+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-08-21T15:17:54.049701+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ SKC 🏠",
-    "detail": "유상증자결정(종속회사의주요경영사항)              "
+    "detail": "S&P +0.43% / 나스닥 +0.43% / VIX 15.13 / 환율 1,386원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
