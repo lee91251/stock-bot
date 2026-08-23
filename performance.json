@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-22",
-      "month": "2026-05",
-      "ticker": "316140.KS",
-      "name": "우리금융지주",
-      "price": 30400.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-22",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 39400.0,
-      "score": 96,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-22",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17180.0,
-      "score": 92,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-22",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 20250.0,
-      "score": 92,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-22",
-      "month": "2026-05",
-      "ticker": "097950.KS",
-      "name": "CJ제일제당",
-      "price": 212500.0,
-      "score": 89,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-05-26",
       "month": "2026-05",
       "ticker": "011200.KS",
@@ -3016,6 +2966,56 @@
       "price": 23800.0,
       "score": 105,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-24",
+      "month": "2026-08",
+      "ticker": "016740.KS",
+      "name": "두올",
+      "price": 3115.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-24",
+      "month": "2026-08",
+      "ticker": "013030.KQ",
+      "name": "하이록코리아",
+      "price": 29950.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-24",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-24",
+      "month": "2026-08",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 18750.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-24",
+      "month": "2026-08",
+      "ticker": "034230.KS",
+      "name": "파라다이스",
+      "price": 9260.0,
+      "score": 103,
+      "buy_signal": false,
       "result": null
     }
   ]
