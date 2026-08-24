@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-26",
-      "month": "2026-05",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 20500.0,
-      "score": 105,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-26",
-      "month": "2026-05",
-      "ticker": "086790.KS",
-      "name": "하나금융지주",
-      "price": 122100.0,
-      "score": 93,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-26",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 39700.0,
-      "score": 92,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-26",
-      "month": "2026-05",
-      "ticker": "051900.KS",
-      "name": "LG생활건강",
-      "price": 262500.0,
-      "score": 90,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-26",
-      "month": "2026-05",
-      "ticker": "316140.KS",
-      "name": "우리금융지주",
-      "price": 31550.0,
-      "score": 87,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-05-27",
       "month": "2026-05",
       "ticker": "015760.KS",
@@ -3015,6 +2965,56 @@
       "name": "파라다이스",
       "price": 9260.0,
       "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-25",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-25",
+      "month": "2026-08",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 18720.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-25",
+      "month": "2026-08",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 31500.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-25",
+      "month": "2026-08",
+      "ticker": "298000.KS",
+      "name": "효성화학",
+      "price": 61300.0,
+      "score": 103,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-25",
+      "month": "2026-08",
+      "ticker": "005990.KQ",
+      "name": "매일홀딩스",
+      "price": 10520.0,
+      "score": 100,
       "buy_signal": false,
       "result": null
     }
