@@ -14,5 +14,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.1 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-08-24T10:45:05.327534+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ HD한국조선해양 🏠",
+    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
+  },
+  {
+    "time": "2026-08-24T10:45:05.327855+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ DL이앤씨",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
