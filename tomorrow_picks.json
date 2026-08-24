@@ -1,32 +1,23 @@
 {
-  "date": "2026-08-21",
-  "generated_at": "2026-08-20T15:43:47.078977",
+  "date": "2026-08-25",
+  "generated_at": "2026-08-24T15:43:59.946740",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": 1,
-    "IT": 1,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "바이오": -3,
-    "제약": -3,
-    "헬스": -3,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "자동차": -3,
-    "유통": -3
-  },
-  "us_etf_changes": {
-    "SOXX": 0.52,
-    "XLK": -0.29,
-    "XLF": -0.92,
-    "XLE": 0.27,
-    "XLV": -1.87,
-    "XLI": -1.2,
-    "XLB": -0.19,
-    "XLY": -1.61
-  },
-  "sector_updated_at": "2026-08-21T06:01:07.352436"
+  "picks": [
+    {
+      "code": "002840",
+      "name": "미원상사",
+      "sector": "기타",
+      "score_bonus": 6,
+      "today_change": 6.03,
+      "today_vol_ratio": 203.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +6.0% 마감",
+        "거래량 평균 +203%",
+        "스윙점수 54"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
