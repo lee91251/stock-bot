@@ -1,42 +1,18 @@
 [
   {
-    "time": "2026-08-24T10:45:05.327534+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-08-24T10:45:05.327855+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ DL이앤씨",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-08-24T14:03:00.146093+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 LG화학 🏠",
-    "detail": "기타안내사항(안내공시)              "
-  },
-  {
-    "time": "2026-08-25T06:01:08.664224+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P -0.28% / 나스닥 -0.76% / VIX 15.85 / 환율 1,383원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-08-25T08:50:52.836550+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-08-26T06:01:20.648956+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.32% / 나스닥 +0.66% / VIX 15.45 / 환율 1,382원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
