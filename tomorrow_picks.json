@@ -1,47 +1,53 @@
 {
-  "date": "2026-08-25",
-  "generated_at": "2026-08-24T15:43:59.946740",
+  "date": "2026-08-27",
+  "generated_at": "2026-08-26T15:43:43.244239",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "002840",
-      "name": "미원상사",
-      "sector": "기타",
-      "score_bonus": 6,
-      "today_change": 6.03,
-      "today_vol_ratio": 203.0,
-      "today_score": 54,
+      "code": "326030",
+      "name": "SK바이오팜",
+      "sector": "바이오",
+      "score_bonus": 9,
+      "today_change": 8.53,
+      "today_vol_ratio": 376.0,
+      "today_score": 52,
       "reasons": [
-        "오늘 +6.0% 마감",
-        "거래량 평균 +203%",
-        "스윙점수 54"
+        "오늘 +8.5% 마감",
+        "거래량 평균 +376%",
+        "스윙점수 52"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "003490",
+      "name": "대한항공",
+      "sector": "항공",
+      "score_bonus": 7,
+      "today_change": 7.03,
+      "today_vol_ratio": 239.0,
+      "today_score": 55,
+      "reasons": [
+        "오늘 +7.0% 마감",
+        "거래량 평균 +239%",
+        "스윙점수 55"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "015760",
+      "name": "한국전력",
+      "sector": "신재생",
+      "score_bonus": 6,
+      "today_change": 6.42,
+      "today_vol_ratio": 302.0,
+      "today_score": 66,
+      "reasons": [
+        "오늘 +6.4% 마감",
+        "거래량 평균 +302%",
+        "스윙점수 66"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -3,
-    "AI": -3,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": -1,
-    "정유": -1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1
-  },
-  "us_etf_changes": {
-    "SOXX": -2.67,
-    "XLK": -1.78,
-    "XLF": 1.29,
-    "XLE": -0.83,
-    "XLV": 0.05,
-    "XLI": -0.69,
-    "XLB": 0.07,
-    "XLY": 0.24
-  },
-  "sector_updated_at": "2026-08-25T06:01:10.157529"
+  "sector_weights": {}
 }
