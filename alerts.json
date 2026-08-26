@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-25T08:50:52.836550+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.8 / 공포탐욕 60(탐욕)"
-  },
-  {
     "time": "2026-08-26T06:01:20.648956+09:00",
     "category": "briefing",
     "level": "info",
@@ -22,5 +14,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.4 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-08-26T09:58:16.744297+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SK이노베이션 🏠",
+    "detail": "증권신고서(합병)"
+  },
+  {
+    "time": "2026-08-26T09:58:16.744560+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SK이노베이션 🏠",
+    "detail": "장래사업ㆍ경영계획(공정공시)              "
   }
 ]

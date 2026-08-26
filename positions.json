@@ -1,19 +1,5 @@
 {
-  "positions": {
-    "015890": {
-      "name": "태경산업",
-      "qty": 206,
-      "buy_price": 4850.0,
-      "buy_date": "2026-08-14",
-      "buy_time": "11:04",
-      "buy_amount": 999100.0,
-      "partial_sold": false,
-      "score": 76,
-      "swing_score": 57,
-      "sector": "기타",
-      "order_no": "0000021855"
-    }
-  },
+  "positions": {},
   "history": [
     {
       "date": "2026-06-16",
@@ -789,6 +775,23 @@
       "profit": -19000,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-08-26",
+      "time": "09:56",
+      "side": "sell",
+      "code": "015890",
+      "name": "태경산업",
+      "qty": 206,
+      "price": 4760.0,
+      "amount": 980560.0,
+      "reason": "하락 추세 빨리 청산 (8일/-1.9%)",
+      "pct": -1.86,
+      "sector": "기타",
+      "buy_price": 4850.0,
+      "profit": -18540,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -890,7 +893,7 @@
     "2026-08-26": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {},
