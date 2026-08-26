@@ -1263,5 +1263,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-08-26T10:42:19.024186+09:00",
+    "side": "buy",
+    "code": "051600",
+    "name": "한전KPS",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]
