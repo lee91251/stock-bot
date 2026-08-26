@@ -19,56 +19,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-05-28",
-      "month": "2026-05",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 39500.0,
-      "score": 91,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-28",
-      "month": "2026-05",
-      "ticker": "030200.KS",
-      "name": "KT",
-      "price": 53400.0,
-      "score": 89,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-28",
-      "month": "2026-05",
-      "ticker": "097950.KS",
-      "name": "CJ제일제당",
-      "price": 206500.0,
-      "score": 84,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-05-28",
-      "month": "2026-05",
-      "ticker": "316140.KS",
-      "name": "우리금융지주",
-      "price": 30650.0,
-      "score": 83,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-05-28",
-      "month": "2026-05",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 17140.0,
-      "score": 82,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-05-29",
       "month": "2026-05",
       "ticker": "015760.KS",
@@ -3010,6 +2960,56 @@
     },
     {
       "date": "2026-08-26",
+      "month": "2026-08",
+      "ticker": "348950.KS",
+      "name": "제이알글로벌리츠",
+      "price": 1182.0,
+      "score": 98,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-27",
+      "month": "2026-08",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 34800.0,
+      "score": 128,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-08-27",
+      "month": "2026-08",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 670.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-27",
+      "month": "2026-08",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 24800.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-27",
+      "month": "2026-08",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 278500.0,
+      "score": 101,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-27",
       "month": "2026-08",
       "ticker": "348950.KS",
       "name": "제이알글로벌리츠",
