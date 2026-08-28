@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-08-27T08:51:02.999011+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.2 / 공포탐욕 60(탐욕)"
-  },
-  {
     "time": "2026-08-27T15:03:11.996890+09:00",
     "category": "disclosure",
     "level": "info",
@@ -30,5 +22,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 14.5 / 공포탐욕 65(탐욕)"
+  },
+  {
+    "time": "2026-08-28T09:26:55.492270+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 한전KPS -3.03% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
