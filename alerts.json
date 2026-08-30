@@ -1,58 +1,10 @@
 [
   {
-    "time": "2026-08-27T15:03:11.996890+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ DL이앤씨",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-08-28T06:01:13.824507+09:00",
+    "time": "2026-08-31T06:01:10.269137+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +0.72% / 나스닥 +1.57% / VIX 14.51 / 환율 1,381원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-08-28T08:50:54.411766+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 14.5 / 공포탐욕 65(탐욕)"
-  },
-  {
-    "time": "2026-08-28T09:26:55.492270+09:00",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 한전KPS -3.03% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-08-28T10:03:02.679713+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 롯데에너지머티리얼즈 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-08-28T14:13:56.881565+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 이마트",
-    "detail": "감자결정(종속회사의주요경영사항)              "
-  },
-  {
-    "time": "2026-08-28T14:30:58.097349+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
+    "detail": "S&P -0.25% / 나스닥 -0.52% / VIX 14.43 / 환율 1,377원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
