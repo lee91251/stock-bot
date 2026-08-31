@@ -70,5 +70,21 @@
     "emoji": "📰",
     "title": "DART 📰 한화솔루션 🏠",
     "detail": "대규모기업집단현황공시[분기별공시(개별회사용)]"
+  },
+  {
+    "time": "2026-08-31T11:44:53.894943+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "대규모기업집단현황공시[분기별공시(대표회사용)]"
+  },
+  {
+    "time": "2026-08-31T11:44:53.895249+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
   }
 ]
