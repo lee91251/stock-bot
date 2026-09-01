@@ -1,77 +1,5 @@
 [
   {
-    "time": "2026-08-31T10:28:31.577204+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 한화에어로스페이스",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-08-31T10:48:16.724741+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "대규모기업집단현황공시[분기별공시(개별회사용)]"
-  },
-  {
-    "time": "2026-08-31T11:18:25.858630+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "대규모기업집단현황공시[분기별공시(개별회사용)]"
-  },
-  {
-    "time": "2026-08-31T11:44:53.894943+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이씨씨 🏠",
-    "detail": "대규모기업집단현황공시[분기별공시(대표회사용)]"
-  },
-  {
-    "time": "2026-08-31T11:44:53.895249+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-08-31T14:19:52.622068+09:00",
-    "category": "imminent",
-    "level": "danger",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🔴 한전KPS -3.97% — 손절 임박 (기준 -4%, 자동 매도)"
-  },
-  {
-    "time": "2026-08-31T14:33:14.666098+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대건설",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-08-31T15:04:13.928736+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 HD한국조선해양 🏠",
-    "detail": "[기재정정]대규모기업집단현황공시[분기별공시(대표회사용)]"
-  },
-  {
-    "time": "2026-09-01T06:01:17.011708+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P -0.33% / 나스닥 -0.12% / VIX 14.92 / 환율 1,368원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-09-01T08:51:02.233668+09:00",
     "category": "briefing",
     "level": "info",
@@ -94,5 +22,13 @@
     "emoji": "✅",
     "title": "DART ✅ 한화오션",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-09-02T06:01:23.509156+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P -0.71% / 나스닥 -1.03% / VIX 16.34 / 환율 1,373원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
