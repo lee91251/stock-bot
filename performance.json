@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-04",
-      "month": "2026-06",
-      "ticker": "298000.KS",
-      "name": "효성화학",
-      "price": 38900.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-04",
-      "month": "2026-06",
-      "ticker": "092230.KS",
-      "name": "KPX홀딩스",
-      "price": 81700.0,
-      "score": 112,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-04",
-      "month": "2026-06",
-      "ticker": "096760.KS",
-      "name": "JW홀딩스",
-      "price": 3670.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-04",
-      "month": "2026-06",
-      "ticker": "215200.KQ",
-      "name": "메가스터디교육",
-      "price": 39850.0,
-      "score": 105,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-06-04",
-      "month": "2026-06",
-      "ticker": "227840.KS",
-      "name": "현대코퍼레이션홀딩스",
-      "price": 12240.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-05",
       "month": "2026-06",
       "ticker": "298000.KS",
@@ -3020,6 +2970,56 @@
       "price": 19500.0,
       "score": 98,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "month": "2026-09",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 32350.0,
+      "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "month": "2026-09",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 7890.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "month": "2026-09",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 282000.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "month": "2026-09",
+      "ticker": "418470.KQ",
+      "name": "KT밀리의서재",
+      "price": 9820.0,
+      "score": 106,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "month": "2026-09",
+      "ticker": "051370.KQ",
+      "name": "인터플렉스",
+      "price": 6760.0,
+      "score": 104,
+      "buy_signal": true,
       "result": null
     }
   ]
