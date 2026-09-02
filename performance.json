@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-05",
-      "month": "2026-06",
-      "ticker": "298000.KS",
-      "name": "효성화학",
-      "price": 38900.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-05",
-      "month": "2026-06",
-      "ticker": "058860.KS",
-      "name": "KTis",
-      "price": 2610.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-05",
-      "month": "2026-06",
-      "ticker": "067160.KQ",
-      "name": "SOOP",
-      "price": 49250.0,
-      "score": 106,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-06-05",
-      "month": "2026-06",
-      "ticker": "215200.KQ",
-      "name": "메가스터디교육",
-      "price": 39000.0,
-      "score": 105,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-06-05",
-      "month": "2026-06",
-      "ticker": "096760.KS",
-      "name": "JW홀딩스",
-      "price": 3715.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-08",
       "month": "2026-06",
       "ticker": "298000.KS",
@@ -3018,6 +2968,56 @@
       "ticker": "051370.KQ",
       "name": "인터플렉스",
       "price": 6760.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-03",
+      "month": "2026-09",
+      "ticker": "117580.KS",
+      "name": "대성에너지",
+      "price": 6850.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-03",
+      "month": "2026-09",
+      "ticker": "007330.KQ",
+      "name": "푸른저축은행",
+      "price": 10000.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-03",
+      "month": "2026-09",
+      "ticker": "104460.KQ",
+      "name": "디와이피엔에프",
+      "price": 7690.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-03",
+      "month": "2026-09",
+      "ticker": "037710.KS",
+      "name": "광주신세계",
+      "price": 35700.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-03",
+      "month": "2026-09",
+      "ticker": "005850.KS",
+      "name": "에스엘",
+      "price": 50100.0,
       "score": 104,
       "buy_signal": true,
       "result": null
