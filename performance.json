@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-08",
-      "month": "2026-06",
-      "ticker": "298000.KS",
-      "name": "효성화학",
-      "price": 38900.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-08",
-      "month": "2026-06",
-      "ticker": "215200.KQ",
-      "name": "메가스터디교육",
-      "price": 38100.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-08",
-      "month": "2026-06",
-      "ticker": "136490.KS",
-      "name": "선진",
-      "price": 9730.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-08",
-      "month": "2026-06",
-      "ticker": "123410.KQ",
-      "name": "코리아에프티",
-      "price": 6290.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-08",
-      "month": "2026-06",
-      "ticker": "007330.KQ",
-      "name": "푸른저축은행",
-      "price": 10420.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-09",
       "month": "2026-06",
       "ticker": "298000.KS",
@@ -3018,6 +2968,56 @@
       "ticker": "005850.KS",
       "name": "에스엘",
       "price": 50100.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-04",
+      "month": "2026-09",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 32450.0,
+      "score": 119,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-04",
+      "month": "2026-09",
+      "ticker": "102940.KQ",
+      "name": "코오롱생명과학",
+      "price": 14560.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-04",
+      "month": "2026-09",
+      "ticker": "037710.KS",
+      "name": "광주신세계",
+      "price": 34900.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-04",
+      "month": "2026-09",
+      "ticker": "078150.KQ",
+      "name": "HB테크놀러지",
+      "price": 1820.0,
+      "score": 104,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-04",
+      "month": "2026-09",
+      "ticker": "037350.KQ",
+      "name": "성도이엔지",
+      "price": 6990.0,
       "score": 104,
       "buy_signal": true,
       "result": null
