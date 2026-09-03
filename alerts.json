@@ -1,42 +1,18 @@
 [
   {
-    "time": "2026-09-02T08:50:59.319071+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.3 / 공포탐욕 45(중립)"
-  },
-  {
-    "time": "2026-09-02T14:01:29.224479+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 에코프로비엠",
-    "detail": "유상증자1차발행가액결정              "
-  },
-  {
-    "time": "2026-09-02T14:34:17.120501+09:00",
-    "category": "disclosure",
-    "level": "warning",
-    "emoji": "⚠️",
-    "title": "DART ⚠️ 에코프로비엠",
-    "detail": "[기재정정]주요사항보고서(유상증자결정)"
-  },
-  {
-    "time": "2026-09-03T06:01:10.123281+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P +0.46% / 나스닥 +0.45% / VIX 15.20 / 환율 1,358원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-09-03T08:50:57.295943+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.2 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-09-04T06:01:20.123539+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +1.06% / 나스닥 +1.40% / VIX 14.32 / 환율 1,356원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
