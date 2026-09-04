@@ -1,46 +1,83 @@
 {
-  "date": "2026-08-31",
-  "generated_at": "2026-08-28T15:43:35.362280",
+  "date": "2026-09-07",
+  "generated_at": "2026-09-04T15:43:26.975348",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "086450",
-      "name": "동국제약",
+      "code": "267250",
+      "name": "HD현대",
       "sector": "기타",
       "score_bonus": 10,
-      "today_change": 15.34,
-      "today_vol_ratio": 296.0,
-      "today_score": 52,
+      "today_change": 12.65,
+      "today_vol_ratio": 208.0,
+      "today_score": 50,
       "reasons": [
-        "오늘 +15.3% 마감",
-        "거래량 평균 +296%",
-        "스윙점수 52"
+        "오늘 +12.7% 마감",
+        "거래량 평균 +208%",
+        "스윙점수 50"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "041190",
+      "name": "우리기술투자",
+      "sector": "기타",
+      "score_bonus": 9,
+      "today_change": 8.93,
+      "today_vol_ratio": 208.0,
+      "today_score": 71,
+      "reasons": [
+        "오늘 +8.9% 마감",
+        "거래량 평균 +208%",
+        "스윙점수 71"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "003530",
+      "name": "한화투자증권",
+      "sector": "기타",
+      "score_bonus": 9,
+      "today_change": 8.97,
+      "today_vol_ratio": 328.0,
+      "today_score": 65,
+      "reasons": [
+        "오늘 +9.0% 마감",
+        "거래량 평균 +328%",
+        "스윙점수 65"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "035510",
+      "name": "신세계 I&C",
+      "sector": "기타",
+      "score_bonus": 7,
+      "today_change": 6.7,
+      "today_vol_ratio": 572.0,
+      "today_score": 53,
+      "reasons": [
+        "오늘 +6.7% 마감",
+        "거래량 평균 +572%",
+        "스윙점수 53"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "010950",
+      "name": "S-Oil",
+      "sector": "에너지",
+      "score_bonus": 6,
+      "today_change": 6.36,
+      "today_vol_ratio": 233.0,
+      "today_score": 61,
+      "reasons": [
+        "오늘 +6.4% 마감",
+        "거래량 평균 +233%",
+        "스윙점수 61"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -3,
-    "AI": -3,
-    "에너지": 1,
-    "정유": 1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -3.2,
-    "XLK": -1.55,
-    "XLF": 0.38,
-    "XLE": 0.63,
-    "XLV": -0.24,
-    "XLI": -0.93,
-    "XLB": -0.09,
-    "XLY": 1.15
-  },
-  "sector_updated_at": "2026-08-31T06:01:11.843877"
+  "sector_weights": {}
 }
