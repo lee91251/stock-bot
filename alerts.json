@@ -22,5 +22,13 @@
     "emoji": "📰",
     "title": "DART 📰 한국가스공사 🏠",
     "detail": "풍문또는보도에대한해명(미확정)              "
+  },
+  {
+    "time": "2026-09-04T15:04:02.318942+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ LIG디펜스앤에어로스페이스",
+    "detail": "[기재정정]주요사항보고서(유상증자결정)"
   }
 ]
