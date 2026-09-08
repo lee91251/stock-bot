@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-11",
-      "month": "2026-06",
-      "ticker": "298000.KS",
-      "name": "효성화학",
-      "price": 38900.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-11",
-      "month": "2026-06",
-      "ticker": "073240.KS",
-      "name": "금호타이어",
-      "price": 4585.0,
-      "score": 113,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-06-11",
-      "month": "2026-06",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 36400.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-11",
-      "month": "2026-06",
-      "ticker": "136490.KS",
-      "name": "선진",
-      "price": 9170.0,
-      "score": 110,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-06-11",
-      "month": "2026-06",
-      "ticker": "007330.KQ",
-      "name": "푸른저축은행",
-      "price": 10070.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-12",
       "month": "2026-06",
       "ticker": "073240.KS",
@@ -3014,6 +2964,56 @@
     },
     {
       "date": "2026-09-08",
+      "month": "2026-09",
+      "ticker": "234080.KS",
+      "name": "JW생명과학",
+      "price": 11110.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "month": "2026-09",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 34100.0,
+      "score": 118,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "month": "2026-09",
+      "ticker": "095570.KS",
+      "name": "AJ네트웍스",
+      "price": 4170.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "month": "2026-09",
+      "ticker": "019010.KQ",
+      "name": "베뉴지",
+      "price": 4650.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "month": "2026-09",
+      "ticker": "005720.KS",
+      "name": "넥센",
+      "price": 5910.0,
+      "score": 103,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
       "month": "2026-09",
       "ticker": "234080.KS",
       "name": "JW생명과학",
