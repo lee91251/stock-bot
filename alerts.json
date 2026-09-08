@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-09-07T08:50:56.697628+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 14.5 / 공포탐욕 60(탐욕)"
-  },
-  {
     "time": "2026-09-07T11:58:34.457448+09:00",
     "category": "disclosure",
     "level": "info",
@@ -38,5 +30,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.3 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-09-08T10:59:28.046457+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ HMM",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
