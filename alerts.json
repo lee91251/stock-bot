@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-09-08T08:50:55.057098+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.3 / 공포탐욕 60(탐욕)"
-  },
-  {
-    "time": "2026-09-08T10:59:28.046457+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HMM",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-09-09T06:01:11.926266+09:00",
     "category": "briefing",
     "level": "info",
@@ -30,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.7 / 공포탐욕 55(중립)"
+  },
+  {
+    "time": "2026-09-09T11:30:06.504213+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
