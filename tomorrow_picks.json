@@ -1,65 +1,23 @@
 {
-  "date": "2026-09-09",
-  "generated_at": "2026-09-08T15:43:12.366941",
+  "date": "2026-09-10",
+  "generated_at": "2026-09-09T15:44:38.677569",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "126720",
-      "name": "수산인더스트리",
+      "code": "036540",
+      "name": "SFA반도체",
       "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 4.17,
-      "today_vol_ratio": 266.0,
-      "today_score": 63,
+      "score_bonus": 10,
+      "today_change": 9.77,
+      "today_vol_ratio": 320.0,
+      "today_score": 50,
       "reasons": [
-        "오늘 +4.2% 마감",
-        "거래량 평균 +266%",
-        "스윙점수 63"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "078150",
-      "name": "HB테크놀러지",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.96,
-      "today_vol_ratio": 776.0,
-      "today_score": 59,
-      "reasons": [
-        "오늘 +4.0% 마감",
-        "거래량 평균 +776%",
-        "스윙점수 59"
+        "오늘 +9.8% 마감",
+        "거래량 평균 +320%",
+        "스윙점수 50"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": -5,
-    "제약": -5,
-    "헬스": -5,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 1.64,
-    "XLK": 0.32,
-    "XLF": -1.38,
-    "XLE": 1.11,
-    "XLV": -2.52,
-    "XLI": -0.48,
-    "XLB": -0.95,
-    "XLY": -0.8
-  },
-  "sector_updated_at": "2026-09-09T06:01:13.330267"
+  "sector_weights": {}
 }
