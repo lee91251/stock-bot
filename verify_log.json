@@ -1310,5 +1310,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-09-10T12:32:28.043927+09:00",
+    "side": "sell",
+    "code": "092790",
+    "name": "넥스틸",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

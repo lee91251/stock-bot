@@ -54,5 +54,13 @@
     "emoji": "✅",
     "title": "DART ✅ S-Oil",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-09-10T12:34:08.265167+09:00",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "💎 넥스틸 +9.49% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
   }
 ]
