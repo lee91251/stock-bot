@@ -15,17 +15,17 @@
     },
     "036460": {
       "name": "한국가스공사",
-      "qty": 56,
+      "qty": 28,
       "buy_price": 34550.0,
       "buy_date": "2026-09-04",
       "buy_time": "13:29",
       "buy_amount": 967400.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 73,
       "swing_score": 67,
       "sector": "기타",
       "order_no": "0000032434",
-      "imminent_state": "near_target1"
+      "imminent_state": ""
     }
   },
   "history": [
@@ -876,6 +876,23 @@
       "reason": "swing_score 67",
       "sector": "기타",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-09-10",
+      "time": "09:16",
+      "side": "sell",
+      "code": "036460",
+      "name": "한국가스공사",
+      "qty": 28,
+      "price": 36750.0,
+      "amount": 1029000.0,
+      "reason": "+6.4% 절반 익절",
+      "pct": 6.37,
+      "sector": "기타",
+      "buy_price": 34550.0,
+      "profit": 61600,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1032,7 +1049,7 @@
     "2026-09-10": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
