@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-09-09T11:30:06.504213+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
     "time": "2026-09-09T13:58:02.789256+09:00",
     "category": "disclosure",
     "level": "info",
@@ -46,5 +38,21 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🟢 한국가스공사 +5.79% — 1차 익절 임박 (목표 +6%, 절반 매도)"
+  },
+  {
+    "time": "2026-09-10T11:30:56.915708+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ GS건설 🏠",
+    "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-09-10T11:30:56.916003+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ S-Oil",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
