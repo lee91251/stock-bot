@@ -1068,6 +1068,11 @@
       "buy_count": 0,
       "buy_amount": 0,
       "trade_count": 2
+    },
+    "2026-09-11": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 0
     }
   },
   "loss_cooldown": {
