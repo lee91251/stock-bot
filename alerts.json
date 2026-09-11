@@ -1,53 +1,5 @@
 [
   {
-    "time": "2026-09-10T11:30:56.915708+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-10T11:30:56.916003+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ S-Oil",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-10T12:34:08.265167+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 넥스틸 +9.49% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-09-10T13:04:03.676388+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-10T13:28:20.191172+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "신규시설투자등(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-09-10T15:03:32.174593+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 넥스틸 +9.26% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
     "time": "2026-09-11T06:01:09.485188+09:00",
     "category": "briefing",
     "level": "info",
@@ -86,5 +38,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "💎 넥스틸 +9.11% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
+  },
+  {
+    "time": "2026-09-11T15:19:15.301835+09:00",
+    "category": "imminent",
+    "level": "info",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "💎 넥스틸 +9.19% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
   }
 ]
