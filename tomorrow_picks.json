@@ -3,5 +3,29 @@
   "generated_at": "2026-09-11T15:44:32.376570",
   "source_phase": "close_summary",
   "picks": [],
-  "sector_weights": {}
+  "sector_weights": {
+    "반도체": 3,
+    "IT": 3,
+    "통신": 1,
+    "AI": 1,
+    "금융": 1,
+    "은행": 1,
+    "보험": 1,
+    "조선": 1,
+    "방산": 1,
+    "기계": 1,
+    "자동차": 1,
+    "유통": 1
+  },
+  "us_etf_changes": {
+    "SOXX": 1.86,
+    "XLK": 1.32,
+    "XLF": 0.67,
+    "XLE": 0.32,
+    "XLV": -0.18,
+    "XLI": 1.07,
+    "XLB": 0.37,
+    "XLY": 0.89
+  },
+  "sector_updated_at": "2026-09-14T06:01:14.667633"
 }
