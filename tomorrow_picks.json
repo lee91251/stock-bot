@@ -1,31 +1,38 @@
 {
-  "date": "2026-09-14",
-  "generated_at": "2026-09-11T15:44:32.376570",
+  "date": "2026-09-15",
+  "generated_at": "2026-09-14T15:43:12.380585",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 1.86,
-    "XLK": 1.32,
-    "XLF": 0.67,
-    "XLE": 0.32,
-    "XLV": -0.18,
-    "XLI": 1.07,
-    "XLB": 0.37,
-    "XLY": 0.89
-  },
-  "sector_updated_at": "2026-09-14T06:01:14.667633"
+  "picks": [
+    {
+      "code": "272210",
+      "name": "한화시스템",
+      "sector": "방산",
+      "score_bonus": 6,
+      "today_change": 5.78,
+      "today_vol_ratio": 296.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +5.8% 마감",
+        "거래량 평균 +296%",
+        "스윙점수 54"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "010140",
+      "name": "삼성중공업",
+      "sector": "조선",
+      "score_bonus": 3,
+      "today_change": 3.27,
+      "today_vol_ratio": 166.0,
+      "today_score": 57,
+      "reasons": [
+        "오늘 +3.3% 마감",
+        "거래량 평균 +166%",
+        "스윙점수 57"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
