@@ -1,19 +1,5 @@
 {
   "positions": {
-    "092790": {
-      "name": "넥스틸",
-      "qty": 38,
-      "buy_price": 13170.0,
-      "buy_date": "2026-09-03",
-      "buy_time": "09:24",
-      "buy_amount": 987750.0,
-      "partial_sold": true,
-      "score": 78,
-      "swing_score": 61,
-      "sector": "기타",
-      "order_no": "0000009774",
-      "imminent_state": ""
-    },
     "036460": {
       "name": "한국가스공사",
       "qty": 28,
@@ -911,6 +897,23 @@
       "profit": 47360,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-09-14",
+      "time": "13:58",
+      "side": "sell",
+      "code": "092790",
+      "name": "넥스틸",
+      "qty": 38,
+      "price": 14940.0,
+      "amount": 567720.0,
+      "reason": "+13.4% 전량 익절",
+      "pct": 13.44,
+      "sector": "기타",
+      "buy_price": 13170.0,
+      "profit": 67260,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1077,7 +1080,7 @@
     "2026-09-14": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
