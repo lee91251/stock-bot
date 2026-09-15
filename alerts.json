@@ -46,5 +46,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 17.1 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-09-15T09:11:17.816756+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 효성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-09-15T09:11:17.817052+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 효성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
