@@ -1,37 +1,5 @@
 [
   {
-    "time": "2026-09-15T08:51:01.156186+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.1 / 공포탐욕 50(중립)"
-  },
-  {
-    "time": "2026-09-15T09:11:17.816756+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 효성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-15T09:11:17.817052+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 효성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-15T11:59:21.942304+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 유한양행",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-09-16T06:01:14.844918+09:00",
     "category": "briefing",
     "level": "info",
@@ -46,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 17.2 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-09-17T06:01:10.566661+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P -0.45% / 나스닥 -0.01% / VIX 17.71 / 환율 1,377원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
