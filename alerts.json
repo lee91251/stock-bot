@@ -30,5 +30,29 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-09-17T13:14:48.645342+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "동일인등출자계열회사와의상품ㆍ용역거래"
+  },
+  {
+    "time": "2026-09-17T13:14:48.645656+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 케이씨씨 🏠",
+    "detail": "특수관계인에대한자산양도"
+  },
+  {
+    "time": "2026-09-17T13:14:48.645982+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ GS건설 🏠",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
   }
 ]
