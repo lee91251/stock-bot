@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-23",
-      "month": "2026-06",
-      "ticker": "035150.KS",
-      "name": "백산",
-      "price": 9920.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-23",
-      "month": "2026-06",
-      "ticker": "009780.KQ",
-      "name": "엠에스씨",
-      "price": 5920.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-23",
-      "month": "2026-06",
-      "ticker": "227840.KS",
-      "name": "현대코퍼레이션홀딩스",
-      "price": 11480.0,
-      "score": 111,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-23",
-      "month": "2026-06",
-      "ticker": "058860.KS",
-      "name": "KTis",
-      "price": 2495.0,
-      "score": 111,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-23",
-      "month": "2026-06",
-      "ticker": "000120.KS",
-      "name": "CJ대한통운",
-      "price": 76800.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-24",
       "month": "2026-06",
       "ticker": "051900.KS",
@@ -3020,6 +2970,56 @@
       "price": 90500.0,
       "score": 105,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-18",
+      "month": "2026-09",
+      "ticker": "067280.KQ",
+      "name": "멀티캠퍼스",
+      "price": 23300.0,
+      "score": 110,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-18",
+      "month": "2026-09",
+      "ticker": "264900.KS",
+      "name": "크라운제과",
+      "price": 7700.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-18",
+      "month": "2026-09",
+      "ticker": "071050.KS",
+      "name": "한국금융지주",
+      "price": 185600.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-18",
+      "month": "2026-09",
+      "ticker": "102940.KQ",
+      "name": "코오롱생명과학",
+      "price": 14170.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-18",
+      "month": "2026-09",
+      "ticker": "297890.KQ",
+      "name": "HB솔루션",
+      "price": 1650.0,
+      "score": 107,
+      "buy_signal": false,
       "result": null
     }
   ]
