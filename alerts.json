@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-09-16T08:50:58.019016+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.2 / 공포탐욕 50(중립)"
-  },
-  {
     "time": "2026-09-17T06:01:10.566661+09:00",
     "category": "briefing",
     "level": "info",
@@ -22,5 +14,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 17.7 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-09-17T11:14:07.198899+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한국가스공사 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
