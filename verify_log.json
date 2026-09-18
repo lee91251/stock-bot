@@ -1337,5 +1337,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-09-18T14:26:43.906785+09:00",
+    "side": "buy",
+    "code": "272210",
+    "name": "한화시스템",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]

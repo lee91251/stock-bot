@@ -13,6 +13,19 @@
       "sector": "기타",
       "order_no": "0000032434",
       "imminent_state": ""
+    },
+    "272210": {
+      "name": "한화시스템",
+      "qty": 12,
+      "buy_price": 80700.0,
+      "buy_date": "2026-09-18",
+      "buy_time": "14:26",
+      "buy_amount": 968400.0,
+      "partial_sold": false,
+      "score": 51,
+      "swing_score": 62,
+      "sector": "방산",
+      "order_no": "0000021059"
     }
   },
   "history": [
@@ -914,6 +927,19 @@
       "profit": 67260,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-09-18",
+      "time": "14:26",
+      "side": "buy",
+      "code": "272210",
+      "name": "한화시스템",
+      "qty": 12,
+      "price": 80700.0,
+      "amount": 968400.0,
+      "reason": "swing_score 62",
+      "sector": "방산",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1098,9 +1124,9 @@
       "trade_count": 0
     },
     "2026-09-18": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 968400.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
