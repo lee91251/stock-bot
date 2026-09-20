@@ -1,66 +1,10 @@
 [
   {
-    "time": "2026-09-18T06:01:08.580235+09:00",
+    "time": "2026-09-21T06:01:10.412460+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +1.14% / 나스닥 +1.69% / VIX 15.44 / 환율 1,380원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-09-18T08:50:53.585908+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.4 / 공포탐욕 65(탐욕)"
-  },
-  {
-    "time": "2026-09-18T09:17:47.705310+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-18T11:03:04.760885+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-09-18T14:32:59.218575+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-09-18T14:48:53.451450+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-09-18T15:04:17.068935+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한국가스공사 🏠",
-    "detail": "주주명부폐쇄기간또는기준일설정              "
-  },
-  {
-    "time": "2026-09-18T15:18:05.684824+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한국가스공사 🏠",
-    "detail": "투자판단관련주요경영사항              "
+    "detail": "S&P +0.17% / 나스닥 +0.39% / VIX 14.81 / 환율 1,386원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
