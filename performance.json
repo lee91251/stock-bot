@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-25",
-      "month": "2026-06",
-      "ticker": "069620.KS",
-      "name": "대웅제약",
-      "price": 114400.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-25",
-      "month": "2026-06",
-      "ticker": "104460.KQ",
-      "name": "디와이피엔에프",
-      "price": 8830.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-25",
-      "month": "2026-06",
-      "ticker": "036580.KS",
-      "name": "팜스코",
-      "price": 2320.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-25",
-      "month": "2026-06",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 36750.0,
-      "score": 116,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-25",
-      "month": "2026-06",
-      "ticker": "051900.KS",
-      "name": "LG생활건강",
-      "price": 225000.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-26",
       "month": "2026-06",
       "ticker": "013580.KS",
@@ -3018,6 +2968,56 @@
       "ticker": "067160.KQ",
       "name": "SOOP",
       "price": 36800.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-22",
+      "month": "2026-09",
+      "ticker": "058860.KS",
+      "name": "KTis",
+      "price": 2465.0,
+      "score": 125,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-22",
+      "month": "2026-09",
+      "ticker": "034230.KS",
+      "name": "파라다이스",
+      "price": 9540.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-22",
+      "month": "2026-09",
+      "ticker": "033920.KS",
+      "name": "무학",
+      "price": 7460.0,
+      "score": 110,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-22",
+      "month": "2026-09",
+      "ticker": "071050.KS",
+      "name": "한국금융지주",
+      "price": 184400.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-22",
+      "month": "2026-09",
+      "ticker": "058850.KS",
+      "name": "KTcs",
+      "price": 2115.0,
       "score": 108,
       "buy_signal": false,
       "result": null
