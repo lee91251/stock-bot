@@ -1366,5 +1366,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-09-22T14:32:23.660063+09:00",
+    "side": "buy",
+    "code": "399720",
+    "name": "가온칩스",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]

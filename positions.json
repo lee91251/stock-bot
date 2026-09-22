@@ -13,6 +13,19 @@
       "sector": "기타",
       "order_no": "0000032434",
       "imminent_state": ""
+    },
+    "399720": {
+      "name": "가온칩스",
+      "qty": 22,
+      "buy_price": 45300.0,
+      "buy_date": "2026-09-22",
+      "buy_time": "14:32",
+      "buy_amount": 996600.0,
+      "partial_sold": false,
+      "score": 61,
+      "swing_score": 56,
+      "sector": "기타",
+      "order_no": "0000031039"
     }
   },
   "history": [
@@ -944,6 +957,19 @@
       "profit": -62400,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-09-22",
+      "time": "14:32",
+      "side": "buy",
+      "code": "399720",
+      "name": "가온칩스",
+      "qty": 22,
+      "price": 45300.0,
+      "amount": 996600.0,
+      "reason": "swing_score 56",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1138,9 +1164,9 @@
       "trade_count": 1
     },
     "2026-09-22": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 996600.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
