@@ -1,46 +1,38 @@
 {
-  "date": "2026-09-22",
-  "generated_at": "2026-09-21T15:43:42.202103",
+  "date": "2026-09-23",
+  "generated_at": "2026-09-22T15:44:56.368077",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "032640",
-      "name": "LG유플러스",
-      "sector": "통신",
-      "score_bonus": 3,
-      "today_change": 3.13,
-      "today_vol_ratio": 154.0,
-      "today_score": 63,
+      "code": "003490",
+      "name": "대한항공",
+      "sector": "항공",
+      "score_bonus": 9,
+      "today_change": 8.84,
+      "today_vol_ratio": 227.0,
+      "today_score": 52,
       "reasons": [
-        "오늘 +3.1% 마감",
-        "거래량 평균 +154%",
-        "스윙점수 63"
+        "오늘 +8.8% 마감",
+        "거래량 평균 +227%",
+        "스윙점수 52"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "066570",
+      "name": "LG전자",
+      "sector": "IT",
+      "score_bonus": 7,
+      "today_change": 6.91,
+      "today_vol_ratio": 225.0,
+      "today_score": 57,
+      "reasons": [
+        "오늘 +6.9% 마감",
+        "거래량 평균 +225%",
+        "스윙점수 57"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 5,
-    "AI": 5,
-    "에너지": -5,
-    "정유": -5,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 4.93,
-    "XLK": 2.77,
-    "XLF": 0.07,
-    "XLE": -2.88,
-    "XLV": 0.37,
-    "XLI": 0.14,
-    "XLB": -0.56,
-    "XLY": 1.08
-  },
-  "sector_updated_at": "2026-09-22T06:01:25.224917"
+  "sector_weights": {}
 }
