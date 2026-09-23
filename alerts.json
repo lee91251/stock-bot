@@ -22,5 +22,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 14.2 / 공포탐욕 60(탐욕)"
+  },
+  {
+    "time": "2026-09-23T09:11:18.308355+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 현대건설",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
