@@ -1,65 +1,38 @@
 {
-  "date": "2026-09-23",
-  "generated_at": "2026-09-22T15:44:56.368077",
+  "date": "2026-09-28",
+  "generated_at": "2026-09-23T15:44:48.221194",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "003490",
-      "name": "대한항공",
-      "sector": "항공",
-      "score_bonus": 9,
-      "today_change": 8.84,
-      "today_vol_ratio": 227.0,
-      "today_score": 52,
+      "code": "058860",
+      "name": "KTis",
+      "sector": "기타",
+      "score_bonus": 5,
+      "today_change": 5.1,
+      "today_vol_ratio": 1776.0,
+      "today_score": 64,
       "reasons": [
-        "오늘 +8.8% 마감",
-        "거래량 평균 +227%",
-        "스윙점수 52"
+        "오늘 +5.1% 마감",
+        "거래량 평균 +1776%",
+        "스윙점수 64"
       ],
       "source": "close_summary"
     },
     {
-      "code": "066570",
-      "name": "LG전자",
-      "sector": "IT",
-      "score_bonus": 7,
-      "today_change": 6.91,
-      "today_vol_ratio": 225.0,
-      "today_score": 57,
+      "code": "058850",
+      "name": "KTcs",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 3.57,
+      "today_vol_ratio": 933.0,
+      "today_score": 69,
       "reasons": [
-        "오늘 +6.9% 마감",
-        "거래량 평균 +225%",
-        "스윙점수 57"
+        "오늘 +3.6% 마감",
+        "거래량 평균 +933%",
+        "스윙점수 69"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1,
-    "금융": -3,
-    "은행": -3,
-    "보험": -3,
-    "에너지": -1,
-    "정유": -1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "화학": 3,
-    "소재": 3,
-    "철강": 3
-  },
-  "us_etf_changes": {
-    "SOXX": 2.4,
-    "XLK": 0.73,
-    "XLF": -1.97,
-    "XLE": -1.09,
-    "XLV": 0.52,
-    "XLI": 0.17,
-    "XLB": 1.65,
-    "XLY": 0.09
-  },
-  "sector_updated_at": "2026-09-23T06:01:12.919506"
+  "sector_weights": {}
 }
