@@ -1377,5 +1377,14 @@
       "점수임계"
     ],
     "warnings": []
+  },
+  {
+    "time": "2026-09-23T10:30:41.220635+09:00",
+    "side": "buy",
+    "code": "058850",
+    "name": "KTcs",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
