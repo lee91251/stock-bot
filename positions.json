@@ -25,7 +25,8 @@
       "score": 61,
       "swing_score": 56,
       "sector": "기타",
-      "order_no": "0000031039"
+      "order_no": "0000031039",
+      "imminent_state": "near_target1"
     },
     "058850": {
       "name": "KTcs",
