@@ -1386,5 +1386,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-09-23T13:29:06.102178+09:00",
+    "side": "buy",
+    "code": "095570",
+    "name": "AJ네트웍스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

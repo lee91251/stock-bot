@@ -39,6 +39,19 @@
       "swing_score": 69,
       "sector": "기타",
       "order_no": "0000013552"
+    },
+    "095570": {
+      "name": "AJ네트웍스",
+      "qty": 232,
+      "buy_price": 4295.0,
+      "buy_date": "2026-09-23",
+      "buy_time": "13:29",
+      "buy_amount": 996440.0,
+      "partial_sold": false,
+      "score": 92,
+      "swing_score": 68,
+      "sector": "기타",
+      "order_no": "0000024375"
     }
   },
   "history": [
@@ -996,6 +1009,19 @@
       "reason": "swing_score 69",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-09-23",
+      "time": "13:29",
+      "side": "buy",
+      "code": "095570",
+      "name": "AJ네트웍스",
+      "qty": 232,
+      "price": 4295.0,
+      "amount": 996440.0,
+      "reason": "swing_score 68",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1195,9 +1221,9 @@
       "trade_count": 1
     },
     "2026-09-23": {
-      "buy_count": 1,
-      "buy_amount": 998065.0,
-      "trade_count": 1
+      "buy_count": 2,
+      "buy_amount": 1994505.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
