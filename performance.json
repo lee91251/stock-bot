@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-29",
-      "month": "2026-06",
-      "ticker": "136490.KS",
-      "name": "선진",
-      "price": 8600.0,
-      "score": 120,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-29",
-      "month": "2026-06",
-      "ticker": "472850.KQ",
-      "name": "폰드그룹",
-      "price": 3910.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-29",
-      "month": "2026-06",
-      "ticker": "023590.KS",
-      "name": "다우기술",
-      "price": 33800.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-29",
-      "month": "2026-06",
-      "ticker": "043150.KQ",
-      "name": "바텍",
-      "price": 17130.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-29",
-      "month": "2026-06",
-      "ticker": "031440.KS",
-      "name": "신세계푸드",
-      "price": 38950.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-06-30",
       "month": "2026-06",
       "ticker": "214320.KS",
@@ -3020,6 +2970,56 @@
       "price": 166200.0,
       "score": 108,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-28",
+      "month": "2026-09",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 4910.0,
+      "score": 129,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-28",
+      "month": "2026-09",
+      "ticker": "067160.KQ",
+      "name": "SOOP",
+      "price": 36500.0,
+      "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-28",
+      "month": "2026-09",
+      "ticker": "111770.KS",
+      "name": "영원무역",
+      "price": 69300.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-28",
+      "month": "2026-09",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 266000.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-28",
+      "month": "2026-09",
+      "ticker": "009970.KS",
+      "name": "영원무역홀딩스",
+      "price": 163400.0,
+      "score": 110,
+      "buy_signal": true,
       "result": null
     }
   ]
