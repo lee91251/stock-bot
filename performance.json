@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-06-30",
-      "month": "2026-06",
-      "ticker": "214320.KS",
-      "name": "이노션",
-      "price": 18180.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-30",
-      "month": "2026-06",
-      "ticker": "000430.KS",
-      "name": "대원강업",
-      "price": 3950.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-30",
-      "month": "2026-06",
-      "ticker": "053580.KQ",
-      "name": "웹케시",
-      "price": 6380.0,
-      "score": 103,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-30",
-      "month": "2026-06",
-      "ticker": "000540.KS",
-      "name": "흥국화재",
-      "price": 3215.0,
-      "score": 100,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-06-30",
-      "month": "2026-06",
-      "ticker": "148150.KQ",
-      "name": "세경하이테크",
-      "price": 3225.0,
-      "score": 100,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-01",
       "month": "2026-07",
       "ticker": "333430.KQ",
@@ -3020,6 +2970,56 @@
       "price": 163400.0,
       "score": 110,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-29",
+      "month": "2026-09",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 19140.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-29",
+      "month": "2026-09",
+      "ticker": "001750.KS",
+      "name": "한양증권",
+      "price": 19220.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-29",
+      "month": "2026-09",
+      "ticker": "310200.KQ",
+      "name": "애니플러스",
+      "price": 1925.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-29",
+      "month": "2026-09",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 5020.0,
+      "score": 103,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-29",
+      "month": "2026-09",
+      "ticker": "033270.KS",
+      "name": "유나이티드제약",
+      "price": 17630.0,
+      "score": 100,
+      "buy_signal": false,
       "result": null
     }
   ]
