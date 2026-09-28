@@ -275,7 +275,7 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
                     except Exception:
                         pass
                     results.append({
-                        "name": buy.get("name", code),
+                        "name": h.get("name") or buy.get("name", code),
                         "code": code,
                         "sector": buy.get("sector", "") or h.get("sector", ""),
                         "swing_score": score,
@@ -310,7 +310,7 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             return sum(1 for r in b if r["pnl_pct"] > 0) / len(b) * 100
 
         summary_lines = [
-            f"최근 {window_days}일 완료 매매: {len(results)}건 (승 {len(wins)}/패 {len(losses)})",
+            f"{'누적' if window_days >= 3650 else f'최근 {window_days}일'} 완료 매매: {len(results)}건 (승 {len(wins)}/패 {len(losses)})",
             f"승률: {len(wins)/len(results)*100:.1f}% / 평균 수익 {avg_win:+.2f}% / 평균 손실 {avg_loss:+.2f}%",
             f"평균 보유: {avg_hold:.1f}일",
             f"실현손익: {total_profit:+,.0f}원 / 손익비 {profit_ratio:.2f}:1",

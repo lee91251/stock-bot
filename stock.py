@@ -5879,8 +5879,9 @@ def make_daily_bot_summary() -> str:
 
     # 오늘 매매
     if t_buy or t_sell:
-        parts = [f"매수 {h.get('name', '')}" for h in t_buy]
-        parts += [f"매도 {h.get('name', '')} {h.get('profit', 0):+,.0f}원" for h in t_sell]
+        _esc = lambda s: str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")  # 텔레그램 HTML
+        parts = [f"매수 {_esc(h.get('name', ''))}" for h in t_buy]
+        parts += [f"매도 {_esc(h.get('name', ''))} {(h.get('profit') or 0):+,.0f}원" for h in t_sell]
         today_line = "오늘: " + ", ".join(parts)
     else:
         today_line = "오늘: 매매 없음"
