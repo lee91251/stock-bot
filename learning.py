@@ -242,21 +242,23 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             return {"trades": 0, "summary": "매매 데이터 없음 (자동매매 시작 후 누적)"}
 
         cutoff = (_now_kst() - timedelta(days=window_days)).strftime("%Y-%m-%d")
-        recent = [h for h in history if h.get("date", "") >= cutoff]
 
-        # 매수/매도 매칭 (FIFO)
+        # 매도 1건 = 결과 1건. 9/28 fix: 예전엔 매수↔매도 1:1 짝짓기 후 매수를 지워서
+        # 절반익절 뒤 전량익절(2번째 매도)이 통째로 누락 → 이긴 매매만 빠져 승률 과소표시.
+        # 이제 매도 기록 자체의 buy_price/pct/profit을 쓰고, 매수 기록은 점수·보유일 참고용.
         buys = {}
         results = []
-        for h in recent:
+        for h in history:  # 전체 순회 (윈도우 이전 매수도 매칭되게), 윈도우는 매도일 기준
             code = h.get("code", "")
             if h.get("side") == "buy":
                 buys[code] = h
-            elif h.get("side") == "sell" and code in buys:
-                buy = buys[code]
-                bp = buy.get("price", 0)
+            elif h.get("side") == "sell" and h.get("date", "") >= cutoff:
+                buy = buys.get(code, {})
+                bp = h.get("buy_price") or buy.get("price", 0)
                 sp = h.get("price", 0)
                 if bp > 0 and sp > 0:
-                    pnl_pct = (sp - bp) / bp * 100
+                    pnl_pct = h["pct"] if h.get("pct") is not None else (sp - bp) / bp * 100
+                    profit  = h["profit"] if h.get("profit") is not None else (sp - bp) * h.get("qty", 0)
                     # 보유일 계산
                     try:
                         bd = datetime.strptime(buy.get("date", ""), "%Y-%m-%d")
@@ -278,12 +280,12 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
                         "sector": buy.get("sector", "") or h.get("sector", ""),
                         "swing_score": score,
                         "pnl_pct": pnl_pct,
+                        "profit": profit,
                         "hold_days": hold_days,
                         "sell_reason": h.get("reason", ""),
                         "buy_time":  buy.get("time", ""),
                         "sell_time": h.get("time", ""),
                     })
-                buys.pop(code, None)
 
         if not results:
             return {"trades": 0, "summary": f"최근 {window_days}일 완료 매매 없음 (보유 중인 종목은 미포함)"}
@@ -293,6 +295,11 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
         avg_win  = sum(r["pnl_pct"] for r in wins) / len(wins) if wins else 0
         avg_loss = sum(r["pnl_pct"] for r in losses) / len(losses) if losses else 0
         avg_hold = sum(r["hold_days"] for r in results) / len(results)
+        # 원화 기준 (회장이 보는 진짜 숫자)
+        total_profit   = sum(r["profit"] for r in results)
+        avg_win_amt    = sum(r["profit"] for r in wins) / len(wins) if wins else 0
+        avg_loss_amt   = sum(r["profit"] for r in losses) / len(losses) if losses else 0
+        profit_ratio   = (avg_win_amt / abs(avg_loss_amt)) if avg_loss_amt else 0
 
         # 점수 구간별 승률
         bucket_70 = [r for r in results if r["swing_score"] >= 70]
@@ -306,6 +313,7 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             f"최근 {window_days}일 완료 매매: {len(results)}건 (승 {len(wins)}/패 {len(losses)})",
             f"승률: {len(wins)/len(results)*100:.1f}% / 평균 수익 {avg_win:+.2f}% / 평균 손실 {avg_loss:+.2f}%",
             f"평균 보유: {avg_hold:.1f}일",
+            f"실현손익: {total_profit:+,.0f}원 / 손익비 {profit_ratio:.2f}:1",
         ]
         if bucket_70:
             summary_lines.append(f"점수 70+: {len(bucket_70)}건, 승률 {_wr(bucket_70):.0f}%")
@@ -418,6 +426,10 @@ def analyze_trading_performance(window_days: int = 30) -> dict:
             "avg_win": avg_win,
             "avg_loss": avg_loss,
             "avg_hold_days": avg_hold,
+            "total_profit": total_profit,
+            "avg_win_amt":  avg_win_amt,
+            "avg_loss_amt": avg_loss_amt,
+            "profit_ratio": profit_ratio,
             "summary": "\n".join(summary_lines),
             "details": results,
             # B3 추가

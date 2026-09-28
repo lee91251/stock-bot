@@ -4094,7 +4094,7 @@ def build_and_save_dashboard(
         tomorrow_html = _make_tomorrow_picks_section(tp_data)
         # 봇 성적표 (B3)
         try:
-            perf_data = analyze_trading_performance(window_days=30)
+            perf_data = analyze_trading_performance(window_days=3650)  # 누적 (6/16 리셋 이후 전체)
         except Exception:
             perf_data = {}
         performance_html = _make_performance_card(perf_data)
@@ -5776,11 +5776,8 @@ def run_premarket_briefing():
         print(f"  [브리핑] 장전 브리핑 오류: {e}")
         tg_send(f"⚠️ 장전 브리핑 수집 실패: {e}")
 
-    # 내부자 매수 실시간 스캔 (선행신호 — 전날 장마감 후 ~ 아침 공시를 뉴스 전에 포착)
-    try:
-        run_insider_scan(send_telegram=True)
-    except Exception as e:
-        print(f"  [브리핑] 내부자 스캔 오류: {e}")
+    # 내부자 매수 스캔 — 9/28 중단: 선행지표 검증에서 기각(엣지 없음)인데 매일 텔레그램 알림만 옴.
+    # 되살리려면 여기서 run_insider_scan(send_telegram=True) 호출 복구. 수동 실행은 --insiderscan.
 
     # 대시보드 갱신 — 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
     try:
@@ -5869,6 +5866,56 @@ def _pick_tomorrow_candidates() -> dict:
 # _load_tomorrow_picks → from finance import (별칭으로 옛 이름 유지)
 
 
+def make_daily_bot_summary() -> str:
+    """장마감 한 줄 요약 (9/28 회장 요청 — 대시보드 안 봐도 봇 성과를 매일 알 수 있게).
+
+    오늘 매매 / 보유 평가손익 / 누적 실현손익. 숫자는 전부 positions.json 기준.
+    """
+    pos   = load_positions()
+    today = _today_str()
+    hist  = pos.get("history", [])
+    t_buy  = [h for h in hist if h.get("date") == today and h.get("side") == "buy"]
+    t_sell = [h for h in hist if h.get("date") == today and h.get("side") == "sell"]
+
+    # 오늘 매매
+    if t_buy or t_sell:
+        parts = [f"매수 {h.get('name', '')}" for h in t_buy]
+        parts += [f"매도 {h.get('name', '')} {h.get('profit', 0):+,.0f}원" for h in t_sell]
+        today_line = "오늘: " + ", ".join(parts)
+    else:
+        today_line = "오늘: 매매 없음"
+
+    # 보유 평가손익 (현재가 조회 실패 종목은 제외하고 표시)
+    held = pos.get("positions", {})
+    unreal, priced = 0.0, 0
+    for code, p in held.items():
+        try:
+            info = _kis.get_price(code) if _kis.available() else {}
+            cur  = _safe_float(info.get("stck_prpr")) if info else 0
+        except Exception:
+            cur = 0
+        if cur > 0 and p.get("buy_price"):
+            unreal += (cur - p["buy_price"]) * p.get("qty", 0)
+            priced += 1
+    if held and priced == 0:
+        hold_line = f"보유 {len(held)}종목 (시세 미확인)"
+    elif held:
+        miss = f" (시세 {len(held) - priced}개 미확인)" if priced < len(held) else ""
+        hold_line = f"보유 {len(held)}종목 평가 {unreal:+,.0f}원{miss}"
+    else:
+        hold_line = "보유 없음"
+
+    # 누적 실현손익 (성적표와 같은 함수)
+    perf = analyze_trading_performance(window_days=3650)
+    if perf.get("trades"):
+        cum_line = (f"누적 실현 {perf['total_profit']:+,.0f}원 "
+                    f"({perf['trades']}건 · 승률 {perf['win_rate']:.0f}% · 손익비 {perf['profit_ratio']:.2f})")
+    else:
+        cum_line = "누적 실현: 완료 매매 없음"
+
+    return f"🤖 <b>봇 오늘 한 줄</b> ({today})\n{today_line}\n{hold_line}\n{cum_line}"
+
+
 def run_close_summary():
     """3시 35분 — 장 마감 결산.
 
@@ -5933,10 +5980,15 @@ def run_close_summary():
         except Exception as e:
             print(f"  [브리핑] B4 학습 알림 오류: {e}")
 
-        # 텔레그램 발송 X — 대시보드에서 확인
         print(f"  [브리핑] 코스피 {mood['kospi_chg']:+.2f}% 마감.")
     except Exception as e:
         print(f"  [브리핑] 마감 결산 오류: {e}")
+
+    # 봇 오늘 한 줄 (9/28) — 시장 데이터 실패와 무관하게 항상 발송, 무음
+    try:
+        tg_send(make_daily_bot_summary(), silent=True)
+    except Exception as e:
+        print(f"  [브리핑] 한 줄 요약 오류: {e}")
 
     # 대시보드 갱신 — 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
     try:

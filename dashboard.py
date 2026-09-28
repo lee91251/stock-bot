@@ -2402,6 +2402,11 @@ def _make_performance_card(perf: dict) -> str:
     avg_loss = perf.get("avg_loss", 0)
     avg_hold = perf.get("avg_hold_days", 0)
     wr_color = "#16a34a" if win_rate >= 50 else "#dc2626"
+    total_profit = perf.get("total_profit", 0)
+    profit_ratio = perf.get("profit_ratio", 0)
+    avg_win_amt  = perf.get("avg_win_amt", 0)
+    avg_loss_amt = perf.get("avg_loss_amt", 0)
+    pf_color = "#16a34a" if total_profit >= 0 else "#dc2626"
 
     rows = []
 
@@ -2524,11 +2529,12 @@ def _make_performance_card(perf: dict) -> str:
     <div class="section__title">
       <span class="section__icon section__icon--auto">📈</span>
       <h2>봇 성적표</h2>
-      <span class="section__badge">최근 30일</span>
+      <span class="section__badge">누적</span>
       <span class="section__count">{trades}건</span>
     </div>
     <div class="section__subtitle">
-      <div class="section__amount" style="color:{wr_color}">승률 {win_rate:.0f}%</div>
+      <div class="section__amount" style="color:{pf_color}">실현손익 {total_profit:+,.0f}원</div>
+      <div style="color:{wr_color}">승률 {win_rate:.0f}% · 손익비 {profit_ratio:.2f}:1 (평균 익절 {avg_win_amt:+,.0f}원 / 손절 {avg_loss_amt:+,.0f}원)</div>
       <div>{wins}승 / {losses}패 · 평균 수익 +{avg_win:.1f}% / 평균 손실 {avg_loss:.1f}% · 평균 보유 {avg_hold:.1f}일</div>
     </div>
   </div>
