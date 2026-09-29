@@ -1413,5 +1413,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-09-29T13:45:12.990536+09:00",
+    "side": "buy",
+    "code": "003570",
+    "name": "SNT다이내믹스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

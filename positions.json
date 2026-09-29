@@ -66,6 +66,19 @@
       "swing_score": 67,
       "sector": "기타",
       "order_no": "0000025749"
+    },
+    "003570": {
+      "name": "SNT다이내믹스",
+      "qty": 32,
+      "buy_price": 30700.0,
+      "buy_date": "2026-09-29",
+      "buy_time": "13:45",
+      "buy_amount": 982400.0,
+      "partial_sold": false,
+      "score": 71,
+      "swing_score": 58,
+      "sector": "기타",
+      "order_no": "0000027012"
     }
   },
   "history": [
@@ -1049,6 +1062,19 @@
       "reason": "swing_score 67",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-09-29",
+      "time": "13:45",
+      "side": "buy",
+      "code": "003570",
+      "name": "SNT다이내믹스",
+      "qty": 32,
+      "price": 30700.0,
+      "amount": 982400.0,
+      "reason": "swing_score 58",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1258,9 +1284,9 @@
       "trade_count": 0
     },
     "2026-09-29": {
-      "buy_count": 1,
-      "buy_amount": 998970.0,
-      "trade_count": 1
+      "buy_count": 2,
+      "buy_amount": 1981370.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
