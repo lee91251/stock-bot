@@ -22,5 +22,29 @@
     "emoji": "✅",
     "title": "DART ✅ 한미반도체",
     "detail": "단일판매ㆍ공급계약체결(자율공시)              "
+  },
+  {
+    "time": "2026-09-29T13:48:33.957224+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 애니플러스 🏠",
+    "detail": "주요사항보고서(자기주식취득신탁계약체결결정)"
+  },
+  {
+    "time": "2026-09-29T13:48:33.957567+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SNT다이내믹스 🏠",
+    "detail": "주식소각결정              "
+  },
+  {
+    "time": "2026-09-29T13:48:33.957933+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ SNT다이내믹스 🏠",
+    "detail": "매매거래정지및정지해제(중요내용공시)              "
   }
 ]
