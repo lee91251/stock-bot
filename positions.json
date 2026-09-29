@@ -53,6 +53,19 @@
       "swing_score": 68,
       "sector": "기타",
       "order_no": "0000024375"
+    },
+    "310200": {
+      "name": "애니플러스",
+      "qty": 497,
+      "buy_price": 2010.0,
+      "buy_date": "2026-09-29",
+      "buy_time": "13:17",
+      "buy_amount": 998970.0,
+      "partial_sold": false,
+      "score": 74,
+      "swing_score": 67,
+      "sector": "기타",
+      "order_no": "0000025749"
     }
   },
   "history": [
@@ -1023,6 +1036,19 @@
       "reason": "swing_score 68",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-09-29",
+      "time": "13:17",
+      "side": "buy",
+      "code": "310200",
+      "name": "애니플러스",
+      "qty": 497,
+      "price": 2010.0,
+      "amount": 998970.0,
+      "reason": "swing_score 67",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1232,9 +1258,9 @@
       "trade_count": 0
     },
     "2026-09-29": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 998970.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
