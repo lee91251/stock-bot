@@ -23,56 +23,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-01",
-      "month": "2026-07",
-      "ticker": "333430.KQ",
-      "name": "일승",
-      "price": 3390.0,
-      "score": 111,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-01",
-      "month": "2026-07",
-      "ticker": "103140.KS",
-      "name": "풍산",
-      "price": 64400.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-01",
-      "month": "2026-07",
-      "ticker": "105630.KS",
-      "name": "한세실업",
-      "price": 8100.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-01",
-      "month": "2026-07",
-      "ticker": "089470.KS",
-      "name": "HDC현대EP",
-      "price": 3745.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-01",
-      "month": "2026-07",
-      "ticker": "036580.KS",
-      "name": "팜스코",
-      "price": 2400.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-03",
       "month": "2026-07",
       "ticker": "214180.KQ",
@@ -3019,6 +2969,56 @@
       "name": "유나이티드제약",
       "price": 17630.0,
       "score": 100,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-30",
+      "month": "2026-09",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 19100.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-30",
+      "month": "2026-09",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 16740.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-09-30",
+      "month": "2026-09",
+      "ticker": "267250.KS",
+      "name": "HD현대",
+      "price": 201500.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-30",
+      "month": "2026-09",
+      "ticker": "071050.KS",
+      "name": "한국금융지주",
+      "price": 179000.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-30",
+      "month": "2026-09",
+      "ticker": "001750.KS",
+      "name": "한양증권",
+      "price": 19160.0,
+      "score": 108,
       "buy_signal": false,
       "result": null
     }
