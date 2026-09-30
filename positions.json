@@ -79,6 +79,19 @@
       "swing_score": 58,
       "sector": "기타",
       "order_no": "0000027012"
+    },
+    "030000": {
+      "name": "제일기획",
+      "qty": 53,
+      "buy_price": 18580.0,
+      "buy_date": "2026-09-30",
+      "buy_time": "13:59",
+      "buy_amount": 984740.0,
+      "partial_sold": false,
+      "score": 93,
+      "swing_score": 80,
+      "sector": "기타",
+      "order_no": "0000029815"
     }
   },
   "history": [
@@ -1075,6 +1088,19 @@
       "reason": "swing_score 58",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-09-30",
+      "time": "13:59",
+      "side": "buy",
+      "code": "030000",
+      "name": "제일기획",
+      "qty": 53,
+      "price": 18580.0,
+      "amount": 984740.0,
+      "reason": "swing_score 80",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1289,9 +1315,9 @@
       "trade_count": 2
     },
     "2026-09-30": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 984740.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {

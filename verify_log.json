@@ -1422,5 +1422,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-09-30T13:59:20.329460+09:00",
+    "side": "buy",
+    "code": "030000",
+    "name": "제일기획",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
