@@ -92,6 +92,19 @@
       "swing_score": 80,
       "sector": "기타",
       "order_no": "0000029815"
+    },
+    "005720": {
+      "name": "넥센",
+      "qty": 170,
+      "buy_price": 5870.0,
+      "buy_date": "2026-09-30",
+      "buy_time": "14:26",
+      "buy_amount": 997900.0,
+      "partial_sold": false,
+      "score": 95,
+      "swing_score": 66,
+      "sector": "기타",
+      "order_no": "0000031848"
     }
   },
   "history": [
@@ -1101,6 +1114,19 @@
       "reason": "swing_score 80",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-09-30",
+      "time": "14:26",
+      "side": "buy",
+      "code": "005720",
+      "name": "넥센",
+      "qty": 170,
+      "price": 5870.0,
+      "amount": 997900.0,
+      "reason": "swing_score 66",
+      "sector": "기타",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -1315,9 +1341,9 @@
       "trade_count": 2
     },
     "2026-09-30": {
-      "buy_count": 1,
-      "buy_amount": 984740.0,
-      "trade_count": 1
+      "buy_count": 2,
+      "buy_amount": 1982640.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
