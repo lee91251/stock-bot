@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-09-29T08:50:59.111888+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.1 / 공포탐욕 45(중립)"
-  },
-  {
     "time": "2026-09-29T09:13:44.721175+09:00",
     "category": "disclosure",
     "level": "info",
@@ -70,5 +62,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.0 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-09-30T09:03:07.681466+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
