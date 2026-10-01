@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-09-30T10:32:57.834209+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
     "time": "2026-09-30T14:33:11.513262+09:00",
     "category": "disclosure",
     "level": "info",
@@ -38,5 +30,13 @@
     "emoji": "✅",
     "title": "DART ✅ 두산에너빌리티 🏠",
     "detail": "단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-10-01T10:57:45.868264+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ LG에너지솔루션",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
   }
 ]

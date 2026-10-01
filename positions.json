@@ -27,19 +27,6 @@
       "sector": "기타",
       "order_no": "0000013552"
     },
-    "095570": {
-      "name": "AJ네트웍스",
-      "qty": 232,
-      "buy_price": 4295.0,
-      "buy_date": "2026-09-23",
-      "buy_time": "13:29",
-      "buy_amount": 996440.0,
-      "partial_sold": false,
-      "score": 92,
-      "swing_score": 68,
-      "sector": "기타",
-      "order_no": "0000024375"
-    },
     "310200": {
       "name": "애니플러스",
       "qty": 497,
@@ -1143,6 +1130,23 @@
       "profit": 22000,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-01",
+      "time": "10:56",
+      "side": "sell",
+      "code": "095570",
+      "name": "AJ네트웍스",
+      "qty": 232,
+      "price": 4250.0,
+      "amount": 986000.0,
+      "reason": "하락 추세 빨리 청산 (4일/-1.0%)",
+      "pct": -1.05,
+      "sector": "기타",
+      "buy_price": 4295.0,
+      "profit": -10440,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1364,7 +1368,7 @@
     "2026-10-01": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 1
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
