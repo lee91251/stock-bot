@@ -91,7 +91,8 @@
       "score": 79,
       "swing_score": 50,
       "sector": "자동차",
-      "order_no": "0000012254"
+      "order_no": "0000012254",
+      "imminent_state": "near_stop"
     },
     "095570": {
       "name": "AJ네트웍스",
