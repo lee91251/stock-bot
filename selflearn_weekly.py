@@ -152,6 +152,32 @@ def _realtime_compare(prices: dict) -> dict:
     return out
 
 
+def _readiness(rt: dict, verdicts: dict) -> dict:
+    """5~7단계와 도전자 판정에 필요한 데이터가 얼마나 쌓였나."""
+    rdays = len(glob.glob(os.path.join(BASE, "realtime_log", "*.json")))
+    cdays = len(glob.glob(os.path.join(LOG_DIR, "*.json")))
+    items = [
+        {"name": "7단계 실시간 포착→봇 매수 연결 판단", "need": 10, "have": rdays, "unit": "거래일 실시간 기록",
+         "todo": "실시간 포착 vs 15분 봇 가격 비교 → 봇 매수 연결 여부 결정"},
+        {"name": "6단계 손절·익절 폭 학습", "need": 15, "have": rdays, "unit": "거래일 실시간 기록",
+         "todo": "손절선 도달~실제 매도 지연·장중 가격 흐름으로 손절·익절 폭 학습"},
+        {"name": "5단계 사는 양(매수 강도) 학습", "need": 20, "have": cdays, "unit": "거래일 후보 기록",
+         "todo": "시장 상황별 매수 강도 학습 (후보 기록 + 시장 위험지수)"},
+    ]
+    out = {"items": [], "todo": []}
+    for it in items:
+        ok = it["have"] >= it["need"]
+        out["items"].append({"name": it["name"], "ok": ok, "progress": f"{min(it['have'], it['need'])}/{it['need']} {it['unit']}"})
+        if ok:
+            out["todo"].append(it["todo"])
+    decided = [k for k, v in (verdicts or {}).items() if not str(v).startswith("판정 보류")]
+    out["items"].append({"name": "도전자 승부 판정", "ok": bool(decided),
+                         "progress": ("판정 나옴: " + ", ".join(f"{k} {verdicts[k]}" for k in decided)) if decided else "표본 쌓는 중 (약 3개월)"})
+    if decided:
+        out["todo"].append("도전자 판정 결과 검토 → 실제 규칙 반영 여부 승인")
+    return out
+
+
 def _summ(vals: list) -> dict:
     if not vals:
         return {"n": 0}
@@ -261,6 +287,17 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
     if rt.get("stop_events"):
         lines.append(f"⏱ <b>손절 지연</b>: 손절선 닿고 봇이 판 {rt['stop_matched']}건 평균 {rt['stop_delay_min']}분 늦음, "
                      f"가격 {rt['stop_price_diff']:+.2f}% 차이")
+    # 🔔 다음 단계 준비 상태 (회장이 잊지 않게 — 준비되면 "Claude와 이어하기" 알림)
+    ready = _readiness(rt, verdicts)
+    rep["readiness"] = ready
+    json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
+    lines.append("📋 <b>다음 단계 준비 상태</b>")
+    for it in ready["items"]:
+        lines.append(f"{'✅' if it['ok'] else '⏳'} {it['name']}: {it['progress']}")
+    if ready["todo"]:
+        lines.append("🔔 <b>회장님 할 일:</b> Claude 대화창을 열고 <b>\"자가학습 다음 단계 이어하자\"</b>라고 말씀해 주세요")
+        for t in ready["todo"]:
+            lines.append(f"   · {t}")
     lines.append("<i>그림자 운영 = 실매매 무변경. 실제 반영은 회장 승인.</i>")
     msg = chr(10).join(lines)
     print(msg)
