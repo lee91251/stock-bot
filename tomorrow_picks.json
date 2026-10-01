@@ -1,80 +1,23 @@
 {
-  "date": "2026-09-29",
-  "generated_at": "2026-09-28T15:42:45.336880",
+  "date": "2026-10-02",
+  "generated_at": "2026-10-01T15:43:08.743619",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "009830",
-      "name": "한화솔루션",
-      "sector": "신재생",
+      "code": "036570",
+      "name": "엔씨소프트",
+      "sector": "게임",
       "score_bonus": 10,
-      "today_change": 14.21,
-      "today_vol_ratio": 442.0,
-      "today_score": 67,
+      "today_change": 10.05,
+      "today_vol_ratio": 269.0,
+      "today_score": 57,
       "reasons": [
-        "오늘 +14.2% 마감",
-        "거래량 평균 +442%",
-        "스윙점수 67"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "036530",
-      "name": "SNT홀딩스",
-      "sector": "기타",
-      "score_bonus": 6,
-      "today_change": 6.48,
-      "today_vol_ratio": 365.0,
-      "today_score": 69,
-      "reasons": [
-        "오늘 +6.5% 마감",
-        "거래량 평균 +365%",
-        "스윙점수 69"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "006730",
-      "name": "서부T&D",
-      "sector": "기타",
-      "score_bonus": 6,
-      "today_change": 5.66,
-      "today_vol_ratio": 226.0,
-      "today_score": 55,
-      "reasons": [
-        "오늘 +5.7% 마감",
-        "거래량 평균 +226%",
-        "스윙점수 55"
+        "오늘 +10.1% 마감",
+        "거래량 평균 +269%",
+        "스윙점수 57"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -3,
-    "IT": -3,
-    "통신": -1,
-    "AI": -1,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": -2.08,
-    "XLK": -0.89,
-    "XLF": -1.19,
-    "XLE": 0.1,
-    "XLV": 0.33,
-    "XLI": -0.97,
-    "XLB": -0.66,
-    "XLY": -1.41
-  },
-  "sector_updated_at": "2026-09-29T06:01:12.148316"
+  "sector_weights": {}
 }
