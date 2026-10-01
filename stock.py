@@ -1518,7 +1518,8 @@ def get_market_mood() -> dict:
         ki = _kis.get_kospi() if _kis.available() else {}
         if ki and ki.get("bstp_nmix_prpr"):
             take("kospi_price", round(_safe_float(ki.get("bstp_nmix_prpr")), 2), "KIS")
-            mood["kospi_chg"] = round(_safe_float(ki.get("prdy_ctrt")), 2)
+            # 10/1 fix: 업종지수 API 등락률 필드는 bstp_nmix_prdy_ctrt (공식 예제 확인). 예전 prdy_ctrt 는 없는 키 → 늘 0
+            mood["kospi_chg"] = round(_safe_float(ki.get("bstp_nmix_prdy_ctrt", ki.get("prdy_ctrt"))), 2)
     except Exception as e:
         print(f"  [무드] KIS 코스피 실패: {e}")
     if "kospi_price" not in mood:
@@ -6573,8 +6574,10 @@ def run_auto_buy():
     try:
         _n = log_candidates(
             analyzed_all,
-            {"risk": risk.get("score"), "risk_level": risk.get("level"),
-             "fg": fg.get("score"), "kospi_chg": (mood or {}).get("kospi_chg")},
+            {"risk": risk.get("score"), "risk_level": risk.get("level"), "fg": fg.get("score"),
+             # 코스피를 못 받았으면 0 대신 None (도전자 판정에서 '지표 없음'으로 처리)
+             "kospi_chg": None if "kospi" in (mood or {}).get("missing", []) else (mood or {}).get("kospi_chg"),
+             "mood_missing": (mood or {}).get("missing", [])},
             {c["ticker"].split(".")[0] for c in candidates},
         )
         print(f"[후보기록] 오늘 신규 {_n}종목 기록 (검토 {len(analyzed_all)})")

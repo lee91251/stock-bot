@@ -218,14 +218,7 @@ def run(send: bool = True, discover: bool = True) -> dict:
             verdicts[c["id"]] = f"판정 보류 (표본: 도전자 {ch.get('n', 0)} / 챔피언 {cp.get('n', 0)})"
 
     # ③ 주간 자동 발굴 (8년 가상매매 → 새 도전자 후보) — 실패해도 성적표는 발송
-    disc = {}
-    if discover:
-        try:
-            import selflearn_discover as sd
-            disc = sd.run(live_scores=res)
-        except Exception as e:
-            disc = {"action": f"발굴 실패: {e}"}
-            print(f"  [주간학습] 발굴 오류: {e}")
+    disc = {}   # 발굴은 성적표 발송 뒤에 따로 (발굴이 시간초과돼도 성적표는 나가게)
     try:
         reg = json.load(open(os.path.join(BASE, "challengers.json"), encoding="utf-8"))
     except Exception:
@@ -268,10 +261,6 @@ def run(send: bool = True, discover: bool = True) -> dict:
     if rt.get("stop_events"):
         lines.append(f"⏱ <b>손절 지연</b>: 손절선 닿고 봇이 판 {rt['stop_matched']}건 평균 {rt['stop_delay_min']}분 늦음, "
                      f"가격 {rt['stop_price_diff']:+.2f}% 차이")
-    if disc:
-        lines.append(f"🔎 <b>이번 주 자동 발굴:</b> {disc.get('action', '-')}")
-        for t in (disc.get("top") or [])[:2]:
-            lines.append(f"   · {t['규칙']} → 학습 {t['학습']:+.2f} / 검증 {t['검증']:+.2f} / 최종 {t['최종확인']:+.2f}%p {'✅' if t['통과'] else '❌'}")
     lines.append("<i>그림자 운영 = 실매매 무변경. 실제 반영은 회장 승인.</i>")
     msg = chr(10).join(lines)
     print(msg)
@@ -281,6 +270,28 @@ def run(send: bool = True, discover: bool = True) -> dict:
             tg_send(msg, silent=True)
         except Exception as e:
             print(f"  [주간학습] 텔레그램 실패: {e}")
+    # ③ 자동 발굴 (8년 가상매매) — 성적표 발송 후 실행, 결과는 별도 메시지
+    if discover:
+        try:
+            import selflearn_discover as sd
+            disc = sd.run(live_scores=res)
+        except Exception as e:
+            disc = {"action": f"발굴 실패: {e}"}
+            print(f"  [주간학습] 발굴 오류: {e}")
+        rep["discovery"] = disc
+        json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
+        dl = [f"🔎 <b>이번 주 자동 발굴</b>: {disc.get('action', '-')}",
+              f"검사한 규칙 조합 {disc.get('checked', 0)}개 (학습~2022 → 검증 2023~24 → 최종확인 2025~ 모두 통과해야 등록)"]
+        for t in (disc.get("top") or [])[:3]:
+            dl.append(f"· {t['규칙']} → 학습 {t['학습']:+.2f} / 검증 {t['검증']:+.2f} / 최종 {t['최종확인']:+.2f}%p {'✅' if t['통과'] else '❌'}")
+        dl.append("<i>등록돼도 그림자 운영만. 실제 반영은 회장 승인.</i>")
+        print(chr(10).join(dl))
+        if send:
+            try:
+                from notify import tg_send
+                tg_send(chr(10).join(dl), silent=True)
+            except Exception as e:
+                print(f"  [주간학습] 텔레그램 실패: {e}")
     return rep
 
 

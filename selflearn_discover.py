@@ -92,16 +92,17 @@ def discover(X: pd.DataFrame, live_features: list) -> dict:
         out["checked"] += 1
         if not (gt and gv and gh) or min(gt["keep"], gv["keep"]) < .5:
             continue
-        ok = bool(gt["gain"] > .10 and gv["gain"] > .10 and gh["gain"] > 0 and gv["big"] <= bigb["va"] + .5)
+        ok = bool(gt["gain"] > .10 and gv["gain"] > .10 and gh["gain"] > .10 and gv["big"] <= bigb["va"] + .5)
         scored.append({"rules": rules, "ok": ok, "train": gt, "valid": gv, "hold": gh,
-                       "score": min(gt["gain"], gv["gain"])})
+                       "score": gt["gain"]})    # 순위는 학습 구간만 (검증·최종확인은 합격 문턱으로만 사용)
     scored.sort(key=lambda s: (-s["ok"], -s["score"]))
     out["top"] = [{"규칙": rule_text(s["rules"]), "통과": s["ok"],
                    "학습": round(s["train"]["gain"], 3), "검증": round(s["valid"]["gain"], 3),
                    "최종확인": round(s["hold"]["gain"], 3), "남는비율": round(s["valid"]["keep"], 2)} for s in scored[:5]]
-    best = next((s for s in scored if s["ok"]), None)
-    if best:
-        out["found"] = best
+    out["found"] = None
+    out["passed_list"] = [s for s in scored if s["ok"]]
+    if out["passed_list"]:
+        out["found"] = out["passed_list"][0]
     return out
 
 
@@ -109,15 +110,15 @@ def _same(a: list, b: list) -> bool:
     if {r["f"] for r in a} != {r["f"] for r in b}: return False
     for r in a:
         m = next(x for x in b if x["f"] == r["f"])
-        if m["op"] != r["op"] or abs(m["v"] - r["v"]) > max(abs(r["v"]) * .1, .5): return False
+        if m["op"] != r["op"] or abs(m["v"] - r["v"]) > max(abs(r["v"]) * .1, .05): return False
     return True
 
 
 def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
     """새 도전자 등록 (중복·한도 관리). 반환: 결과 설명."""
     act = [c for c in reg["challengers"] if c.get("status") == "shadow"]
-    if any(_same(found["rules"], c["rules"]) for c in act):
-        return "이미 운영 중인 도전자와 같은 규칙 → 등록 안 함"
+    if any(_same(found["rules"], c["rules"]) for c in reg["challengers"]):   # 은퇴한 규칙도 재등록 안 함
+        return "DUP"
     today = datetime.now().strftime("%Y-%m-%d")
     nid = f"C{max([int(c['id'][1:]) for c in reg['challengers'] if c['id'][1:].isdigit()] + [1]) + 1}"
     new = {"id": nid, "name": "봇 자동 발굴", "rules": found["rules"], "status": "shadow",
@@ -130,9 +131,12 @@ def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
         if not disc:
             return "도전자 한도 초과 → 등록 안 함"
         # 실시간 성적(있으면) 또는 검증 개선폭이 가장 낮은 자동발굴 도전자 은퇴
-        def strength(c):
+        champ = (live_scores or {}).get("champion", {})
+        def strength(c):   # 같은 단위(%p 개선폭)로 비교: 실시간 30건↑면 챔피언 대비 개선폭, 아니면 검증 개선폭
             ls = (live_scores or {}).get(c["id"], {})
-            return ls.get("avg", -9) if ls.get("n", 0) >= 30 else c.get("valid_gain", 0)
+            if ls.get("n", 0) >= 30 and champ.get("n", 0) >= 30:
+                return ls["avg"] - champ["avg"]
+            return c.get("valid_gain", 0)
         weak = min(disc, key=strength)
         if strength(weak) >= new["valid_gain"]:
             return f"기존 도전자보다 약함 → 등록 안 함 ({rule_text(found['rules'])})"
@@ -149,9 +153,15 @@ def run(live_scores: dict | None = None) -> dict:
     X = sv.build()
     res = discover(X, sv.LIVE_FEATURES)
     reg = load_registry()
-    res["action"] = register(res["found"], reg, live_scores) if res["found"] else "검증 통과 규칙 없음 → 등록 안 함"
+    res["action"] = "검증 통과 규칙 없음 → 등록 안 함"
+    for cand in res.get("passed_list", []):          # 1등이 이미 있는 규칙이면 다음 합격 규칙 시도
+        msg = register(cand, reg, live_scores)
+        if msg != "DUP":
+            res["action"] = msg
+            break
+        res["action"] = "합격 규칙이 모두 기존 도전자와 같음 → 등록 안 함"
     save_registry(reg)
-    res.pop("found", None)
+    res.pop("found", None); res.pop("passed_list", None)
     print(json.dumps(res, ensure_ascii=False, indent=1, default=float))
     return res
 

@@ -854,7 +854,7 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
         stocks = data.setdefault("stocks", {})
         _bp = _prev_breadth(now.strftime("%Y-%m-%d"))
         data["breadth_prev"] = _bp
-        market = {k: (_cand_val(v) if not isinstance(v, str) else v) for k, v in (market or {}).items()}
+        market = {k: (v if isinstance(v, (str, list)) else _cand_val(v)) for k, v in (market or {}).items()}
         data.setdefault("market_first", market)          # 그날 첫 회차 시장 상태
         passed_codes = passed_codes or set()
         added = changed = 0
