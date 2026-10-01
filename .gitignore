@@ -20,3 +20,4 @@ history_cache.json
 *.key
 dart_corp_map.json
 __pycache__/
+candidate_log/*.tmp

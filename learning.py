@@ -747,14 +747,23 @@ def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
 CANDIDATE_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "candidate_log")
 _CAND_FIELDS = ("price", "change", "swing_score", "score", "rsi", "vol_ratio", "bb_pct",
                 "ret_1w", "ret_1m", "ret_3m", "pct_from_high", "pct_from_low", "macd_cross",
-                "per", "pbr", "roe", "mktcap", "foreign_eok", "inst_eok", "atr")
+                "per", "pbr", "roe", "mktcap", "foreign_eok", "inst_eok", "atr",
+                "support", "resistance", "ma20", "ma60")
 
 
 def _cand_val(v):
-    if isinstance(v, bool) or v is None:
-        return v
-    if isinstance(v, (int, float)):
-        return round(float(v), 3)
+    """numpy 타입·NaN 포함 안전 변환 (JSON 표준 유지: NaN/inf → None)."""
+    if v is None:
+        return None
+    try:
+        import numbers, math
+        if isinstance(v, bool) or getattr(getattr(v, "dtype", None), "kind", "") == "b":
+            return bool(v)
+        if isinstance(v, numbers.Number):
+            f = float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else round(f, 3)
+    except Exception:
+        pass
     return None
 
 
@@ -774,6 +783,7 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
             with open(fn, "r", encoding="utf-8") as f:
                 data = json.load(f)
         stocks = data.setdefault("stocks", {})
+        market = {k: (_cand_val(v) if not isinstance(v, str) else v) for k, v in (market or {}).items()}
         data.setdefault("market_first", market)          # 그날 첫 회차 시장 상태
         passed_codes = passed_codes or set()
         added = changed = 0
@@ -787,14 +797,16 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
                     stocks[code]["passed_t"] = now.strftime("%H:%M")
                     changed += 1
                 continue
-            rec = {"t": now.strftime("%H:%M"), "name": r.get("name", ""), "sector": r.get("sector", "")}
+            rec = {"t": now.strftime("%H:%M"), "name": r.get("name", ""), "sector": r.get("sector", ""),
+                   # 장 시작 후 경과 분 — 장중 vol_ratio(부분 거래량) 보정용
+                   "elapsed_min": max(0, (now.hour - 9) * 60 + now.minute)}
             for k in _CAND_FIELDS:
                 rec[k] = _cand_val(r.get(k))
             rec["signal"] = bool(r.get("swing_signal"))
             rec["momentum"] = bool(r.get("momentum_signal"))
             rec["blocks"] = [str(b)[:30] for b in (r.get("swing_block_reasons") or [])][:5]
             rec["tp_pick"] = bool(r.get("from_tomorrow_picks"))
-            rec["sector_bonus"] = r.get("sector_bonus", 0) or 0
+            rec["sector_bonus"] = _cand_val(r.get("sector_bonus", 0)) or 0
             ds = r.get("dart_signals") or {}
             rec["dart"] = sorted(k for k, v in ds.items() if v) if isinstance(ds, dict) else []
             rec["mkt"] = market
@@ -802,8 +814,10 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
             stocks[code] = rec
             added += 1
         if added or changed:
-            with open(fn, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+            tmp = fn + ".tmp"                             # 임시파일에 다 쓴 뒤 교체 → 쓰다 실패해도 기존 파일 보존
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+            os.replace(tmp, fn)
         return added
     except Exception as e:
         print(f"  [후보기록] 오류(매매 영향 없음): {e}")
