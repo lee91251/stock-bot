@@ -5927,6 +5927,12 @@ def run_close_summary():
     if _skip_if_holiday("장 마감 결산"):
         return
     print("[브리핑] 장 마감 결산 (대시보드 갱신용)")
+    # 봇 오늘 한 줄 (9/28) — 무거운 분석(tomorrow_picks 250여 종목) 전에 먼저 발송.
+    # 10/1 fix: 끝에 두면 작업이 시간초과로 끊길 때 알림도 같이 사라짐(9/29·9/30 실제 발생).
+    try:
+        tg_send(make_daily_bot_summary(), silent=True)
+    except Exception as e:
+        print(f"  [브리핑] 한 줄 요약 오류: {e}")
     try:
         mood = get_market_mood()
         fg   = get_fear_greed(mood)
@@ -5986,11 +5992,6 @@ def run_close_summary():
     except Exception as e:
         print(f"  [브리핑] 마감 결산 오류: {e}")
 
-    # 봇 오늘 한 줄 (9/28) — 시장 데이터 실패와 무관하게 항상 발송, 무음
-    try:
-        tg_send(make_daily_bot_summary(), silent=True)
-    except Exception as e:
-        print(f"  [브리핑] 한 줄 요약 오류: {e}")
 
     # 대시보드 갱신 — 데이터 수집 실패해도 항상 시도 (try 밖으로 분리)
     try:

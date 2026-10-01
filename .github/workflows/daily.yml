@@ -174,7 +174,7 @@ jobs:
   close-summary:
     if: github.event.inputs.mode == '--close'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25  # 10/1: 10→25분 (tomorrow_picks 풀 253종목 분석이 10분 초과 → 9/29·9/30 중간에 끊김)
     concurrency:
       group: trading-state
       cancel-in-progress: false
