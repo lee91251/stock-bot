@@ -160,7 +160,7 @@ def _summ(vals: list) -> dict:
             "avg": round(float(s.mean()), 3), "big_loss": round(float((s <= -5).mean() * 100), 1)}
 
 
-def run(send: bool = True, discover: bool = True) -> dict:
+def run(send: bool = True, discover: bool = True, research: bool = True) -> dict:
     import FinanceDataReader as fdr
     rows = _load_logs()
     buys = _actual_buys()
@@ -272,9 +272,11 @@ def run(send: bool = True, discover: bool = True) -> dict:
             print(f"  [주간학습] 텔레그램 실패: {e}")
     # ③ 자동 발굴 (8년 가상매매) — 성적표 발송 후 실행, 결과는 별도 메시지
     if discover:
+        X = None
         try:
-            import selflearn_discover as sd
-            disc = sd.run(live_scores=res)
+            import selflearn_discover as sd, selflearn_virtual as sv
+            X = sv.build()
+            disc = sd.run(live_scores=res, X=X)
         except Exception as e:
             disc = {"action": f"발굴 실패: {e}"}
             print(f"  [주간학습] 발굴 오류: {e}")
@@ -292,9 +294,23 @@ def run(send: bool = True, discover: bool = True) -> dict:
                 tg_send(chr(10).join(dl), silent=True)
             except Exception as e:
                 print(f"  [주간학습] 텔레그램 실패: {e}")
+        # ④ AI 연구원 — Claude 가설 → 3구간 검증 → 통과 시 그림자 등록 (회장 승인 10/1)
+        if research and X is not None:
+            try:
+                import selflearn_research as sr
+                rres = sr.run(X=X, live_scores=res)
+                rep["research"] = rres
+                json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
+                rmsg = sr.message(rres)
+                print(rmsg)
+                if send:
+                    from notify import tg_send
+                    tg_send(rmsg, silent=True)
+            except Exception as e:
+                print(f"  [주간학습] AI 연구원 오류: {e}")
     return rep
 
 
 if __name__ == "__main__":
     import sys
-    run(send="--no-send" not in sys.argv, discover="--no-discover" not in sys.argv)
+    run(send="--no-send" not in sys.argv, discover="--no-discover" not in sys.argv, research="--no-research" not in sys.argv)

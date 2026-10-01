@@ -148,9 +148,10 @@ def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
     return msg
 
 
-def run(live_scores: dict | None = None) -> dict:
+def run(live_scores: dict | None = None, X: pd.DataFrame | None = None) -> dict:
     import selflearn_virtual as sv
-    X = sv.build()
+    if X is None:
+        X = sv.build()
     res = discover(X, sv.LIVE_FEATURES)
     reg = load_registry()
     res["action"] = "검증 통과 규칙 없음 → 등록 안 함"
