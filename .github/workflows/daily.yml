@@ -251,6 +251,7 @@ jobs:
       - name: 자동 매수 (스윙)
         run: python stock.py --autobuy
       - name: 포지션 + 대시보드 커밋
+        if: always()   # 10/1: 매수 단계가 실패·시간초과여도 이미 끝난 매도 기록은 저장
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |
@@ -301,6 +302,7 @@ jobs:
       - name: 자동 매도 (조건 점검)
         run: python stock.py --autosell
       - name: 포지션 + 대시보드 커밋
+        if: always()   # 10/1: 매도 단계 오류여도 체결된 기록은 저장
         env:
           DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
         run: |

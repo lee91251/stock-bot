@@ -9,8 +9,8 @@
 매매에는 일절 관여하지 않음. 도전자 승격은 회장 승인 사항 (자동 승격 없음).
 
 채점 규칙 (SWING_RULES.md 와 동일, 일봉 근사):
-  진입=기록 시점 가격(장중) / 판단=매일 종가 / 손절 -4% / +6% 절반 / +10% 전량 /
-  3일+ -1% 미만 빨리청산 / 5일 청산(+3% 이상이면 10일까지) / 체결=판단 다음날 시가.
+  진입=기록 시점 가격(장중) / 손절 -4%·익절 +6% 절반·+10% 전량은 장중 도달 즉시 /
+  3일+ -1% 미만 빨리청산·5일 청산(+3% 이상이면 10일까지)은 종가 판단 → 다음날 시가. 매수일=0일.
   비용: 수수료 0.015%×2 + 세금 0.18% + 슬리피지 0.1%×2. 아직 결과가 안 난 건은 '진행중'으로 분리.
 """
 import os, json, glob
@@ -50,31 +50,40 @@ def _actual_buys() -> dict:
 
 
 def _simulate(ohlc: pd.DataFrame, day: str, entry: float):
-    """day 장중 entry 매수 → 봇 매도 규칙. 반환 (net%, 결과) / 진행중이면 (None,'진행중')."""
+    """day 장중 entry 매수 → 봇 매도 규칙. 반환 (net%, 결과) / 진행중이면 (None,'진행중').
+
+    보유일: 매수일=0일 (봇 _trading_days_between 과 동일, 매수일 제외).
+    손절·익절: 봇이 장중 15분마다 점검하므로 장중 저가/고가가 닿으면 그 가격에 체결(갭이면 시가).
+    매수 당일은 매수 이후 저가/고가를 알 수 없어 종가로만 판단. 빨리청산·기간청산은 종가 판단 → 다음날 시가.
+    """
     d = ohlc[ohlc.index >= pd.Timestamp(day)]
     if d.empty:
         return None, "시세없음"
     bp = entry * (1 + SLIP)
-    O, C = d.Open.values, d.Close.values
+    O, H, L, C = d.Open.values, d.High.values, d.Low.values, d.Close.values
+    stop, t1, t2 = bp * 0.96, bp * 1.06, bp * 1.10
     parts, half = [], False
-    for k in range(len(C)):
-        held = k + 1
-        pct = (C[k] / bp - 1) * 100
-        act = None
-        if pct <= -4: act = "all"
-        elif pct >= 10: act = "all"
-        elif pct >= 6 and not half: act = "half"
-        elif held >= 3 and pct < -1: act = "all"
-        elif held >= 5 and not (held < 10 and pct >= 3): act = "all"
-        if not act:
-            continue
-        if k + 1 >= len(C):
-            return None, "진행중"
-        sp = O[k + 1] * (1 - SLIP) * (1 - COMM - TAX)
-        if act == "half":
-            parts.append((0.5, sp)); half = True; continue
+
+    def fin(price):
+        sp = price * (1 - SLIP) * (1 - COMM - TAX)
         parts.append((1 - sum(w for w, _ in parts), sp))
         return sum(w * (p / (bp * (1 + COMM)) - 1) for w, p in parts) * 100, "완료"
+
+    for k in range(len(C)):
+        held = k
+        lo, hi = (C[k], C[k]) if k == 0 else (L[k], H[k])
+        op = C[k] if k == 0 else O[k]
+        if lo <= stop:                       # 손절 우선 (보수적)
+            return fin(min(op, stop))
+        if hi >= t2:
+            return fin(max(op, t2))
+        if hi >= t1 and not half:
+            parts.append((0.5, max(op, t1) * (1 - SLIP) * (1 - COMM - TAX))); half = True
+        pct = (C[k] / bp - 1) * 100
+        if (held >= 3 and pct < -1) or (held >= 5 and not (held < 10 and pct >= 3)):
+            if k + 1 >= len(C):
+                return None, "진행중"
+            return fin(O[k + 1])
     return None, "진행중"
 
 
@@ -126,7 +135,7 @@ def run(send: bool = True) -> dict:
         "days": len({r["date"] for r in rows}),
         "records": len(rows),
         "groups": res, "pending": pending,
-        "challenger": "C1 (코스피 하락일·전일 상승비율 39% 미만 쉬기 + 볼린저 63.6 미만 제외)",
+        "challenger": "C1 (코스피 장중 -0.24% 미만 또는 전일 상승종목 39% 미만인 날은 매수 쉼)",
     }
     ch, cp = res["challenger"], res["champion"]
     if ch.get("n", 0) >= MIN_SAMPLES_FOR_VERDICT and cp.get("n", 0) >= 30:

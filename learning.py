@@ -768,12 +768,12 @@ def _cand_val(v):
 
 
 # ── 도전자 그림자 판정 (10/1) ──────────────────────────────
-# 8년 가상매매(2018~22 학습 → 2023~26 시험)에서 시험기간에도 통과한 "사지 마라" 규칙 3개.
+# 8년 가상매매(2018~22 학습 → 2023~26 시험)에서 시험기간 4년 모두 개선된 "쉬는 날" 규칙 2개.
+# (종목 단위 3번째 규칙(볼린저/변동성)은 시뮬레이션 방식에 따라 바뀌어 불안정 → 제외. bb_pct·atr는 기록돼 추후 재검증 가능)
 # 실매매엔 적용 안 함 — 기록만 하고 주간 채점에서 챔피언(현 규칙)과 비교. 승격은 회장 승인.
 CHALLENGER_ID = "C1"
 C1_KOSPI_MIN   = -0.24   # 코스피 당일(장중) 등락이 이보다 낮으면 그날 매수 쉼
 C1_BREADTH_MIN = 39.0    # 전 거래일 상승종목 비율(%)이 이보다 낮으면 쉼
-C1_BB_MIN      = 63.6    # 볼린저 위치(%)가 이보다 낮은 종목은 제외
 MARKET_BREADTH_FILE_L = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_breadth_history.json")
 
 
@@ -794,9 +794,6 @@ def challenger_c1(rec: dict, market: dict, breadth_prev) -> str:
         return f"skip:코스피{k:+.2f}%"
     if breadth_prev is not None and breadth_prev < C1_BREADTH_MIN:
         return f"skip:전일상승비율{breadth_prev:.0f}%"
-    bb = rec.get("bb_pct")
-    if bb is not None and bb < C1_BB_MIN:
-        return f"skip:볼린저{bb:.0f}%"
     return "buy"
 
 

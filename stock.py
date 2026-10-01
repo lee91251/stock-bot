@@ -341,6 +341,8 @@ class KisClient:
     def __init__(self):
         self._token: str = ""
         self._token_exp: datetime = datetime.min
+        import threading
+        self._token_lock = threading.Lock()   # 10/1: 자동매수 3병렬 분석 시 동시 재발급 방지
 
     def available(self) -> bool:
         return bool(KIS_APP_KEY and KIS_APP_SECRET)
@@ -348,6 +350,12 @@ class KisClient:
     def _ensure_token(self):
         if not self.available() or _now_kst() < self._token_exp:
             return
+        with self._token_lock:
+            if _now_kst() < self._token_exp:      # 기다리는 동안 다른 스레드가 발급 완료
+                return
+            self._issue_token()
+
+    def _issue_token(self):
         # EGW00133 = KIS 토큰 발급 1분당 1회 제한. 여러 mode가 새 프로세스로 돌며
         # 1분 내 재발급 시 발생 → 65초 대기 후 1회 재시도(조회 실패로 매도 못 하는 사고 방지).
         for _attempt in range(2):
@@ -359,8 +367,9 @@ class KisClient:
                     timeout=10,
                 )
                 d = r.json()
-                self._token = d.get("access_token", "")
-                if self._token:
+                _new = d.get("access_token", "")
+                if _new:                                   # 실패 응답으로 기존 정상 토큰을 지우지 않음
+                    self._token = _new
                     self._token_exp = _now_kst() + timedelta(
                         seconds=int(d.get("expires_in", 86400)) - 600
                     )
@@ -399,7 +408,11 @@ class KisClient:
             d = r.json()
             if d.get("rt_cd") == "0":
                 return d
-            print(f"  [KIS] {tr_id} API 오류: rt_cd={d.get('rt_cd')} msg={d.get('msg1','')}")
+            if d.get("msg_cd") == "EGW00201" and not params.get("_retried"):
+                # 10/1: 초당 호출 한도 초과 → 잠깐 쉬고 1회 재시도 (병렬 분석 중 종목이 조용히 빠지는 것 방지)
+                time.sleep(0.6)
+                return self._get(path, tr_id, {**params, "_retried": 1})
+            print(f"  [KIS] {tr_id} API 오류: rt_cd={d.get('rt_cd')} msg={d.get('msg1','')} params={params}")
             return {}
         except Exception as e:
             print(f"  [KIS] {tr_id} 실패: {e}")
@@ -528,6 +541,8 @@ class KisTradingClient:
         self.account    = KIS_PAPER_ACCOUNT    if self.paper else os.environ.get("KIS_REAL_ACCOUNT", "")
         self._token: str = ""
         self._token_exp: datetime = datetime.min
+        import threading
+        self._token_lock = threading.Lock()   # 10/1: _ensure_token 공통 구조 (시세 클라이언트와 동일)
 
     def mode_tag(self) -> str:
         return "[모의]" if self.paper else "[실전]"
@@ -542,6 +557,12 @@ class KisTradingClient:
     def _ensure_token(self):
         if not self.available() or _now_kst() < self._token_exp:
             return
+        with self._token_lock:
+            if _now_kst() < self._token_exp:      # 기다리는 동안 다른 스레드가 발급 완료
+                return
+            self._issue_token()
+
+    def _issue_token(self):
         # EGW00133 = KIS 토큰 발급 1분당 1회 제한 → 65초 대기 후 재시도 (매도 실패 방지)
         for _attempt in range(2):
             try:
@@ -552,8 +573,9 @@ class KisTradingClient:
                     timeout=10,
                 )
                 d = r.json()
-                self._token = d.get("access_token", "")
-                if self._token:
+                _new = d.get("access_token", "")
+                if _new:                                   # 실패 응답으로 기존 정상 토큰을 지우지 않음
+                    self._token = _new
                     self._token_exp = _now_kst() + timedelta(
                         seconds=int(d.get("expires_in", 86400)) - 600
                     )
@@ -8639,7 +8661,12 @@ if __name__ == "__main__":
                 run_auto_sell()
             except Exception as _e:
                 print(f"[autobuy] 선행 매도점검 오류(매수는 계속): {_e}")
-            run_auto_buy()
+            try:
+                run_auto_buy()
+            except Exception as _e:
+                # 매수 쪽 예외로 프로세스가 죽으면 앞에서 끝난 매도 기록(positions.json)이 커밋 안 됨 → 알리고 정상 종료
+                import traceback; traceback.print_exc()
+                tg_send("⚠️ <b>자동매수 오류</b> (매도점검·기록은 저장됨)\n" + str(_e)[:300])
         elif mode == "--autosell":
             run_auto_sell()
         elif mode == "--ccstrlog":
