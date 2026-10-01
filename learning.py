@@ -767,6 +767,39 @@ def _cand_val(v):
     return None
 
 
+# ── 도전자 그림자 판정 (10/1) ──────────────────────────────
+# 8년 가상매매(2018~22 학습 → 2023~26 시험)에서 시험기간에도 통과한 "사지 마라" 규칙 3개.
+# 실매매엔 적용 안 함 — 기록만 하고 주간 채점에서 챔피언(현 규칙)과 비교. 승격은 회장 승인.
+CHALLENGER_ID = "C1"
+C1_KOSPI_MIN   = -0.24   # 코스피 당일(장중) 등락이 이보다 낮으면 그날 매수 쉼
+C1_BREADTH_MIN = 39.0    # 전 거래일 상승종목 비율(%)이 이보다 낮으면 쉼
+C1_BB_MIN      = 63.6    # 볼린저 위치(%)가 이보다 낮은 종목은 제외
+MARKET_BREADTH_FILE_L = os.path.join(os.path.dirname(os.path.abspath(__file__)), "market_breadth_history.json")
+
+
+def _prev_breadth(today: str):
+    try:
+        with open(MARKET_BREADTH_FILE_L, encoding="utf-8") as f:
+            hist = json.load(f).get("history", [])
+        prev = [h for h in hist if h.get("date", "") < today]
+        return prev[-1]["breadth"] if prev else None
+    except Exception:
+        return None
+
+
+def challenger_c1(rec: dict, market: dict, breadth_prev) -> str:
+    """도전자 C1 판정: 'buy' 또는 'skip:사유'. 데이터 없으면 해당 조건은 통과로 간주."""
+    k = (market or {}).get("kospi_chg")
+    if k is not None and k < C1_KOSPI_MIN:
+        return f"skip:코스피{k:+.2f}%"
+    if breadth_prev is not None and breadth_prev < C1_BREADTH_MIN:
+        return f"skip:전일상승비율{breadth_prev:.0f}%"
+    bb = rec.get("bb_pct")
+    if bb is not None and bb < C1_BB_MIN:
+        return f"skip:볼린저{bb:.0f}%"
+    return "buy"
+
+
 def log_candidates(results: list, market: dict, passed_codes: set | None = None) -> int:
     """자동매수 1회차의 분석 결과를 오늘자 후보 로그에 병합.
 
@@ -783,6 +816,8 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
             with open(fn, "r", encoding="utf-8") as f:
                 data = json.load(f)
         stocks = data.setdefault("stocks", {})
+        _bp = _prev_breadth(now.strftime("%Y-%m-%d"))
+        data["breadth_prev"] = _bp
         market = {k: (_cand_val(v) if not isinstance(v, str) else v) for k, v in (market or {}).items()}
         data.setdefault("market_first", market)          # 그날 첫 회차 시장 상태
         passed_codes = passed_codes or set()
@@ -795,6 +830,8 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
                 if code in passed_codes and not stocks[code].get("passed"):
                     stocks[code]["passed"] = True
                     stocks[code]["passed_t"] = now.strftime("%H:%M")
+                    stocks[code]["passed_mkt"] = market   # 통과 시점 시장 (도전자 판정 기준)
+                    stocks[code][CHALLENGER_ID] = challenger_c1(stocks[code], market, _bp)
                     changed += 1
                 continue
             rec = {"t": now.strftime("%H:%M"), "name": r.get("name", ""), "sector": r.get("sector", ""),
@@ -811,6 +848,7 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
             rec["dart"] = sorted(k for k, v in ds.items() if v) if isinstance(ds, dict) else []
             rec["mkt"] = market
             rec["passed"] = code in passed_codes
+            rec[CHALLENGER_ID] = challenger_c1(rec, market, _bp)
             stocks[code] = rec
             added += 1
         if added or changed:

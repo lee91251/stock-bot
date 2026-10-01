@@ -265,6 +265,7 @@ jobs:
           [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
           [ -f mirae_paper.json ] && git add mirae_paper.json || true
           [ -d candidate_log ] && git add candidate_log/ || true   # 10/1 자가학습 후보 기록
+          [ -f dart_seen.json ] && git add dart_seen.json || true  # 10/1 매수 회차가 매도점검도 수행
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true

@@ -6419,9 +6419,27 @@ def run_auto_buy():
     diag_buckets  = {"65+": 0, "50-64": 0, "<50": 0}
     diag_blocks   = {}                  # 차단 사유 종류별 카운트
     diag_top_score: list = []           # (-score, name, score, blocks) — 최고점 TOP5 추적
-    for ticker, (name, period, sector) in pool.items():
-        r = analyze(ticker, name, period, sector,
-                    dart_data=all_dart.get(ticker), with_sentiment=False)
+    # 10/1 속도 개선: 종목 분석을 3개씩 동시에 (예전 순차 1회 10~15분 → 15분 주기 안에 못 끝나 다음 회차 취소·매도 대기 발생).
+    # KIS 시세조회 한도(초당 20건) 대비 여유 있게 3개 + 종목당 0.15초 간격. 결과 순서는 풀 순서 그대로 유지.
+    from concurrent.futures import ThreadPoolExecutor
+    _kis._ensure_token()  # 스레드들이 동시에 토큰을 발급받지 않도록 먼저 1회 확보
+
+    def _analyze_one(item):
+        _t, (_n, _p, _s) = item
+        try:
+            return analyze(_t, _n, _p, _s, dart_data=all_dart.get(_t), with_sentiment=False)
+        except Exception as _e:
+            print(f"  [{_n}] 분석 오류: {_e}")
+            return None
+        finally:
+            time.sleep(0.15)
+
+    _t0 = time.time()
+    with ThreadPoolExecutor(max_workers=3) as _ex:
+        _analyzed = list(_ex.map(_analyze_one, list(pool.items())))
+    print(f"[자동매수] 분석 소요 {time.time() - _t0:.0f}초 ({len(pool)}종목)")
+
+    for (ticker, (name, period, sector)), r in zip(pool.items(), _analyzed):
         if r:
             sc = r.get("swing_score", 0)
             blocks = r.get("swing_block_reasons", [])
@@ -6456,7 +6474,6 @@ def run_auto_buy():
             if (r.get("swing_signal") and sc >= SWING_SCORE_MIN) or r.get("momentum_signal"):
                 candidates.append(r)
             analyzed_all.append(r)
-        time.sleep(0.4)
 
     # 10/1 자가학습 ① — 검토한 모든 종목의 매수시점 상태 기록 (매매 판단 무관, 실패해도 매수 진행)
     try:
@@ -8617,6 +8634,11 @@ if __name__ == "__main__":
         elif mode == "--marketscan":
             run_market_scan()
         elif mode == "--autobuy":
+            # 10/1: 매수 회차 시작 때 손절·익절 점검 먼저 — 매도 job이 매수 job 뒤에서 최대 12분 줄 서던 손절 지연 해소
+            try:
+                run_auto_sell()
+            except Exception as _e:
+                print(f"[autobuy] 선행 매도점검 오류(매수는 계속): {_e}")
             run_auto_buy()
         elif mode == "--autosell":
             run_auto_sell()

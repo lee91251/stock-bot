@@ -1,0 +1,42 @@
+name: 자가학습 주간 성적표
+
+# 10/1 신설 — 매주 토요일 09:00 KST 자동 채점 + 텔레그램 (매매와 무관, 시간 지연돼도 상관없는 작업이라 GitHub schedule 사용).
+# daily.yml 과 분리한 이유: daily.yml 에 schedule 을 넣으면 mode 가 빈 값이 되어 daily-report job 까지 같이 돈다.
+on:
+  schedule:
+    - cron: "0 0 * * 6"   # 토 00:00 UTC = 토 09:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install pandas numpy requests finance-datareader
+      - name: 주간 채점 + 텔레그램
+        run: python selflearn_weekly.py
+      - name: 성적표 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          [ -f selflearn_report.json ] && git add selflearn_report.json || true
+          git diff --staged --quiet && echo "변경 없음" && exit 0 || true
+          git commit -m "chore: 자가학습 주간 성적표 $(date '+%Y-%m-%d')"
+          for i in 1 2 3; do
+            git push && exit 0
+            git pull --rebase origin master || true
+            sleep 3
+          done
