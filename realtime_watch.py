@@ -151,10 +151,14 @@ class Watcher:
         self.last_save = time.time()
 
     def on_tick(self, f: list):
+        if len(f) <= F_ACML_VOL:
+            return
         code = f[F_CODE]
         try:
             hhmmss, price, chg, acml = f[F_TIME], float(f[F_PRICE]), float(f[F_CHG]), float(f[F_ACML_VOL])
         except (ValueError, IndexError):
+            return
+        if len(code) != 6 or len(hhmmss) != 6 or not hhmmss.isdigit():
             return
         st = self.log["stats"]; st["ticks"] += 1
         st["first_tick"] = st["first_tick"] or hhmmss; st["last_tick"] = hhmmss
@@ -227,8 +231,18 @@ class Watcher:
                             parts = raw.split("|")
                             if len(parts) >= 4 and parts[1] == "H0STCNT0" and parts[0] == "0":
                                 fields = parts[3].split("^")
-                                for i in range(0, len(fields) - COLS + 1, COLS):
-                                    self.on_tick(fields[i:i + COLS])
+                                try:
+                                    cnt = max(1, int(parts[2]))
+                                except ValueError:
+                                    cnt = 1
+                                width = len(fields) // cnt          # 10/1 실측: 건수로 나눠야 정확 (필드 수 고정 가정 X)
+                                for i in range(cnt):
+                                    try:
+                                        self.on_tick(fields[i * width:(i + 1) * width])
+                                    except Exception as e:      # 한 건 오류가 연결 전체를 끊지 않게
+                                        self.log["stats"]["bad_ticks"] = self.log["stats"].get("bad_ticks", 0) + 1
+                                        if self.log["stats"]["bad_ticks"] <= 3:
+                                            print(f"[실시간] 체결 1건 파싱 오류(무시): {e} / {fields[i*width:i*width+6]}")
                         else:
                             try:
                                 j = json.loads(raw)
