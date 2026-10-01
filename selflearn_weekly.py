@@ -38,7 +38,7 @@ def _load_logs() -> list:
             continue
         for code, r in d.get("stocks", {}).items():
             if r.get("price"):
-                rows.append({"date": day, "code": code, **r})
+                rows.append({"date": day, "code": code, "_bp": d.get("breadth_prev"), **r})
     return rows
 
 
@@ -50,7 +50,7 @@ def _actual_buys() -> dict:
     return {(x["date"], x["code"]): x.get("price") for x in h if x.get("side") == "buy"}
 
 
-def _simulate(ohlc: pd.DataFrame, day: str, entry: float):
+def _simulate(ohlc: pd.DataFrame, day: str, entry: float, stop: float = .04, t1: float = .06, t2: float = .10):
     """day 장중 entry 매수 → 봇 매도 규칙. 반환 (net%, 결과) / 진행중이면 (None,'진행중').
 
     보유일: 매수일=0일 (봇 _trading_days_between 과 동일, 매수일 제외).
@@ -62,7 +62,7 @@ def _simulate(ohlc: pd.DataFrame, day: str, entry: float):
         return None, "시세없음"
     bp = entry * (1 + SLIP)
     O, H, L, C = d.Open.values, d.High.values, d.Low.values, d.Close.values
-    stop, t1, t2 = bp * 0.96, bp * 1.06, bp * 1.10
+    stop, t1, t2 = bp * (1 - stop), bp * (1 + t1), bp * (1 + t2)   # 기본 = 봇 현재 규칙(-4/+6/+10)
     parts, half = [], False
 
     def fin(price):
@@ -152,6 +152,38 @@ def _realtime_compare(prices: dict) -> dict:
     return out
 
 
+def _exit_params(c: dict, r: dict) -> dict:
+    """매도 방식 도전자: {"stop": {"atr_k":2,"lo":.03,"hi":.08}, ...} → 종목 변동성(ATR%)에 비례한 폭."""
+    atr_pct = (r.get("atr") / r["price"] * 100) if r.get("atr") and r.get("price") else 3.0
+    out = {}
+    for k in ("stop", "t1", "t2"):
+        spec = (c.get("exit") or {}).get(k)
+        if isinstance(spec, dict):
+            out[k] = min(spec["hi"], max(spec["lo"], spec["atr_k"] * atr_pct / 100))
+        elif isinstance(spec, (int, float)):
+            out[k] = float(spec)
+    return out
+
+
+def _size_weight(c: dict, r: dict) -> float:
+    """매수량 도전자: 조건별 비중 (위에서부터 첫 번째로 맞는 조건). 지표 없으면 그 조건 무시."""
+    try:
+        from learning import _live_feature
+    except Exception:
+        return 1.0
+    mkt = r.get("passed_mkt") or r.get("mkt") or {}
+    for rule in c.get("size", []):
+        ok = True
+        for q in rule.get("when", []):
+            x = _live_feature(q["f"], r, mkt, r.get("_bp"))
+            if x is None or not ((x < q["v"]) if q["op"] == "<" else (x > q["v"])):
+                ok = False
+                break
+        if ok:
+            return float(rule["w"])
+    return float(c.get("default", 1.0))
+
+
 def _readiness(rt: dict, verdicts: dict) -> dict:
     """5~7단계와 도전자 판정에 필요한 데이터가 얼마나 쌓였나."""
     rdays = len(glob.glob(os.path.join(BASE, "realtime_log", "*.json")))
@@ -159,10 +191,10 @@ def _readiness(rt: dict, verdicts: dict) -> dict:
     items = [
         {"name": "7단계 실시간 포착→봇 매수 연결 판단", "need": 10, "have": rdays, "unit": "거래일 실시간 기록",
          "todo": "실시간 포착 vs 15분 봇 가격 비교 → 봇 매수 연결 여부 결정"},
-        {"name": "6단계 손절·익절 폭 학습", "need": 15, "have": rdays, "unit": "거래일 실시간 기록",
-         "todo": "손절선 도달~실제 매도 지연·장중 가격 흐름으로 손절·익절 폭 학습"},
-        {"name": "5단계 사는 양(매수 강도) 학습", "need": 20, "have": cdays, "unit": "거래일 후보 기록",
-         "todo": "시장 상황별 매수 강도 학습 (후보 기록 + 시장 위험지수)"},
+        {"name": "6단계 손절·익절 폭 (8년 검증 완료 → E1 실시간 확인)", "need": 15, "have": rdays, "unit": "거래일 실시간 기록",
+         "todo": "E1(변동성 비례 손절·익절) 실시간 성적 + 장중 손절 지연 데이터로 최종 판단"},
+        {"name": "5단계 사는 양 (8년 검증 완료 → S1 실시간 확인)", "need": 20, "have": cdays, "unit": "거래일 후보 기록",
+         "todo": "S1(좋은 날 1.5배·나쁜 날 쉬기) 실시간 성적으로 최종 판단"},
     ]
     out = {"items": [], "todo": []}
     for it in items:
@@ -204,11 +236,14 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
             print(f"  [주간학습] {code} 시세 실패: {e}")
     try:
         reg = json.load(open(os.path.join(BASE, "challengers.json"), encoding="utf-8"))
-        chs = [c for c in reg.get("challengers", []) if c.get("status") == "shadow"]
+        allc = [c for c in reg.get("challengers", []) if c.get("status") == "shadow"]
     except Exception:
-        reg, chs = {"challengers": [], "history": []}, [{"id": "C1", "name": "시장 나쁜 날 쉬기", "rules": []}]
+        reg, allc = {"challengers": [], "history": []}, [{"id": "C1", "name": "시장 나쁜 날 쉬기", "rules": []}]
+    chs = [c for c in allc if c.get("type", "rule") == "rule"]      # 매수 여부 도전자
+    ex_chs = [c for c in allc if c.get("type") == "exit"]           # 매도 방식 도전자 (6단계)
+    sz_chs = [c for c in allc if c.get("type") == "size"]           # 매수량 도전자 (5단계)
     groups = {"champion": [], "passed": [], "missed": [], "all": []}
-    for c in chs:
+    for c in chs + ex_chs + sz_chs:
         groups[c["id"]] = []
     pending = {k: 0 for k in groups}
     for r in rows:
@@ -232,6 +267,14 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
             if t not in groups: continue
             if status == "완료": groups[t].append(net)
             elif status == "진행중": pending[t] += 1
+        if r.get("passed"):
+            for c in ex_chs:   # 같은 후보를 다른 매도 규칙으로
+                net2, st2 = _simulate(ohlc, r["date"], entry, **_exit_params(c, r))
+                if st2 == "완료": groups[c["id"]].append(net2)
+                elif st2 == "진행중": pending[c["id"]] += 1
+            for c in sz_chs:   # 같은 후보를 다른 매수량으로 (후보 1건당 기대 손익 = 수익률 × 비중)
+                if status == "완료": groups[c["id"]].append(net * _size_weight(c, r))
+                elif status == "진행중": pending[c["id"]] += 1
     res = {k: _summ(v) for k, v in groups.items()}
     cp = res["champion"]
     verdicts = {}
@@ -242,6 +285,14 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
             verdicts[c["id"]] = "도전자 우세 — 회장 승인 검토 가능" if better else "챔피언 유지"
         else:
             verdicts[c["id"]] = f"판정 보류 (표본: 도전자 {ch.get('n', 0)} / 챔피언 {cp.get('n', 0)})"
+    pb = res["passed"]
+    for c in ex_chs + sz_chs:   # 매도·매수량 도전자는 '같은 1차 후보 + 현재 규칙'과 비교
+        ch = res[c["id"]]
+        if ch.get("n", 0) >= MIN_SAMPLES_FOR_VERDICT:
+            better = ch["avg"] - pb["avg"] >= 0.25
+            verdicts[c["id"]] = "도전자 우세 — 회장 승인 검토 가능" if better else "현재 규칙 유지"
+        else:
+            verdicts[c["id"]] = f"판정 보류 (표본 {ch.get('n', 0)}/{MIN_SAMPLES_FOR_VERDICT})"
 
     # ③ 주간 자동 발굴 (8년 가상매매 → 새 도전자 후보) — 실패해도 성적표는 발송
     disc = {}   # 발굴은 성적표 발송 뒤에 따로 (발굴이 시간초과돼도 성적표는 나가게)
@@ -275,6 +326,9 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
     for c in chs:
         lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
         lines.append(f"   └ {rule_text(c.get('rules', []))}이면 쉼 → {verdicts[c['id']]}")
+    for c in ex_chs + sz_chs:
+        lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
+        lines.append(f"   └ {c.get('desc', c.get('name', ''))} → {verdicts[c['id']]} (비교 기준: 1차 후보 전체)")
     lines += [line("1차 후보 전체", res["passed"], pending["passed"]),
               line("놓친 후보(후보였는데 안 삼)", res["missed"], pending["missed"]),
               line("검토 종목 전체", res["all"], pending["all"])]

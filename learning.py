@@ -800,7 +800,8 @@ _C1_DEFAULT = [{"id": "C1", "rules": [{"f": "kospi_1d", "op": "<", "v": C1_KOSPI
 def _active_challengers() -> list:
     try:
         with open(CHALLENGER_REG, encoding="utf-8") as f:
-            return [c for c in json.load(f).get("challengers", []) if c.get("status") == "shadow"]
+            return [c for c in json.load(f).get("challengers", [])
+                    if c.get("status") == "shadow" and c.get("type", "rule") == "rule"]   # 매도·매수량 도전자는 주간 채점에서만
     except Exception:
         return _C1_DEFAULT
 

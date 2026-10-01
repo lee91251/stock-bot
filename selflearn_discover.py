@@ -159,11 +159,11 @@ def _same(a: list, b: list) -> bool:
 
 def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
     """새 도전자 등록 (중복·한도 관리). 반환: 결과 설명."""
-    act = [c for c in reg["challengers"] if c.get("status") == "shadow"]
-    if any(_same(found["rules"], c["rules"]) for c in reg["challengers"]):   # 은퇴한 규칙도 재등록 안 함
+    act = [c for c in reg["challengers"] if c.get("status") == "shadow" and c.get("type", "rule") == "rule"]
+    if any(_same(found["rules"], c["rules"]) for c in reg["challengers"] if c.get("type", "rule") == "rule"):   # 은퇴한 규칙도 재등록 안 함
         return "DUP"
     today = datetime.now().strftime("%Y-%m-%d")
-    nid = f"C{max([int(c['id'][1:]) for c in reg['challengers'] if c['id'][1:].isdigit()] + [1]) + 1}"
+    nid = f"C{max([int(c['id'][1:]) for c in reg['challengers'] if c['id'].startswith('C') and c['id'][1:].isdigit()] + [1]) + 1}"
     new = {"id": nid, "name": "봇 자동 발굴", "rules": found["rules"], "status": "shadow",
            "source": f"{today} 주간 발굴 (학습 {found['train']['gain']:+.2f}%p / 검증 {found['valid']['gain']:+.2f}%p / "
                      f"최종확인 {found['hold']['gain']:+.2f}%p)", "created": today,
