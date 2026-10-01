@@ -88,6 +88,70 @@ def _simulate(ohlc: pd.DataFrame, day: str, entry: float):
     return None, "진행중"
 
 
+def _realtime_compare(prices: dict) -> dict:
+    """실시간 감시(realtime_log) vs 15분 봇: 포착 시점 가격·이후 결과, 손절선 도달 vs 실제 매도 지연."""
+    out = {"alerts": 0, "stop_events": 0}
+    fns = sorted(glob.glob(os.path.join(BASE, "realtime_log", "*.json")))
+    if not fns:
+        return out
+    try:
+        hist = json.load(open(POSITIONS, encoding="utf-8")).get("history", [])
+    except Exception:
+        hist = []
+    def hm2min(t):
+        t = str(t).replace(":", "")
+        return int(t[:2]) * 60 + int(t[2:4]) if len(t) >= 4 and t[:4].isdigit() else None
+    res, pend, both, later, pdiff = [], 0, 0, [], []
+    s_delay, s_pdiff, s_n, s_ev = [], [], 0, 0
+    try:
+        import FinanceDataReader as fdr
+    except Exception:
+        fdr = None
+    for fn in fns:
+        day = os.path.basename(fn)[:10]
+        try:
+            d = json.load(open(fn, encoding="utf-8"))
+        except Exception:
+            continue
+        for a in d.get("alerts", []):
+            out["alerts"] += 1
+            ohlc = prices.get(a["code"])
+            if ohlc is None and fdr is not None:
+                try:
+                    ohlc = fdr.DataReader(a["code"], day); prices[a["code"]] = ohlc
+                except Exception:
+                    ohlc = None
+            if ohlc is not None:
+                net, st = _simulate(ohlc, day, a["price"])
+                if st == "완료": res.append(net)
+                elif st == "진행중": pend += 1
+            b = next((h for h in hist if h.get("side") == "buy" and h.get("date") == day and h.get("code") == a["code"]), None)
+            if b:
+                both += 1
+                ta, tb = hm2min(a["t"]), hm2min(b.get("time", ""))
+                if ta is not None and tb is not None: later.append(tb - ta)
+                if b.get("price"): pdiff.append((b["price"] / a["price"] - 1) * 100)
+        for e in d.get("holding_events", []):
+            if e.get("type") != "손절선":
+                continue
+            s_ev += 1
+            sell = next((h for h in hist if h.get("side") == "sell" and h.get("code") == e["code"] and h.get("date", "") >= day), None)
+            if sell:
+                s_n += 1
+                if sell.get("date") == day:
+                    te, ts = hm2min(e["t"]), hm2min(sell.get("time", ""))
+                    if te is not None and ts is not None: s_delay.append(ts - te)
+                if sell.get("price"): s_pdiff.append((sell["price"] / e["price"] - 1) * 100)
+    import statistics as _st
+    out.update({"alert_result": _summ(res), "alert_pending": pend, "both": both,
+                "bot_later_min": round(_st.mean(later), 1) if later else "-",
+                "bot_price_diff": round(_st.mean(pdiff), 2) if pdiff else 0.0,
+                "stop_events": s_ev, "stop_matched": s_n,
+                "stop_delay_min": round(_st.mean(s_delay), 1) if s_delay else "-",
+                "stop_price_diff": round(_st.mean(s_pdiff), 2) if s_pdiff else 0.0})
+    return out
+
+
 def _summ(vals: list) -> dict:
     if not vals:
         return {"n": 0}
@@ -117,7 +181,7 @@ def run(send: bool = True, discover: bool = True) -> dict:
         chs = [c for c in reg.get("challengers", []) if c.get("status") == "shadow"]
     except Exception:
         reg, chs = {"challengers": [], "history": []}, [{"id": "C1", "name": "시장 나쁜 날 쉬기", "rules": []}]
-    groups = {"champion": [], "passed": [], "all": []}
+    groups = {"champion": [], "passed": [], "missed": [], "all": []}
     for c in chs:
         groups[c["id"]] = []
     pending = {k: 0 for k in groups}
@@ -137,6 +201,7 @@ def run(send: bool = True, discover: bool = True) -> dict:
                 if verdicts.get(c["id"]) == "buy":   # 판정이 없는 옛 기록은 그 도전자 집계에서 제외
                     tags.append(c["id"])
         if actual_price: tags.append("champion")
+        elif r.get("passed"): tags.append("missed")    # 1차 후보였는데 실제로 안 산 종목 (놓친 매수)
         for t in tags:
             if t not in groups: continue
             if status == "완료": groups[t].append(net)
@@ -191,7 +256,18 @@ def run(send: bool = True, discover: bool = True) -> dict:
     for c in chs:
         lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
         lines.append(f"   └ {rule_text(c.get('rules', []))}이면 쉼 → {verdicts[c['id']]}")
-    lines += [line("1차 후보 전체", res["passed"], pending["passed"]), line("검토 종목 전체", res["all"], pending["all"])]
+    lines += [line("1차 후보 전체", res["passed"], pending["passed"]),
+              line("놓친 후보(후보였는데 안 삼)", res["missed"], pending["missed"]),
+              line("검토 종목 전체", res["all"], pending["all"])]
+    rt = _realtime_compare(prices)
+    rep["realtime"] = rt
+    json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
+    if rt.get("alerts"):
+        lines.append(f"⚡ <b>실시간 포착</b> {rt['alerts']}건: " + line("결과", rt["alert_result"], rt["alert_pending"])[2:]
+                     + f" / 같은 날 봇도 산 종목 {rt['both']}건 (봇이 평균 {rt['bot_later_min']}분 늦게, 가격 {rt['bot_price_diff']:+.2f}%)")
+    if rt.get("stop_events"):
+        lines.append(f"⏱ <b>손절 지연</b>: 손절선 닿고 봇이 판 {rt['stop_matched']}건 평균 {rt['stop_delay_min']}분 늦음, "
+                     f"가격 {rt['stop_price_diff']:+.2f}% 차이")
     if disc:
         lines.append(f"🔎 <b>이번 주 자동 발굴:</b> {disc.get('action', '-')}")
         for t in (disc.get("top") or [])[:2]:
