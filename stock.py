@@ -103,6 +103,7 @@ from learning import (
     ai_sell_advisor as _lrn_ai_sell_advisor,  # 6차 (ai_complete 주입)
     ai_trade_journal as _lrn_ai_trade_journal,  # 6차
     AI_ADVISOR_LOG, AI_ADVISOR_MIN_SAMPLES, AI_ADVISOR_MIN_ACCURACY,
+    log_candidates,  # 10/1 자가학습 ① 후보 기록
 )
 
 
@@ -6413,6 +6414,7 @@ def run_auto_buy():
     # DART 데이터는 KR_STOCKS만 (market_scan 종목은 코드 정보 부족하여 스킵)
     all_dart = get_all_dart_data(KR_STOCKS)
     candidates = []
+    analyzed_all = []                   # 10/1 자가학습: 검토한 전 종목 (산 것+안 산 것) 기록용
     diag_buckets  = {"65+": 0, "50-64": 0, "<50": 0}
     diag_blocks   = {}                  # 차단 사유 종류별 카운트
     diag_top_score: list = []           # (-score, name, score, blocks) — 최고점 TOP5 추적
@@ -6452,7 +6454,20 @@ def run_auto_buy():
             # swing_signal (점수≥65 + 안전조건) 또는 momentum_signal (급등 +3%/vol+200%) 둘 중 하나
             if (r.get("swing_signal") and sc >= SWING_SCORE_MIN) or r.get("momentum_signal"):
                 candidates.append(r)
+            analyzed_all.append(r)
         time.sleep(0.4)
+
+    # 10/1 자가학습 ① — 검토한 모든 종목의 매수시점 상태 기록 (매매 판단 무관, 실패해도 매수 진행)
+    try:
+        _n = log_candidates(
+            analyzed_all,
+            {"risk": risk.get("score"), "risk_level": risk.get("level"),
+             "fg": fg.get("score"), "kospi_chg": (mood or {}).get("kospi_chg")},
+            {c["ticker"].split(".")[0] for c in candidates},
+        )
+        print(f"[후보기록] 오늘 신규 {_n}종목 기록 (검토 {len(analyzed_all)})")
+    except Exception as e:
+        print(f"[후보기록] 오류(매매 영향 없음): {e}")
 
     # 진단 로그 — swing_signal 통과 0인 경우 어느 조건이 막는지 즉시 파악 가능
     diag_top_score.sort()

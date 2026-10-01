@@ -736,3 +736,75 @@ def ai_trade_journal(stock_info: dict, hold_days: int, pct: float,
     except Exception as e:
         print(f"  [AI 일기] 호출 오류: {e}")
         return ""
+
+
+# ════════════════════════════════════════════════
+# 자가학습 ① 후보 기록 (10/1 — 회장 "매매하면서 스스로 배우는 봇")
+# 자동매수 때 봇이 검토한 *모든* 종목(산 것 + 안 산 것)의 매수시점 상태를 하루 1건씩 기록.
+# 결과(이후 1·3·5일 수익)는 나중에 주간 학습이 시세로 채움 → 하루 1~2건 대신 수백 건 학습 재료.
+# 매매 판단에는 일절 관여하지 않음 (기록 전용).
+# ════════════════════════════════════════════════
+CANDIDATE_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "candidate_log")
+_CAND_FIELDS = ("price", "change", "swing_score", "score", "rsi", "vol_ratio", "bb_pct",
+                "ret_1w", "ret_1m", "ret_3m", "pct_from_high", "pct_from_low", "macd_cross",
+                "per", "pbr", "roe", "mktcap", "foreign_eok", "inst_eok", "atr")
+
+
+def _cand_val(v):
+    if isinstance(v, bool) or v is None:
+        return v
+    if isinstance(v, (int, float)):
+        return round(float(v), 3)
+    return None
+
+
+def log_candidates(results: list, market: dict, passed_codes: set | None = None) -> int:
+    """자동매수 1회차의 분석 결과를 오늘자 후보 로그에 병합.
+
+    results: analyze() 결과 dict 리스트 / market: {"risk":..,"risk_level":..,"fg":..,"kospi_chg":..}
+    같은 날 같은 종목은 첫 기록만 유지(첫 판단 시점), 이후 회차에서 매수신호 통과 시 passed만 갱신.
+    파일이 실제로 바뀔 때만 저장 → 15분마다 돌아도 git 커밋 폭증 없음. 반환=새로 추가된 종목 수.
+    """
+    try:
+        os.makedirs(CANDIDATE_LOG_DIR, exist_ok=True)
+        now = _now_kst()
+        fn = os.path.join(CANDIDATE_LOG_DIR, f"{now.strftime('%Y-%m-%d')}.json")
+        data = {}
+        if os.path.exists(fn):
+            with open(fn, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        stocks = data.setdefault("stocks", {})
+        data.setdefault("market_first", market)          # 그날 첫 회차 시장 상태
+        passed_codes = passed_codes or set()
+        added = changed = 0
+        for r in results:
+            if not r or not r.get("ticker"):
+                continue
+            code = str(r["ticker"]).split(".")[0]
+            if code in stocks:
+                if code in passed_codes and not stocks[code].get("passed"):
+                    stocks[code]["passed"] = True
+                    stocks[code]["passed_t"] = now.strftime("%H:%M")
+                    changed += 1
+                continue
+            rec = {"t": now.strftime("%H:%M"), "name": r.get("name", ""), "sector": r.get("sector", "")}
+            for k in _CAND_FIELDS:
+                rec[k] = _cand_val(r.get(k))
+            rec["signal"] = bool(r.get("swing_signal"))
+            rec["momentum"] = bool(r.get("momentum_signal"))
+            rec["blocks"] = [str(b)[:30] for b in (r.get("swing_block_reasons") or [])][:5]
+            rec["tp_pick"] = bool(r.get("from_tomorrow_picks"))
+            rec["sector_bonus"] = r.get("sector_bonus", 0) or 0
+            ds = r.get("dart_signals") or {}
+            rec["dart"] = sorted(k for k, v in ds.items() if v) if isinstance(ds, dict) else []
+            rec["mkt"] = market
+            rec["passed"] = code in passed_codes
+            stocks[code] = rec
+            added += 1
+        if added or changed:
+            with open(fn, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        return added
+    except Exception as e:
+        print(f"  [후보기록] 오류(매매 영향 없음): {e}")
+        return 0

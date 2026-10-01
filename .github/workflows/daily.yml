@@ -264,6 +264,7 @@ jobs:
           [ -f ai_advisor_log.json ] && git add ai_advisor_log.json || true
           [ -f tomorrow_picks.json ] && git add tomorrow_picks.json || true
           [ -f mirae_paper.json ] && git add mirae_paper.json || true
+          [ -d candidate_log ] && git add candidate_log/ || true   # 10/1 자가학습 후보 기록
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true
