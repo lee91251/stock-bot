@@ -1,0 +1,59 @@
+name: 실시간 감시 알림 (시험)
+
+# 10/1 신설 — 장중 09:00~14:30 한국투자증권 웹소켓으로 감시 종목 40개 실시간 추적 (매매 안 함, 알림·기록만).
+# 시작: daily.yml 장전 브리핑(08:50) job 끝에서 자동 실행 / 수동 실행도 가능(stop 시각 지정).
+on:
+  workflow_dispatch:
+    inputs:
+      stop:
+        description: "감시 종료 시각 (HH:MM, KST)"
+        required: false
+        default: "14:30"
+      no_wait:
+        description: "09:00 전이라도 바로 시작 (테스트용, true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: realtime-watch
+  cancel-in-progress: false
+
+env:
+  TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  KIS_APP_KEY:      ${{ secrets.KIS_APP_KEY }}
+  KIS_APP_SECRET:   ${{ secrets.KIS_APP_SECRET }}
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350   # GitHub 무료 한도 6시간 안 (09:00~14:30 = 5.5시간)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: 패키지 설치
+        run: pip install -r requirements.txt websockets
+      - name: 실시간 감시
+        run: |
+          ARGS="--stop ${{ github.event.inputs.stop || '14:30' }}"
+          if [ "${{ github.event.inputs.no_wait }}" = "true" ]; then ARGS="$ARGS --no-wait"; fi
+          python -u realtime_watch.py $ARGS
+      - name: 기록 커밋
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          [ -d realtime_log ] && git add realtime_log/*.json || true
+          git diff --staged --quiet && echo "변경 없음" && exit 0 || true
+          git commit -m "chore: 실시간 감시 기록 $(date '+%Y-%m-%d %H:%M')"
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            git pull --rebase origin master || true
+            sleep 5
+          done
