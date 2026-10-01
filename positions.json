@@ -14,20 +14,6 @@
       "order_no": "0000032434",
       "imminent_state": ""
     },
-    "399720": {
-      "name": "가온칩스",
-      "qty": 22,
-      "buy_price": 45300.0,
-      "buy_date": "2026-09-22",
-      "buy_time": "14:32",
-      "buy_amount": 996600.0,
-      "partial_sold": false,
-      "score": 61,
-      "swing_score": 56,
-      "sector": "기타",
-      "order_no": "0000031039",
-      "imminent_state": ""
-    },
     "058850": {
       "name": "KTcs",
       "qty": 461,
@@ -1127,6 +1113,23 @@
       "reason": "swing_score 66",
       "sector": "기타",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-10-01",
+      "time": "09:32",
+      "side": "sell",
+      "code": "399720",
+      "name": "가온칩스",
+      "qty": 22,
+      "price": 46300.0,
+      "amount": 1018600.0,
+      "reason": "5거래일 경과 강제 매도 (+2.2%)",
+      "pct": 2.21,
+      "sector": "기타",
+      "buy_price": 45300.0,
+      "profit": 22000,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1348,7 +1351,7 @@
     "2026-10-01": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
