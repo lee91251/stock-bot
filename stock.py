@@ -1483,68 +1483,106 @@ def get_fear_greed(mood: dict) -> dict:
 # ════════════════════════════════════════════════
 # 시장 분위기
 # ════════════════════════════════════════════════
+def _yf_last2(ticker: str):
+    """야후 일봉 마지막 2개 종가 (history 우선 — .info 보다 클라우드 서버에서 덜 막힘)."""
+    h = yf.Ticker(ticker).history(period="5d")
+    if h is None or len(h) == 0:
+        raise ValueError(f"{ticker} 빈 응답")
+    c = h["Close"].dropna()
+    return float(c.iloc[-1]), (float(c.iloc[-2]) if len(c) >= 2 else float(c.iloc[-1]))
+
+
+def _fred_last(series: str) -> float:
+    """FRED 공개 CSV 마지막 값 (VIX 등 야후 차단 시 대체). 하루 늦은 값."""
+    r = requests.get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}", timeout=10)
+    rows = [x.split(",") for x in r.text.strip().splitlines()[1:]]
+    vals = [float(v) for _, v in rows if v not in (".", "")]
+    return vals[-1]
+
+
 def get_market_mood() -> dict:
-    mood: dict = {}
+    """시장 분위기 (코스피·VIX·환율·유가·금·S&P).
+
+    10/1 fix: 예전엔 전체를 try 하나로 묶어, 야후 한 항목만 실패해도 이미 받은 코스피(KIS)까지
+    전부 기본값(코스피 0%, VIX 20)으로 덮어씀 → GitHub 서버에서 시장 위험지수가 늘 '안전'으로 계산됨.
+    이제 항목별로 따로 받고 대체 출처 사용, 못 받은 항목은 mood["missing"] 에 기록.
+    """
+    mood: dict = {"missing": [], "sources": {}}
+
+    def take(key, val, src):
+        mood[key] = val
+        mood["sources"][key] = src
+
+    # 코스피: KIS → 야후 → FDR
     try:
-        kospi_ok = False
-        if _kis.available():
-            try:
-                ki = _kis.get_kospi()
-                if ki:
-                    mood["kospi_price"] = round(_safe_float(ki.get("bstp_nmix_prpr")), 2)
-                    mood["kospi_chg"]   = round(_safe_float(ki.get("prdy_ctrt")), 2)
-                    kospi_ok = True
-            except Exception:
-                pass
+        ki = _kis.get_kospi() if _kis.available() else {}
+        if ki and ki.get("bstp_nmix_prpr"):
+            take("kospi_price", round(_safe_float(ki.get("bstp_nmix_prpr")), 2), "KIS")
+            mood["kospi_chg"] = round(_safe_float(ki.get("prdy_ctrt")), 2)
+    except Exception as e:
+        print(f"  [무드] KIS 코스피 실패: {e}")
+    if "kospi_price" not in mood:
+        try:
+            last, prev = _yf_last2("^KS11")
+            take("kospi_price", round(last, 2), "yahoo"); mood["kospi_chg"] = round((last - prev) / prev * 100, 2)
+        except Exception as e:
+            print(f"  [무드] 야후 코스피 실패: {e}")
+    if "kospi_price" not in mood:
+        try:
+            import FinanceDataReader as _fdr
+            k = _fdr.DataReader("KS11", (_now_kst() - timedelta(days=10)).strftime("%Y-%m-%d"))["Close"].dropna()
+            take("kospi_price", round(float(k.iloc[-1]), 2), "FDR")
+            mood["kospi_chg"] = round((float(k.iloc[-1]) / float(k.iloc[-2]) - 1) * 100, 2) if len(k) >= 2 else 0
+        except Exception as e:
+            print(f"  [무드] FDR 코스피 실패: {e}")
+    if "kospi_price" not in mood:
+        mood["kospi_chg"] = mood["kospi_price"] = 0
+        mood["missing"].append("kospi")
 
-        if not kospi_ok:
-            kospi = yf.Ticker("^KS11").history(period="5d")
-            if len(kospi) >= 2:
-                mood["kospi_chg"]   = round(
-                    (kospi["Close"].iloc[-1] - kospi["Close"].iloc[-2])
-                    / kospi["Close"].iloc[-2] * 100, 2
-                )
-                mood["kospi_price"] = round(float(kospi["Close"].iloc[-1]), 2)
-            else:
-                mood["kospi_chg"] = mood["kospi_price"] = 0
+    # VIX: 야후 → FRED(하루 늦음)
+    try:
+        take("vix", round(_yf_last2("^VIX")[0], 2), "yahoo")
+    except Exception as e:
+        print(f"  [무드] 야후 VIX 실패: {e}")
+        try:
+            take("vix", round(_fred_last("VIXCLS"), 2), "FRED")
+        except Exception as e2:
+            print(f"  [무드] FRED VIX 실패: {e2}")
+            mood["vix"] = 20; mood["missing"].append("vix")
 
-        vix    = yf.Ticker("^VIX").info
-        usdkrw = yf.Ticker("KRW=X").info
-        wti    = yf.Ticker("CL=F").info
-        gold   = yf.Ticker("GC=F").info
-        sp500  = yf.Ticker("^GSPC").history(period="2d")
+    # S&P500 등락 (공포탐욕 계산용)
+    try:
+        last, prev = _yf_last2("^GSPC")
+        take("sp500_chg", round((last - prev) / prev * 100, 2), "yahoo")
+    except Exception as e:
+        print(f"  [무드] 야후 S&P 실패: {e}")
+        mood["sp500_chg"] = 0; mood["missing"].append("sp500")
 
-        mood["sp500_chg"] = (
-            round(
-                (sp500["Close"].iloc[-1] - sp500["Close"].iloc[-2])
-                / sp500["Close"].iloc[-2] * 100, 2
-            ) if len(sp500) >= 2 else 0
-        )
-        mood["vix"]    = round(float(vix.get("regularMarketPrice") or 20), 2)
-        mood["usdkrw"] = round(float(usdkrw.get("regularMarketPrice") or 1300), 2)
-        mood["wti"]    = round(float(wti.get("regularMarketPrice") or 75), 2)
-        mood["gold"]   = round(float(gold.get("regularMarketPrice") or 2000), 2)
+    # 환율·유가·금 (표시용)
+    for key, tk, dflt in [("usdkrw", "KRW=X", 1300), ("wti", "CL=F", 75), ("gold", "GC=F", 2000)]:
+        try:
+            take(key, round(_yf_last2(tk)[0], 2), "yahoo")
+        except Exception as e:
+            print(f"  [무드] 야후 {key} 실패: {e}")
+            mood[key] = dflt; mood["missing"].append(key)
 
-        if mood["vix"] > 30:
-            mood["status"] = "위험"
-            mood["advice"] = "⛔ 공포지수 매우 높음 — 오늘은 관망 추천. 급하게 매수 금지."
-        elif mood["vix"] > 20:
-            mood["status"] = "주의"
-            mood["advice"] = "⚠️ 시장 불안정 — 검증된 가치주 위주로 소량만 접근."
-        elif mood["kospi_chg"] < -1.5:
-            mood["status"] = "하락"
-            mood["advice"] = "⚠️ 코스피 하락 중 — 분할매수 전략으로 접근 권장."
-        else:
-            mood["status"] = "양호"
-            mood["advice"] = "✅ 시장 분위기 양호 — 추천 종목 적극 검토 가능."
-
-    except Exception:
-        mood = {
-            "kospi_chg": 0, "kospi_price": 0, "sp500_chg": 0,
-            "vix": 20, "usdkrw": 1300, "wti": 75, "gold": 2000,
-            "status": "확인불가",
-            "advice": "⚠️ 시장 데이터 수집 실패 — 직접 확인 필요.",
-        }
+    if mood["vix"] > 30:
+        mood["status"] = "위험"
+        mood["advice"] = "⛔ 공포지수 매우 높음 — 오늘은 관망 추천. 급하게 매수 금지."
+    elif mood["vix"] > 20:
+        mood["status"] = "주의"
+        mood["advice"] = "⚠️ 시장 불안정 — 검증된 가치주 위주로 소량만 접근."
+    elif mood["kospi_chg"] < -1.5:
+        mood["status"] = "하락"
+        mood["advice"] = "⚠️ 코스피 하락 중 — 분할매수 전략으로 접근 권장."
+    else:
+        mood["status"] = "양호"
+        mood["advice"] = "✅ 시장 분위기 양호 — 추천 종목 적극 검토 가능."
+    if "kospi" in mood["missing"] and "vix" in mood["missing"]:
+        mood["status"] = "확인불가"
+        mood["advice"] = "⚠️ 시장 데이터 수집 실패 — 직접 확인 필요."
+    if mood["missing"]:
+        print(f"  [무드] 기본값 사용 항목: {mood['missing']} / 출처: {mood['sources']}")
     return mood
 
 
