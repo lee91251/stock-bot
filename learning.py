@@ -826,11 +826,16 @@ def challenger_verdicts(rec: dict, market: dict, breadth_prev) -> dict:
     for c in _active_challengers():
         v = "buy"
         for r in c.get("rules", []):
-            x = _live_feature(r["f"], rec, market, breadth_prev)
-            if x is None:
-                continue
-            if (x < r["v"]) if r["op"] == "<" else (x > r["v"]):
-                v = f"skip:{r['f']}{x:+.2f}"
+            conds = r["all"] if "all" in r else [r]       # "all" = 동시 조건 (모두 걸려야 제외)
+            hits = []
+            for q in conds:
+                x = _live_feature(q["f"], rec, market, breadth_prev)
+                if x is None or not ((x < q["v"]) if q["op"] == "<" else (x > q["v"])):
+                    hits = None
+                    break
+                hits.append(f"{q['f']}{x:+.2f}")
+            if hits:
+                v = "skip:" + "&".join(hits)
                 break
         out[c["id"]] = v
     return out

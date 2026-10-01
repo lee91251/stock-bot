@@ -38,17 +38,29 @@ def save_registry(reg: dict):
     json.dump(reg, open(REG, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 
+def _cond_text(r: dict) -> str:
+    if "all" in r:   # 동시 조건 (A 그리고 B)
+        return "(" + " 그리고 ".join(_cond_text(x) for x in r["all"]) + ")"
+    return f"{NAMES.get(r['f'], r['f'])} {r['op']} {r['v']:g}"
+
+
 def rule_text(rules: list) -> str:
-    return " 또는 ".join(f"{NAMES.get(r['f'], r['f'])} {r['op']} {r['v']:g}" for r in rules)
+    return " 또는 ".join(_cond_text(r) for r in rules)
 
 
 def _mask(df: pd.DataFrame, rules: list) -> pd.Series:
     """True = 이 규칙에 걸려 '제외'. 지표가 비어 있으면 제외 안 함 (실시간과 동일)."""
+    def one(r):
+        if "all" in r:   # 동시 조건: 모두 걸려야 제외
+            h = pd.Series(True, index=df.index)
+            for x in r["all"]:
+                h &= one(x)
+            return h
+        col = df[r["f"]]
+        return ((col < r["v"]) if r["op"] == "<" else (col > r["v"])).fillna(False)
     m = pd.Series(False, index=df.index)
     for r in rules:
-        col = df[r["f"]]
-        hit = (col < r["v"]) if r["op"] == "<" else (col > r["v"])
-        m |= hit.fillna(False)
+        m |= one(r)
     return m
 
 
@@ -86,6 +98,26 @@ def discover(X: pd.DataFrame, live_features: list) -> dict:
             a, b = singles[i][1], singles[j][1]
             if a[0]["f"] != b[0]["f"]:
                 cands.append(a + b)
+    # ── 동시 조건(A 그리고 B) 탐색: 두 지표가 '함께' 나쁠 때만 제외 (AI 연구원 없이 '진 매매 공통 패턴' 찾기) ──
+    feats_ok = [f for f in live_features if f in tr and tr[f].notna().sum() >= 100]
+    qs = {f: [float(np.nanquantile(tr[f], q)) for q in (.2, .35, .65, .8)] for f in feats_ok}
+    pairs = []
+    for i, f1 in enumerate(feats_ok):
+        for f2 in feats_ok[i + 1:]:
+            for k1, v1 in enumerate(qs[f1]):
+                for k2, v2 in enumerate(qs[f2]):
+                    r = [{"all": [{"f": f1, "op": "<" if k1 < 2 else ">", "v": round(v1, 3)},
+                                  {"f": f2, "op": "<" if k2 < 2 else ">", "v": round(v2, 3)}]}]
+                    msk = _mask(tr, r)
+                    if msk.sum() < max(40, .05 * len(tr)):      # 너무 드문 조합은 우연 → 제외
+                        continue
+                    out["checked"] += 1
+                    g = tr[~msk].net_pct.mean() - base["tr"]
+                    if g > .15:
+                        pairs.append((g, r))
+    pairs.sort(key=lambda x: -x[0])
+    cands += [r for _, r in pairs[:20]]
+
     scored = []
     for rules in cands:
         gt, gv, gh = _gain(tr, rules, base["tr"]), _gain(va, rules, base["va"]), _gain(ho, rules, base["ho"])
@@ -106,12 +138,23 @@ def discover(X: pd.DataFrame, live_features: list) -> dict:
     return out
 
 
+def _flat(rules: list) -> list:
+    out = []
+    for r in rules:
+        out += [("&",) + tuple(sorted((x["f"], x["op"]) for x in r["all"]))] if "all" in r else [(r["f"], r["op"])]
+    return sorted(out)
+
+
+def _vals(rules: list) -> list:
+    v = []
+    for r in sorted(rules, key=lambda r: str(_flat([r]))):
+        v += [x["v"] for x in sorted(r["all"], key=lambda x: x["f"])] if "all" in r else [r["v"]]
+    return v
+
+
 def _same(a: list, b: list) -> bool:
-    if {r["f"] for r in a} != {r["f"] for r in b}: return False
-    for r in a:
-        m = next(x for x in b if x["f"] == r["f"])
-        if m["op"] != r["op"] or abs(m["v"] - r["v"]) > max(abs(r["v"]) * .1, .05): return False
-    return True
+    if _flat(a) != _flat(b): return False
+    return all(abs(x - y) <= max(abs(x) * .1, .05) for x, y in zip(_vals(a), _vals(b)))
 
 
 def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
