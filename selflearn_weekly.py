@@ -303,7 +303,7 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
                 json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
                 rmsg = sr.message(rres)
                 print(rmsg)
-                if send:
+                if send and not str(rres.get("action", "")).startswith("AI 연구원 건너뜀"):   # 키·크레딧 없으면 조용히
                     from notify import tg_send
                     tg_send(rmsg, silent=True)
             except Exception as e:
