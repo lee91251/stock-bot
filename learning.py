@@ -788,13 +788,52 @@ def _prev_breadth(today: str):
 
 
 def challenger_c1(rec: dict, market: dict, breadth_prev) -> str:
-    """도전자 C1 판정: 'buy' 또는 'skip:사유'. 데이터 없으면 해당 조건은 통과로 간주."""
-    k = (market or {}).get("kospi_chg")
-    if k is not None and k < C1_KOSPI_MIN:
-        return f"skip:코스피{k:+.2f}%"
-    if breadth_prev is not None and breadth_prev < C1_BREADTH_MIN:
-        return f"skip:전일상승비율{breadth_prev:.0f}%"
-    return "buy"
+    """(하위호환) 도전자 C1 판정 — 이제 challengers.json 의 C1 정의를 사용."""
+    return challenger_verdicts(rec, market, breadth_prev).get("C1", "buy")
+
+
+CHALLENGER_REG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "challengers.json")
+_C1_DEFAULT = [{"id": "C1", "rules": [{"f": "kospi_1d", "op": "<", "v": C1_KOSPI_MIN},
+                                      {"f": "breadth_prev", "op": "<", "v": C1_BREADTH_MIN}], "status": "shadow"}]
+
+
+def _active_challengers() -> list:
+    try:
+        with open(CHALLENGER_REG, encoding="utf-8") as f:
+            return [c for c in json.load(f).get("challengers", []) if c.get("status") == "shadow"]
+    except Exception:
+        return _C1_DEFAULT
+
+
+def _live_feature(name: str, rec: dict, market: dict, breadth_prev):
+    """발굴기(selflearn_virtual.LIVE_FEATURES)와 같은 이름의 지표를 실시간 기록에서 계산."""
+    if name == "kospi_1d":
+        return (market or {}).get("kospi_chg")
+    if name == "breadth_prev":
+        return breadth_prev
+    if name == "dist_ma20":
+        p, m = rec.get("price"), rec.get("ma20")
+        return (p / m - 1) * 100 if p and m else None
+    if name == "atr_pct":
+        p, a = rec.get("price"), rec.get("atr")
+        return a / p * 100 if p and a else None
+    return rec.get(name)
+
+
+def challenger_verdicts(rec: dict, market: dict, breadth_prev) -> dict:
+    """그림자 운영 중인 모든 도전자 판정 {id: 'buy' | 'skip:사유'}. 규칙 하나라도 걸리면 skip, 지표 없으면 통과."""
+    out = {}
+    for c in _active_challengers():
+        v = "buy"
+        for r in c.get("rules", []):
+            x = _live_feature(r["f"], rec, market, breadth_prev)
+            if x is None:
+                continue
+            if (x < r["v"]) if r["op"] == "<" else (x > r["v"]):
+                v = f"skip:{r['f']}{x:+.2f}"
+                break
+        out[c["id"]] = v
+    return out
 
 
 def log_candidates(results: list, market: dict, passed_codes: set | None = None) -> int:
@@ -828,7 +867,9 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
                     stocks[code]["passed"] = True
                     stocks[code]["passed_t"] = now.strftime("%H:%M")
                     stocks[code]["passed_mkt"] = market   # 통과 시점 시장 (도전자 판정 기준)
-                    stocks[code][CHALLENGER_ID] = challenger_c1(stocks[code], market, _bp)
+                    _v = challenger_verdicts(stocks[code], market, _bp)
+                    stocks[code]["ch"] = _v
+                    stocks[code][CHALLENGER_ID] = _v.get("C1", "buy")
                     changed += 1
                 continue
             rec = {"t": now.strftime("%H:%M"), "name": r.get("name", ""), "sector": r.get("sector", ""),
@@ -845,7 +886,9 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
             rec["dart"] = sorted(k for k, v in ds.items() if v) if isinstance(ds, dict) else []
             rec["mkt"] = market
             rec["passed"] = code in passed_codes
-            rec[CHALLENGER_ID] = challenger_c1(rec, market, _bp)
+            _v = challenger_verdicts(rec, market, _bp)
+            rec["ch"] = _v                                  # 모든 도전자 판정 (challengers.json)
+            rec[CHALLENGER_ID] = _v.get("C1", "buy")        # 하위호환
             stocks[code] = rec
             added += 1
         if added or changed:

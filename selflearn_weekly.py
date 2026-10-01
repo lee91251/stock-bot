@@ -4,7 +4,8 @@
 매주 토요일 자동 실행 (.github/workflows/selflearn.yml):
   1) candidate_log/*.json (봇이 검토한 전 종목 기록)을 읽어
   2) 기록 시점 가격에 샀다면 봇 매도 규칙으로 어떻게 됐을지 실제 시세(FinanceDataReader)로 채점
-  3) 챔피언(현 규칙: 실제로 산 종목) vs 도전자 C1(그림자: 1차 후보 중 C1이 'buy') vs 전체 후보 비교
+  3) 챔피언(현 규칙: 실제로 산 종목) vs 도전자들(challengers.json, 그림자) vs 전체 후보 비교
+  3-1) 8년 가상매매로 새 도전자 자동 발굴 (selflearn_discover) — 3구간 검증 통과 시 그림자 등록
   4) selflearn_report.json 저장 + 텔레그램 주간 성적표 (무음)
 매매에는 일절 관여하지 않음. 도전자 승격은 회장 승인 사항 (자동 승격 없음).
 
@@ -95,7 +96,7 @@ def _summ(vals: list) -> dict:
             "avg": round(float(s.mean()), 3), "big_loss": round(float((s <= -5).mean() * 100), 1)}
 
 
-def run(send: bool = True) -> dict:
+def run(send: bool = True, discover: bool = True) -> dict:
     import FinanceDataReader as fdr
     rows = _load_logs()
     buys = _actual_buys()
@@ -111,7 +112,14 @@ def run(send: bool = True) -> dict:
                 prices[code] = df
         except Exception as e:
             print(f"  [주간학습] {code} 시세 실패: {e}")
-    groups = {"champion": [], "challenger": [], "passed": [], "all": []}
+    try:
+        reg = json.load(open(os.path.join(BASE, "challengers.json"), encoding="utf-8"))
+        chs = [c for c in reg.get("challengers", []) if c.get("status") == "shadow"]
+    except Exception:
+        reg, chs = {"challengers": [], "history": []}, [{"id": "C1", "name": "시장 나쁜 날 쉬기", "rules": []}]
+    groups = {"champion": [], "passed": [], "all": []}
+    for c in chs:
+        groups[c["id"]] = []
     pending = {k: 0 for k in groups}
     for r in rows:
         key = (r["date"], r["code"])
@@ -122,41 +130,74 @@ def run(send: bool = True) -> dict:
         entry = actual_price or r["price"]
         net, status = _simulate(ohlc, r["date"], entry)
         tags = ["all"]
-        if r.get("passed"): tags.append("passed")
-        if r.get("passed") and r.get("C1") == "buy": tags.append("challenger")
+        if r.get("passed"):
+            tags.append("passed")
+            verdicts = r.get("ch") or ({"C1": r["C1"]} if r.get("C1") else {})
+            for c in chs:
+                if verdicts.get(c["id"]) == "buy":   # 판정이 없는 옛 기록은 그 도전자 집계에서 제외
+                    tags.append(c["id"])
         if actual_price: tags.append("champion")
         for t in tags:
+            if t not in groups: continue
             if status == "완료": groups[t].append(net)
             elif status == "진행중": pending[t] += 1
     res = {k: _summ(v) for k, v in groups.items()}
+    cp = res["champion"]
+    verdicts = {}
+    for c in chs:
+        ch = res[c["id"]]
+        if ch.get("n", 0) >= MIN_SAMPLES_FOR_VERDICT and cp.get("n", 0) >= 30:
+            better = ch["avg"] - cp["avg"] >= 0.25 and ch["big_loss"] <= cp["big_loss"]
+            verdicts[c["id"]] = "도전자 우세 — 회장 승인 검토 가능" if better else "챔피언 유지"
+        else:
+            verdicts[c["id"]] = f"판정 보류 (표본: 도전자 {ch.get('n', 0)} / 챔피언 {cp.get('n', 0)})"
+
+    # ③ 주간 자동 발굴 (8년 가상매매 → 새 도전자 후보) — 실패해도 성적표는 발송
+    disc = {}
+    if discover:
+        try:
+            import selflearn_discover as sd
+            disc = sd.run(live_scores=res)
+        except Exception as e:
+            disc = {"action": f"발굴 실패: {e}"}
+            print(f"  [주간학습] 발굴 오류: {e}")
+    try:
+        reg = json.load(open(os.path.join(BASE, "challengers.json"), encoding="utf-8"))
+    except Exception:
+        pass
     rep = {
         "updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "period": [start, max(r["date"] for r in rows)],
         "days": len({r["date"] for r in rows}),
         "records": len(rows),
-        "groups": res, "pending": pending,
-        "challenger": "C1 (코스피 장중 -0.24% 미만 또는 전일 상승종목 39% 미만인 날은 매수 쉼)",
+        "groups": res, "pending": pending, "verdicts": verdicts,
+        "challengers": [{"id": c["id"], "name": c.get("name"), "rules": c.get("rules"), "status": c.get("status"),
+                         "source": c.get("source")} for c in reg.get("challengers", [])],
+        "discovery": disc,
     }
-    ch, cp = res["challenger"], res["champion"]
-    if ch.get("n", 0) >= MIN_SAMPLES_FOR_VERDICT and cp.get("n", 0) >= 30:
-        better = ch["avg"] - cp["avg"] >= 0.25 and ch["big_loss"] <= cp["big_loss"]
-        rep["verdict"] = "도전자 우세 — 회장 승인 검토 가능" if better else "챔피언 유지"
-    else:
-        rep["verdict"] = f"판정 보류 (표본 부족: 도전자 {ch.get('n', 0)}건 / 챔피언 {cp.get('n', 0)}건)"
-    json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
 
     def line(name, g, p):
         if not g.get("n"):
             return f"• {name}: 완료 0건 (진행중 {p})"
         return f"• {name}: {g['n']}건 승률 {g['win']}% 평균 {g['avg']:+.2f}% 큰손실 {g['big_loss']}% (진행중 {p})"
-    msg = (f"🧠 <b>자가학습 주간 성적표</b>\n"
-           f"기록 {rep['period'][0]}~{rep['period'][1]} ({rep['days']}거래일, {rep['records']}건)\n"
-           + line("챔피언(실제 매수)", cp, pending["champion"]) + "\n"
-           + line("도전자 C1(그림자)", ch, pending["challenger"]) + "\n"
-           + line("1차 후보 전체", res["passed"], pending["passed"]) + "\n"
-           + line("검토 종목 전체", res["all"], pending["all"]) + "\n"
-           f"<b>판정:</b> {rep['verdict']}\n"
-           f"<i>그림자 운영 = 실매매 무변경. 승격은 회장 승인.</i>")
+    try:
+        from selflearn_discover import rule_text
+    except Exception:
+        rule_text = lambda r: str(r)
+    lines = [f"🧠 <b>자가학습 주간 성적표</b>",
+             f"기록 {rep['period'][0]}~{rep['period'][1]} ({rep['days']}거래일, {rep['records']}건)",
+             line("챔피언(실제 매수)", cp, pending["champion"])]
+    for c in chs:
+        lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
+        lines.append(f"   └ {rule_text(c.get('rules', []))}이면 쉼 → {verdicts[c['id']]}")
+    lines += [line("1차 후보 전체", res["passed"], pending["passed"]), line("검토 종목 전체", res["all"], pending["all"])]
+    if disc:
+        lines.append(f"🔎 <b>이번 주 자동 발굴:</b> {disc.get('action', '-')}")
+        for t in (disc.get("top") or [])[:2]:
+            lines.append(f"   · {t['규칙']} → 학습 {t['학습']:+.2f} / 검증 {t['검증']:+.2f} / 최종 {t['최종확인']:+.2f}%p {'✅' if t['통과'] else '❌'}")
+    lines.append("<i>그림자 운영 = 실매매 무변경. 실제 반영은 회장 승인.</i>")
+    msg = chr(10).join(lines)
     print(msg)
     if send:
         try:
@@ -169,4 +210,4 @@ def run(send: bool = True) -> dict:
 
 if __name__ == "__main__":
     import sys
-    run(send="--no-send" not in sys.argv)
+    run(send="--no-send" not in sys.argv, discover="--no-discover" not in sys.argv)

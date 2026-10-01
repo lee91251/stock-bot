@@ -13,26 +13,35 @@ permissions:
 env:
   TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
   TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  PAPER_TRADING:    "true"   # stock.py import 시 안전 기본값 (매매 없음)
 
 jobs:
   weekly:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60   # 10/1: 8년 가상매매(약 500종목) + 자동 발굴 포함
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
+      - name: 시세 캐시 복원
+        uses: actions/cache@v4
+        with:
+          path: .selflearn_cache
+          key: selflearn-ohlcv-${{ github.run_id }}
+          restore-keys: selflearn-ohlcv-
       - name: 패키지 설치
-        run: pip install pandas numpy requests finance-datareader
-      - name: 주간 채점 + 텔레그램
-        run: python selflearn_weekly.py
+        run: pip install -r requirements.txt
+      - name: 주간 채점 + 자동 발굴 + 텔레그램
+        run: python -u selflearn_weekly.py
       - name: 성적표 커밋
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           [ -f selflearn_report.json ] && git add selflearn_report.json || true
+          [ -f challengers.json ] && git add challengers.json || true
           git diff --staged --quiet && echo "변경 없음" && exit 0 || true
           git commit -m "chore: 자가학습 주간 성적표 $(date '+%Y-%m-%d')"
           for i in 1 2 3; do

@@ -1862,6 +1862,154 @@ SECTOR_DESC = {
 # ════════════════════════════════════════════════
 # 종목 분석
 # ════════════════════════════════════════════════
+def calc_live_swing(f: dict) -> dict:
+    """실제 자동매수 스윙 점수·신호 (analyze() 에서 분리, 10/1).
+
+    analyze() 와 8년 가상매매·자가학습이 *같은 함수*를 쓰도록 분리 — 공식 불일치(drift) 차단.
+    f 키: rsi, macd_cross, bb_pct, pct_from_low, vol_ratio, change, ret_1w, ret_1m, near_support,
+          near_resistance, foreign_eok, inst_eok, dart_sigs, per, sector, manipulation_signal, momentum_bad
+    과거 데이터가 없는 항목(수급·공시·PER)은 0/빈값으로 넘기면 해당 점수 0.
+    반환: sw_score, sw_reasons, swing_block_reasons, swing_signal, momentum_signal
+    """
+    rsi = f.get("rsi", 50); macd_cross = f.get("macd_cross", False); bb_pct = f.get("bb_pct", 50)
+    pct_from_low = f.get("pct_from_low", 100); vol_ratio = f.get("vol_ratio", 100); change = f.get("change", 0)
+    ret_1w = f.get("ret_1w", 0); ret_1m = f.get("ret_1m", 0)
+    foreign_eok = f.get("foreign_eok", 0) or 0; inst_eok = f.get("inst_eok", 0) or 0
+    dart_sigs = f.get("dart_sigs") or {}; per = f.get("per"); sector = f.get("sector", "기타")
+    manipulation_signal = f.get("manipulation_signal", False); momentum_bad = f.get("momentum_bad", False)
+    sr = {"near_support": f.get("near_support", False), "near_resistance": f.get("near_resistance", False)}
+
+    # ── 스윙 전용 점수 (기존 'score'는 가치투자 점수, 그대로 유지) ──
+    # 스윙은 단기 모멘텀 위주: 기술적 35% / 거래량·모멘텀 25% / 수급 20% / 공시 10% / 가치 5% / 섹터 5%
+    sw_score = 0
+    sw_reasons = []
+
+    # 1) 기술적 (RSI, MACD, 볼린저, 52주 위치)
+    if rsi < 30:
+        sw_score += 15; sw_reasons.append(f"RSI {rsi} 과매도 반등 구간")
+    elif rsi < 45:
+        sw_score += 12; sw_reasons.append(f"RSI {rsi} 저점 매수권")
+    elif rsi > 65:
+        sw_score -= 10
+    if macd_cross:
+        sw_score += 10; sw_reasons.append("MACD 골든크로스")
+    if bb_pct < 20:
+        sw_score += 8;  sw_reasons.append("볼린저밴드 하단 (반등 통계)")
+    elif bb_pct > 80:
+        sw_score -= 5
+    if pct_from_low <= 10:
+        sw_score += 8;  sw_reasons.append(f"52주 저점 +{pct_from_low}%")
+    elif pct_from_low <= 20:
+        sw_score += 4
+
+    # 2) 거래량 / 모멘텀 (5/6: 가중치 후하게 — 급등주 캐치 가능하도록)
+    if vol_ratio >= 250:
+        sw_score += 25; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 매우 폭증")
+    elif vol_ratio >= 200:
+        sw_score += 18; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 급증")
+    elif vol_ratio >= 150:
+        sw_score += 12; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 활발")
+    elif vol_ratio >= 100:
+        sw_score += 6;  sw_reasons.append(f"거래량 {vol_ratio:.0f}% 평균↑")
+    elif vol_ratio < 70:
+        sw_score -= 5
+    # 급등 모멘텀 보너스 (거래량 폭증 + 가격 급등 동시) — SKC 같은 30% 종목 캐치
+    if vol_ratio >= 200 and change >= 3.0:
+        sw_score += 15
+        sw_reasons.append(f"급등 모멘텀 (vol +{vol_ratio:.0f}%, 가격 +{change:.1f}%)")
+    if 0 < ret_1w <= 5:
+        sw_score += 8;  sw_reasons.append(f"1주 +{ret_1w}% 가벼운 상승")
+    elif 5 < ret_1w <= 10:
+        sw_score += 4
+    elif ret_1w > 10:
+        sw_score -= 3   # 너무 오른 종목은 추격 매수 위험
+    elif ret_1w < -3:
+        sw_score -= 5
+    if -5 <= ret_1m <= 0:
+        sw_score += 5;  sw_reasons.append("1달 가벼운 조정 (눌림목)")
+    elif ret_1m < -15:
+        sw_score -= 10
+    if sr["near_support"]:
+        sw_score += 8;  sw_reasons.append("지지선 근처")
+
+    # 3) 수급 (외국인/기관)
+    if foreign_eok >= 50:
+        sw_score += 12; sw_reasons.append(f"외국인 +{foreign_eok:.2f}억")
+    elif foreign_eok >= 10:
+        sw_score += 6
+    elif foreign_eok <= -50:
+        sw_score -= 8
+    if inst_eok >= 50:
+        sw_score += 8;  sw_reasons.append(f"기관 +{inst_eok:.2f}억")
+    elif inst_eok >= 10:
+        sw_score += 4
+
+    # 4) 공시 (단기 호재 / 악재)
+    if dart_sigs.get("rights"):
+        sw_score -= 20  # 유증은 단기 치명적
+    if dart_sigs.get("buyback"):
+        sw_score += 6;  sw_reasons.append("자사주 매입")
+    if dart_sigs.get("order"):
+        sw_score += 8;  sw_reasons.append("신규 수주")
+    if dart_sigs.get("insider"):
+        sw_score -= 5
+
+    # 5) 가치 (스윙엔 비중 작음 — 너무 비싼 것만 거름)
+    if per and per > 30:
+        sw_score -= 5
+
+    # 6) 섹터 (약하게만)
+    if sector in ("조선", "방산", "원전", "전력", "바이오"):
+        sw_score += 5
+
+    # 가격 조작 / 모멘텀 약화는 강력 차단
+    if manipulation_signal:
+        sw_score -= 25
+    if momentum_bad:
+        sw_score -= 15
+
+    # 스윙 매수 시그널: 점수 + 안전 조건 (5/6 완화 — RSI 65→70, vol 100→70, ret_1m -15→-20)
+    swing_block_reasons = []
+    if sw_score < SWING_SCORE_MIN:
+        swing_block_reasons.append(f"점수<{SWING_SCORE_MIN}")
+    if rsi >= 70:
+        swing_block_reasons.append(f"RSI{int(rsi)}")
+    if manipulation_signal:
+        swing_block_reasons.append("조작감지")
+    if momentum_bad:
+        swing_block_reasons.append("모멘텀악화")
+    if dart_sigs.get("rights"):
+        swing_block_reasons.append("유증")
+    if sr["near_resistance"]:
+        swing_block_reasons.append("저항근처")
+    if vol_ratio < 70:
+        swing_block_reasons.append(f"거래량{int(vol_ratio)}%")
+    if ret_1m <= -20:
+        swing_block_reasons.append(f"1개월{ret_1m:.0f}%")
+    swing_signal = len(swing_block_reasons) == 0
+
+    # 급등 모멘텀 매수 시그널 (5/6 추가 — SKC 같은 30% 종목 캐치)
+    # 거래량 폭증 + 가격 급등 → swing_signal 통과 못해도 강력 매수 후보
+    # 5/6 변경: 가격 상승률 +3~+5% 안전대만 매수 (추격매수 차단)
+    #   배경: 미래에셋 5/6 매수가 +14.5%에 잡혀 평균 +1%만 남음 — 너무 늦은 진입.
+    momentum_signal = (
+        vol_ratio >= 200          # 거래량 평균 2배 이상
+        and 3.0 <= change <= 5.0  # 당일 +3~+5% 안전대 (이전: +3% 이상 무상한)
+        and rsi < 80              # 너무 과열은 X
+        and not manipulation_signal
+        and not momentum_bad
+        and not dart_sigs.get("rights")
+        and ret_1m > -20
+        and sw_score >= 50        # swing 임계(65)보다 느슨
+    )
+    momentum_block_reasons = []
+    if momentum_signal:
+        sw_reasons.append(f"🚀 급등 모멘텀 매수 시그널 (점수 {sw_score}, vol {vol_ratio:.0f}%, +{change:.1f}%)")
+
+    return {"sw_score": sw_score, "sw_reasons": sw_reasons, "swing_block_reasons": swing_block_reasons,
+            "swing_signal": swing_signal, "momentum_signal": momentum_signal}
+
+
 def analyze(
     ticker: str,
     name: str,
@@ -2217,132 +2365,18 @@ def analyze(
     else:
         period_strategy = f"1~2차 목표에서 일부만 매도, 나머지는 장기 보유. 배당도 챙기세요."
 
-    # ── 스윙 전용 점수 (기존 'score'는 가치투자 점수, 그대로 유지) ──
-    # 스윙은 단기 모멘텀 위주: 기술적 35% / 거래량·모멘텀 25% / 수급 20% / 공시 10% / 가치 5% / 섹터 5%
-    sw_score = 0
-    sw_reasons = []
-
-    # 1) 기술적 (RSI, MACD, 볼린저, 52주 위치)
-    if rsi < 30:
-        sw_score += 15; sw_reasons.append(f"RSI {rsi} 과매도 반등 구간")
-    elif rsi < 45:
-        sw_score += 12; sw_reasons.append(f"RSI {rsi} 저점 매수권")
-    elif rsi > 65:
-        sw_score -= 10
-    if macd_cross:
-        sw_score += 10; sw_reasons.append("MACD 골든크로스")
-    if bb_pct < 20:
-        sw_score += 8;  sw_reasons.append("볼린저밴드 하단 (반등 통계)")
-    elif bb_pct > 80:
-        sw_score -= 5
-    if pct_from_low <= 10:
-        sw_score += 8;  sw_reasons.append(f"52주 저점 +{pct_from_low}%")
-    elif pct_from_low <= 20:
-        sw_score += 4
-
-    # 2) 거래량 / 모멘텀 (5/6: 가중치 후하게 — 급등주 캐치 가능하도록)
-    if vol_ratio >= 250:
-        sw_score += 25; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 매우 폭증")
-    elif vol_ratio >= 200:
-        sw_score += 18; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 급증")
-    elif vol_ratio >= 150:
-        sw_score += 12; sw_reasons.append(f"거래량 {vol_ratio:.0f}% 활발")
-    elif vol_ratio >= 100:
-        sw_score += 6;  sw_reasons.append(f"거래량 {vol_ratio:.0f}% 평균↑")
-    elif vol_ratio < 70:
-        sw_score -= 5
-    # 급등 모멘텀 보너스 (거래량 폭증 + 가격 급등 동시) — SKC 같은 30% 종목 캐치
-    if vol_ratio >= 200 and change >= 3.0:
-        sw_score += 15
-        sw_reasons.append(f"급등 모멘텀 (vol +{vol_ratio:.0f}%, 가격 +{change:.1f}%)")
-    if 0 < ret_1w <= 5:
-        sw_score += 8;  sw_reasons.append(f"1주 +{ret_1w}% 가벼운 상승")
-    elif 5 < ret_1w <= 10:
-        sw_score += 4
-    elif ret_1w > 10:
-        sw_score -= 3   # 너무 오른 종목은 추격 매수 위험
-    elif ret_1w < -3:
-        sw_score -= 5
-    if -5 <= ret_1m <= 0:
-        sw_score += 5;  sw_reasons.append("1달 가벼운 조정 (눌림목)")
-    elif ret_1m < -15:
-        sw_score -= 10
-    if sr["near_support"]:
-        sw_score += 8;  sw_reasons.append("지지선 근처")
-
-    # 3) 수급 (외국인/기관)
-    if foreign_eok >= 50:
-        sw_score += 12; sw_reasons.append(f"외국인 +{foreign_eok:.2f}억")
-    elif foreign_eok >= 10:
-        sw_score += 6
-    elif foreign_eok <= -50:
-        sw_score -= 8
-    if inst_eok >= 50:
-        sw_score += 8;  sw_reasons.append(f"기관 +{inst_eok:.2f}억")
-    elif inst_eok >= 10:
-        sw_score += 4
-
-    # 4) 공시 (단기 호재 / 악재)
-    if dart_sigs.get("rights"):
-        sw_score -= 20  # 유증은 단기 치명적
-    if dart_sigs.get("buyback"):
-        sw_score += 6;  sw_reasons.append("자사주 매입")
-    if dart_sigs.get("order"):
-        sw_score += 8;  sw_reasons.append("신규 수주")
-    if dart_sigs.get("insider"):
-        sw_score -= 5
-
-    # 5) 가치 (스윙엔 비중 작음 — 너무 비싼 것만 거름)
-    if per and per > 30:
-        sw_score -= 5
-
-    # 6) 섹터 (약하게만)
-    if sector in ("조선", "방산", "원전", "전력", "바이오"):
-        sw_score += 5
-
-    # 가격 조작 / 모멘텀 약화는 강력 차단
-    if manipulation_signal:
-        sw_score -= 25
-    if momentum_bad:
-        sw_score -= 15
-
-    # 스윙 매수 시그널: 점수 + 안전 조건 (5/6 완화 — RSI 65→70, vol 100→70, ret_1m -15→-20)
-    swing_block_reasons = []
-    if sw_score < SWING_SCORE_MIN:
-        swing_block_reasons.append(f"점수<{SWING_SCORE_MIN}")
-    if rsi >= 70:
-        swing_block_reasons.append(f"RSI{int(rsi)}")
-    if manipulation_signal:
-        swing_block_reasons.append("조작감지")
-    if momentum_bad:
-        swing_block_reasons.append("모멘텀악화")
-    if dart_sigs.get("rights"):
-        swing_block_reasons.append("유증")
-    if sr["near_resistance"]:
-        swing_block_reasons.append("저항근처")
-    if vol_ratio < 70:
-        swing_block_reasons.append(f"거래량{int(vol_ratio)}%")
-    if ret_1m <= -20:
-        swing_block_reasons.append(f"1개월{ret_1m:.0f}%")
-    swing_signal = len(swing_block_reasons) == 0
-
-    # 급등 모멘텀 매수 시그널 (5/6 추가 — SKC 같은 30% 종목 캐치)
-    # 거래량 폭증 + 가격 급등 → swing_signal 통과 못해도 강력 매수 후보
-    # 5/6 변경: 가격 상승률 +3~+5% 안전대만 매수 (추격매수 차단)
-    #   배경: 미래에셋 5/6 매수가 +14.5%에 잡혀 평균 +1%만 남음 — 너무 늦은 진입.
-    momentum_signal = (
-        vol_ratio >= 200          # 거래량 평균 2배 이상
-        and 3.0 <= change <= 5.0  # 당일 +3~+5% 안전대 (이전: +3% 이상 무상한)
-        and rsi < 80              # 너무 과열은 X
-        and not manipulation_signal
-        and not momentum_bad
-        and not dart_sigs.get("rights")
-        and ret_1m > -20
-        and sw_score >= 50        # swing 임계(65)보다 느슨
-    )
+    # ── 스윙 점수: calc_live_swing() 로 분리 (10/1, 공식 통일 — 가상매매·자가학습과 동일 함수) ──
+    _sw = calc_live_swing({
+        "rsi": rsi, "macd_cross": macd_cross, "bb_pct": bb_pct, "pct_from_low": pct_from_low,
+        "vol_ratio": vol_ratio, "change": change, "ret_1w": ret_1w, "ret_1m": ret_1m,
+        "near_support": sr["near_support"], "near_resistance": sr["near_resistance"],
+        "foreign_eok": foreign_eok, "inst_eok": inst_eok, "dart_sigs": dart_sigs, "per": per,
+        "sector": sector, "manipulation_signal": manipulation_signal, "momentum_bad": momentum_bad,
+    })
+    sw_score, sw_reasons = _sw["sw_score"], _sw["sw_reasons"]
+    swing_block_reasons, swing_signal = _sw["swing_block_reasons"], _sw["swing_signal"]
+    momentum_signal = _sw["momentum_signal"]
     momentum_block_reasons = []
-    if momentum_signal:
-        sw_reasons.append(f"🚀 급등 모멘텀 매수 시그널 (점수 {sw_score}, vol {vol_ratio:.0f}%, +{change:.1f}%)")
 
     return {
         "ticker": ticker, "name": name, "period": period, "sector": sector,
