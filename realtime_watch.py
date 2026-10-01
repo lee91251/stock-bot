@@ -131,6 +131,16 @@ class Watcher:
         self.last_save = time.time()
         os.makedirs(LOG_DIR, exist_ok=True)
         self.fn = os.path.join(LOG_DIR, f"{today}.json")
+        if os.path.exists(self.fn):                      # 같은 날 재실행 → 기존 기록 이어 쓰기 (덮어쓰기 방지)
+            try:
+                old = json.load(open(self.fn, encoding="utf-8"))
+                self.log["alerts"] = old.get("alerts", [])
+                self.log["holding_events"] = old.get("holding_events", [])
+                self.log["stats"]["reconnects"] = old.get("stats", {}).get("reconnects", 0)
+                self.alerted = {a["code"] for a in self.log["alerts"]}
+                self.hold_flags = {(e["code"], e["type"]): True for e in self.log["holding_events"]}
+            except Exception as e:
+                print(f"  [실시간] 기존 기록 읽기 실패(새로 시작): {e}")
 
     def save(self):
         self.log["last_prices"] = {c: v for c, v in self.last.items()}
@@ -246,7 +256,12 @@ def main():
     ap.add_argument("--stop", default="14:30", help="감시 종료 시각 HH:MM (KST)")
     ap.add_argument("--no-wait", action="store_true", help="09:00 전이라도 바로 시작(테스트)")
     a = ap.parse_args()
+    import re
+    if not re.fullmatch(r"\d{2}:\d{2}", a.stop):
+        print(f"[실시간] 종료 시각 형식 오류 '{a.stop}' (HH:MM) — 종료"); return
     now = _now_kst(); today = now.strftime("%Y-%m-%d")
+    if now.strftime("%H:%M") >= a.stop:
+        print(f"[실시간] 이미 종료 시각({a.stop}) 지남 — 종료"); return
     if not is_trading_day(now):
         print("[실시간] 휴장일 — 종료"); return
     if not (APP_KEY and APP_SECRET):
@@ -264,7 +279,7 @@ def main():
         w.save()
         st = w.log["stats"]
         print(f"[실시간] 종료 — 메시지 {st['msgs']} / 체결 {st['ticks']} / 재접속 {st['reconnects']} / 포착 {len(w.log['alerts'])} / 샘플 {st['sample']}")
-        if st["ticks"] == 0:
+        if st["ticks"] == 0 and st["msgs"] >= 0 and _now_kst().strftime("%H:%M") >= "09:10":
             tg("⚠️ 실시간 감시: 체결 데이터를 하나도 받지 못함 — 접속 규격 점검 필요")
 
 
