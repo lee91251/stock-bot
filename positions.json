@@ -16,12 +16,12 @@
     },
     "310200": {
       "name": "애니플러스",
-      "qty": 497,
+      "qty": 249,
       "buy_price": 2010.0,
       "buy_date": "2026-09-29",
       "buy_time": "13:17",
       "buy_amount": 998970.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 74,
       "swing_score": 67,
       "sector": "기타",
@@ -1186,6 +1186,23 @@
       "profit": 39100,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "09:31",
+      "side": "sell",
+      "code": "310200",
+      "name": "애니플러스",
+      "qty": 248,
+      "price": 2160.0,
+      "amount": 535680.0,
+      "reason": "+7.5% 절반 익절",
+      "pct": 7.46,
+      "sector": "기타",
+      "buy_price": 2010.0,
+      "profit": 37200,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1412,7 +1429,7 @@
     "2026-10-02": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 3
+      "trade_count": 4
     }
   },
   "loss_cooldown": {
