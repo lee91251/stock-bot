@@ -16,7 +16,7 @@
     },
     "310200": {
       "name": "애니플러스",
-      "qty": 249,
+      "qty": 125,
       "buy_price": 2010.0,
       "buy_date": "2026-09-29",
       "buy_time": "13:17",
@@ -26,7 +26,7 @@
       "swing_score": 67,
       "sector": "기타",
       "order_no": "0000025749",
-      "imminent_state": ""
+      "imminent_state": "near_target2"
     },
     "030000": {
       "name": "제일기획",
