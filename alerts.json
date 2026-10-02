@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-10-01T10:57:45.868264+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ LG에너지솔루션",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-10-01T12:03:28.130152+09:00",
     "category": "imminent",
     "level": "info",
@@ -110,5 +102,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "💎 넥센 +9.20% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
+  },
+  {
+    "time": "2026-10-02T11:03:20.847553+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성중공업",
+    "detail": "단일판매ㆍ공급계약체결              "
   }
 ]
