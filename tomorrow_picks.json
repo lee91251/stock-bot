@@ -1,47 +1,38 @@
 {
-  "date": "2026-10-02",
-  "generated_at": "2026-10-01T15:43:08.743619",
+  "date": "2026-10-05",
+  "generated_at": "2026-10-02T15:45:20.815030",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "036570",
-      "name": "엔씨소프트",
-      "sector": "게임",
-      "score_bonus": 10,
-      "today_change": 10.05,
-      "today_vol_ratio": 269.0,
-      "today_score": 57,
+      "code": "145720",
+      "name": "덴티움",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 4.45,
+      "today_vol_ratio": 211.0,
+      "today_score": 58,
       "reasons": [
-        "오늘 +10.1% 마감",
-        "거래량 평균 +269%",
-        "스윙점수 57"
+        "오늘 +4.5% 마감",
+        "거래량 평균 +211%",
+        "스윙점수 58"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "018880",
+      "name": "한온시스템",
+      "sector": "자동차",
+      "score_bonus": 4,
+      "today_change": 4.22,
+      "today_vol_ratio": 334.0,
+      "today_score": 56,
+      "reasons": [
+        "오늘 +4.2% 마감",
+        "거래량 평균 +334%",
+        "스윙점수 56"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 1,
-    "IT": 1,
-    "통신": 1,
-    "AI": 1,
-    "에너지": 3,
-    "정유": 3,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 1.35,
-    "XLK": 1.05,
-    "XLF": 0.11,
-    "XLE": 1.95,
-    "XLV": -1.32,
-    "XLI": 0.99,
-    "XLB": -0.33,
-    "XLY": -0.03
-  },
-  "sector_updated_at": "2026-10-02T06:01:16.089181"
+  "sector_weights": {}
 }
