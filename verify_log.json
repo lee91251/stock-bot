@@ -1494,5 +1494,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-02T10:05:03.770713+09:00",
+    "side": "sell",
+    "code": "310200",
+    "name": "애니플러스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

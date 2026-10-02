@@ -14,20 +14,6 @@
       "order_no": "0000032434",
       "imminent_state": ""
     },
-    "310200": {
-      "name": "애니플러스",
-      "qty": 125,
-      "buy_price": 2010.0,
-      "buy_date": "2026-09-29",
-      "buy_time": "13:17",
-      "buy_amount": 998970.0,
-      "partial_sold": true,
-      "score": 74,
-      "swing_score": 67,
-      "sector": "기타",
-      "order_no": "0000025749",
-      "imminent_state": "near_target2"
-    },
     "030000": {
       "name": "제일기획",
       "qty": 53,
@@ -1203,6 +1189,23 @@
       "profit": 37200,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "10:05",
+      "side": "sell",
+      "code": "310200",
+      "name": "애니플러스",
+      "qty": 125,
+      "price": 2215.0,
+      "amount": 276875.0,
+      "reason": "+10.2% 전량 익절",
+      "pct": 10.2,
+      "sector": "기타",
+      "buy_price": 2010.0,
+      "profit": 25625,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1429,7 +1432,7 @@
     "2026-10-02": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 4
+      "trade_count": 5
     }
   },
   "loss_cooldown": {
