@@ -14,19 +14,6 @@
       "order_no": "0000032434",
       "imminent_state": ""
     },
-    "058850": {
-      "name": "KTcs",
-      "qty": 461,
-      "buy_price": 2165.0,
-      "buy_date": "2026-09-23",
-      "buy_time": "10:30",
-      "buy_amount": 998065.0,
-      "partial_sold": false,
-      "score": 90,
-      "swing_score": 69,
-      "sector": "기타",
-      "order_no": "0000013552"
-    },
     "310200": {
       "name": "애니플러스",
       "qty": 497,
@@ -40,19 +27,6 @@
       "sector": "기타",
       "order_no": "0000025749",
       "imminent_state": ""
-    },
-    "003570": {
-      "name": "SNT다이내믹스",
-      "qty": 32,
-      "buy_price": 30700.0,
-      "buy_date": "2026-09-29",
-      "buy_time": "13:45",
-      "buy_amount": 982400.0,
-      "partial_sold": false,
-      "score": 71,
-      "swing_score": 58,
-      "sector": "기타",
-      "order_no": "0000027012"
     },
     "030000": {
       "name": "제일기획",
@@ -69,12 +43,12 @@
     },
     "005720": {
       "name": "넥센",
-      "qty": 170,
+      "qty": 85,
       "buy_price": 5870.0,
       "buy_date": "2026-09-30",
       "buy_time": "14:26",
       "buy_amount": 997900.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 95,
       "swing_score": 66,
       "sector": "기타",
@@ -1161,6 +1135,57 @@
       "profit": -10440,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "09:01",
+      "side": "sell",
+      "code": "058850",
+      "name": "KTcs",
+      "qty": 461,
+      "price": 2190.0,
+      "amount": 1009590.0,
+      "reason": "5거래일 경과 강제 매도 (+1.2%)",
+      "pct": 1.15,
+      "sector": "기타",
+      "buy_price": 2165.0,
+      "profit": 11525,
+      "ai_opinion": "",
+      "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "09:01",
+      "side": "sell",
+      "code": "003570",
+      "name": "SNT다이내믹스",
+      "qty": 32,
+      "price": 30200.0,
+      "amount": 966400.0,
+      "reason": "하락 추세 빨리 청산 (3일/-1.6%)",
+      "pct": -1.63,
+      "sector": "기타",
+      "buy_price": 30700.0,
+      "profit": -16000,
+      "ai_opinion": "",
+      "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "09:02",
+      "side": "sell",
+      "code": "005720",
+      "name": "넥센",
+      "qty": 85,
+      "price": 6330.0,
+      "amount": 538050.0,
+      "reason": "+7.8% 절반 익절",
+      "pct": 7.84,
+      "sector": "기타",
+      "buy_price": 5870.0,
+      "profit": 39100,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1383,6 +1408,11 @@
       "buy_count": 0,
       "buy_amount": 0,
       "trade_count": 2
+    },
+    "2026-10-02": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {

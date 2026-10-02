@@ -1458,5 +1458,32 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-02T09:01:50.682053+09:00",
+    "side": "sell",
+    "code": "058850",
+    "name": "KTcs",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
+  },
+  {
+    "time": "2026-10-02T09:01:56.481262+09:00",
+    "side": "sell",
+    "code": "003570",
+    "name": "SNT다이내믹스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
+  },
+  {
+    "time": "2026-10-02T09:02:12.257671+09:00",
+    "side": "sell",
+    "code": "005720",
+    "name": "넥센",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
