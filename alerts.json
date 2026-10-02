@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-10-01T14:51:40.131643+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 애니플러스 🏠",
-    "detail": "[기재정정]반기보고서 (2026.06)"
-  },
-  {
-    "time": "2026-10-01T15:03:34.216240+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🟢 애니플러스 +5.47% — 1차 익절 임박 (목표 +6%, 절반 매도)"
-  },
-  {
     "time": "2026-10-02T06:01:14.532889+09:00",
     "category": "briefing",
     "level": "info",
@@ -94,5 +78,21 @@
     "emoji": "📰",
     "title": "DART 📰 한화솔루션 🏠",
     "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-10-02T15:18:01.168042+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 SK이노베이션 🏠",
+    "detail": "주식등의대량보유상황보고서(약식)"
+  },
+  {
+    "time": "2026-10-02T15:18:01.168504+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ DL이앤씨",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
   }
 ]
