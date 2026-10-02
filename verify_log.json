@@ -1512,5 +1512,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-02T14:09:30.406521+09:00",
+    "side": "sell",
+    "code": "036460",
+    "name": "한국가스공사",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

@@ -1,19 +1,5 @@
 {
   "positions": {
-    "036460": {
-      "name": "한국가스공사",
-      "qty": 28,
-      "buy_price": 34550.0,
-      "buy_date": "2026-09-04",
-      "buy_time": "13:29",
-      "buy_amount": 967400.0,
-      "partial_sold": true,
-      "score": 73,
-      "swing_score": 67,
-      "sector": "기타",
-      "order_no": "0000032434",
-      "imminent_state": ""
-    },
     "030000": {
       "name": "제일기획",
       "qty": 53,
@@ -1210,6 +1196,23 @@
       "profit": 25370,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "14:09",
+      "side": "sell",
+      "code": "036460",
+      "name": "한국가스공사",
+      "qty": 28,
+      "price": 36000.0,
+      "amount": 1008000.0,
+      "reason": "18거래일 경과 강제 매도 (+4.2%)",
+      "pct": 4.2,
+      "sector": "기타",
+      "buy_price": 34550.0,
+      "profit": 40600,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1436,7 +1439,7 @@
     "2026-10-02": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 6
+      "trade_count": 7
     }
   },
   "loss_cooldown": {
