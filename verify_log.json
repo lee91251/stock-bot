@@ -1503,5 +1503,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-02T13:31:30.161828+09:00",
+    "side": "sell",
+    "code": "005720",
+    "name": "넥센",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

@@ -27,20 +27,6 @@
       "sector": "기타",
       "order_no": "0000029815"
     },
-    "005720": {
-      "name": "넥센",
-      "qty": 43,
-      "buy_price": 5870.0,
-      "buy_date": "2026-09-30",
-      "buy_time": "14:26",
-      "buy_amount": 997900.0,
-      "partial_sold": true,
-      "score": 95,
-      "swing_score": 66,
-      "sector": "기타",
-      "order_no": "0000031848",
-      "imminent_state": ""
-    },
     "018880": {
       "name": "한온시스템",
       "qty": 271,
@@ -1207,6 +1193,23 @@
       "profit": 25625,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-02",
+      "time": "13:31",
+      "side": "sell",
+      "code": "005720",
+      "name": "넥센",
+      "qty": 43,
+      "price": 6460.0,
+      "amount": 277780.0,
+      "reason": "+10.1% 전량 익절",
+      "pct": 10.05,
+      "sector": "기타",
+      "buy_price": 5870.0,
+      "profit": 25370,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1433,7 +1436,7 @@
     "2026-10-02": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 5
+      "trade_count": 6
     }
   },
   "loss_cooldown": {
