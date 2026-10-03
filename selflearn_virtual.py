@@ -126,10 +126,19 @@ def market_table(closes: pd.DataFrame, end: str) -> pd.DataFrame:
     import FinanceDataReader as fdr
     m = pd.DataFrame(index=closes.index)
     try:
-        k = fdr.DataReader("KS11", START_LOAD, end).Close
+        # 10/3: FDR 'KS11'이 9/17에서 멈춤(ffill로 이후 등락률이 전부 0이 됨) → 네이버 우선, 둘 중 최신 것 사용
+        srcs = []
+        for sym in ("NAVER:KOSPI", "KS11"):
+            try:
+                s = fdr.DataReader(sym, START_LOAD, end)["Close"].dropna()
+                if len(s): srcs.append(s)
+            except Exception as e:
+                print(f"  [가상매매] 코스피 {sym} 실패: {e}")
+        k = max(srcs, key=lambda s: pd.to_datetime(s.index[-1]))
         k.index = pd.to_datetime(k.index)
         kk = k.reindex(m.index).ffill()
-        m["kospi_1d"] = kk.pct_change() * 100
+        kk[m.index > k.index[-1]] = np.nan   # 지수 데이터가 끝난 뒤는 '모름'(0% 아님)
+        m["kospi_1d"] = kk.pct_change(fill_method=None) * 100
     except Exception as e:
         print(f"  [가상매매] 코스피 지수 실패 — 시장지표 없이 진행: {e}")
         m["kospi_1d"] = np.nan

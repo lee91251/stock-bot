@@ -1531,7 +1531,18 @@ def get_market_mood() -> dict:
     if "kospi_price" not in mood:
         try:
             import FinanceDataReader as _fdr
-            k = _fdr.DataReader("KS11", (_now_kst() - timedelta(days=10)).strftime("%Y-%m-%d"))["Close"].dropna()
+            # 10/3: FDR 'KS11'이 9/17에서 멈춘 사고 → 네이버 우선 + 5일 넘게 오래된 데이터는 안 씀
+            _since = (_now_kst() - timedelta(days=10)).strftime("%Y-%m-%d")
+            for _sym in ("NAVER:KOSPI", "KS11"):
+                try:
+                    k = _fdr.DataReader(_sym, _since)["Close"].dropna()
+                except Exception as e:
+                    print(f"  [무드] FDR {_sym} 실패: {e}")
+                    continue
+                if len(k) and (_now_kst().date() - k.index[-1].date()).days <= 5:
+                    break
+            else:
+                raise ValueError("FDR 코스피 데이터가 없거나 5일 넘게 멈춤")
             take("kospi_price", round(float(k.iloc[-1]), 2), "FDR")
             mood["kospi_chg"] = round((float(k.iloc[-1]) / float(k.iloc[-2]) - 1) * 100, 2) if len(k) >= 2 else 0
         except Exception as e:
