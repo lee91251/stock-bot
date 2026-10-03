@@ -27,7 +27,21 @@ WEEKS = 8
 MIN_TRADES = 20
 COST_RATE = 0.0023
 BASE_CAPITAL = float(os.environ.get("GATE_BASE_CAPITAL", "10000000"))
-LIVE = os.environ.get("PAPER_TRADING", "true").lower() == "false"
+
+
+def _live_mode() -> bool:
+    """실제 매매 설정은 daily.yml 의 PAPER_TRADING 값이 정한다.
+    (selflearn.yml 은 안전을 위해 PAPER_TRADING="true" 로 고정돼 있어 환경변수로는 실계좌 여부를 알 수 없음 — 10/3 카운슬 지적)"""
+    import re
+    try:
+        txt = open(os.path.join(BASE, ".github", "workflows", "daily.yml"), encoding="utf-8").read()
+        m = re.search(r'PAPER_TRADING:\s*"?(\w+)"?', txt)
+        return bool(m) and m.group(1).lower() == "false"
+    except Exception:
+        return False
+
+
+LIVE = _live_mode()
 
 
 def _now():
