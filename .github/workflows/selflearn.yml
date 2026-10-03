@@ -36,6 +36,9 @@ jobs:
         run: pip install -r requirements.txt
       - name: 주간 채점 + 자동 발굴 + 텔레그램
         run: python -u selflearn_weekly.py
+      - name: 실계좌 문지기 (최근 8주 봇 vs 코스피, 10/3 신설 — 판정·텔레그램만, 매매 무관)
+        if: always()
+        run: python -u gate_check.py
       - name: 시세 캐시 저장 (시간초과로 끊겨도 받은 만큼 저장 → 다음 주 이어받기)
         if: always()
         uses: actions/cache/save@v4
@@ -49,6 +52,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           [ -f selflearn_report.json ] && git add selflearn_report.json || true
           [ -f challengers.json ] && git add challengers.json || true
+          [ -f gate_state.json ] && git add gate_state.json || true
           git diff --staged --quiet && echo "변경 없음" && exit 0 || true
           git commit -m "chore: 자가학습 주간 성적표 $(date '+%Y-%m-%d')"
           for i in 1 2 3; do
