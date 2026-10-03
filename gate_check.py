@@ -15,7 +15,7 @@
   - 봇 수익률 = 최근 8주 매도 실현손익 합 − 추정 거래비용(매도금액 × 0.23%: 거래세 0.20% + 수수료 왕복 약 0.03%) ÷ 기준 자금
   - 기준 자금 = 종목당 100만원 × 최대 10종목 = 1,000만원 (GATE_BASE_CAPITAL 로 바꿀 수 있음).
     실제 최대 동시 보유는 약 775만원(9/30)이라 봇 수익률이 조금 낮게 나옴 = 보수적(통과가 더 어려움)
-  - 코스피 수익률 = 시작일 직전 종가 → 오늘까지 마지막 종가. yfinance '^KS11' 먼저, 안 되면 FinanceDataReader 'KS11'.
+  - 코스피 수익률 = 시작일 직전 종가 → 오늘까지 마지막 종가. yfinance '^KS11' 먼저, 안 되면 FinanceDataReader 'NAVER:KOSPI'.
     ⚠️ 10/3 FDR KS11 이 9/17에서 멈춰 있던 사고 → 마지막 날짜가 오늘보다 5일 넘게 오래되면 '판정불가'
   - 통과 = 매도 20건 이상 + 비용 뺀 손익 > 0 + 봇 수익률 > 코스피 수익률
            + 1건당 순익 t값 ≥ 1.5 + 제일 많이 번 1건을 빼도 순익 > 0   (운으로 통과 방지, 10/3 카운슬)
@@ -75,9 +75,9 @@ def _close_series(start: str, end: str):
         print("yfinance 코스피 실패:", e)
     try:
         import FinanceDataReader as fdr
-        c = fdr.DataReader("KS11", s0, end)["Close"].dropna()
+        c = fdr.DataReader("NAVER:KOSPI", s0, end)["Close"].dropna()   # FDR 'KS11'은 9/17에서 멈춤 → 네이버 (10/3 손익비02 확인)
         if len(c) >= 2:
-            return c, "FDR"
+            return c, "네이버"
     except Exception as e:
         print("FDR 코스피 실패:", e)
     return None, ""
