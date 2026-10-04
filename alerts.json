@@ -1,106 +1,10 @@
 [
   {
-    "time": "2026-10-02T06:01:14.532889+09:00",
+    "time": "2026-10-05T06:01:09.821366+09:00",
     "category": "briefing",
     "level": "info",
     "emoji": "🌙",
     "title": "미국 마감",
-    "detail": "S&P +0.19% / 나스닥 +0.04% / VIX 16.39 / 환율 1,360원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
-    "time": "2026-10-02T08:51:32.244662+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 16.4 / 공포탐욕 50(중립)"
-  },
-  {
-    "time": "2026-10-02T09:48:18.270208+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 애니플러스 +9.20% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-10-02T10:17:52.857068+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한국가스공사 🏠",
-    "detail": "풍문또는보도에대한해명(미확정)              "
-  },
-  {
-    "time": "2026-10-02T10:48:19.555444+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 넥센 +9.20% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-10-02T11:03:20.847553+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 삼성중공업",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-10-02T13:06:55.349987+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "💎 넥센 +9.54% — 2차 익절 임박 (목표 +10%, 잔여 전량 매도)"
-  },
-  {
-    "time": "2026-10-02T13:33:10.348946+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "기타경영사항(자율공시)              "
-  },
-  {
-    "time": "2026-10-02T13:55:48.096610+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ GS건설 🏠",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-10-02T14:47:45.107962+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "주식등의대량보유상황보고서(약식)"
-  },
-  {
-    "time": "2026-10-02T15:18:01.168042+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SK이노베이션 🏠",
-    "detail": "주식등의대량보유상황보고서(약식)"
-  },
-  {
-    "time": "2026-10-02T15:18:01.168504+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ DL이앤씨",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
-    "time": "2026-10-02T15:45:22.555401+09:00",
-    "category": "system",
-    "level": "warning",
-    "emoji": "🧠",
-    "title": "🧠 B4 자가학습 권장 발견",
-    "detail": "매매 33건 누적 → 가중치 조정 권장 1건. 자가학습 카드에서 확인."
+    "detail": "S&P +0.73% / 나스닥 +1.19% / VIX 15.31 / 환율 1,343원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
