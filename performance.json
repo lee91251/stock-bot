@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-07",
-      "month": "2026-07",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 39150.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-07",
-      "month": "2026-07",
-      "ticker": "000540.KS",
-      "name": "흥국화재",
-      "price": 3255.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-07",
-      "month": "2026-07",
-      "ticker": "297890.KQ",
-      "name": "HB솔루션",
-      "price": 1689.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-07",
-      "month": "2026-07",
-      "ticker": "019180.KS",
-      "name": "티에이치엔",
-      "price": 6120.0,
-      "score": 108,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-07-07",
-      "month": "2026-07",
-      "ticker": "011200.KS",
-      "name": "HMM",
-      "price": 19380.0,
-      "score": 106,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-08",
       "month": "2026-07",
       "ticker": "264450.KQ",
@@ -3024,6 +2974,56 @@
       "price": 262500.0,
       "score": 106,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-06",
+      "month": "2026-10",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 16380.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-06",
+      "month": "2026-10",
+      "ticker": "032190.KQ",
+      "name": "다우데이타",
+      "price": 18920.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-06",
+      "month": "2026-10",
+      "ticker": "024800.KQ",
+      "name": "유성티엔에스",
+      "price": 4370.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-06",
+      "month": "2026-10",
+      "ticker": "071050.KS",
+      "name": "한국금융지주",
+      "price": 180000.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-06",
+      "month": "2026-10",
+      "ticker": "111770.KS",
+      "name": "영원무역",
+      "price": 66800.0,
+      "score": 105,
+      "buy_signal": true,
       "result": null
     }
   ]
