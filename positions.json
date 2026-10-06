@@ -15,17 +15,17 @@
     },
     "018880": {
       "name": "한온시스템",
-      "qty": 271,
+      "qty": 136,
       "buy_price": 3690.0,
       "buy_date": "2026-10-01",
       "buy_time": "09:44",
       "buy_amount": 999990.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 79,
       "swing_score": 50,
       "sector": "자동차",
       "order_no": "0000012254",
-      "imminent_state": "near_target1"
+      "imminent_state": ""
     },
     "095570": {
       "name": "AJ네트웍스",
@@ -1213,6 +1213,23 @@
       "profit": 40600,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-06",
+      "time": "09:16",
+      "side": "sell",
+      "code": "018880",
+      "name": "한온시스템",
+      "qty": 135,
+      "price": 3980.0,
+      "amount": 537300.0,
+      "reason": "+7.9% 절반 익절",
+      "pct": 7.86,
+      "sector": "자동차",
+      "buy_price": 3690.0,
+      "profit": 39150,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1444,7 +1461,7 @@
     "2026-10-06": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
