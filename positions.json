@@ -51,6 +51,19 @@
       "swing_score": 53,
       "sector": "기타",
       "order_no": "0000025122"
+    },
+    "214180": {
+      "name": "헥토이노베이션",
+      "qty": 69,
+      "buy_price": 14420.0,
+      "buy_date": "2026-10-06",
+      "buy_time": "14:26",
+      "buy_amount": 994980.0,
+      "partial_sold": false,
+      "score": 90,
+      "swing_score": 68,
+      "sector": "기타",
+      "order_no": "0000028331"
     }
   },
   "history": [
@@ -1256,6 +1269,19 @@
       "reason": "swing_score 53",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-10-06",
+      "time": "14:26",
+      "side": "buy",
+      "code": "214180",
+      "name": "헥토이노베이션",
+      "qty": 69,
+      "price": 14420.0,
+      "amount": 994980.0,
+      "reason": "swing_score 68",
+      "sector": "기타",
+      "tag": "🚀 급등"
     }
   ],
   "daily": {
@@ -1485,9 +1511,9 @@
       "trade_count": 7
     },
     "2026-10-06": {
-      "buy_count": 1,
-      "buy_amount": 995400.0,
-      "trade_count": 2
+      "buy_count": 2,
+      "buy_amount": 1990380.0,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {
