@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-08",
-      "month": "2026-07",
-      "ticker": "264450.KQ",
-      "name": "유비쿼스",
-      "price": 9590.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-08",
-      "month": "2026-07",
-      "ticker": "064820.KQ",
-      "name": "케이프",
-      "price": 8560.0,
-      "score": 116,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-08",
-      "month": "2026-07",
-      "ticker": "333430.KQ",
-      "name": "일승",
-      "price": 3190.0,
-      "score": 116,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-08",
-      "month": "2026-07",
-      "ticker": "035000.KS",
-      "name": "HS애드",
-      "price": 6700.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-08",
-      "month": "2026-07",
-      "ticker": "019180.KS",
-      "name": "티에이치엔",
-      "price": 5990.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-09",
       "month": "2026-07",
       "ticker": "013030.KQ",
@@ -3024,6 +2974,56 @@
       "price": 66800.0,
       "score": 105,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-07",
+      "month": "2026-10",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 30300.0,
+      "score": 124,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-07",
+      "month": "2026-10",
+      "ticker": "024800.KQ",
+      "name": "유성티엔에스",
+      "price": 4310.0,
+      "score": 117,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-07",
+      "month": "2026-10",
+      "ticker": "461300.KQ",
+      "name": "아이스크림미디어",
+      "price": 17640.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-07",
+      "month": "2026-10",
+      "ticker": "003480.KS",
+      "name": "한진중공업홀딩스",
+      "price": 4640.0,
+      "score": 110,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-07",
+      "month": "2026-10",
+      "ticker": "046440.KQ",
+      "name": "KG파이낸셜",
+      "price": 4005.0,
+      "score": 109,
+      "buy_signal": false,
       "result": null
     }
   ]
