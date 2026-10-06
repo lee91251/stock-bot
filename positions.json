@@ -25,7 +25,7 @@
       "swing_score": 50,
       "sector": "자동차",
       "order_no": "0000012254",
-      "imminent_state": ""
+      "imminent_state": "near_target1"
     },
     "095570": {
       "name": "AJ네트웍스",
@@ -1440,6 +1440,11 @@
       "buy_count": 0,
       "buy_amount": 0,
       "trade_count": 7
+    },
+    "2026-10-06": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 0
     }
   },
   "loss_cooldown": {
