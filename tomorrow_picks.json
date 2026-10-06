@@ -1,62 +1,23 @@
 {
-  "date": "2026-10-05",
-  "generated_at": "2026-10-02T15:45:20.815030",
+  "date": "2026-10-07",
+  "generated_at": "2026-10-06T15:45:58.118912",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "145720",
-      "name": "덴티움",
+      "code": "214180",
+      "name": "헥토이노베이션",
       "sector": "기타",
       "score_bonus": 4,
-      "today_change": 4.45,
-      "today_vol_ratio": 211.0,
-      "today_score": 58,
+      "today_change": 3.94,
+      "today_vol_ratio": 212.0,
+      "today_score": 68,
       "reasons": [
-        "오늘 +4.5% 마감",
-        "거래량 평균 +211%",
-        "스윙점수 58"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "018880",
-      "name": "한온시스템",
-      "sector": "자동차",
-      "score_bonus": 4,
-      "today_change": 4.22,
-      "today_vol_ratio": 334.0,
-      "today_score": 56,
-      "reasons": [
-        "오늘 +4.2% 마감",
-        "거래량 평균 +334%",
-        "스윙점수 56"
+        "오늘 +3.9% 마감",
+        "거래량 평균 +212%",
+        "스윙점수 68"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 2.18,
-    "XLK": 1.01,
-    "XLF": 0.06,
-    "XLE": 0.19,
-    "XLV": -0.01,
-    "XLI": 0.78,
-    "XLB": 0.66,
-    "XLY": 1.13
-  },
-  "sector_updated_at": "2026-10-05T06:01:11.393525"
+  "sector_weights": {}
 }
