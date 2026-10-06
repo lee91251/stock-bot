@@ -1530,5 +1530,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-06T13:23:34.941720+09:00",
+    "side": "buy",
+    "code": "267980",
+    "name": "매일유업",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
