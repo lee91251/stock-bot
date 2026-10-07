@@ -1548,5 +1548,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-07T14:24:36.601489+09:00",
+    "side": "buy",
+    "code": "352820",
+    "name": "하이브",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

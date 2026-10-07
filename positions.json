@@ -64,6 +64,19 @@
       "swing_score": 68,
       "sector": "기타",
       "order_no": "0000028331"
+    },
+    "352820": {
+      "name": "하이브",
+      "qty": 5,
+      "buy_price": 167100.0,
+      "buy_date": "2026-10-07",
+      "buy_time": "14:24",
+      "buy_amount": 835500.0,
+      "partial_sold": false,
+      "score": 83,
+      "swing_score": 73,
+      "sector": "엔터",
+      "order_no": "0000029987"
     }
   },
   "history": [
@@ -1282,6 +1295,19 @@
       "reason": "swing_score 68",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-10-07",
+      "time": "14:24",
+      "side": "buy",
+      "code": "352820",
+      "name": "하이브",
+      "qty": 5,
+      "price": 167100.0,
+      "amount": 835500.0,
+      "reason": "swing_score 73",
+      "sector": "엔터",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -1516,9 +1542,9 @@
       "trade_count": 3
     },
     "2026-10-07": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 835500.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
