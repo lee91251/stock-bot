@@ -350,15 +350,22 @@ class KisClient:
     def _ensure_token(self):
         if not self.available() or _now_kst() < self._token_exp:
             return
+        if _now_kst() < getattr(self, "_token_fail_until", datetime.min):   # 10/7: 연속 실패 직후엔 60초 쉼(무한 재시도로 시간초과 방지)
+            return
         with self._token_lock:
             if _now_kst() < self._token_exp:      # 기다리는 동안 다른 스레드가 발급 완료
+                return
+            if _now_kst() < getattr(self, "_token_fail_until", datetime.min):
                 return
             self._issue_token()
 
     def _issue_token(self):
         # EGW00133 = KIS 토큰 발급 1분당 1회 제한. 여러 mode가 새 프로세스로 돌며
         # 1분 내 재발급 시 발생 → 65초 대기 후 1회 재시도(조회 실패로 매도 못 하는 사고 방지).
-        for _attempt in range(2):
+        # 10/7: 연결 끊김·시간초과도 재시도 — 예전엔 1번 실패로 끝나 첫 종목(한국가스공사) 시세가 매번 빠져
+        #       10일 한도 넘겨 18거래일 보유(9/18~10/2 하루 18회 조회 실패).
+        _egw_waited = False
+        for _attempt in range(4):
             try:
                 r = requests.post(
                     f"{KIS_BASE}/oauth2/tokenP",
@@ -374,14 +381,19 @@ class KisClient:
                         seconds=int(d.get("expires_in", 86400)) - 600
                     )
                     return
-                if d.get("error_code") == "EGW00133" and _attempt == 0:
+                if d.get("error_code") == "EGW00133" and not _egw_waited:
+                    _egw_waited = True
                     print("  [KIS] 토큰 발급 1분 제한(EGW00133) — 65초 대기 후 재시도")
                     time.sleep(65)
                     continue
                 print(f"  [KIS] 토큰 발급 오류: {d.get('msg1') or d.get('error_description', 'access_token 없음')}")
                 return
             except Exception as e:
-                print(f"  [KIS] 토큰 발급 실패: {e}")
+                print(f"  [KIS] 토큰 발급 실패({_attempt + 1}/4): {e}")
+                if _attempt < 3:
+                    time.sleep(3)
+                    continue
+                self._token_fail_until = _now_kst() + timedelta(seconds=60)
                 return
 
     def _get(self, path: str, tr_id: str, params: dict) -> dict:
@@ -402,7 +414,7 @@ class KisClient:
                     "tr_id":         tr_id,
                     "custtype":      "P",
                 },
-                params=params,
+                params={k: v for k, v in params.items() if k != "_retried"},   # 재시도 표시는 증권사로 보내지 않음
                 timeout=10,
             )
             d = r.json()
@@ -416,6 +428,9 @@ class KisClient:
             return {}
         except Exception as e:
             print(f"  [KIS] {tr_id} 실패: {e}")
+            if not params.get("_retried"):   # 10/7: 조회는 시간초과·연결끊김 시 1회 재시도 (조회라 중복 위험 없음)
+                time.sleep(1)
+                return self._get(path, tr_id, {**params, "_retried": 1})
             return {}
 
     def get_price(self, code: str) -> dict:
@@ -557,14 +572,20 @@ class KisTradingClient:
     def _ensure_token(self):
         if not self.available() or _now_kst() < self._token_exp:
             return
+        if _now_kst() < getattr(self, "_token_fail_until", datetime.min):   # 10/7: 연속 실패 직후엔 60초 쉼(무한 재시도로 시간초과 방지)
+            return
         with self._token_lock:
             if _now_kst() < self._token_exp:      # 기다리는 동안 다른 스레드가 발급 완료
+                return
+            if _now_kst() < getattr(self, "_token_fail_until", datetime.min):
                 return
             self._issue_token()
 
     def _issue_token(self):
         # EGW00133 = KIS 토큰 발급 1분당 1회 제한 → 65초 대기 후 재시도 (매도 실패 방지)
-        for _attempt in range(2):
+        # 10/7: 연결 끊김·시간초과도 3초 쉬고 재시도 (시세 클라이언트와 동일 사고 방지). 주문 자체는 재전송 X
+        _egw_waited = False
+        for _attempt in range(4):
             try:
                 r = requests.post(
                     f"{self.base}/oauth2/tokenP",
@@ -580,14 +601,19 @@ class KisTradingClient:
                         seconds=int(d.get("expires_in", 86400)) - 600
                     )
                     return
-                if d.get("error_code") == "EGW00133" and _attempt == 0:
+                if d.get("error_code") == "EGW00133" and not _egw_waited:
+                    _egw_waited = True
                     print(f"  [매매{self.mode_tag()}] 토큰 발급 1분 제한(EGW00133) — 65초 대기 후 재시도")
                     time.sleep(65)
                     continue
                 print(f"  [매매{self.mode_tag()}] 토큰 발급 오류: {d.get('msg1') or d.get('error_description', 'access_token 없음')}")
                 return
             except Exception as e:
-                print(f"  [매매{self.mode_tag()}] 토큰 발급 실패: {e}")
+                print(f"  [매매{self.mode_tag()}] 토큰 발급 실패({_attempt + 1}/4): {e}")
+                if _attempt < 3:
+                    time.sleep(3)
+                    continue
+                self._token_fail_until = _now_kst() + timedelta(seconds=60)
                 return
 
     def _order(self, code: str, qty: int, side: str) -> dict:
