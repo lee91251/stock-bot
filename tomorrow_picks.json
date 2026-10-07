@@ -1,43 +1,38 @@
 {
-  "date": "2026-10-07",
-  "generated_at": "2026-10-06T15:45:58.118912",
+  "date": "2026-10-08",
+  "generated_at": "2026-10-07T15:45:36.008020",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "214180",
-      "name": "헥토이노베이션",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.94,
-      "today_vol_ratio": 212.0,
-      "today_score": 68,
+      "code": "352820",
+      "name": "하이브",
+      "sector": "엔터",
+      "score_bonus": 6,
+      "today_change": 6.37,
+      "today_vol_ratio": 228.0,
+      "today_score": 81,
       "reasons": [
-        "오늘 +3.9% 마감",
-        "거래량 평균 +212%",
-        "스윙점수 68"
+        "오늘 +6.4% 마감",
+        "거래량 평균 +228%",
+        "스윙점수 81"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "018670",
+      "name": "SK가스",
+      "sector": "기타",
+      "score_bonus": 5,
+      "today_change": 4.84,
+      "today_vol_ratio": 283.0,
+      "today_score": 52,
+      "reasons": [
+        "오늘 +4.8% 마감",
+        "거래량 평균 +283%",
+        "스윙점수 52"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "IT": 1,
-    "통신": 1,
-    "AI": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -0.01,
-    "XLK": 0.53,
-    "XLF": 0.24,
-    "XLE": 0.47,
-    "XLV": -0.17,
-    "XLI": 0.87,
-    "XLB": 0.46,
-    "XLY": 1.18
-  },
-  "sector_updated_at": "2026-10-07T06:01:29.036848"
+  "sector_weights": {}
 }
