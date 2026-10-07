@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-09",
-      "month": "2026-07",
-      "ticker": "013030.KQ",
-      "name": "하이록코리아",
-      "price": 29850.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-09",
-      "month": "2026-07",
-      "ticker": "015750.KQ",
-      "name": "성우하이텍",
-      "price": 5790.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-09",
-      "month": "2026-07",
-      "ticker": "214180.KQ",
-      "name": "헥토이노베이션",
-      "price": 13120.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-09",
-      "month": "2026-07",
-      "ticker": "297890.KQ",
-      "name": "HB솔루션",
-      "price": 1628.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-09",
-      "month": "2026-07",
-      "ticker": "013310.KQ",
-      "name": "아진산업",
-      "price": 2545.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-10",
       "month": "2026-07",
       "ticker": "031440.KS",
@@ -3023,6 +2973,56 @@
       "name": "KG파이낸셜",
       "price": 4005.0,
       "score": 109,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-08",
+      "month": "2026-10",
+      "ticker": "005810.KS",
+      "name": "풍산홀딩스",
+      "price": 35650.0,
+      "score": 117,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-08",
+      "month": "2026-10",
+      "ticker": "071050.KS",
+      "name": "한국금융지주",
+      "price": 174400.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-08",
+      "month": "2026-10",
+      "ticker": "034230.KS",
+      "name": "파라다이스",
+      "price": 9830.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-08",
+      "month": "2026-10",
+      "ticker": "037710.KS",
+      "name": "광주신세계",
+      "price": 33600.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-08",
+      "month": "2026-10",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 16550.0,
+      "score": 108,
       "buy_signal": false,
       "result": null
     }
