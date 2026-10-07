@@ -40,6 +40,7 @@ B4_HOUR_MIN_TRADES       = 3       # 시간대 권장 최소 매매 건수
 B4_GAP_HIGH              = 20      # 점수대 승률 차이 20%p 이상 — 임계 조정 권장
 B4_WEAK_WIN_RATE         = 30      # 30% 미만 승률 — 회피 권장
 B4_STRONG_WIN_RATE       = 70      # 70%+ 승률 — 우대 권장
+B4_HOLD_DAYS_REC         = False   # 10/7 보유일 권장 끔 (거꾸로 된 인과 — 4) 주석 참고)
 
 
 def _load_advisor_log() -> list:
@@ -558,8 +559,9 @@ def calc_weight_recommendations(swing_score_min: int) -> dict:
             "bucket": h["bucket"],
         })
 
-    # 4) 보유일 권장 (특정 보유일이 다른 것보다 현저히 낮으면)
-    hp = perf.get("hold_perf", [])
+    # 4) 보유일 권장 — 10/7 끔: 보유일은 '결과'지 '선택'이 아님. 매도 규칙이 +3% 이상만 10일까지 들고 가므로
+    #    6일+ = 이미 수익 난 종목만 남은 묶음(승률 높을 수밖에 없음), 4-5일 = 손절·빨리청산 묶음. 거꾸로 된 인과라 권장 무의미.
+    hp = perf.get("hold_perf", []) if B4_HOLD_DAYS_REC else []
     if len(hp) >= 2:
         worst = min(hp, key=lambda x: x.get("win_rate", 0))
         best  = max(hp, key=lambda x: x.get("win_rate", 0))

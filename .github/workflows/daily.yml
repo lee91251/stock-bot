@@ -206,6 +206,7 @@ jobs:
           [ -f mirae_paper.json ] && git add mirae_paper.json || true
           [ -f alerts.json ] && git add alerts.json || true
           [ -f ai_advisor_log.json ] && git add ai_advisor_log.json || true
+          [ -f b4_notified.json ] && git add b4_notified.json || true   # 10/7 B4 권장 알림 중복 방지
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true

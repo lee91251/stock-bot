@@ -6066,18 +6066,18 @@ def run_close_summary():
         except Exception as e:
             print(f"  [브리핑] advisor outcome 추적 오류: {e}")
 
-        # B4 자가학습 — 30건 도달 시 첫 번째 알림 (1회만)
+        # B4 자가학습 — 권장 내용이 바뀌었을 때만 알림 (10/7: 예전엔 '오늘 안 보냈으면'이라 장마감마다 같은 알림 반복)
         try:
             b4 = calc_weight_recommendations()
             if b4.get("ready") and b4.get("recommendations"):
-                # alerts.json에 1회만 (오늘 아직 안 보냈으면)
-                today_alerts = _load_alerts()
-                already_sent = any(
-                    a.get("category") == "system" and "B4 자가학습" in a.get("title", "")
-                    and a.get("time", "").startswith(_today_str())
-                    for a in today_alerts
-                )
+                sig = sorted(r.get("title", "") for r in b4["recommendations"])
+                _b4_fn = os.path.join(os.path.dirname(os.path.abspath(__file__)), "b4_notified.json")
+                try:
+                    already_sent = json.load(open(_b4_fn, encoding="utf-8")).get("sig") == sig
+                except Exception:
+                    already_sent = False
                 if not already_sent:
+                    json.dump({"sig": sig, "sent": _today_str()}, open(_b4_fn, "w", encoding="utf-8"), ensure_ascii=False)
                     n = len(b4["recommendations"])
                     log_alert(
                         "system", "warning",
