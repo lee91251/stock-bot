@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-10-06T08:50:56.162698+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.5 / 공포탐욕 65(탐욕)"
-  },
-  {
-    "time": "2026-10-06T09:06:07.116157+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🟢 한온시스템 +5.28% — 1차 익절 임박 (목표 +6%, 절반 매도)"
-  },
-  {
     "time": "2026-10-06T13:47:59.786520+09:00",
     "category": "disclosure",
     "level": "info",
@@ -46,5 +30,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 15.0 / 공포탐욕 65(탐욕)"
+  },
+  {
+    "time": "2026-10-07T09:55:33.506957+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
