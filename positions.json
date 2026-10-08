@@ -14,18 +14,6 @@
       "order_no": "0000012254",
       "imminent_state": ""
     },
-    "095570": {
-      "name": "AJ네트웍스",
-      "qty": 231,
-      "buy_price": 4280.0,
-      "buy_date": "2026-10-01",
-      "buy_amount": 988680.0,
-      "partial_sold": false,
-      "score": 0,
-      "swing_score": 0,
-      "sector": "미상",
-      "reconciled": true
-    },
     "267980": {
       "name": "매일유업",
       "qty": 28,
@@ -51,20 +39,6 @@
       "swing_score": 68,
       "sector": "기타",
       "order_no": "0000028331"
-    },
-    "352820": {
-      "name": "하이브",
-      "qty": 5,
-      "buy_price": 167100.0,
-      "buy_date": "2026-10-07",
-      "buy_time": "14:24",
-      "buy_amount": 835500.0,
-      "partial_sold": false,
-      "score": 83,
-      "swing_score": 73,
-      "sector": "엔터",
-      "order_no": "0000029987",
-      "imminent_state": "near_stop"
     }
   },
   "history": [
@@ -1313,6 +1287,23 @@
       "profit": 20140,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-08",
+      "time": "09:16",
+      "side": "sell",
+      "code": "352820",
+      "name": "하이브",
+      "qty": 5,
+      "price": 159500.0,
+      "amount": 797500.0,
+      "reason": "손절 (-4.5%)",
+      "pct": -4.55,
+      "sector": "엔터",
+      "buy_price": 167100.0,
+      "profit": -38000,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1554,12 +1545,13 @@
     "2026-10-08": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 1
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
     "051600": "2026-09-06",
-    "272210": "2026-09-24"
+    "272210": "2026-09-24",
+    "352820": "2026-10-11"
   },
   "halted": false,
   "pending_cancel": {},

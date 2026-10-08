@@ -1566,5 +1566,23 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-08T09:16:27.618135+09:00",
+    "side": "sell",
+    "code": "095570",
+    "name": "AJ네트웍스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
+  },
+  {
+    "time": "2026-10-08T09:16:44.954245+09:00",
+    "side": "sell",
+    "code": "352820",
+    "name": "하이브",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
