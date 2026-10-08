@@ -1,63 +1,7 @@
 {
-  "date": "2026-10-08",
-  "generated_at": "2026-10-07T15:45:36.008020",
+  "date": "2026-10-12",
+  "generated_at": "2026-10-08T15:44:22.846041",
   "source_phase": "close_summary",
-  "picks": [
-    {
-      "code": "352820",
-      "name": "하이브",
-      "sector": "엔터",
-      "score_bonus": 6,
-      "today_change": 6.37,
-      "today_vol_ratio": 228.0,
-      "today_score": 81,
-      "reasons": [
-        "오늘 +6.4% 마감",
-        "거래량 평균 +228%",
-        "스윙점수 81"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "018670",
-      "name": "SK가스",
-      "sector": "기타",
-      "score_bonus": 5,
-      "today_change": 4.84,
-      "today_vol_ratio": 283.0,
-      "today_score": 52,
-      "reasons": [
-        "오늘 +4.8% 마감",
-        "거래량 평균 +283%",
-        "스윙점수 52"
-      ],
-      "source": "close_summary"
-    }
-  ],
-  "sector_weights": {
-    "반도체": -1,
-    "IT": -1,
-    "에너지": -1,
-    "정유": -1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": -3,
-    "방산": -3,
-    "기계": -3,
-    "화학": -3,
-    "소재": -3,
-    "철강": -3
-  },
-  "us_etf_changes": {
-    "SOXX": -1.12,
-    "XLK": -0.3,
-    "XLF": -0.48,
-    "XLE": -0.61,
-    "XLV": 1.03,
-    "XLI": -2.18,
-    "XLB": -1.51,
-    "XLY": -0.32
-  },
-  "sector_updated_at": "2026-10-08T06:01:22.251880"
+  "picks": [],
+  "sector_weights": {}
 }
