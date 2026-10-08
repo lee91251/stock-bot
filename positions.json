@@ -63,7 +63,8 @@
       "score": 83,
       "swing_score": 73,
       "sector": "엔터",
-      "order_no": "0000029987"
+      "order_no": "0000029987",
+      "imminent_state": "near_stop"
     }
   },
   "history": [
