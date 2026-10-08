@@ -1,19 +1,5 @@
 {
   "positions": {
-    "018880": {
-      "name": "한온시스템",
-      "qty": 68,
-      "buy_price": 3690.0,
-      "buy_date": "2026-10-01",
-      "buy_time": "09:44",
-      "buy_amount": 999990.0,
-      "partial_sold": true,
-      "score": 79,
-      "swing_score": 50,
-      "sector": "자동차",
-      "order_no": "0000012254",
-      "imminent_state": "near_target2"
-    },
     "267980": {
       "name": "매일유업",
       "qty": 28,
@@ -1305,6 +1291,23 @@
       "profit": -38000,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-08",
+      "time": "14:12",
+      "side": "sell",
+      "code": "018880",
+      "name": "한온시스템",
+      "qty": 68,
+      "price": 4060.0,
+      "amount": 276080.0,
+      "reason": "+10.0% 전량 익절",
+      "pct": 10.03,
+      "sector": "자동차",
+      "buy_price": 3690.0,
+      "profit": 25160,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1546,7 +1549,7 @@
     "2026-10-08": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 2
+      "trade_count": 3
     }
   },
   "loss_cooldown": {

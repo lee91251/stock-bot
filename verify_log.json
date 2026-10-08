@@ -1584,5 +1584,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-08T14:12:27.198355+09:00",
+    "side": "sell",
+    "code": "018880",
+    "name": "한온시스템",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
