@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-10-07T09:55:33.506957+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-10-07T11:17:23.894040+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 한화솔루션 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
     "time": "2026-10-08T06:01:20.841410+09:00",
     "category": "briefing",
     "level": "info",
@@ -38,5 +22,13 @@
     "emoji": "📊",
     "title": "매매 임박",
     "detail": "🔴 하이브 -3.35% — 손절 임박 (기준 -4%, 자동 매도)"
+  },
+  {
+    "time": "2026-10-08T13:03:46.123232+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 헥토이노베이션 -3.12% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
