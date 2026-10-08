@@ -1,18 +1,5 @@
 {
   "positions": {
-    "030000": {
-      "name": "제일기획",
-      "qty": 53,
-      "buy_price": 18580.0,
-      "buy_date": "2026-09-30",
-      "buy_time": "13:59",
-      "buy_amount": 984740.0,
-      "partial_sold": false,
-      "score": 93,
-      "swing_score": 80,
-      "sector": "기타",
-      "order_no": "0000029815"
-    },
     "018880": {
       "name": "한온시스템",
       "qty": 68,
@@ -1308,6 +1295,23 @@
       "reason": "swing_score 73",
       "sector": "엔터",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-10-08",
+      "time": "09:01",
+      "side": "sell",
+      "code": "030000",
+      "name": "제일기획",
+      "qty": 53,
+      "price": 18960.0,
+      "amount": 1004880.0,
+      "reason": "5거래일 경과 강제 매도 (+2.0%)",
+      "pct": 2.05,
+      "sector": "기타",
+      "buy_price": 18580.0,
+      "profit": 20140,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1544,6 +1548,11 @@
     "2026-10-07": {
       "buy_count": 1,
       "buy_amount": 835500.0,
+      "trade_count": 1
+    },
+    "2026-10-08": {
+      "buy_count": 0,
+      "buy_amount": 0,
       "trade_count": 1
     }
   },

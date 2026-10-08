@@ -1557,5 +1557,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-08T09:01:36.201211+09:00",
+    "side": "sell",
+    "code": "030000",
+    "name": "제일기획",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
