@@ -16,6 +16,8 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 REG = os.path.join(BASE, "challengers.json")
 TR_END, VA_END = pd.Timestamp("2023-01-01"), pd.Timestamp("2025-01-01")
 MAX_ACTIVE = 3
+MIN_TENURE_DAYS = 56      # 10/10: 등록 후 8주는 은퇴 보호 (예전엔 매주 교체 C3→C4→C5 → 실시간 표본이 안 쌓여 판정 불가)
+REPLACE_MARGIN = 0.05     # 교체는 새 규칙 검증 개선폭이 기존보다 이만큼(%p) 이상 클 때만 (임계값만 살짝 다른 규칙 반복 교체 방지)
 NAMES = {"rsi": "RSI", "bb_pct": "볼린저위치%", "ret_1w": "1주수익%", "ret_1m": "1달수익%", "ret_3m": "3달수익%",
          "pct_from_low": "52주저점대비%", "pct_from_high": "52주고점대비%", "dist_ma20": "20일선이격%",
          "atr_pct": "변동성(ATR)%", "kospi_1d": "코스피당일%", "breadth_prev": "전일상승종목비율%"}
@@ -173,6 +175,16 @@ def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
         disc = [c for c in act if c["id"] != "C1"]
         if not disc:
             return "도전자 한도 초과 → 등록 안 함"
+        def _age(c):
+            try:
+                if not c.get("created"):   # 등록일 없는 옛 도전자는 보호 대상 아님
+                    return MIN_TENURE_DAYS
+                return (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(c["created"], "%Y-%m-%d")).days
+            except Exception:
+                return MIN_TENURE_DAYS
+        disc = [c for c in disc if _age(c) >= MIN_TENURE_DAYS]
+        if not disc:
+            return f"기존 도전자 실시간 표본 쌓는 중(등록 후 8주 보호) → 등록 안 함 ({rule_text(found['rules'])})"
         # 실시간 성적(있으면) 또는 검증 개선폭이 가장 낮은 자동발굴 도전자 은퇴
         champ = (live_scores or {}).get("champion", {})
         def strength(c):   # 같은 단위(%p 개선폭)로 비교: 실시간 30건↑면 챔피언 대비 개선폭, 아니면 검증 개선폭
@@ -181,7 +193,7 @@ def register(found: dict, reg: dict, live_scores: dict | None = None) -> str:
                 return ls["avg"] - champ["avg"]
             return c.get("valid_gain", 0)
         weak = min(disc, key=strength)
-        if strength(weak) >= new["valid_gain"]:
+        if strength(weak) + REPLACE_MARGIN > new["valid_gain"]:
             return f"기존 도전자보다 약함 → 등록 안 함 ({rule_text(found['rules'])})"
         weak["status"] = "retired"; weak["retired"] = today
         reg["history"].append({"date": today, "event": f"{weak['id']} 은퇴 (더 나은 {nid}로 교체)"})

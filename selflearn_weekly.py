@@ -317,18 +317,20 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
             return f"• {name}: 완료 0건 (진행중 {p})"
         return f"• {name}: {g['n']}건 승률 {g['win']}% 평균 {g['avg']:+.2f}% 큰손실 {g['big_loss']}% (진행중 {p})"
     try:
-        from selflearn_discover import rule_text
+        from selflearn_discover import rule_text as _rt
     except Exception:
-        rule_text = lambda r: str(r)
+        _rt = lambda r: str(r)
+    from html import escape as _esc   # 10/10: 규칙의 '<'를 텔레그램이 태그로 오해해 C2·E1·S1·후보 줄이 통째로 사라짐
+    rule_text = lambda r: _esc(_rt(r))
     lines = [f"🧠 <b>자가학습 주간 성적표</b>",
              f"기록 {rep['period'][0]}~{rep['period'][1]} ({rep['days']}거래일, {rep['records']}건)",
              line("챔피언(실제 매수)", cp, pending["champion"])]
     for c in chs:
         lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
-        lines.append(f"   └ {rule_text(c.get('rules', []))}이면 쉼 → {verdicts[c['id']]}")
+        lines.append(f"   └ {rule_text(c.get('rules', []))}이면 쉼 → {_esc(verdicts[c['id']])}")
     for c in ex_chs + sz_chs:
         lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
-        lines.append(f"   └ {c.get('desc', c.get('name', ''))} → {verdicts[c['id']]} (비교 기준: 1차 후보 전체)")
+        lines.append(f"   └ {_esc(c.get('desc', c.get('name', '')))} → {_esc(verdicts[c['id']])} (비교 기준: 1차 후보 전체)")
     lines += [line("1차 후보 전체", res["passed"], pending["passed"]),
               line("놓친 후보(후보였는데 안 삼)", res["missed"], pending["missed"]),
               line("검토 종목 전체", res["all"], pending["all"])]
@@ -347,7 +349,7 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
     json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
     lines.append("📋 <b>다음 단계 준비 상태</b>")
     for it in ready["items"]:
-        lines.append(f"{'✅' if it['ok'] else '⏳'} {it['name']}: {it['progress']}")
+        lines.append(f"{'✅' if it['ok'] else '⏳'} {_esc(it['name'])}: {_esc(it['progress'])}")
     if ready["todo"]:
         lines.append("🔔 <b>회장님 할 일:</b> Claude 대화창을 열고 <b>\"자가학습 다음 단계 이어하자\"</b>라고 말씀해 주세요")
         for t in ready["todo"]:
@@ -373,10 +375,10 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
             print(f"  [주간학습] 발굴 오류: {e}")
         rep["discovery"] = disc
         json.dump(rep, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
-        dl = [f"🔎 <b>이번 주 자동 발굴</b>: {disc.get('action', '-')}",
+        dl = [f"🔎 <b>이번 주 자동 발굴</b>: {_esc(str(disc.get('action', '-')))}",
               f"검사한 규칙 조합 {disc.get('checked', 0)}개 (학습~2022 → 검증 2023~24 → 최종확인 2025~ 모두 통과해야 등록)"]
         for t in (disc.get("top") or [])[:3]:
-            dl.append(f"· {t['규칙']} → 학습 {t['학습']:+.2f} / 검증 {t['검증']:+.2f} / 최종 {t['최종확인']:+.2f}%p {'✅' if t['통과'] else '❌'}")
+            dl.append(f"· {_esc(t['규칙'])} → 학습 {t['학습']:+.2f} / 검증 {t['검증']:+.2f} / 최종 {t['최종확인']:+.2f}%p {'✅' if t['통과'] else '❌'}")
         dl.append("<i>등록돼도 그림자 운영만. 실제 반영은 회장 승인.</i>")
         print(chr(10).join(dl))
         if send:

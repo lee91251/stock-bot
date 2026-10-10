@@ -156,16 +156,17 @@ def run(X: pd.DataFrame | None = None, live_scores: dict | None = None) -> dict:
 
 
 def message(res: dict) -> str:
+    from html import escape as _esc   # 10/10: 규칙의 '<'가 텔레그램 태그로 오해돼 내용이 사라지는 것 방지
     lines = ["🧑‍🔬 <b>AI 연구원 주간 노트</b>"]
     if res.get("note"):
-        lines.append(res["note"])
+        lines.append(_esc(str(res["note"])))
     for t in res.get("tested", []):
         g = (f"학습 {t['학습']:+.2f} / 검증 {t['검증']:+.2f} / 최종 {t['최종확인']:+.2f}%p"
              if None not in (t["학습"], t["검증"], t["최종확인"]) else "검증 불가(남는 매매 부족)")
-        lines.append(f"{'✅' if t['통과'] else '❌'} {t['규칙']} → {g}")
+        lines.append(f"{'✅' if t['통과'] else '❌'} {_esc(str(t['규칙']))} → {g}")
         if t.get("근거"):
-            lines.append(f"   └ {t['근거']}")
-    lines.append(f"<b>결과:</b> {res.get('action', '-')}")
+            lines.append(f"   └ {_esc(str(t['근거']))}")
+    lines.append(f"<b>결과:</b> {_esc(str(res.get('action', '-')))}")
     lines.append("<i>가설은 8년 데이터 3구간 검증을 통과해야만 그림자 등록. 실매매 반영은 회장 승인.</i>")
     return chr(10).join(lines)
 
