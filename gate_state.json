@@ -1,0 +1,20 @@
+{
+ "stage": "관찰",
+ "history": [
+  {
+   "date": "2026-10-10",
+   "from": "2026-08-15",
+   "trades": 21,
+   "profit": 236210,
+   "cost": 37063,
+   "net": 199147,
+   "bot_pct": 1.99,
+   "kospi_pct": -5.04,
+   "kospi_memo": "08/14→10/08 yfinance",
+   "t": 1.19,
+   "net_wo_best": 133193,
+   "verdict": "미달",
+   "stage": "관찰"
+  }
+ ]
+}
