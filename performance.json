@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-10",
-      "month": "2026-07",
-      "ticker": "031440.KS",
-      "name": "신세계푸드",
-      "price": 39000.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-10",
-      "month": "2026-07",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 35200.0,
-      "score": 113,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-10",
-      "month": "2026-07",
-      "ticker": "000120.KS",
-      "name": "CJ대한통운",
-      "price": 71900.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-10",
-      "month": "2026-07",
-      "ticker": "032190.KQ",
-      "name": "다우데이타",
-      "price": 17520.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-10",
-      "month": "2026-07",
-      "ticker": "005810.KS",
-      "name": "풍산홀딩스",
-      "price": 33200.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-13",
       "month": "2026-07",
       "ticker": "015760.KS",
@@ -3023,6 +2973,56 @@
       "name": "동양이엔피",
       "price": 16550.0,
       "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "month": "2026-10",
+      "ticker": "091700.KQ",
+      "name": "파트론",
+      "price": 5110.0,
+      "score": 119,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "month": "2026-10",
+      "ticker": "090850.KQ",
+      "name": "현대이지웰",
+      "price": 4850.0,
+      "score": 117,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "month": "2026-10",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 16370.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "month": "2026-10",
+      "ticker": "049520.KQ",
+      "name": "유아이엘",
+      "price": 3685.0,
+      "score": 111,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "month": "2026-10",
+      "ticker": "064820.KQ",
+      "name": "케이프",
+      "price": 7560.0,
+      "score": 110,
       "buy_signal": false,
       "result": null
     }
