@@ -1,34 +1,68 @@
 {
-  "date": "2026-10-12",
-  "generated_at": "2026-10-08T15:44:22.846041",
+  "date": "2026-10-13",
+  "generated_at": "2026-10-12T15:46:38.235605",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": -1,
-    "IT": 0,
-    "통신": 1,
-    "AI": 1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "바이오": 3,
-    "제약": 3,
-    "헬스": 3,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -0.69,
-    "XLK": 0.51,
-    "XLF": 0.92,
-    "XLE": -0.25,
-    "XLV": 1.58,
-    "XLI": 0.5,
-    "XLB": 0.32,
-    "XLY": 1.02
-  },
-  "sector_updated_at": "2026-10-12T06:01:07.463734"
+  "picks": [
+    {
+      "code": "011200",
+      "name": "HMM",
+      "sector": "해운",
+      "score_bonus": 5,
+      "today_change": 4.81,
+      "today_vol_ratio": 350.0,
+      "today_score": 63,
+      "reasons": [
+        "오늘 +4.8% 마감",
+        "거래량 평균 +350%",
+        "스윙점수 63"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "038500",
+      "name": "삼표시멘트",
+      "sector": "기타",
+      "score_bonus": 5,
+      "today_change": 4.66,
+      "today_vol_ratio": 623.0,
+      "today_score": 61,
+      "reasons": [
+        "오늘 +4.7% 마감",
+        "거래량 평균 +623%",
+        "스윙점수 61"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "171090",
+      "name": "선익시스템",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 3.6,
+      "today_vol_ratio": 223.0,
+      "today_score": 50,
+      "reasons": [
+        "오늘 +3.6% 마감",
+        "거래량 평균 +223%",
+        "스윙점수 50"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "037710",
+      "name": "광주신세계",
+      "sector": "기타",
+      "score_bonus": 3,
+      "today_change": 3.41,
+      "today_vol_ratio": 600.0,
+      "today_score": 67,
+      "reasons": [
+        "오늘 +3.4% 마감",
+        "거래량 평균 +600%",
+        "스윙점수 67"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
