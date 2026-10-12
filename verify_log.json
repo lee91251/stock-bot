@@ -1593,5 +1593,23 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-12T09:01:46.238345+09:00",
+    "side": "sell",
+    "code": "267980",
+    "name": "매일유업",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
+  },
+  {
+    "time": "2026-10-12T09:02:01.820808+09:00",
+    "side": "sell",
+    "code": "214180",
+    "name": "헥토이노베이션",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
