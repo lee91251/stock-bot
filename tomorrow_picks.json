@@ -1,94 +1,23 @@
 {
-  "date": "2026-10-13",
-  "generated_at": "2026-10-12T15:46:38.235605",
+  "date": "2026-10-14",
+  "generated_at": "2026-10-13T15:46:14.312971",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "011200",
-      "name": "HMM",
-      "sector": "해운",
-      "score_bonus": 5,
-      "today_change": 4.81,
-      "today_vol_ratio": 350.0,
-      "today_score": 63,
-      "reasons": [
-        "오늘 +4.8% 마감",
-        "거래량 평균 +350%",
-        "스윙점수 63"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "038500",
-      "name": "삼표시멘트",
-      "sector": "기타",
-      "score_bonus": 5,
-      "today_change": 4.66,
-      "today_vol_ratio": 623.0,
-      "today_score": 61,
-      "reasons": [
-        "오늘 +4.7% 마감",
-        "거래량 평균 +623%",
-        "스윙점수 61"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "171090",
-      "name": "선익시스템",
-      "sector": "기타",
+      "code": "069620",
+      "name": "대웅제약",
+      "sector": "바이오",
       "score_bonus": 4,
-      "today_change": 3.6,
-      "today_vol_ratio": 223.0,
-      "today_score": 50,
+      "today_change": 3.57,
+      "today_vol_ratio": 213.0,
+      "today_score": 74,
       "reasons": [
         "오늘 +3.6% 마감",
-        "거래량 평균 +223%",
-        "스윙점수 50"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "037710",
-      "name": "광주신세계",
-      "sector": "기타",
-      "score_bonus": 3,
-      "today_change": 3.41,
-      "today_vol_ratio": 600.0,
-      "today_score": 67,
-      "reasons": [
-        "오늘 +3.4% 마감",
-        "거래량 평균 +600%",
-        "스윙점수 67"
+        "거래량 평균 +213%",
+        "스윙점수 74"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -1,
-    "AI": -1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": -2.6,
-    "XLK": -1.22,
-    "XLF": 0.58,
-    "XLE": 1.43,
-    "XLV": 0.69,
-    "XLI": -0.06,
-    "XLB": 0.02,
-    "XLY": -0.51
-  },
-  "sector_updated_at": "2026-10-13T06:01:03.734674"
+  "sector_weights": {}
 }
