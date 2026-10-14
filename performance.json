@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-15",
-      "month": "2026-07",
-      "ticker": "200670.KQ",
-      "name": "휴메딕스",
-      "price": 25700.0,
-      "score": 111,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-15",
-      "month": "2026-07",
-      "ticker": "103140.KS",
-      "name": "풍산",
-      "price": 60700.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-15",
-      "month": "2026-07",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 33950.0,
-      "score": 108,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-07-15",
-      "month": "2026-07",
-      "ticker": "017370.KS",
-      "name": "우신시스템",
-      "price": 4150.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-15",
-      "month": "2026-07",
-      "ticker": "036830.KQ",
-      "name": "솔브레인홀딩스",
-      "price": 31750.0,
-      "score": 107,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-16",
       "month": "2026-07",
       "ticker": "071320.KS",
@@ -3023,6 +2973,56 @@
       "name": "한국전력",
       "price": 29150.0,
       "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-15",
+      "month": "2026-10",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 18090.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-15",
+      "month": "2026-10",
+      "ticker": "027410.KS",
+      "name": "BGF",
+      "price": 3665.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-15",
+      "month": "2026-10",
+      "ticker": "194700.KQ",
+      "name": "노바렉스",
+      "price": 10010.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-15",
+      "month": "2026-10",
+      "ticker": "107590.KS",
+      "name": "미원홀딩스",
+      "price": 58000.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-15",
+      "month": "2026-10",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 29150.0,
+      "score": 111,
       "buy_signal": false,
       "result": null
     }
