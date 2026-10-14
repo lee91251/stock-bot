@@ -1,43 +1,38 @@
 {
-  "date": "2026-10-14",
-  "generated_at": "2026-10-13T15:46:14.312971",
+  "date": "2026-10-15",
+  "generated_at": "2026-10-14T15:44:14.515906",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "069620",
-      "name": "대웅제약",
-      "sector": "바이오",
-      "score_bonus": 4,
-      "today_change": 3.57,
-      "today_vol_ratio": 213.0,
-      "today_score": 74,
+      "code": "006400",
+      "name": "삼성SDI",
+      "sector": "2차전지",
+      "score_bonus": 6,
+      "today_change": 5.54,
+      "today_vol_ratio": 217.0,
+      "today_score": 62,
       "reasons": [
-        "오늘 +3.6% 마감",
-        "거래량 평균 +213%",
-        "스윙점수 74"
+        "오늘 +5.5% 마감",
+        "거래량 평균 +217%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "004490",
+      "name": "세방전지",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 4.45,
+      "today_vol_ratio": 330.0,
+      "today_score": 67,
+      "reasons": [
+        "오늘 +4.5% 마감",
+        "거래량 평균 +330%",
+        "스윙점수 67"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "에너지": 3,
-    "정유": 3,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -0.17,
-    "XLK": -0.04,
-    "XLF": -0.42,
-    "XLE": 1.8,
-    "XLV": -1.35,
-    "XLI": -0.28,
-    "XLB": 0.57,
-    "XLY": 0.08
-  },
-  "sector_updated_at": "2026-10-14T06:01:09.747312"
+  "sector_weights": {}
 }
