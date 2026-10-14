@@ -1611,5 +1611,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-14T13:21:16.302795+09:00",
+    "side": "buy",
+    "code": "004490",
+    "name": "세방전지",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
