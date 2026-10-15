@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-10-14T08:50:57.166859+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 15.3 / 공포탐욕 60(탐욕)"
-  },
-  {
     "time": "2026-10-14T13:33:09.915996+09:00",
     "category": "disclosure",
     "level": "info",
@@ -30,5 +22,21 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.9 / 공포탐욕 45(중립)"
+  },
+  {
+    "time": "2026-10-15T09:03:01.207662+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ 에코프로비엠",
+    "detail": "[기재정정]특수관계인의유상증자참여"
+  },
+  {
+    "time": "2026-10-15T09:03:36.224617+09:00",
+    "category": "risk",
+    "level": "danger",
+    "emoji": "🚨",
+    "title": "위험 등급 상승: 안전 → 경계",
+    "detail": "60/100 · 매수량 50% 축소 · 공포탐욕 30 공포 · 코스피 -5.2% 폭락 · 오늘 미국 9월 CPI 발표 (D-day)"
   }
 ]

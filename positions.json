@@ -1,19 +1,5 @@
 {
-  "positions": {
-    "004490": {
-      "name": "세방전지",
-      "qty": 15,
-      "buy_price": 64600.0,
-      "buy_date": "2026-10-14",
-      "buy_time": "13:21",
-      "buy_amount": 969000.0,
-      "partial_sold": false,
-      "score": 91,
-      "swing_score": 67,
-      "sector": "기타",
-      "order_no": "0000035954"
-    }
-  },
+  "positions": {},
   "history": [
     {
       "date": "2026-06-16",
@@ -1341,6 +1327,23 @@
       "reason": "swing_score 67",
       "sector": "기타",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-10-15",
+      "time": "09:01",
+      "side": "sell",
+      "code": "004490",
+      "name": "세방전지",
+      "qty": 15,
+      "price": 60700.0,
+      "amount": 910500.0,
+      "reason": "손절 (-6.0%)",
+      "pct": -6.04,
+      "sector": "기타",
+      "buy_price": 64600.0,
+      "profit": -58500,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1598,16 +1601,22 @@
       "buy_count": 1,
       "buy_amount": 969000.0,
       "trade_count": 1
+    },
+    "2026-10-15": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
     "051600": "2026-09-06",
     "272210": "2026-09-24",
-    "352820": "2026-10-11"
+    "352820": "2026-10-11",
+    "004490": "2026-10-18"
   },
   "halted": false,
   "pending_cancel": {},
-  "last_risk_level": "안전",
+  "last_risk_level": "경계",
   "_algorithm_reset_date": "2026-06-16",
   "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)",
   "reconcile_seen": {
