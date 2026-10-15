@@ -54,6 +54,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -90,6 +92,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -136,6 +140,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -186,6 +192,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -228,6 +236,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -249,6 +259,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -300,6 +312,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -345,6 +359,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -360,6 +376,8 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -389,6 +407,8 @@ jobs:
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -420,6 +440,8 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -446,6 +468,8 @@ jobs:
     timeout-minutes: 35  # 5/29: 120→20→35분 (20분 부족 — DART셋업 5분 + 1500종목 분석 25분 + 여유 5분)
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

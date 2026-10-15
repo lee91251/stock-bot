@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 60   # 10/1: 8년 가상매매(약 500종목) + 자동 발굴 포함
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

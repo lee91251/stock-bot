@@ -33,6 +33,8 @@ jobs:
     timeout-minutes: 350   # GitHub 무료 한도 6시간 안 (09:00~14:30 = 5.5시간)
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master   # 10/15: 대기열에서 기다린 회차가 '요청 시점'의 옛 기록을 받아 이미 판 세방전지를 또 팔려던 사고 → 항상 최신
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
