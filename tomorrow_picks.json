@@ -1,67 +1,53 @@
 {
-  "date": "2026-10-15",
-  "generated_at": "2026-10-14T15:44:14.515906",
+  "date": "2026-10-16",
+  "generated_at": "2026-10-15T15:47:15.269095",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "006400",
-      "name": "삼성SDI",
-      "sector": "2차전지",
+      "code": "207940",
+      "name": "삼성바이오로직스",
+      "sector": "바이오",
       "score_bonus": 6,
-      "today_change": 5.54,
-      "today_vol_ratio": 217.0,
-      "today_score": 62,
+      "today_change": 5.5,
+      "today_vol_ratio": 263.0,
+      "today_score": 60,
       "reasons": [
         "오늘 +5.5% 마감",
-        "거래량 평균 +217%",
-        "스윙점수 62"
+        "거래량 평균 +263%",
+        "스윙점수 60"
       ],
       "source": "close_summary"
     },
     {
-      "code": "004490",
-      "name": "세방전지",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 4.45,
-      "today_vol_ratio": 330.0,
-      "today_score": 67,
+      "code": "282330",
+      "name": "BGF리테일",
+      "sector": "유통",
+      "score_bonus": 6,
+      "today_change": 5.64,
+      "today_vol_ratio": 178.0,
+      "today_score": 54,
       "reasons": [
-        "오늘 +4.5% 마감",
-        "거래량 평균 +330%",
-        "스윙점수 67"
+        "오늘 +5.6% 마감",
+        "거래량 평균 +178%",
+        "스윙점수 54"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "000100",
+      "name": "유한양행",
+      "sector": "바이오",
+      "score_bonus": 5,
+      "today_change": 5.09,
+      "today_vol_ratio": 210.0,
+      "today_score": 82,
+      "reasons": [
+        "오늘 +5.1% 마감",
+        "거래량 평균 +210%",
+        "스윙점수 82"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -5,
-    "AI": -5,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 5,
-    "제약": 5,
-    "헬스": 5,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": -4.5,
-    "XLK": -2.98,
-    "XLF": -0.55,
-    "XLE": 0.64,
-    "XLV": 2.53,
-    "XLI": -0.97,
-    "XLB": -0.1,
-    "XLY": -0.77
-  },
-  "sector_updated_at": "2026-10-15T06:01:08.517621"
+  "sector_weights": {}
 }
