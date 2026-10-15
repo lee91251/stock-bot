@@ -681,6 +681,15 @@ class KisTradingClient:
             return {}
         cano, prdt = self._account_split()
         tr_id = "VTTC8434R" if self.paper else "TTTC8434R"
+        for _try in range(3):   # 10/15: 모의서버 '초당 거래건수 초과'로 잔고조회 실패 → 실잔고 대조(reconcile) 건너뜀 → 1초 쉬고 재시도
+            res = self._balance_once(cano, prdt, tr_id)
+            if res is not None:
+                return res
+            time.sleep(1)
+        return {}
+
+    def _balance_once(self, cano, prdt, tr_id):
+        """잔고 1회 조회. 초당 한도 초과면 None(재시도), 그 밖의 실패는 {}."""
         try:
             r = requests.get(
                 f"{self.base}/uapi/domestic-stock/v1/trading/inquire-balance",
@@ -710,6 +719,8 @@ class KisTradingClient:
             d = r.json()
             if d.get("rt_cd") != "0":
                 print(f"  [매매{self.mode_tag()}] 잔고조회 오류: {d.get('msg1','')}")
+                if "초당" in str(d.get("msg1", "")) or d.get("msg_cd") == "EGW00201":
+                    return None
                 return {}
             out2 = d.get("output2", [{}])
             summary = out2[0] if isinstance(out2, list) and out2 else {}
