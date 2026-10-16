@@ -1,5 +1,19 @@
 {
-  "positions": {},
+  "positions": {
+    "139480": {
+      "name": "이마트",
+      "qty": 13,
+      "buy_price": 74100.0,
+      "buy_date": "2026-10-16",
+      "buy_time": "14:22",
+      "buy_amount": 963300.0,
+      "partial_sold": false,
+      "score": 79,
+      "swing_score": 74,
+      "sector": "유통",
+      "order_no": "0000032704"
+    }
+  },
   "history": [
     {
       "date": "2026-06-16",
@@ -1344,6 +1358,19 @@
       "profit": -58500,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-16",
+      "time": "14:22",
+      "side": "buy",
+      "code": "139480",
+      "name": "이마트",
+      "qty": 13,
+      "price": 74100.0,
+      "amount": 963300.0,
+      "reason": "swing_score 74",
+      "sector": "유통",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -1608,9 +1635,9 @@
       "trade_count": 1
     },
     "2026-10-16": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 0
+      "buy_count": 1,
+      "buy_amount": 963300.0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
