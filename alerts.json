@@ -22,5 +22,21 @@
     "emoji": "✅",
     "title": "위험 등급 하락: 경계 → 안전",
     "detail": "5/100 — 정상화 추세"
+  },
+  {
+    "time": "2026-10-16T14:33:05.809387+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "특수관계인에대한담보제공"
+  },
+  {
+    "time": "2026-10-16T14:33:05.809758+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화솔루션 🏠",
+    "detail": "특수관계인에대한출자"
   }
 ]
