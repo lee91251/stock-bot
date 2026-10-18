@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-17",
-      "month": "2026-07",
-      "ticker": "031440.KS",
-      "name": "신세계푸드",
-      "price": 39100.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-17",
-      "month": "2026-07",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 34050.0,
-      "score": 108,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-07-17",
-      "month": "2026-07",
-      "ticker": "036830.KQ",
-      "name": "솔브레인홀딩스",
-      "price": 32100.0,
-      "score": 107,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-17",
-      "month": "2026-07",
-      "ticker": "005710.KQ",
-      "name": "대원산업",
-      "price": 10610.0,
-      "score": 100,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-17",
-      "month": "2026-07",
-      "ticker": "002380.KS",
-      "name": "KCC",
-      "price": 420000.0,
-      "score": 99,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-07-20",
       "month": "2026-07",
       "ticker": "031440.KS",
@@ -3024,6 +2974,56 @@
       "price": 28450.0,
       "score": 116,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-19",
+      "month": "2026-10",
+      "ticker": "000270.KS",
+      "name": "기아",
+      "price": 110200.0,
+      "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-19",
+      "month": "2026-10",
+      "ticker": "024800.KQ",
+      "name": "유성티엔에스",
+      "price": 4070.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-19",
+      "month": "2026-10",
+      "ticker": "003480.KS",
+      "name": "한진중공업홀딩스",
+      "price": 4435.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-19",
+      "month": "2026-10",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 18050.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-19",
+      "month": "2026-10",
+      "ticker": "138930.KS",
+      "name": "BNK금융지주",
+      "price": 14600.0,
+      "score": 110,
+      "buy_signal": true,
       "result": null
     }
   ]
