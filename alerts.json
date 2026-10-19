@@ -54,5 +54,13 @@
     "emoji": "📰",
     "title": "DART 📰 HD한국조선해양 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-10-19T15:06:19.382339+09:00",
+    "category": "disclosure",
+    "level": "warning",
+    "emoji": "⚠️",
+    "title": "DART ⚠️ 에코프로비엠",
+    "detail": "유상증자또는주식관련사채등의청약결과(자율공시)              "
   }
 ]
