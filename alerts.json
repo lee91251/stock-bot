@@ -22,5 +22,21 @@
     "emoji": "🚨",
     "title": "위험 등급 상승: 안전 → 주의",
     "detail": "40/100 · 매수량 25% 축소 · 공포탐욕 37 공포 · VIX 24h +21% 급등"
+  },
+  {
+    "time": "2026-10-19T09:47:53.739087+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ S-Oil",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
+  },
+  {
+    "time": "2026-10-19T09:47:53.739482+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ S-Oil",
+    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
   }
 ]
