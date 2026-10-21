@@ -1638,5 +1638,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-21T09:01:40.950014+09:00",
+    "side": "sell",
+    "code": "139480",
+    "name": "이마트",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
