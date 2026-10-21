@@ -1,37 +1,5 @@
 [
   {
-    "time": "2026-10-20T09:07:44.342805+09:00",
-    "category": "risk",
-    "level": "danger",
-    "emoji": "🚨",
-    "title": "위험 등급 상승: 안전 → 주의",
-    "detail": "35/100 · 매수량 25% 축소 · 공포탐욕 35 공포 · 코스피 -2.1% 급락"
-  },
-  {
-    "time": "2026-10-20T10:54:23.617581+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-10-20T10:54:23.618223+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD한국조선해양 🏠",
-    "detail": "단일판매ㆍ공급계약체결(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-10-20T11:17:54.338148+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ S-Oil",
-    "detail": "단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-10-21T06:01:15.888437+09:00",
     "category": "briefing",
     "level": "info",
@@ -54,5 +22,13 @@
     "emoji": "✅",
     "title": "위험 등급 하락: 주의 → 안전",
     "detail": "5/100 — 정상화 추세"
+  },
+  {
+    "time": "2026-10-22T06:01:13.668461+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.58% / 나스닥 +1.05% / VIX 16.68 / 환율 1,326원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
