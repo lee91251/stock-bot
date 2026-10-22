@@ -1,29 +1,23 @@
 {
-  "date": "2026-10-22",
-  "generated_at": "2026-10-21T15:44:30.250185",
+  "date": "2026-10-23",
+  "generated_at": "2026-10-22T15:43:10.433181",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 3,
-    "AI": 3,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 2.07,
-    "XLK": 1.67,
-    "XLF": 0.57,
-    "XLE": 0.28,
-    "XLV": -0.49,
-    "XLI": 0.91,
-    "XLB": 0.18,
-    "XLY": 0.03
-  },
-  "sector_updated_at": "2026-10-22T06:01:15.658544"
+  "picks": [
+    {
+      "code": "004960",
+      "name": "한신공영",
+      "sector": "기타",
+      "score_bonus": 3,
+      "today_change": 3.41,
+      "today_vol_ratio": 287.0,
+      "today_score": 57,
+      "reasons": [
+        "오늘 +3.4% 마감",
+        "거래량 평균 +287%",
+        "스윙점수 57"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
