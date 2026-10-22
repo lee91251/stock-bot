@@ -1647,5 +1647,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-22T12:08:08.980504+09:00",
+    "side": "buy",
+    "code": "004960",
+    "name": "한신공영",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
