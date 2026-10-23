@@ -1656,5 +1656,16 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-23T14:10:16.669532+09:00",
+    "side": "buy",
+    "code": "018260",
+    "name": "삼성에스디에스",
+    "ok": false,
+    "rejects": [
+      "점수임계"
+    ],
+    "warnings": []
   }
 ]
