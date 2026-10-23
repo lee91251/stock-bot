@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-10-22T14:03:00.373342+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 현대건설",
-    "detail": "[기재정정]단일판매ㆍ공급계약체결              "
-  },
-  {
     "time": "2026-10-22T15:18:02.756872+09:00",
     "category": "disclosure",
     "level": "info",
@@ -110,5 +102,13 @@
     "emoji": "✅",
     "title": "위험 등급 하락: 경계 → 주의",
     "detail": "45/100 — 정상화 추세"
+  },
+  {
+    "time": "2026-10-23T14:33:10.136158+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 하나금융지주",
+    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
   }
 ]
