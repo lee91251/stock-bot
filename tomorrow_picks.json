@@ -1,53 +1,23 @@
 {
-  "date": "2026-10-23",
-  "generated_at": "2026-10-22T15:43:10.433181",
+  "date": "2026-10-26",
+  "generated_at": "2026-10-23T15:42:56.557145",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "004960",
-      "name": "한신공영",
-      "sector": "기타",
+      "code": "018260",
+      "name": "삼성에스디에스",
+      "sector": "IT",
       "score_bonus": 3,
-      "today_change": 3.41,
-      "today_vol_ratio": 287.0,
-      "today_score": 57,
+      "today_change": 3.14,
+      "today_vol_ratio": 226.0,
+      "today_score": 63,
       "reasons": [
-        "오늘 +3.4% 마감",
-        "거래량 평균 +287%",
-        "스윙점수 57"
+        "오늘 +3.1% 마감",
+        "거래량 평균 +226%",
+        "스윙점수 63"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -5,
-    "AI": -5,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": -1,
-    "정유": -1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -6.79,
-    "XLK": -3.29,
-    "XLF": 1.09,
-    "XLE": -0.87,
-    "XLV": 1.32,
-    "XLI": -0.94,
-    "XLB": 0.72,
-    "XLY": -0.45
-  },
-  "sector_updated_at": "2026-10-23T06:01:03.204544"
+  "sector_weights": {}
 }
