@@ -30,6 +30,21 @@
    "net_wo_best": 48026,
    "verdict": "미달",
    "stage": "관찰"
+  },
+  {
+   "date": "2026-10-24",
+   "from": "2026-08-29",
+   "trades": 22,
+   "profit": 158630,
+   "cost": 39041,
+   "net": 119589,
+   "bot_pct": 1.2,
+   "kospi_pct": -18.24,
+   "kospi_memo": "08/28→10/23 yfinance",
+   "t": 0.65,
+   "net_wo_best": 53635,
+   "verdict": "미달",
+   "stage": "관찰"
   }
  ]
 }
