@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-24",
-      "month": "2026-07",
-      "ticker": "051360.KQ",
-      "name": "토비스",
-      "price": 16090.0,
-      "score": 112,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-24",
-      "month": "2026-07",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 35600.0,
-      "score": 107,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-07-24",
-      "month": "2026-07",
-      "ticker": "272290.KQ",
-      "name": "이녹스첨단소재",
-      "price": 21200.0,
-      "score": 103,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-24",
-      "month": "2026-07",
-      "ticker": "083930.KQ",
-      "name": "아바코",
-      "price": 10400.0,
-      "score": 103,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-24",
-      "month": "2026-07",
-      "ticker": "031440.KS",
-      "name": "신세계푸드",
-      "price": 38150.0,
-      "score": 102,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-07-27",
       "month": "2026-07",
       "ticker": "285490.KQ",
@@ -3023,6 +2973,56 @@
       "name": "휴온스",
       "price": 17520.0,
       "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-26",
+      "month": "2026-10",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 28650.0,
+      "score": 124,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-26",
+      "month": "2026-10",
+      "ticker": "138930.KS",
+      "name": "BNK금융지주",
+      "price": 13670.0,
+      "score": 119,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-26",
+      "month": "2026-10",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 17370.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-26",
+      "month": "2026-10",
+      "ticker": "015360.KS",
+      "name": "INVENI",
+      "price": 13880.0,
+      "score": 115,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-26",
+      "month": "2026-10",
+      "ticker": "051500.KQ",
+      "name": "CJ프레시웨이",
+      "price": 20850.0,
+      "score": 115,
       "buy_signal": true,
       "result": null
     }
