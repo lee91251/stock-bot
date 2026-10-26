@@ -62,5 +62,21 @@
     "emoji": "✅",
     "title": "위험 등급 하락: 주의 → 안전",
     "detail": "25/100 — 정상화 추세"
+  },
+  {
+    "time": "2026-10-26T14:33:06.480540+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ BNK금융지주",
+    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
+  },
+  {
+    "time": "2026-10-26T14:33:06.481394+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ BNK금융지주",
+    "detail": "현금ㆍ현물배당결정              "
   }
 ]
