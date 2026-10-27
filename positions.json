@@ -1,19 +1,5 @@
 {
   "positions": {
-    "004960": {
-      "name": "한신공영",
-      "qty": 66,
-      "buy_price": 11320.0,
-      "buy_date": "2026-10-22",
-      "buy_time": "12:08",
-      "buy_amount": 747120.0,
-      "partial_sold": false,
-      "score": 86,
-      "swing_score": 50,
-      "sector": "기타",
-      "order_no": "0000027721",
-      "imminent_state": ""
-    },
     "018260": {
       "name": "삼성에스디에스",
       "qty": 3,
@@ -1428,6 +1414,23 @@
       "reason": "swing_score 66",
       "sector": "IT",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-10-27",
+      "time": "09:04",
+      "side": "sell",
+      "code": "004960",
+      "name": "한신공영",
+      "qty": 66,
+      "price": 11190.0,
+      "amount": 738540.0,
+      "reason": "하락 추세 빨리 청산 (3일/-1.1%)",
+      "pct": -1.15,
+      "sector": "기타",
+      "buy_price": 11320.0,
+      "profit": -8580,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1725,6 +1728,11 @@
       "buy_count": 0,
       "buy_amount": 0,
       "trade_count": 0
+    },
+    "2026-10-27": {
+      "buy_count": 0,
+      "buy_amount": 0,
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
