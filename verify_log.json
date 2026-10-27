@@ -1676,5 +1676,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-27T10:55:11.131536+09:00",
+    "side": "buy",
+    "code": "035900",
+    "name": "JYP Ent.",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

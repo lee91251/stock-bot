@@ -12,6 +12,19 @@
       "swing_score": 66,
       "sector": "IT",
       "order_no": "0000033334"
+    },
+    "035900": {
+      "name": "JYP Ent.",
+      "qty": 24,
+      "buy_price": 40450.0,
+      "buy_date": "2026-10-27",
+      "buy_time": "10:55",
+      "buy_amount": 970800.0,
+      "partial_sold": false,
+      "score": 74,
+      "swing_score": 65,
+      "sector": "엔터",
+      "order_no": "0000019649"
     }
   },
   "history": [
@@ -1431,6 +1444,19 @@
       "profit": -8580,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-27",
+      "time": "10:55",
+      "side": "buy",
+      "code": "035900",
+      "name": "JYP Ent.",
+      "qty": 24,
+      "price": 40450.0,
+      "amount": 970800.0,
+      "reason": "swing_score 65",
+      "sector": "엔터",
+      "tag": "📊 스윙"
     }
   ],
   "daily": {
@@ -1730,9 +1756,9 @@
       "trade_count": 0
     },
     "2026-10-27": {
-      "buy_count": 0,
-      "buy_amount": 0,
-      "trade_count": 1
+      "buy_count": 1,
+      "buy_amount": 970800.0,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
