@@ -1,79 +1,38 @@
 {
-  "date": "2026-10-28",
-  "generated_at": "2026-10-27T15:42:38.783484",
+  "date": "2026-10-29",
+  "generated_at": "2026-10-28T15:43:20.886133",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "035900",
-      "name": "JYP Ent.",
-      "sector": "엔터",
-      "score_bonus": 7,
-      "today_change": 6.81,
-      "today_vol_ratio": 617.0,
-      "today_score": 57,
+      "code": "277810",
+      "name": "레인보우로보틱스",
+      "sector": "로봇",
+      "score_bonus": 10,
+      "today_change": 15.08,
+      "today_vol_ratio": 227.0,
+      "today_score": 66,
       "reasons": [
-        "오늘 +6.8% 마감",
-        "거래량 평균 +617%",
-        "스윙점수 57"
+        "오늘 +15.1% 마감",
+        "거래량 평균 +227%",
+        "스윙점수 66"
       ],
       "source": "close_summary"
     },
     {
-      "code": "037710",
-      "name": "광주신세계",
+      "code": "212560",
+      "name": "네오오토",
       "sector": "기타",
-      "score_bonus": 6,
-      "today_change": 5.52,
-      "today_vol_ratio": 270.0,
-      "today_score": 67,
+      "score_bonus": 5,
+      "today_change": 4.73,
+      "today_vol_ratio": 252.0,
+      "today_score": 60,
       "reasons": [
-        "오늘 +5.5% 마감",
-        "거래량 평균 +270%",
-        "스윙점수 67"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "079960",
-      "name": "동양이엔피",
-      "sector": "기타",
-      "score_bonus": 3,
-      "today_change": 3.29,
-      "today_vol_ratio": 192.0,
-      "today_score": 50,
-      "reasons": [
-        "오늘 +3.3% 마감",
-        "거래량 평균 +192%",
-        "스윙점수 50"
+        "오늘 +4.7% 마감",
+        "거래량 평균 +252%",
+        "스윙점수 60"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 3,
-    "AI": 3,
-    "에너지": -3,
-    "정유": -3,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 3.91,
-    "XLK": 1.7,
-    "XLF": -0.25,
-    "XLE": -2.05,
-    "XLV": -0.06,
-    "XLI": 0.57,
-    "XLB": 0.78,
-    "XLY": 1.04
-  },
-  "sector_updated_at": "2026-10-28T06:01:12.102963"
+  "sector_weights": {}
 }
