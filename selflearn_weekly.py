@@ -189,15 +189,22 @@ def _readiness(rt: dict, verdicts: dict) -> dict:
     rdays = len(glob.glob(os.path.join(BASE, "realtime_log", "*.json")))
     cdays = len(glob.glob(os.path.join(LOG_DIR, "*.json")))
     items = [
-        {"name": "7단계 실시간 포착→봇 매수 연결 판단", "need": 10, "have": rdays, "unit": "거래일 실시간 기록",
+        {"key": "7단계", "name": "7단계 실시간 포착→봇 매수 연결 판단", "need": 10, "have": rdays, "unit": "거래일 실시간 기록",
          "todo": "실시간 포착 vs 15분 봇 가격 비교 → 봇 매수 연결 여부 결정"},
-        {"name": "6단계 손절·익절 폭 (8년 검증 완료 → E1 실시간 확인)", "need": 15, "have": rdays, "unit": "거래일 실시간 기록",
+        {"key": "6단계", "name": "6단계 손절·익절 폭 (8년 검증 완료 → E1 실시간 확인)", "need": 15, "have": rdays, "unit": "거래일 실시간 기록",
          "todo": "E1(변동성 비례 손절·익절) 실시간 성적 + 장중 손절 지연 데이터로 최종 판단"},
-        {"name": "5단계 사는 양 (8년 검증 완료 → S1 실시간 확인)", "need": 20, "have": cdays, "unit": "거래일 후보 기록",
+        {"key": "5단계", "name": "5단계 사는 양 (8년 검증 완료 → S1 실시간 확인)", "need": 20, "have": cdays, "unit": "거래일 후보 기록",
          "todo": "S1(좋은 날 1.5배·나쁜 날 쉬기) 실시간 성적으로 최종 판단"},
     ]
     out = {"items": [], "todo": []}
+    try:   # 10/28: 회장과 결론 낸 단계는 매주 '회장님 할 일'로 다시 알리지 않음 (challengers.json decisions)
+        decisions = json.load(open(os.path.join(BASE, "challengers.json"), encoding="utf-8")).get("decisions", {})
+    except Exception:
+        decisions = {}
     for it in items:
+        if it["key"] in decisions:
+            out["items"].append({"name": it["name"], "ok": True, "progress": "결정됨 — " + str(decisions[it["key"]])})
+            continue
         ok = it["have"] >= it["need"]
         out["items"].append({"name": it["name"], "ok": ok, "progress": f"{min(it['have'], it['need'])}/{it['need']} {it['unit']}"})
         if ok:
