@@ -242,7 +242,10 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
     chs = [c for c in allc if c.get("type", "rule") == "rule"]      # 매수 여부 도전자
     ex_chs = [c for c in allc if c.get("type") == "exit"]           # 매도 방식 도전자 (6단계)
     sz_chs = [c for c in allc if c.get("type") == "size"]           # 매수량 도전자 (5단계)
-    groups = {"champion": [], "passed": [], "missed": [], "all": []}
+    # 10/28: 실제 규칙으로 채택된 도전자(C1)는 비교 대상에서 빼고, 그 규칙 때문에 쉰 후보는 '놓친 후보'가 아니라 '쉰 후보'로 따로 집계
+    adopted = {c["id"]: c["adopted"] for c in reg.get("challengers", []) if c.get("adopted")}
+    chs = [c for c in chs if c["id"] not in adopted]
+    groups = {"champion": [], "passed": [], "missed": [], "rested": [], "all": []}
     for c in chs + ex_chs + sz_chs:
         groups[c["id"]] = []
     pending = {k: 0 for k in groups}
@@ -262,7 +265,12 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
                 if verdicts.get(c["id"]) == "buy":   # 판정이 없는 옛 기록은 그 도전자 집계에서 제외
                     tags.append(c["id"])
         if actual_price: tags.append("champion")
-        elif r.get("passed"): tags.append("missed")    # 1차 후보였는데 실제로 안 산 종목 (놓친 매수)
+        elif r.get("passed"):
+            _chv = r.get("ch") or ({"C1": r["C1"]} if r.get("C1") else {})
+            if any(r["date"] >= ad and str(_chv.get(cid, "")).startswith("skip") for cid, ad in adopted.items()):
+                tags.append("rested")    # 채택 규칙(C1)이 쉬라고 해서 안 산 후보
+            else:
+                tags.append("missed")    # 1차 후보였는데 실제로 안 산 종목 (놓친 매수)
         for t in tags:
             if t not in groups: continue
             if status == "완료": groups[t].append(net)
@@ -324,7 +332,10 @@ def run(send: bool = True, discover: bool = True, research: bool = True) -> dict
     rule_text = lambda r: _esc(_rt(r))
     lines = [f"🧠 <b>자가학습 주간 성적표</b>",
              f"기록 {rep['period'][0]}~{rep['period'][1]} ({rep['days']}거래일, {rep['records']}건)",
-             line("챔피언(실제 매수)", cp, pending["champion"])]
+             line("챔피언(실제 매수" + (", " + "·".join(adopted) + " 적용" if adopted else "") + ")", cp, pending["champion"])]
+    for cid, ad in adopted.items():
+        lines.append(line(f"{cid}로 쉰 후보({ad}~ 채택 규칙)", res["rested"], pending["rested"]))
+        lines.append("   └ 이 줄이 손실이면 쉬길 잘한 것, 이익이면 놓친 기회")
     for c in chs:
         lines.append(line(f"도전자 {c['id']}", res[c["id"]], pending[c["id"]]))
         lines.append(f"   └ {rule_text(c.get('rules', []))}이면 쉼 → {_esc(verdicts[c['id']])}")

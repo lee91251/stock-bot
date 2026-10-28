@@ -104,6 +104,7 @@ from learning import (
     ai_trade_journal as _lrn_ai_trade_journal,  # 6차
     AI_ADVISOR_LOG, AI_ADVISOR_MIN_SAMPLES, AI_ADVISOR_MIN_ACCURACY,
     log_candidates,  # 10/1 자가학습 ① 후보 기록
+    _prev_breadth as _lrn_prev_breadth, C1_KOSPI_MIN, C1_BREADTH_MIN,  # 10/28 C1 실제 적용
 )
 
 
@@ -1553,10 +1554,12 @@ def get_market_mood() -> dict:
     # 코스피: KIS → 야후 → FDR
     try:
         ki = _kis.get_kospi() if _kis.available() else {}
-        if ki and ki.get("bstp_nmix_prpr"):
+        # 10/28: 등락률 칸이 비어 있으면 0%로 읽혀 C1이 '좋은 날'로 오판 → 지수·등락률 둘 다 있을 때만 KIS 사용(없으면 다음 출처)
+        _kchg = ki.get("bstp_nmix_prdy_ctrt", ki.get("prdy_ctrt")) if ki else None
+        if ki and ki.get("bstp_nmix_prpr") and str(_kchg or "").strip() not in ("", "None"):
             take("kospi_price", round(_safe_float(ki.get("bstp_nmix_prpr")), 2), "KIS")
             # 10/1 fix: 업종지수 API 등락률 필드는 bstp_nmix_prdy_ctrt (공식 예제 확인). 예전 prdy_ctrt 는 없는 키 → 늘 0
-            mood["kospi_chg"] = round(_safe_float(ki.get("bstp_nmix_prdy_ctrt", ki.get("prdy_ctrt"))), 2)
+            mood["kospi_chg"] = round(_safe_float(_kchg), 2)
     except Exception as e:
         print(f"  [무드] KIS 코스피 실패: {e}")
     if "kospi_price" not in mood:
@@ -6640,6 +6643,26 @@ def run_auto_buy():
     print(f"[진단] 최고점 TOP5:")
     for _, name_, sc_, blocks_ in diag_top_score[:5]:
         print(f"  • {name_}: {sc_}점 / 차단={blocks_ or 'OK(통과)'}")
+
+    # 10/28 회장 승인 — 도전자 C1 '시장 나쁜 날 쉬기' 실제 적용 (그림자 → 실매매)
+    #   근거: 8년 가상매매 3구간 모두 1건당 손실 축소(-0.61→-0.13 / -0.29→-0.03 / +0.14→+0.25%), 큰손실(≤-5%) 증가 없음.
+    #   코스피 장중 등락 < C1_KOSPI_MIN 또는 전 거래일 상승종목비율 < C1_BREADTH_MIN → 이번 회차 신규 매수 0.
+    #   지표를 못 받으면 그 조건은 무시(그림자 판정과 동일). 분석·후보기록은 위에서 끝났으므로 자가학습 데이터는 계속 쌓임.
+    #   되돌리기: GitHub 변수/워크플로우 env C1_ENFORCE=false. 실제 30건 쌓이면 재판정.
+    if os.environ.get("C1_ENFORCE", "true").lower() != "false" and candidates:
+        _kc = None if "kospi" in (mood or {}).get("missing", []) else (mood or {}).get("kospi_chg")
+        _bp = _lrn_prev_breadth(today)
+        _why = []
+        if _kc is not None and _kc < C1_KOSPI_MIN:
+            _why.append(f"코스피 {_kc:+.2f}% (기준 {C1_KOSPI_MIN}%)")
+        if _bp is not None and _bp < C1_BREADTH_MIN:
+            _why.append(f"전일 상승종목 {_bp:.0f}% (기준 {C1_BREADTH_MIN:.0f}%)")
+        if _why:
+            _alert(f"🛑 <b>{mode_tag} 시장 나쁜 날 — 신규 매수 쉼 (C1)</b>" + chr(10)
+                   + f"{' / '.join(_why)}" + chr(10)
+                   + f"후보 {len(candidates)}종목 매수 안 함 · 매도는 정상 작동")
+            print(f"[자동매수] C1 쉬는 날: {' / '.join(_why)} — 후보 {len(candidates)}개 매수 안 함")
+            candidates = []
 
     # 보유 / 쿨다운 / 일일 한도 적용
     held = set(pos.get("positions", {}).keys())
