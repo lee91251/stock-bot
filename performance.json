@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-29",
-      "month": "2026-07",
-      "ticker": "104460.KQ",
-      "name": "디와이피엔에프",
-      "price": 8350.0,
-      "score": 128,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-29",
-      "month": "2026-07",
-      "ticker": "019180.KS",
-      "name": "티에이치엔",
-      "price": 5500.0,
-      "score": 124,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-29",
-      "month": "2026-07",
-      "ticker": "148150.KQ",
-      "name": "세경하이테크",
-      "price": 2900.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-29",
-      "month": "2026-07",
-      "ticker": "173130.KQ",
-      "name": "오파스넷",
-      "price": 5820.0,
-      "score": 117,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-29",
-      "month": "2026-07",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 666.0,
-      "score": 116,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-30",
       "month": "2026-07",
       "ticker": "041190.KQ",
@@ -3023,6 +2973,56 @@
       "name": "이노션",
       "price": 17320.0,
       "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "month": "2026-10",
+      "ticker": "030200.KS",
+      "name": "KT",
+      "price": 45350.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "month": "2026-10",
+      "ticker": "029780.KS",
+      "name": "삼성카드",
+      "price": 40850.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "month": "2026-10",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 28650.0,
+      "score": 107,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "month": "2026-10",
+      "ticker": "033270.KS",
+      "name": "유나이티드제약",
+      "price": 16550.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "month": "2026-10",
+      "ticker": "036580.KS",
+      "name": "팜스코",
+      "price": 2400.0,
+      "score": 106,
       "buy_signal": true,
       "result": null
     }
