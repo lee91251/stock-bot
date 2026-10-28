@@ -1,45 +1,5 @@
 [
   {
-    "time": "2026-10-27T13:40:50.597135+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 동아에스티 🏠",
-    "detail": "영업(잠정)실적(공정공시)              "
-  },
-  {
-    "time": "2026-10-27T13:40:50.597772+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 동아에스티 🏠",
-    "detail": "기업설명회(IR)개최(안내공시)              "
-  },
-  {
-    "time": "2026-10-27T13:40:50.598712+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ HD현대일렉트릭",
-    "detail": "신규시설투자등              "
-  },
-  {
-    "time": "2026-10-27T13:40:50.599114+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ 신한지주",
-    "detail": "현금ㆍ현물배당결정              (2026년 3분기)"
-  },
-  {
-    "time": "2026-10-28T06:01:10.819242+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🌙",
-    "title": "미국 마감",
-    "detail": "S&P +0.60% / 나스닥 +1.18% / VIX 17.52 / 환율 1,326원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
-  },
-  {
     "time": "2026-10-28T08:50:44.812200+09:00",
     "category": "briefing",
     "level": "info",
@@ -94,5 +54,13 @@
     "emoji": "📰",
     "title": "DART 📰 SKC 🏠",
     "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
+  },
+  {
+    "time": "2026-10-29T06:01:11.439768+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P +0.28% / 나스닥 +0.27% / VIX 16.91 / 환율 1,342원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
