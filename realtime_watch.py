@@ -124,6 +124,11 @@ class Watcher:
     def __init__(self, codes, meta, base, today, stop_hm):
         self.codes, self.meta, self.base, self.today = codes, meta, base, today
         self.stop_hm = stop_hm
+        try:   # 10/29: 거래량 속도 기준 = 그날 개장 시각(수능일 10시)
+            from stock import _market_hours
+            self.open_h = _market_hours(_now_kst())[0] // 100
+        except Exception:
+            self.open_h = 9
         self.log = {"date": today, "watch": codes, "alerts": [], "holding_events": [], "stats":
                     {"msgs": 0, "ticks": 0, "reconnects": 0, "first_tick": None, "last_tick": None, "sample": None}}
         self.alerted, self.hold_flags = set(), {}
@@ -185,7 +190,7 @@ class Watcher:
             return
         b = self.base.get(code)
         if not b: return
-        elapsed = max(5, (int(hhmmss[:2]) - 9) * 60 + int(hhmmss[2:4]))
+        elapsed = max(5, (int(hhmmss[:2]) - self.open_h) * 60 + int(hhmmss[2:4]))
         pace = acml / (b["avg20"] * min(1.0, elapsed / 390)) if b["avg20"] else 0
         if not (3.0 <= chg <= 5.0 and pace >= 2.0):
             return
@@ -284,7 +289,12 @@ def main():
     base = baselines([c for c in codes if c not in meta["held"]], today)
     print(f"[실시간] 감시 {len(codes)}종목 (보유 {len(meta['held'])}) / 기준데이터 {len(base)}종목 / 종료 {a.stop}")
     if not a.no_wait:
-        while _now_kst().strftime("%H:%M") < "09:00":
+        try:   # 10/29: 수능일 등 개장 지연일엔 그 시각까지 대기
+            from stock import _market_hours
+            _open = "%02d:%02d" % divmod(_market_hours(_now_kst())[0], 100)
+        except Exception:
+            _open = "09:00"
+        while _now_kst().strftime("%H:%M") < _open:
             time.sleep(20)
     w = Watcher(codes, meta, base, today, a.stop)
     try:

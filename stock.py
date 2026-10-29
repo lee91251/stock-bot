@@ -5227,15 +5227,27 @@ def _check_monitor_signals(prev_scores: dict) -> list:
     return signals
 
 
+# 10/29: 개장 지연일 — 수능일엔 KRX가 정규장을 1시간 늦춤(10:00~16:30, 매년 관례). 매년 11월 수능일 추가.
+_KRX_LATE_OPEN = {
+    "2026-11-19": (1000, 1630),   # 2027학년도 수능 (목) — 2025 수능(11/13)도 10:00~16:30
+}
+
+
+def _market_hours(now: datetime) -> tuple:
+    """그날 정규장 (개장 HHMM, 마감 HHMM). 평소 (900, 1530)."""
+    return _KRX_LATE_OPEN.get(now.strftime("%Y-%m-%d"), (900, 1530))
+
+
 def _is_market_open(now: datetime) -> bool:
-    """한국 주식시장 정규 개장 시간(09:00~15:30 KST) 여부."""
+    """한국 주식시장 정규 개장 시간(평소 09:00~15:30 KST, 수능일 10:00~16:30) 여부."""
     hm = now.hour * 100 + now.minute
-    return 900 <= hm <= 1530
+    o, c = _market_hours(now)
+    return o <= hm <= c
 
 
 def _is_after_market_close(now: datetime) -> bool:
-    """장 마감(15:35 이후) 여부 — 모니터 조기 종료 판정용."""
-    return now.hour > 15 or (now.hour == 15 and now.minute >= 35)
+    """장 마감 5분 뒤(평소 15:35, 수능일 16:35) 이후 여부 — 모니터 조기 종료 판정용."""
+    return now.hour * 100 + now.minute >= _market_hours(now)[1] + 5
 
 
 # 한국 거래소(KRX) 휴장일. 주말 외 추가 휴장일만 등록.
@@ -6406,7 +6418,7 @@ def run_auto_buy():
     # 사유: 장 마감 직전 매수 → 다음날 갭다운 시 익절 기회 0 + 즉시 손절 위험
     # 5/6~5/12 손절 4건 중 3건이 *14:30 후 또는 전일 늦은 시간 매수* 패턴
     # 회장 결정 (5/12): 14:30 이후 신규 매수 X / 기존 보유 모니터링은 계속
-    if now.hour > 14 or (now.hour == 14 and now.minute >= 30):
+    if now.hour * 100 + now.minute >= _market_hours(now)[1] - 100:   # 평소 14:30, 수능일 15:30
         print(f"[autobuy] 14:30 후 신규 매수 차단 ({now.strftime('%H:%M')}) — 다음 거래일 09:00 재개")
         return
 
