@@ -365,8 +365,10 @@ class KisClient:
         # 1분 내 재발급 시 발생 → 65초 대기 후 1회 재시도(조회 실패로 매도 못 하는 사고 방지).
         # 10/7: 연결 끊김·시간초과도 재시도 — 예전엔 1번 실패로 끝나 첫 종목(한국가스공사) 시세가 매번 빠져
         #       10일 한도 넘겨 18거래일 보유(9/18~10/2 하루 18회 조회 실패).
-        _egw_waited = False
-        for _attempt in range(4):
+        # 10/29: 1분 제한은 최대 2번 기다림 — 09:00~09:05 매도·매수·모니터링 회차가 같은 키로 연달아 발급해
+        #        65초 뒤에도 다른 회차가 그 1분을 가져가 포기하던 문제. 연결 오류 재시도(최대 4번)와 따로 셈.
+        _egw_waits, _net_fails = 0, 0
+        while True:
             try:
                 r = requests.post(
                     f"{KIS_BASE}/oauth2/tokenP",
@@ -382,16 +384,18 @@ class KisClient:
                         seconds=int(d.get("expires_in", 86400)) - 600
                     )
                     return
-                if d.get("error_code") == "EGW00133" and not _egw_waited:
-                    _egw_waited = True
-                    print("  [KIS] 토큰 발급 1분 제한(EGW00133) — 65초 대기 후 재시도")
-                    time.sleep(65)
+                if d.get("error_code") == "EGW00133" and _egw_waits < 2:
+                    print(f"  [KIS] 토큰 발급 1분 제한(EGW00133) — {65 + 5 * (_egw_waits + 1)}초 대기 후 재시도 ({_egw_waits + 1}/2)")
+                    _egw_waits += 1
+                    time.sleep(65 + 5 * _egw_waits)   # 두 번째는 조금 더 길게(겹침 회피)
                     continue
                 print(f"  [KIS] 토큰 발급 오류: {d.get('msg1') or d.get('error_description', 'access_token 없음')}")
+                self._token_fail_until = _now_kst() + timedelta(seconds=60)   # 다른 스레드·종목이 줄줄이 재시도하지 않게
                 return
             except Exception as e:
-                print(f"  [KIS] 토큰 발급 실패({_attempt + 1}/4): {e}")
-                if _attempt < 3:
+                _net_fails += 1
+                print(f"  [KIS] 토큰 발급 실패({_net_fails}/4): {e}")
+                if _net_fails < 4:
                     time.sleep(3)
                     continue
                 self._token_fail_until = _now_kst() + timedelta(seconds=60)
@@ -585,8 +589,10 @@ class KisTradingClient:
     def _issue_token(self):
         # EGW00133 = KIS 토큰 발급 1분당 1회 제한 → 65초 대기 후 재시도 (매도 실패 방지)
         # 10/7: 연결 끊김·시간초과도 3초 쉬고 재시도 (시세 클라이언트와 동일 사고 방지). 주문 자체는 재전송 X
-        _egw_waited = False
-        for _attempt in range(4):
+        # 10/29: 1분 제한은 최대 2번 기다림 — 09:00~09:05 매도·매수·모니터링 회차가 같은 키로 연달아 발급해
+        #        65초 뒤에도 다른 회차가 그 1분을 가져가 포기하던 문제. 연결 오류 재시도(최대 4번)와 따로 셈.
+        _egw_waits, _net_fails = 0, 0
+        while True:
             try:
                 r = requests.post(
                     f"{self.base}/oauth2/tokenP",
@@ -602,16 +608,18 @@ class KisTradingClient:
                         seconds=int(d.get("expires_in", 86400)) - 600
                     )
                     return
-                if d.get("error_code") == "EGW00133" and not _egw_waited:
-                    _egw_waited = True
-                    print(f"  [매매{self.mode_tag()}] 토큰 발급 1분 제한(EGW00133) — 65초 대기 후 재시도")
-                    time.sleep(65)
+                if d.get("error_code") == "EGW00133" and _egw_waits < 2:
+                    print(f"  [매매{self.mode_tag()}] 토큰 발급 1분 제한(EGW00133) — {65 + 5 * (_egw_waits + 1)}초 대기 후 재시도 ({_egw_waits + 1}/2)")
+                    _egw_waits += 1
+                    time.sleep(65 + 5 * _egw_waits)   # 두 번째는 조금 더 길게(겹침 회피)
                     continue
                 print(f"  [매매{self.mode_tag()}] 토큰 발급 오류: {d.get('msg1') or d.get('error_description', 'access_token 없음')}")
+                self._token_fail_until = _now_kst() + timedelta(seconds=60)   # 다른 스레드·종목이 줄줄이 재시도하지 않게
                 return
             except Exception as e:
-                print(f"  [매매{self.mode_tag()}] 토큰 발급 실패({_attempt + 1}/4): {e}")
-                if _attempt < 3:
+                _net_fails += 1
+                print(f"  [매매{self.mode_tag()}] 토큰 발급 실패({_net_fails}/4): {e}")
+                if _net_fails < 4:
                     time.sleep(3)
                     continue
                 self._token_fail_until = _now_kst() + timedelta(seconds=60)
