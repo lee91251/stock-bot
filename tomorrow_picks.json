@@ -1,54 +1,23 @@
 {
-  "date": "2026-10-29",
-  "generated_at": "2026-10-28T15:43:20.886133",
+  "date": "2026-10-30",
+  "generated_at": "2026-10-29T15:44:57.419492",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "277810",
-      "name": "레인보우로보틱스",
-      "sector": "로봇",
-      "score_bonus": 10,
-      "today_change": 15.08,
-      "today_vol_ratio": 227.0,
-      "today_score": 66,
-      "reasons": [
-        "오늘 +15.1% 마감",
-        "거래량 평균 +227%",
-        "스윙점수 66"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "212560",
-      "name": "네오오토",
+      "code": "194370",
+      "name": "제이에스코퍼레이션",
       "sector": "기타",
       "score_bonus": 5,
-      "today_change": 4.73,
-      "today_vol_ratio": 252.0,
-      "today_score": 60,
+      "today_change": 4.53,
+      "today_vol_ratio": 209.0,
+      "today_score": 53,
       "reasons": [
-        "오늘 +4.7% 마감",
-        "거래량 평균 +252%",
-        "스윙점수 60"
+        "오늘 +4.5% 마감",
+        "거래량 평균 +209%",
+        "스윙점수 53"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 3,
-    "IT": 3,
-    "통신": 1,
-    "AI": 1
-  },
-  "us_etf_changes": {
-    "SOXX": 2.13,
-    "XLK": 0.8,
-    "XLF": 0.45,
-    "XLE": 0.35,
-    "XLV": 0.3,
-    "XLI": 0.34,
-    "XLB": 0.15,
-    "XLY": -0.1
-  },
-  "sector_updated_at": "2026-10-29T06:01:12.847665"
+  "sector_weights": {}
 }
