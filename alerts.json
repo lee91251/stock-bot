@@ -62,5 +62,45 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
+  },
+  {
+    "time": "2026-10-29T10:02:59.057793+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성에스디에스 🏠",
+    "detail": "연결재무제표기준영업(잠정)실적(공정공시)              "
+  },
+  {
+    "time": "2026-10-29T10:02:59.058235+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성에스디에스 🏠",
+    "detail": "기업설명회(IR)개최(안내공시)              "
+  },
+  {
+    "time": "2026-10-29T10:02:59.058724+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "[기재정정]연결재무제표기준영업(잠정)실적(공정공시)              "
+  },
+  {
+    "time": "2026-10-29T10:02:59.059150+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "✅",
+    "title": "DART ✅ 삼성전자 🏠",
+    "detail": "현금ㆍ현물배당결정              "
+  },
+  {
+    "time": "2026-10-29T10:02:59.059596+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "장래사업ㆍ경영계획(공정공시)              "
   }
 ]
