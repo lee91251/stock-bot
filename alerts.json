@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-10-28T09:03:01.920708+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ SK하이닉스",
-    "detail": "현금ㆍ현물배당결정              "
-  },
-  {
-    "time": "2026-10-28T09:03:01.921824+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ SK하이닉스",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정              "
-  },
-  {
     "time": "2026-10-28T13:32:59.349022+09:00",
     "category": "disclosure",
     "level": "info",
@@ -62,5 +46,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 16.9 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-10-29T09:32:57.130795+09:00",
+    "category": "imminent",
+    "level": "danger",
+    "emoji": "📊",
+    "title": "매매 임박",
+    "detail": "🔴 동아에스티 -3.14% — 손절 임박 (기준 -4%, 자동 매도)"
   }
 ]
