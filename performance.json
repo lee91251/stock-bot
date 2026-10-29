@@ -27,56 +27,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-07-30",
-      "month": "2026-07",
-      "ticker": "041190.KQ",
-      "name": "우리기술투자",
-      "price": 3990.0,
-      "score": 123,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-30",
-      "month": "2026-07",
-      "ticker": "214180.KQ",
-      "name": "헥토이노베이션",
-      "price": 12420.0,
-      "score": 123,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-30",
-      "month": "2026-07",
-      "ticker": "079960.KQ",
-      "name": "동양이엔피",
-      "price": 18120.0,
-      "score": 123,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-30",
-      "month": "2026-07",
-      "ticker": "103140.KS",
-      "name": "풍산",
-      "price": 57700.0,
-      "score": 120,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-30",
-      "month": "2026-07",
-      "ticker": "032190.KQ",
-      "name": "다우데이타",
-      "price": 16820.0,
-      "score": 120,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-07-31",
       "month": "2026-07",
       "ticker": "123410.KQ",
@@ -3023,6 +2973,56 @@
       "name": "팜스코",
       "price": 2400.0,
       "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "month": "2026-10",
+      "ticker": "243070.KQ",
+      "name": "휴온스",
+      "price": 17030.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "month": "2026-10",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 4690.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "month": "2026-10",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 28300.0,
+      "score": 106,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "month": "2026-10",
+      "ticker": "002810.KS",
+      "name": "삼영무역",
+      "price": 20100.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "month": "2026-10",
+      "ticker": "030200.KS",
+      "name": "KT",
+      "price": 45750.0,
+      "score": 105,
       "buy_signal": true,
       "result": null
     }
