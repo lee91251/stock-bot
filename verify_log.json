@@ -1703,5 +1703,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-29T09:49:46.480888+09:00",
+    "side": "sell",
+    "code": "170900",
+    "name": "동아에스티",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]

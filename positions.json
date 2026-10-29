@@ -12,20 +12,6 @@
       "swing_score": 66,
       "sector": "IT",
       "order_no": "0000033334"
-    },
-    "170900": {
-      "name": "동아에스티",
-      "qty": 28,
-      "buy_price": 35050.0,
-      "buy_date": "2026-10-27",
-      "buy_time": "13:37",
-      "buy_amount": 981400.0,
-      "partial_sold": false,
-      "score": 79,
-      "swing_score": 54,
-      "sector": "기타",
-      "order_no": "0000028720",
-      "imminent_state": "near_stop"
     }
   },
   "history": [
@@ -1488,6 +1474,23 @@
       "reason": "swing_score 54",
       "sector": "기타",
       "tag": "🚀 급등"
+    },
+    {
+      "date": "2026-10-29",
+      "time": "09:49",
+      "side": "sell",
+      "code": "170900",
+      "name": "동아에스티",
+      "qty": 28,
+      "price": 33550.0,
+      "amount": 939400.0,
+      "reason": "손절 (-4.3%)",
+      "pct": -4.28,
+      "sector": "기타",
+      "buy_price": 35050.0,
+      "profit": -42000,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1799,7 +1802,7 @@
     "2026-10-29": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 0
+      "trade_count": 1
     }
   },
   "loss_cooldown": {
@@ -1807,7 +1810,8 @@
     "272210": "2026-09-24",
     "352820": "2026-10-11",
     "004490": "2026-10-18",
-    "035900": "2026-10-30"
+    "035900": "2026-10-30",
+    "170900": "2026-11-01"
   },
   "halted": false,
   "pending_cancel": {},
