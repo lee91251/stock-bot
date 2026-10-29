@@ -1,19 +1,5 @@
 {
-  "positions": {
-    "018260": {
-      "name": "삼성에스디에스",
-      "qty": 3,
-      "buy_price": 215000.0,
-      "buy_date": "2026-10-23",
-      "buy_time": "14:10",
-      "buy_amount": 645000.0,
-      "partial_sold": false,
-      "score": 55,
-      "swing_score": 66,
-      "sector": "IT",
-      "order_no": "0000033334"
-    }
-  },
+  "positions": {},
   "history": [
     {
       "date": "2026-06-16",
@@ -1491,6 +1477,23 @@
       "profit": -42000,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-10-29",
+      "time": "10:08",
+      "side": "sell",
+      "code": "018260",
+      "name": "삼성에스디에스",
+      "qty": 3,
+      "price": 208500.0,
+      "amount": 625500.0,
+      "reason": "하락 추세 빨리 청산 (4일/-3.0%)",
+      "pct": -3.02,
+      "sector": "IT",
+      "buy_price": 215000.0,
+      "profit": -19500,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1802,7 +1805,7 @@
     "2026-10-29": {
       "buy_count": 0,
       "buy_amount": 0,
-      "trade_count": 1
+      "trade_count": 2
     }
   },
   "loss_cooldown": {

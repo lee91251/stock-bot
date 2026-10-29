@@ -1712,5 +1712,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-10-29T10:07:49.284746+09:00",
+    "side": "sell",
+    "code": "018260",
+    "name": "삼성에스디에스",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
