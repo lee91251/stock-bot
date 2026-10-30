@@ -1,53 +1,38 @@
 {
-  "date": "2026-10-30",
-  "generated_at": "2026-10-29T15:44:57.419492",
+  "date": "2026-11-02",
+  "generated_at": "2026-10-30T15:44:48.801837",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "194370",
-      "name": "제이에스코퍼레이션",
-      "sector": "기타",
-      "score_bonus": 5,
-      "today_change": 4.53,
-      "today_vol_ratio": 209.0,
-      "today_score": 53,
+      "code": "090430",
+      "name": "아모레퍼시픽",
+      "sector": "소비재",
+      "score_bonus": 4,
+      "today_change": 3.78,
+      "today_vol_ratio": 203.0,
+      "today_score": 63,
       "reasons": [
-        "오늘 +4.5% 마감",
-        "거래량 평균 +209%",
-        "스윙점수 53"
+        "오늘 +3.8% 마감",
+        "거래량 평균 +203%",
+        "스윙점수 63"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "005300",
+      "name": "롯데칠성",
+      "sector": "기타",
+      "score_bonus": 4,
+      "today_change": 3.72,
+      "today_vol_ratio": 220.0,
+      "today_score": 52,
+      "reasons": [
+        "오늘 +3.7% 마감",
+        "거래량 평균 +220%",
+        "스윙점수 52"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -3,
-    "IT": -3,
-    "통신": -1,
-    "AI": -1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "바이오": 3,
-    "제약": 3,
-    "헬스": 3,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -1.55,
-    "XLK": -1.18,
-    "XLF": 1.44,
-    "XLE": 0.38,
-    "XLV": 2.4,
-    "XLI": 0.97,
-    "XLB": 1.29,
-    "XLY": 0.75
-  },
-  "sector_updated_at": "2026-10-30T06:01:15.473701"
+  "sector_weights": {}
 }
