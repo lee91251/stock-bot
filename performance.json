@@ -23,59 +23,13 @@
     "2026-10": {
       "total": 0,
       "wins": 0
+    },
+    "2026-11": {
+      "total": 0,
+      "wins": 0
     }
   },
   "recommendations": [
-    {
-      "date": "2026-07-31",
-      "month": "2026-07",
-      "ticker": "123410.KQ",
-      "name": "코리아에프티",
-      "price": 4920.0,
-      "score": 116,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-31",
-      "month": "2026-07",
-      "ticker": "079960.KQ",
-      "name": "동양이엔피",
-      "price": 18470.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-31",
-      "month": "2026-07",
-      "ticker": "309960.KQ",
-      "name": "LB인베스트먼트",
-      "price": 3995.0,
-      "score": 115,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-31",
-      "month": "2026-07",
-      "ticker": "035510.KS",
-      "name": "신세계 I&C",
-      "price": 11440.0,
-      "score": 114,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-07-31",
-      "month": "2026-07",
-      "ticker": "104480.KQ",
-      "name": "티케이케미칼",
-      "price": 1436.0,
-      "score": 114,
-      "buy_signal": true,
-      "result": null
-    },
     {
       "date": "2026-08-05",
       "month": "2026-08",
@@ -3023,6 +2977,56 @@
       "name": "KT",
       "price": 45750.0,
       "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "month": "2026-11",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 28600.0,
+      "score": 116,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "month": "2026-11",
+      "ticker": "003100.KQ",
+      "name": "선광",
+      "price": 18120.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "month": "2026-11",
+      "ticker": "079960.KQ",
+      "name": "동양이엔피",
+      "price": 14940.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "month": "2026-11",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 101100.0,
+      "score": 111,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "month": "2026-11",
+      "ticker": "143160.KQ",
+      "name": "아이디스",
+      "price": 14460.0,
+      "score": 110,
       "buy_signal": true,
       "result": null
     }
