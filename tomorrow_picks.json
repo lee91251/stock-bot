@@ -1,64 +1,38 @@
 {
-  "date": "2026-11-02",
-  "generated_at": "2026-10-30T15:44:48.801837",
+  "date": "2026-11-03",
+  "generated_at": "2026-11-02T15:43:52.881542",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "090430",
-      "name": "아모레퍼시픽",
-      "sector": "소비재",
-      "score_bonus": 4,
-      "today_change": 3.78,
-      "today_vol_ratio": 203.0,
-      "today_score": 63,
+      "code": "004020",
+      "name": "현대제철",
+      "sector": "철강",
+      "score_bonus": 10,
+      "today_change": 11.61,
+      "today_vol_ratio": 228.0,
+      "today_score": 66,
       "reasons": [
-        "오늘 +3.8% 마감",
-        "거래량 평균 +203%",
-        "스윙점수 63"
+        "오늘 +11.6% 마감",
+        "거래량 평균 +228%",
+        "스윙점수 66"
       ],
       "source": "close_summary"
     },
     {
-      "code": "005300",
-      "name": "롯데칠성",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.72,
-      "today_vol_ratio": 220.0,
-      "today_score": 52,
+      "code": "010140",
+      "name": "삼성중공업",
+      "sector": "조선",
+      "score_bonus": 8,
+      "today_change": 7.81,
+      "today_vol_ratio": 163.0,
+      "today_score": 61,
       "reasons": [
-        "오늘 +3.7% 마감",
-        "거래량 평균 +220%",
-        "스윙점수 52"
+        "오늘 +7.8% 마감",
+        "거래량 평균 +163%",
+        "스윙점수 61"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -5,
-    "AI": -5,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": 3,
-    "정유": 3,
-    "조선": -3,
-    "방산": -3,
-    "기계": -3,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": -8.24,
-    "XLK": -4.89,
-    "XLF": -0.76,
-    "XLE": 1.91,
-    "XLV": 0.45,
-    "XLI": -1.6,
-    "XLB": 0.4,
-    "XLY": -0.71
-  },
-  "sector_updated_at": "2026-11-02T06:01:07.756357"
+  "sector_weights": {}
 }
