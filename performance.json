@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-06",
-      "month": "2026-08",
-      "ticker": "031440.KS",
-      "name": "신세계푸드",
-      "price": 38150.0,
-      "score": 113,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-06",
-      "month": "2026-08",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 14940.0,
-      "score": 110,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-06",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-06",
-      "month": "2026-08",
-      "ticker": "090850.KQ",
-      "name": "현대이지웰",
-      "price": 5570.0,
-      "score": 107,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-06",
-      "month": "2026-08",
-      "ticker": "096760.KS",
-      "name": "JW홀딩스",
-      "price": 3810.0,
-      "score": 103,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-08-07",
       "month": "2026-08",
       "ticker": "031440.KS",
@@ -3028,6 +2978,56 @@
       "price": 59800.0,
       "score": 107,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-04",
+      "month": "2026-11",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 102200.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-04",
+      "month": "2026-11",
+      "ticker": "185750.KS",
+      "name": "종근당",
+      "price": 60600.0,
+      "score": 112,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-04",
+      "month": "2026-11",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 60300.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-04",
+      "month": "2026-11",
+      "ticker": "096760.KS",
+      "name": "JW홀딩스",
+      "price": 3825.0,
+      "score": 105,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-04",
+      "month": "2026-11",
+      "ticker": "023760.KQ",
+      "name": "한국캐피탈",
+      "price": 1347.0,
+      "score": 105,
+      "buy_signal": false,
       "result": null
     }
   ]
