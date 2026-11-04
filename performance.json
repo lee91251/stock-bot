@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-07",
-      "month": "2026-08",
-      "ticker": "031440.KS",
-      "name": "신세계푸드",
-      "price": 38150.0,
-      "score": 113,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-07",
-      "month": "2026-08",
-      "ticker": "090850.KQ",
-      "name": "현대이지웰",
-      "price": 5210.0,
-      "score": 109,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-07",
-      "month": "2026-08",
-      "ticker": "019010.KQ",
-      "name": "베뉴지",
-      "price": 3600.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-07",
-      "month": "2026-08",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 35950.0,
-      "score": 104,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-07",
-      "month": "2026-08",
-      "ticker": "096760.KS",
-      "name": "JW홀딩스",
-      "price": 3810.0,
-      "score": 103,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-08-10",
       "month": "2026-08",
       "ticker": "031440.KS",
@@ -3028,6 +2978,56 @@
       "price": 1347.0,
       "score": 105,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-05",
+      "month": "2026-11",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 56800.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-05",
+      "month": "2026-11",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 30450.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-05",
+      "month": "2026-11",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 102900.0,
+      "score": 111,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-05",
+      "month": "2026-11",
+      "ticker": "200670.KQ",
+      "name": "휴메딕스",
+      "price": 22350.0,
+      "score": 111,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-05",
+      "month": "2026-11",
+      "ticker": "214180.KQ",
+      "name": "헥토이노베이션",
+      "price": 12210.0,
+      "score": 111,
+      "buy_signal": true,
       "result": null
     }
   ]
