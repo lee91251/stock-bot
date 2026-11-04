@@ -1,36 +1,68 @@
 {
-  "date": "2026-11-04",
-  "generated_at": "2026-11-03T15:43:04.359894",
+  "date": "2026-11-05",
+  "generated_at": "2026-11-04T15:43:41.040629",
   "source_phase": "close_summary",
-  "picks": [],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 1,
-    "AI": 1,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": -1,
-    "정유": -1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": -3,
-    "소재": -3,
-    "철강": -3,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 2.5,
-    "XLK": 1.31,
-    "XLF": -0.64,
-    "XLE": -0.8,
-    "XLV": -0.3,
-    "XLI": 0.97,
-    "XLB": -2.05,
-    "XLY": -0.69
-  },
-  "sector_updated_at": "2026-11-04T06:01:14.059307"
+  "picks": [
+    {
+      "code": "259960",
+      "name": "크래프톤",
+      "sector": "게임",
+      "score_bonus": 10,
+      "today_change": 16.55,
+      "today_vol_ratio": 262.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +16.6% 마감",
+        "거래량 평균 +262%",
+        "스윙점수 54"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "006400",
+      "name": "삼성SDI",
+      "sector": "2차전지",
+      "score_bonus": 10,
+      "today_change": 11.57,
+      "today_vol_ratio": 189.0,
+      "today_score": 53,
+      "reasons": [
+        "오늘 +11.6% 마감",
+        "거래량 평균 +189%",
+        "스윙점수 53"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "047810",
+      "name": "한국항공우주",
+      "sector": "방산",
+      "score_bonus": 10,
+      "today_change": 11.82,
+      "today_vol_ratio": 223.0,
+      "today_score": 51,
+      "reasons": [
+        "오늘 +11.8% 마감",
+        "거래량 평균 +223%",
+        "스윙점수 51"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "015760",
+      "name": "한국전력",
+      "sector": "신재생",
+      "score_bonus": 5,
+      "today_change": 4.82,
+      "today_vol_ratio": 213.0,
+      "today_score": 62,
+      "reasons": [
+        "오늘 +4.8% 마감",
+        "거래량 평균 +213%",
+        "스윙점수 62"
+      ],
+      "source": "close_summary"
+    }
+  ],
+  "sector_weights": {}
 }
