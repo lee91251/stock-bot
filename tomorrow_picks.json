@@ -1,98 +1,143 @@
 {
-  "date": "2026-11-05",
-  "generated_at": "2026-11-04T15:43:41.040629",
+  "date": "2026-11-06",
+  "generated_at": "2026-11-05T15:44:11.869011",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "259960",
-      "name": "크래프톤",
-      "sector": "게임",
+      "code": "035720",
+      "name": "카카오",
+      "sector": "IT",
       "score_bonus": 10,
-      "today_change": 16.55,
-      "today_vol_ratio": 262.0,
-      "today_score": 54,
+      "today_change": 10.65,
+      "today_vol_ratio": 305.0,
+      "today_score": 78,
       "reasons": [
-        "오늘 +16.6% 마감",
-        "거래량 평균 +262%",
-        "스윙점수 54"
+        "오늘 +10.7% 마감",
+        "거래량 평균 +305%",
+        "스윙점수 78"
       ],
       "source": "close_summary"
     },
     {
-      "code": "006400",
-      "name": "삼성SDI",
-      "sector": "2차전지",
+      "code": "041510",
+      "name": "에스엠",
+      "sector": "엔터",
       "score_bonus": 10,
-      "today_change": 11.57,
-      "today_vol_ratio": 189.0,
-      "today_score": 53,
+      "today_change": 11.72,
+      "today_vol_ratio": 159.0,
+      "today_score": 50,
       "reasons": [
-        "오늘 +11.6% 마감",
-        "거래량 평균 +189%",
-        "스윙점수 53"
+        "오늘 +11.7% 마감",
+        "거래량 평균 +159%",
+        "스윙점수 50"
       ],
       "source": "close_summary"
     },
     {
-      "code": "047810",
-      "name": "한국항공우주",
-      "sector": "방산",
-      "score_bonus": 10,
-      "today_change": 11.82,
-      "today_vol_ratio": 223.0,
+      "code": "035420",
+      "name": "NAVER",
+      "sector": "IT",
+      "score_bonus": 8,
+      "today_change": 8.26,
+      "today_vol_ratio": 214.0,
+      "today_score": 66,
+      "reasons": [
+        "오늘 +8.3% 마감",
+        "거래량 평균 +214%",
+        "스윙점수 66"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "462870",
+      "name": "시프트업",
+      "sector": "기타",
+      "score_bonus": 7,
+      "today_change": 6.53,
+      "today_vol_ratio": 315.0,
+      "today_score": 71,
+      "reasons": [
+        "오늘 +6.5% 마감",
+        "거래량 평균 +315%",
+        "스윙점수 71"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "009450",
+      "name": "경동나비엔",
+      "sector": "기타",
+      "score_bonus": 5,
+      "today_change": 4.56,
+      "today_vol_ratio": 205.0,
+      "today_score": 65,
+      "reasons": [
+        "오늘 +4.6% 마감",
+        "거래량 평균 +205%",
+        "스윙점수 65"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "090435",
+      "name": "아모레퍼시픽우",
+      "sector": "기타",
+      "score_bonus": 5,
+      "today_change": 5.1,
+      "today_vol_ratio": 199.0,
       "today_score": 51,
       "reasons": [
-        "오늘 +11.8% 마감",
-        "거래량 평균 +223%",
+        "오늘 +5.1% 마감",
+        "거래량 평균 +199%",
         "스윙점수 51"
       ],
       "source": "close_summary"
     },
     {
-      "code": "015760",
-      "name": "한국전력",
-      "sector": "신재생",
+      "code": "185750",
+      "name": "종근당",
+      "sector": "바이오",
       "score_bonus": 5,
-      "today_change": 4.82,
-      "today_vol_ratio": 213.0,
-      "today_score": 62,
+      "today_change": 5.07,
+      "today_vol_ratio": 162.0,
+      "today_score": 50,
       "reasons": [
-        "오늘 +4.8% 마감",
-        "거래량 평균 +213%",
-        "스윙점수 62"
+        "오늘 +5.1% 마감",
+        "거래량 평균 +162%",
+        "스윙점수 50"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "097950",
+      "name": "CJ제일제당",
+      "sector": "음식료",
+      "score_bonus": 4,
+      "today_change": 3.79,
+      "today_vol_ratio": 150.0,
+      "today_score": 57,
+      "reasons": [
+        "오늘 +3.8% 마감",
+        "거래량 평균 +150%",
+        "스윙점수 57"
+      ],
+      "source": "close_summary"
+    },
+    {
+      "code": "005380",
+      "name": "현대차",
+      "sector": "자동차",
+      "score_bonus": 4,
+      "today_change": 3.53,
+      "today_vol_ratio": 167.0,
+      "today_score": 54,
+      "reasons": [
+        "오늘 +3.5% 마감",
+        "거래량 평균 +167%",
+        "스윙점수 54"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "금융": 5,
-    "은행": 5,
-    "보험": 5,
-    "에너지": -5,
-    "정유": -5,
-    "바이오": 5,
-    "제약": 5,
-    "헬스": 5,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": 3,
-    "소재": 3,
-    "철강": 3,
-    "자동차": 5,
-    "유통": 5
-  },
-  "us_etf_changes": {
-    "SOXX": -3.14,
-    "XLK": -0.02,
-    "XLF": 3.48,
-    "XLE": -4.72,
-    "XLV": 3.08,
-    "XLI": -1.1,
-    "XLB": 2.43,
-    "XLY": 4.24
-  },
-  "sector_updated_at": "2026-11-05T06:01:02.069097"
+  "sector_weights": {}
 }
