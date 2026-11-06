@@ -544,6 +544,30 @@ class KisClient:
 _kis = KisClient()
 
 
+def _alert_account_unusable(mode_tag: str, msg: str) -> None:
+    """11/6: 매매 계좌를 못 쓰는 상태(모의투자 신청 만료 등) — 하루 1번 텔레그램(진동) + 대시보드 알림.
+
+    11/2부터 '모의투자 신청내역을 확인하세요'가 로그에만 찍히고 아무도 몰랐던 사고 방지.
+    이 상태면 잔고 대조·매수·매도 주문이 모두 실패한다.
+    """
+    today = _now_kst().strftime("%Y-%m-%d")
+    try:
+        if any(a.get("category") == "account" and str(a.get("time", "")).startswith(today) for a in _load_alerts()):
+            return
+    except Exception:
+        pass
+    try:
+        log_alert("account", "danger", f"{mode_tag} 매매 계좌 사용 불가", msg, "🚨")
+    except Exception as e:
+        print(f"  [계좌알림] 대시보드 기록 실패: {e}")
+    try:
+        tg_send(f"🚨 <b>{mode_tag} 매매 계좌를 쓸 수 없습니다</b>\n증권사 응답: {msg}\n"
+                f"→ 이 상태면 잔고 확인·매수·매도 주문이 모두 실패합니다.\n"
+                f"→ 한국투자증권에서 모의투자 신청(재신청) 상태를 확인해 주세요.")
+    except Exception as e:
+        print(f"  [계좌알림] 텔레그램 실패: {e}")
+
+
 # ════════════════════════════════════════════════
 # KIS 매매 클라이언트 (모의/실전 도메인 분기)
 # ════════════════════════════════════════════════
@@ -730,6 +754,8 @@ class KisTradingClient:
                 print(f"  [매매{self.mode_tag()}] 잔고조회 오류: {d.get('msg1','')}")
                 if "초당" in str(d.get("msg1", "")) or d.get("msg_cd") == "EGW00201":
                     return None
+                if "신청" in str(d.get("msg1", "")):
+                    _alert_account_unusable(self.mode_tag(), str(d.get("msg1", "")).strip())
                 return {}
             out2 = d.get("output2", [{}])
             summary = out2[0] if isinstance(out2, list) and out2 else {}
@@ -6554,8 +6580,11 @@ def run_auto_buy():
     pos["last_risk_level"] = risk['level']
     save_positions(pos)
 
+    _risk_halt = False
     if risk['qty_factor'] == 0.0:
         # 위험 등급(70+) → 자동매수 정지
+        # 11/6: 예전엔 여기서 바로 return → 폭락일 자가학습 후보 기록이 통째로 빠짐(C1 효과 판정에 필요한 날).
+        #       이제 분석·후보기록은 하고, 아래 C1 게이트 자리에서 매수만 0으로.
         reasons_html = "\n".join(f"• {r}" for r in risk['reasons']) if risk['reasons'] else "• (상세 데이터 부족)"
         _alert(
             f"🚨 <b>{mode_tag} 시장 위험도 {risk['score']}/100 ({risk['level']}) — 자동매수 정지</b>\n"
@@ -6563,7 +6592,7 @@ def run_auto_buy():
             f"<b>위험 요인:</b>\n{reasons_html}\n\n"
             f"<i>안정 시 다음 호출에서 자동 재개</i>"
         )
-        return
+        _risk_halt = True
 
     # ── 종목 풀 구성 (KR_STOCKS + market_scan_cache) ──
     pool = _load_auto_buy_pool()
@@ -6701,6 +6730,10 @@ def run_auto_buy():
             print(f"[자동매수] C1 쉬는 날: {' / '.join(_why)} — 후보 {len(candidates)}개 매수 안 함")
             candidates = []
 
+    if _risk_halt and candidates:   # 11/6: 위험 70+ 정지 — 기록은 남기고 매수만 0
+        print(f"[자동매수] 시장 위험 {risk['score']}/100 정지 — 후보 {len(candidates)}개 매수 안 함")
+        candidates = []
+
     # 보유 / 쿨다운 / 일일 한도 적용
     held = set(pos.get("positions", {}).keys())
     cooldown = pos.get("loss_cooldown", {})
@@ -6716,7 +6749,7 @@ def run_auto_buy():
 
     # qty_factor: 시장 위험 지수 기반 자동 조정 (Phase 1.5)
     qty_factor = risk['qty_factor']
-    if qty_factor < 1.0:
+    if qty_factor < 1.0 and not _risk_halt:   # 정지 알림은 위에서 이미 보냄
         reasons_short = " / ".join(risk['reasons'][:3]) if risk['reasons'] else ""
         _alert(
             f"⚠️ 시장 위험 {risk['score']}/100 ({risk['level']}) — {risk['action']}"
