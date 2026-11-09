@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-12",
-      "month": "2026-08",
-      "ticker": "019010.KQ",
-      "name": "베뉴지",
-      "price": 3790.0,
-      "score": 109,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-12",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-12",
-      "month": "2026-08",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 35200.0,
-      "score": 103,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-12",
-      "month": "2026-08",
-      "ticker": "035890.KQ",
-      "name": "서희건설",
-      "price": 2075.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-12",
-      "month": "2026-08",
-      "ticker": "348950.KS",
-      "name": "제이알글로벌리츠",
-      "price": 1182.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-13",
       "month": "2026-08",
       "ticker": "215200.KQ",
@@ -3028,6 +2978,56 @@
       "price": 18880.0,
       "score": 114,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-10",
+      "month": "2026-11",
+      "ticker": "005380.KS",
+      "name": "현대차",
+      "price": 271500.0,
+      "score": 122,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-10",
+      "month": "2026-11",
+      "ticker": "024800.KQ",
+      "name": "유성티엔에스",
+      "price": 3900.0,
+      "score": 119,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-10",
+      "month": "2026-11",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 4295.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-10",
+      "month": "2026-11",
+      "ticker": "009540.KS",
+      "name": "HD한국조선해양",
+      "price": 235500.0,
+      "score": 116,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-10",
+      "month": "2026-11",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 101600.0,
+      "score": 113,
+      "buy_signal": true,
       "result": null
     }
   ]
