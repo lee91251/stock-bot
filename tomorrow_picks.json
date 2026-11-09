@@ -1,60 +1,38 @@
 {
-  "date": "2026-11-09",
-  "generated_at": "2026-11-06T15:46:14.760922",
+  "date": "2026-11-10",
+  "generated_at": "2026-11-09T15:45:30.832318",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "006360",
-      "name": "GS건설",
-      "sector": "건설",
-      "score_bonus": 6,
-      "today_change": 6.44,
-      "today_vol_ratio": 219.0,
-      "today_score": 56,
+      "code": "005430",
+      "name": "한국공항",
+      "sector": "기타",
+      "score_bonus": 7,
+      "today_change": 6.86,
+      "today_vol_ratio": 202.0,
+      "today_score": 51,
       "reasons": [
-        "오늘 +6.4% 마감",
-        "거래량 평균 +219%",
-        "스윙점수 56"
+        "오늘 +6.9% 마감",
+        "거래량 평균 +202%",
+        "스윙점수 51"
       ],
       "source": "close_summary"
     },
     {
-      "code": "018260",
-      "name": "삼성에스디에스",
-      "sector": "IT",
-      "score_bonus": 6,
-      "today_change": 6.34,
-      "today_vol_ratio": 226.0,
-      "today_score": 54,
+      "code": "006650",
+      "name": "대한유화",
+      "sector": "기타",
+      "score_bonus": 3,
+      "today_change": 3.29,
+      "today_vol_ratio": 211.0,
+      "today_score": 67,
       "reasons": [
-        "오늘 +6.3% 마감",
-        "거래량 평균 +226%",
-        "스윙점수 54"
+        "오늘 +3.3% 마감",
+        "거래량 평균 +211%",
+        "스윙점수 67"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 1,
-    "AI": 1,
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 3.51,
-    "XLK": 1.45,
-    "XLF": -0.59,
-    "XLE": -0.02,
-    "XLV": -0.06,
-    "XLI": 0.12,
-    "XLB": -0.73,
-    "XLY": -0.05
-  },
-  "sector_updated_at": "2026-11-09T06:01:07.264937"
+  "sector_weights": {}
 }
