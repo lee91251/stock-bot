@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-13",
-      "month": "2026-08",
-      "ticker": "215200.KQ",
-      "name": "메가스터디교육",
-      "price": 37250.0,
-      "score": 112,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-13",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-13",
-      "month": "2026-08",
-      "ticker": "418470.KQ",
-      "name": "KT밀리의서재",
-      "price": 10080.0,
-      "score": 101,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-13",
-      "month": "2026-08",
-      "ticker": "000120.KS",
-      "name": "CJ대한통운",
-      "price": 74100.0,
-      "score": 100,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-13",
-      "month": "2026-08",
-      "ticker": "000370.KS",
-      "name": "한화손해보험",
-      "price": 6200.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-14",
       "month": "2026-08",
       "ticker": "023760.KQ",
@@ -3027,6 +2977,56 @@
       "name": "대웅제약",
       "price": 101600.0,
       "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-11",
+      "month": "2026-11",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 4275.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-11",
+      "month": "2026-11",
+      "ticker": "071320.KS",
+      "name": "지역난방공사",
+      "price": 68000.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-11",
+      "month": "2026-11",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 184700.0,
+      "score": 109,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-11",
+      "month": "2026-11",
+      "ticker": "051900.KS",
+      "name": "LG생활건강",
+      "price": 230500.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-11",
+      "month": "2026-11",
+      "ticker": "003650.KS",
+      "name": "미창석유",
+      "price": 109500.0,
+      "score": 106,
       "buy_signal": true,
       "result": null
     }
