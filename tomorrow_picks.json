@@ -1,70 +1,23 @@
 {
-  "date": "2026-11-10",
-  "generated_at": "2026-11-09T15:45:30.832318",
+  "date": "2026-11-11",
+  "generated_at": "2026-11-10T15:42:47.106846",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "005430",
-      "name": "한국공항",
+      "code": "016590",
+      "name": "신대양제지",
       "sector": "기타",
-      "score_bonus": 7,
-      "today_change": 6.86,
-      "today_vol_ratio": 202.0,
-      "today_score": 51,
+      "score_bonus": 9,
+      "today_change": 9.2,
+      "today_vol_ratio": 552.0,
+      "today_score": 50,
       "reasons": [
-        "오늘 +6.9% 마감",
-        "거래량 평균 +202%",
-        "스윙점수 51"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "006650",
-      "name": "대한유화",
-      "sector": "기타",
-      "score_bonus": 3,
-      "today_change": 3.29,
-      "today_vol_ratio": 211.0,
-      "today_score": 67,
-      "reasons": [
-        "오늘 +3.3% 마감",
-        "거래량 평균 +211%",
-        "스윙점수 67"
+        "오늘 +9.2% 마감",
+        "거래량 평균 +552%",
+        "스윙점수 50"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": 5,
-    "IT": 5,
-    "통신": 5,
-    "AI": 5,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 3,
-    "제약": 3,
-    "헬스": 3,
-    "조선": 5,
-    "방산": 5,
-    "기계": 5,
-    "화학": 3,
-    "소재": 3,
-    "철강": 3,
-    "자동차": 5,
-    "유통": 5
-  },
-  "us_etf_changes": {
-    "SOXX": 7.5,
-    "XLK": 3.79,
-    "XLF": 1.46,
-    "XLE": 0.67,
-    "XLV": 1.93,
-    "XLI": 3.9,
-    "XLB": 1.96,
-    "XLY": 3.0
-  },
-  "sector_updated_at": "2026-11-10T06:01:09.370653"
+  "sector_weights": {}
 }
