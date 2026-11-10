@@ -19,5 +19,23 @@
       "source": "close_summary"
     }
   ],
-  "sector_weights": {}
+  "sector_weights": {
+    "IT": -1,
+    "통신": -1,
+    "AI": -1,
+    "금융": 1,
+    "은행": 1,
+    "보험": 1
+  },
+  "us_etf_changes": {
+    "SOXX": -0.12,
+    "XLK": -1.14,
+    "XLF": 0.5,
+    "XLE": 0.46,
+    "XLV": 0.31,
+    "XLI": -0.08,
+    "XLB": -0.17,
+    "XLY": 0.04
+  },
+  "sector_updated_at": "2026-11-11T06:01:10.124892"
 }
