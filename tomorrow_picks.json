@@ -1,41 +1,7 @@
 {
-  "date": "2026-11-11",
-  "generated_at": "2026-11-10T15:42:47.106846",
+  "date": "2026-11-12",
+  "generated_at": "2026-11-11T15:45:43.269253",
   "source_phase": "close_summary",
-  "picks": [
-    {
-      "code": "016590",
-      "name": "신대양제지",
-      "sector": "기타",
-      "score_bonus": 9,
-      "today_change": 9.2,
-      "today_vol_ratio": 552.0,
-      "today_score": 50,
-      "reasons": [
-        "오늘 +9.2% 마감",
-        "거래량 평균 +552%",
-        "스윙점수 50"
-      ],
-      "source": "close_summary"
-    }
-  ],
-  "sector_weights": {
-    "IT": -1,
-    "통신": -1,
-    "AI": -1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -0.12,
-    "XLK": -1.14,
-    "XLF": 0.5,
-    "XLE": 0.46,
-    "XLV": 0.31,
-    "XLI": -0.08,
-    "XLB": -0.17,
-    "XLY": 0.04
-  },
-  "sector_updated_at": "2026-11-11T06:01:10.124892"
+  "picks": [],
+  "sector_weights": {}
 }
