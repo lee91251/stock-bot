@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-14",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-14",
-      "month": "2026-08",
-      "ticker": "069620.KS",
-      "name": "대웅제약",
-      "price": 123300.0,
-      "score": 107,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-14",
-      "month": "2026-08",
-      "ticker": "036580.KS",
-      "name": "팜스코",
-      "price": 2675.0,
-      "score": 102,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-14",
-      "month": "2026-08",
-      "ticker": "081660.KS",
-      "name": "미스토홀딩스",
-      "price": 42900.0,
-      "score": 100,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-14",
-      "month": "2026-08",
-      "ticker": "123410.KQ",
-      "name": "코리아에프티",
-      "price": 5570.0,
-      "score": 99,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-17",
       "month": "2026-08",
       "ticker": "023760.KQ",
@@ -3026,6 +2976,56 @@
       "ticker": "003650.KS",
       "name": "미창석유",
       "price": 109500.0,
+      "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-12",
+      "month": "2026-11",
+      "ticker": "103140.KS",
+      "name": "풍산",
+      "price": 53100.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-12",
+      "month": "2026-11",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 4325.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-12",
+      "month": "2026-11",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 30450.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-12",
+      "month": "2026-11",
+      "ticker": "064820.KQ",
+      "name": "케이프",
+      "price": 6130.0,
+      "score": 108,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-12",
+      "month": "2026-11",
+      "ticker": "114090.KS",
+      "name": "GKL",
+      "price": 7950.0,
       "score": 106,
       "buy_signal": true,
       "result": null
