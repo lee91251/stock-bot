@@ -1721,5 +1721,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-11-12T10:07:35.428191+09:00",
+    "side": "buy",
+    "code": "037270",
+    "name": "YG PLUS",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
