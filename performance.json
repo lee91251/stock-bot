@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-17",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-17",
-      "month": "2026-08",
-      "ticker": "138930.KS",
-      "name": "BNK금융지주",
-      "price": 15130.0,
-      "score": 104,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-17",
-      "month": "2026-08",
-      "ticker": "035890.KQ",
-      "name": "서희건설",
-      "price": 2095.0,
-      "score": 104,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-17",
-      "month": "2026-08",
-      "ticker": "090850.KQ",
-      "name": "현대이지웰",
-      "price": 5250.0,
-      "score": 103,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-17",
-      "month": "2026-08",
-      "ticker": "030200.KS",
-      "name": "KT",
-      "price": 53400.0,
-      "score": 101,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-08-18",
       "month": "2026-08",
       "ticker": "015760.KS",
@@ -3027,6 +2977,56 @@
       "name": "GKL",
       "price": 7950.0,
       "score": 106,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-13",
+      "month": "2026-11",
+      "ticker": "106190.KQ",
+      "name": "하이텍팜",
+      "price": 8660.0,
+      "score": 114,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-13",
+      "month": "2026-11",
+      "ticker": "001450.KS",
+      "name": "현대해상",
+      "price": 36800.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-13",
+      "month": "2026-11",
+      "ticker": "032190.KQ",
+      "name": "다우데이타",
+      "price": 15910.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-13",
+      "month": "2026-11",
+      "ticker": "019180.KS",
+      "name": "티에이치엔",
+      "price": 4240.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-13",
+      "month": "2026-11",
+      "ticker": "024800.KQ",
+      "name": "유성티엔에스",
+      "price": 3630.0,
+      "score": 111,
       "buy_signal": true,
       "result": null
     }
