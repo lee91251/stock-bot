@@ -2,17 +2,17 @@
   "positions": {
     "037270": {
       "name": "YG PLUS",
-      "qty": 328,
+      "qty": 164,
       "buy_price": 3045.0,
       "buy_date": "2026-11-12",
       "buy_time": "10:07",
       "buy_amount": 998760.0,
-      "partial_sold": false,
+      "partial_sold": true,
       "score": 87,
       "swing_score": 71,
       "sector": "기타",
       "order_no": "0000016728",
-      "imminent_state": "near_target1"
+      "imminent_state": ""
     }
   },
   "history": [
@@ -1522,6 +1522,23 @@
       "reason": "swing_score 71",
       "sector": "기타",
       "tag": "📊 스윙"
+    },
+    {
+      "date": "2026-11-12",
+      "time": "10:31",
+      "side": "sell",
+      "code": "037270",
+      "name": "YG PLUS",
+      "qty": 164,
+      "price": 3255.0,
+      "amount": 533820.0,
+      "reason": "+6.9% 절반 익절",
+      "pct": 6.9,
+      "sector": "기타",
+      "buy_price": 3045.0,
+      "profit": 34440,
+      "ai_opinion": "",
+      "journal": ""
     }
   ],
   "daily": {
@@ -1883,7 +1900,7 @@
     "2026-11-12": {
       "buy_count": 1,
       "buy_amount": 998760.0,
-      "trade_count": 1
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
