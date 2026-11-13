@@ -1739,5 +1739,14 @@
     "ok": true,
     "rejects": [],
     "warnings": []
+  },
+  {
+    "time": "2026-11-13T09:16:31.717179+09:00",
+    "side": "sell",
+    "code": "037270",
+    "name": "YG PLUS",
+    "ok": true,
+    "rejects": [],
+    "warnings": []
   }
 ]
