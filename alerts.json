@@ -1,29 +1,5 @@
 [
   {
-    "time": "2026-11-12T08:50:59.437529+09:00",
-    "category": "briefing",
-    "level": "info",
-    "emoji": "🔔",
-    "title": "장 시작 전",
-    "detail": "코스피 +0.00% / VIX 17.5 / 공포탐욕 55(중립)"
-  },
-  {
-    "time": "2026-11-12T10:18:01.059914+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 삼성전자 🏠",
-    "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
-  },
-  {
-    "time": "2026-11-12T10:25:27.501525+09:00",
-    "category": "imminent",
-    "level": "info",
-    "emoji": "📊",
-    "title": "매매 임박",
-    "detail": "🟢 YG PLUS +5.58% — 1차 익절 임박 (목표 +6%, 절반 매도)"
-  },
-  {
     "time": "2026-11-12T14:36:53.456648+09:00",
     "category": "imminent",
     "level": "info",
@@ -54,5 +30,13 @@
     "emoji": "🔔",
     "title": "장 시작 전",
     "detail": "코스피 +0.00% / VIX 18.7 / 공포탐욕 50(중립)"
+  },
+  {
+    "time": "2026-11-13T13:03:07.872836+09:00",
+    "category": "risk",
+    "level": "danger",
+    "emoji": "🚨",
+    "title": "위험 등급 상승: 안전 → 주의",
+    "detail": "30/100 · 매수량 25% 축소 · 오늘 미국 10월 CPI 발표 (D-day)"
   }
 ]
