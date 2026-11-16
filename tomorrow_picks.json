@@ -1,62 +1,23 @@
 {
-  "date": "2026-11-16",
-  "generated_at": "2026-11-13T15:43:53.998726",
+  "date": "2026-11-17",
+  "generated_at": "2026-11-16T15:44:01.662493",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "064960",
-      "name": "SNT모티브",
+      "code": "003100",
+      "name": "선광",
       "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 10.17,
-      "today_vol_ratio": 518.0,
-      "today_score": 69,
+      "score_bonus": 3,
+      "today_change": 3.14,
+      "today_vol_ratio": 247.0,
+      "today_score": 60,
       "reasons": [
-        "오늘 +10.2% 마감",
-        "거래량 평균 +518%",
-        "스윙점수 69"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "003570",
-      "name": "SNT다이내믹스",
-      "sector": "기타",
-      "score_bonus": 7,
-      "today_change": 6.94,
-      "today_vol_ratio": 516.0,
-      "today_score": 59,
-      "reasons": [
-        "오늘 +6.9% 마감",
-        "거래량 평균 +516%",
-        "스윙점수 59"
+        "오늘 +3.1% 마감",
+        "거래량 평균 +247%",
+        "스윙점수 60"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -3,
-    "AI": -3,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 1,
-    "제약": 1,
-    "헬스": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -3.67,
-    "XLK": -2.01,
-    "XLF": 0.81,
-    "XLE": 0.98,
-    "XLV": 0.54,
-    "XLI": -0.39,
-    "XLB": -0.21,
-    "XLY": -0.4
-  },
-  "sector_updated_at": "2026-11-16T06:01:06.928073"
+  "sector_weights": {}
 }
