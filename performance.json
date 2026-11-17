@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-20",
-      "month": "2026-08",
-      "ticker": "104460.KQ",
-      "name": "디와이피엔에프",
-      "price": 7780.0,
-      "score": 118,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-20",
-      "month": "2026-08",
-      "ticker": "194700.KQ",
-      "name": "노바렉스",
-      "price": 11140.0,
-      "score": 111,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-20",
-      "month": "2026-08",
-      "ticker": "025540.KS",
-      "name": "한국단자",
-      "price": 55600.0,
-      "score": 110,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-20",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-20",
-      "month": "2026-08",
-      "ticker": "071050.KS",
-      "name": "한국금융지주",
-      "price": 183100.0,
-      "score": 99,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-21",
       "month": "2026-08",
       "ticker": "015760.KS",
@@ -3026,6 +2976,56 @@
       "ticker": "032190.KQ",
       "name": "다우데이타",
       "price": 15860.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-18",
+      "month": "2026-11",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 194300.0,
+      "score": 127,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-18",
+      "month": "2026-11",
+      "ticker": "023590.KS",
+      "name": "다우기술",
+      "price": 29050.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-18",
+      "month": "2026-11",
+      "ticker": "005380.KS",
+      "name": "현대차",
+      "price": 259000.0,
+      "score": 121,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-18",
+      "month": "2026-11",
+      "ticker": "032190.KQ",
+      "name": "다우데이타",
+      "price": 15600.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-18",
+      "month": "2026-11",
+      "ticker": "037460.KQ",
+      "name": "삼지전자",
+      "price": 25000.0,
       "score": 118,
       "buy_signal": true,
       "result": null
