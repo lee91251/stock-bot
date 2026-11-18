@@ -1,84 +1,23 @@
 {
-  "date": "2026-11-18",
-  "generated_at": "2026-11-17T15:46:54.366749",
+  "date": "2026-11-19",
+  "generated_at": "2026-11-18T15:46:19.531113",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "143240",
-      "name": "사람인",
-      "sector": "기타",
-      "score_bonus": 9,
-      "today_change": 8.66,
-      "today_vol_ratio": 304.0,
+      "code": "277810",
+      "name": "레인보우로보틱스",
+      "sector": "로봇",
+      "score_bonus": 10,
+      "today_change": 20.06,
+      "today_vol_ratio": 322.0,
       "today_score": 59,
       "reasons": [
-        "오늘 +8.7% 마감",
-        "거래량 평균 +304%",
+        "오늘 +20.1% 마감",
+        "거래량 평균 +322%",
         "스윙점수 59"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "025980",
-      "name": "아난티",
-      "sector": "기타",
-      "score_bonus": 6,
-      "today_change": 5.82,
-      "today_vol_ratio": 662.0,
-      "today_score": 54,
-      "reasons": [
-        "오늘 +5.8% 마감",
-        "거래량 평균 +662%",
-        "스윙점수 54"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "045390",
-      "name": "대아티아이",
-      "sector": "기타",
-      "score_bonus": 4,
-      "today_change": 3.62,
-      "today_vol_ratio": 295.0,
-      "today_score": 69,
-      "reasons": [
-        "오늘 +3.6% 마감",
-        "거래량 평균 +295%",
-        "스윙점수 69"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "IT": -1,
-    "통신": -1,
-    "AI": -1,
-    "금융": -3,
-    "은행": -3,
-    "보험": -3,
-    "에너지": -1,
-    "정유": -1,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": -1,
-    "유통": -1
-  },
-  "us_etf_changes": {
-    "SOXX": 0.17,
-    "XLK": -0.89,
-    "XLF": -1.89,
-    "XLE": -0.53,
-    "XLV": -1.38,
-    "XLI": -0.54,
-    "XLB": -1.22,
-    "XLY": -0.86
-  },
-  "sector_updated_at": "2026-11-18T06:01:08.688598"
+  "sector_weights": {}
 }
