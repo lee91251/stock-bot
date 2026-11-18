@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-21",
-      "month": "2026-08",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 31800.0,
-      "score": 121,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-21",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 108,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-21",
-      "month": "2026-08",
-      "ticker": "025540.KS",
-      "name": "한국단자",
-      "price": 55800.0,
-      "score": 106,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-21",
-      "month": "2026-08",
-      "ticker": "194700.KQ",
-      "name": "노바렉스",
-      "price": 11190.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-21",
-      "month": "2026-08",
-      "ticker": "067280.KQ",
-      "name": "멀티캠퍼스",
-      "price": 23800.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-24",
       "month": "2026-08",
       "ticker": "016740.KS",
@@ -3027,6 +2977,56 @@
       "name": "삼지전자",
       "price": 25000.0,
       "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-19",
+      "month": "2026-11",
+      "ticker": "271980.KS",
+      "name": "제일약품",
+      "price": 8490.0,
+      "score": 123,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-19",
+      "month": "2026-11",
+      "ticker": "023590.KS",
+      "name": "다우기술",
+      "price": 29300.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-19",
+      "month": "2026-11",
+      "ticker": "032190.KQ",
+      "name": "다우데이타",
+      "price": 15710.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-19",
+      "month": "2026-11",
+      "ticker": "069620.KS",
+      "name": "대웅제약",
+      "price": 97600.0,
+      "score": 115,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-19",
+      "month": "2026-11",
+      "ticker": "002810.KS",
+      "name": "삼영무역",
+      "price": 19600.0,
+      "score": 114,
       "buy_signal": true,
       "result": null
     }
