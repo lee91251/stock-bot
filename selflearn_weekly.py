@@ -58,6 +58,8 @@ def _simulate(ohlc: pd.DataFrame, day: str, entry: float, stop: float = .04, t1:
     매수 당일은 매수 이후 저가/고가를 알 수 없어 종가로만 판단. 빨리청산·기간청산은 종가 판단 → 다음날 시가.
     """
     d = ohlc[ohlc.index >= pd.Timestamp(day)]
+    # 11/19: 거래정지일은 시가·고가·저가가 0으로 와서 '0원 폭락=-100%'로 채점되던 오류 → 거래 없는 날 제외(8년 가상매매와 같은 기준)
+    d = d[(d.Open > 0) & (d.High > 0) & (d.Low > 0) & (d.Close > 0)]
     if d.empty:
         return None, "시세없음"
     bp = entry * (1 + SLIP)
