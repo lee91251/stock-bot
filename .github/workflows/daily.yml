@@ -45,6 +45,10 @@ env:
   KIS_PAPER_APP_KEY:    ${{ secrets.KIS_PAPER_APP_KEY }}
   KIS_PAPER_APP_SECRET: ${{ secrets.KIS_PAPER_APP_SECRET }}
   KIS_PAPER_ACCOUNT:    ${{ secrets.KIS_PAPER_ACCOUNT }}
+  # ── 11/20 공시 기반 규칙 (GitHub Settings → Variables 에서 false 로 바꾸면 커밋 없이 다음 회차부터 꺼짐) ──
+  BAD_DART_ENFORCE:     ${{ vars.BAD_DART_ENFORCE || 'true' }}    # 나쁜 공시 14일 매수 금지
+  BUYBACK_ENABLED:      ${{ vars.BUYBACK_ENABLED || 'true' }}     # 하락 뒤 자사주 매입 스윙
+  BUYBACK_OWN_EXIT:     ${{ vars.BUYBACK_OWN_EXIT || 'false' }}   # 자사주 전용 매도(−8%·10일) — 회장 승인 후 true
 
 jobs:
   # ── 일일 AI 리포트 (cron-job.org 평일 08:00 KST) ────

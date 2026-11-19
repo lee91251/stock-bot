@@ -1080,6 +1080,92 @@ def dart_recent_titles_all(days: int = 3, max_pages: int = 40) -> dict:
     return out
 
 
+# 11/20 회장 승인 — 공시 8년 연구(자가학습/09·09b·10·11·12) 결과를 매수에 반영.
+# ① 나쁜 공시 매수 금지: 아래 공시가 최근 BAD_DART_DAYS일 안에 난 종목은 어떤 신호로도 사지 않음.
+#    (2018~26 9.9만건: 다음날 산 경우 20일 뒤 '아무 날 산 경우'보다 두 기간 모두 −1.5~−36%p)
+BAD_DART_PATTERNS = [
+    ("상장폐지 사유", r"상장폐지|상장적격성"),
+    ("회생·파산·부도", r"회생절차|파산|부도|해산사유"),
+    ("횡령·배임", r"횡령|배임"),
+    ("소송", r"소송등의제기"),
+    ("최대주주 변경", r"최대주주변경"),
+    ("조회공시(주가 급변)", r"현저한시황변동"),
+    ("교환사채", r"교환사채권발행결정"),
+    ("전환사채", r"전환사채권발행결정"),
+    ("신주인수권부사채", r"신주인수권부사채권발행결정"),
+    ("감자", r"감자결정"),
+    ("유상증자", r"유상증자결정"),
+    ("불성실공시", r"불성실공시법인지정"),
+    ("관리종목", r"관리종목지정"),
+    ("영업정지", r"영업정지"),
+]
+BAD_DART_DAYS = int(os.environ.get("BAD_DART_DAYS", "14"))          # 달력일 (≈ 10거래일)
+BAD_DART_ENFORCE = os.environ.get("BAD_DART_ENFORCE", "true").lower() != "false"
+# ② 자사주 매입 스윙: '자기주식 취득 결정' 공시 다음 거래일 아침에 매수 → 매도는 기본 '지금 봇 규칙', 승인 시 전용 규칙(아래 BUYBACK_OWN_EXIT).
+#    8년 봇 종목풀 1,337건: 규칙 없이 5일 +1.31%, 지금 매도 규칙 걸면 +0.51% (비용 뺀 1건당, 9년 모두 플러스).
+#    지금 봇 기본 매수 규칙은 같은 8년 가상매매에서 1건당 −0.32%.
+BUYBACK_ENABLED = os.environ.get("BUYBACK_ENABLED", "true").lower() != "false"
+BUYBACK_MAX_HELD = int(os.environ.get("BUYBACK_MAX_HELD", "3"))     # 동시 보유 최대 (슬롯 10개 중)
+BUYBACK_PATTERN = r"자기주식취득결정|자기주식취득신탁계약체결결정"
+BUYBACK_MIN_MCAP_EOK = 500          # 시가총액 500억 미만 제외(체결·유동성)
+BUYBACK_LAST_HHMM = 1000            # 연구는 '다음날 시가' 진입 → 10시 이후엔 안 삼
+BUYBACK_MAX_FROM_OPEN = 3.0         # 시가보다 3% 넘게 올라 있으면 시가 진입이 아니므로 안 삼
+# 11/20 강화(자가학습/14_weapons·15_buyback_dip_check 검산): 신호의 힘은 '많이 빠진 뒤 나온 자사주 매입'에 몰려 있음.
+#   공시 전 20거래일 −10%↓ (전체 1,463건): 10일 보유 +6.67% / 손절 −8%만 걸고 10일 +4.89% (9년 모두 플러스, 최악 −17%)
+#   나머지 3,990건: 10일 +0.70%로 약함 → 안 삼.  기존 익절(+6/+10%)은 큰 상승을 잘라 +1.48%로 줄어 → 전용 매도 규칙 사용.
+BUYBACK_PRE20_MAX = -10.0           # 공시 직전 20거래일 수익률이 이 값 이하인 종목만
+BUYBACK_STOP_PCT = 8.0              # 전용 손절 −8%
+BUYBACK_HOLD_DAYS = 10              # 전용 보유 10거래일 (익절선 없음)
+# 전용 매도 규칙은 회장 승인 대기 → 기본 꺼짐(승인받은 '지금 봇 매도 규칙' −4%·+6/+10%·5일로 운용, 하락 뒤 자사주 8년 +1.48%).
+#   켜면(env BUYBACK_OWN_EXIT=true) 그 뒤 새로 산 자사주 종목부터 −8%·10일·익절 없음(8년 +4.89%). 이미 산 종목은 산 때 규칙 유지.
+BUYBACK_OWN_EXIT = os.environ.get("BUYBACK_OWN_EXIT", "false").lower() == "true"
+
+
+def dart_recent_bi(days: int = 14) -> dict:
+    """11/20: 최근 N일 주요사항(B)·거래소공시(I)를 받아 {종목코드: [(접수일 'YYYYMMDD', 제목, 회사명), …]}.
+
+    나쁜 공시 매수 금지·자사주 매입 스윙용. 유형을 B·I로 좁혀 호출 수를 줄임(14일 ≈ 30페이지).
+    첫 페이지로 전체 페이지 수를 안 뒤 나머지는 4개씩 동시에 받음(DART 응답 1회 2~3초). 실패한 페이지는 건너뜀.
+    """
+    if not DART_API_KEY:
+        return {}
+    today = _now_kst()
+    base = {"bgn_de": (today - timedelta(days=days)).strftime("%Y%m%d"),
+            "end_de": today.strftime("%Y%m%d"), "page_count": "100"}
+    from concurrent.futures import ThreadPoolExecutor
+    jobs = []
+    firsts = []
+    for ty in ("B", "I"):
+        d = _dart_req("list.json", {**base, "pblntf_ty": ty, "page_no": "1"})
+        firsts.append(d)
+        tot = int((d or {}).get("total_page", 1) or 1)
+        jobs += [(ty, p) for p in range(2, min(tot, 60) + 1)]
+
+    def _one(job):
+        ty, p = job
+        return _dart_req("list.json", {**base, "pblntf_ty": ty, "page_no": str(p)})
+
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        pages = firsts + list(ex.map(_one, jobs))
+    out: dict = {"_failed_pages": sum(1 for d in pages if not d)}   # 빈 응답 = 실패(호출한 쪽에서 꺼내 씀)
+    for d in pages:
+        for it in (d or {}).get("list", []):
+            sc = (it.get("stock_code") or "").strip()
+            if sc:
+                out.setdefault(sc, []).append((str(it.get("rcept_dt", "")), re.sub(r"\s+", "", str(it.get("report_nm", ""))),
+                                               str(it.get("corp_name", "")).strip()))
+    return out
+
+
+def bad_dart_reason(items: list) -> str:
+    """공시 목록 [(접수일, 제목, 회사명)] 중 나쁜 공시가 있으면 '유상증자 11/18' 같은 이유, 없으면 ''."""
+    for dt, nm, _ in sorted(items or [], reverse=True):
+        for lab, pat in BAD_DART_PATTERNS:
+            if re.search(pat, nm):
+                return f"{lab} {dt[4:6]}/{dt[6:8]}"
+    return ""
+
+
 def fetch_recent_disclosures_by_stock_codes(stock_codes: set, days: int = 1) -> list:
     """주식 코드 set에 매칭되는 최근 N일 공시 fetch (DART list.json 전체 → stock_code 필터).
 
@@ -6450,6 +6536,68 @@ def _load_auto_buy_pool() -> dict:
     return pool
 
 
+def _buyback_candidates(bi: dict, now: datetime) -> list:
+    """11/20: 자사주 매입 스윙 후보 — '자기주식 취득 결정' 공시가 직전 거래일~어제 접수된 종목(=오늘이 공시 다음 거래일).
+
+    연구와 같게 '공시 다음 거래일 시가' 진입만: 10시 이후·시가 대비 +3% 넘게 오른 종목은 제외.
+    반환 dict는 analyze() 결과와 같은 모양(매수 루프 공용). 나쁜 공시 거르기는 호출한 쪽에서 공통으로.
+    """
+    if not bi or now.hour * 100 + now.minute >= BUYBACK_LAST_HHMM:
+        return []
+    today = now.strftime("%Y%m%d")
+    prev = now - timedelta(days=1)
+    for _ in range(15):
+        if _is_trading_day(prev):
+            break
+        prev -= timedelta(days=1)
+    prev_s = prev.strftime("%Y%m%d")
+    out = []
+    for code, items in bi.items():
+        hits = [(dt, nm, cn) for dt, nm, cn in items
+                if prev_s <= dt < today and re.search(BUYBACK_PATTERN, nm) and "정정" not in nm[:6]
+                and "자회사" not in nm]   # 자회사의 자사주 공시(지주사 코드로 옴)는 제외
+        if not hits:
+            continue
+        name = hits[0][2] or code
+        if "스팩" in name:
+            continue
+        try:
+            q = _kis.get_price(code) or {}
+            price = int(_safe_float(q.get("stck_prpr")))
+            opn = _safe_float(q.get("stck_oprc"))
+            mcap = _safe_float(q.get("hts_avls"))          # 시가총액(억원)
+            chg = _safe_float(q.get("prdy_ctrt"))
+        except Exception as e:
+            print(f"  [자사주] {name} 시세 조회 실패: {e}")
+            continue
+        if price < 1000 or opn <= 0:
+            print(f"  [자사주] {name} 가격 정보 없음/저가주 — 제외"); continue
+        _st = str(q.get("iscd_stat_cls_code", "") or "")
+        if str(q.get("temp_stop_yn", "")).upper() == "Y" or _st in ("51", "52", "53", "58", "59"):
+            print(f"  [자사주] {name} 관리·투자경고/위험·거래정지·단기과열(상태 {_st}) — 제외"); continue
+        if mcap and mcap < BUYBACK_MIN_MCAP_EOK:
+            print(f"  [자사주] {name} 시총 {mcap:,.0f}억 < {BUYBACK_MIN_MCAP_EOK}억 — 제외"); continue
+        from_open = (price / opn - 1) * 100
+        if from_open > BUYBACK_MAX_FROM_OPEN:
+            print(f"  [자사주] {name} 시가 대비 +{from_open:.1f}% — 시가 진입 아님, 제외"); continue
+        try:   # 공시 직전 20거래일 수익률 (어제 종가 ÷ 21거래일 전 종가)
+            _ch = [r for r in (_kis.get_daily_chart(code, months=3) or []) if str(r.get("stck_bsop_date", "")) < today]
+            _cl = [x for x in (_safe_float(r.get("stck_clpr")) for r in _ch) if x > 0]
+            pre20 = (_cl[-1] / _cl[-21] - 1) * 100 if len(_cl) >= 21 and _cl[-21] > 0 else None
+        except Exception as e:
+            pre20 = None
+            print(f"  [자사주] {name} 일봉 조회 실패: {e}")
+        if pre20 is None or pre20 > BUYBACK_PRE20_MAX:
+            print(f"  [자사주] {name} 공시 전 20일 {'?' if pre20 is None else f'{pre20:+.1f}%'} — 많이 빠진 뒤가 아님, 제외"); continue
+        out.append({
+            "ticker": code + ".KS", "name": name, "price": price, "sector": "자사주 매입",
+            "score": 0, "swing_score": 0, "today_change": chg, "change_pct": chg,
+            "buyback": True, "buyback_date": hits[0][0], "pre20": round(pre20, 1),
+        })
+        time.sleep(0.15)
+    return out
+
+
 def run_auto_buy():
     """장 시작 후 자동 매수 (스윙). 09:30~15:30 30분 간격으로 호출.
 
@@ -6768,6 +6916,58 @@ def run_auto_buy():
         print(f"[자동매수] 시장 위험 {risk['score']}/100 정지 — 후보 {len(candidates)}개 매수 안 함")
         candidates = []
 
+    # 11/20 회장 승인 — 공시 기반: ② 자사주 매입 스윙 후보 추가 ① 나쁜 공시 종목 매수 금지 (자세한 근거는 BAD_DART_PATTERNS 위 주석)
+    #   자사주 후보는 C1(나쁜 날 쉬기)과 무관하게 8년 모든 장에서 플러스였으므로 C1 뒤에 붙임. 위험 70+ 정지 때는 안 삼.
+    _bi = {}
+    _bi_fail = 0
+    _need_bb = BUYBACK_ENABLED and not _risk_halt and now.hour * 100 + now.minute < BUYBACK_LAST_HHMM
+    if (BAD_DART_ENFORCE and candidates) or _need_bb:   # 거를 후보도 없고 자사주 시간도 아니면 조회 생략(회차 시간 절약)
+        try:
+            _t1 = time.time()
+            _bi = dart_recent_bi(BAD_DART_DAYS)
+            _bi_fail = _bi.pop("_failed_pages", 0)
+            print(f"[공시] 최근 {BAD_DART_DAYS}일 주요사항·거래소공시 {sum(len(v) for v in _bi.values())}건 "
+                  f"({len(_bi)}종목, {time.time() - _t1:.0f}초, 실패 페이지 {_bi_fail})")
+            if _bi_fail:   # 일부만 받아짐 → 나쁜 공시 거르기에 구멍. 거르기는 받은 만큼 하고, 자사주 신규 매수는 이번 회차 쉼
+                _alert(f"⚠️ 공시 조회 일부 실패({_bi_fail}페이지) — 이번 회차 자사주 매수 쉼, 나쁜 공시 거르기는 받은 만큼만")
+            # 보유 종목에 나쁜 공시 → 알림(하루 1회). 자동 매도는 회장 승인 사항이라 알림만.
+            _seen_bad = pos.setdefault("bad_dart_alerted", {})
+            for _hc, _hp in pos.get("positions", {}).items():
+                _hr = bad_dart_reason(_bi.get(_hc, []))
+                if _hr and _seen_bad.get(_hc) != today:
+                    tg_send(f"⚠️ <b>보유 종목 나쁜 공시</b>: {_hp.get('name', _hc)} — {_hr}" + chr(10)
+                            + f"8년 연구상 이후 약세 경향. 자동 매도는 안 함(기존 손절 규칙 유지).")
+                    _seen_bad[_hc] = today
+            save_positions(pos)
+        except Exception as e:
+            print(f"[공시] 수집 실패 — 나쁜 공시 거르기·자사주 후보 이번 회차 생략: {e}")
+    if BUYBACK_ENABLED and _bi and not _risk_halt and not _bi_fail:
+        _bb_held = sum(1 for p in pos.get("positions", {}).values() if p.get("strategy") == "buyback")
+        if _bb_held < BUYBACK_MAX_HELD:
+            _excl = set(pos.get("positions", {}).keys()) | {h.get("code") for h in pos.get("history", [])
+                                                            if h.get("date") == today and h.get("side") == "buy"}
+            _cd = pos.get("loss_cooldown", {})
+            _bb = [c for c in _buyback_candidates(_bi, now)
+                   if c["ticker"].split(".")[0] not in _excl
+                   and not (_cd.get(c["ticker"].split(".")[0]) and today < _cd[c["ticker"].split(".")[0]])
+                   and not bad_dart_reason(_bi.get(c["ticker"].split(".")[0], []))]
+            _bb.sort(key=lambda c: c.get("pre20", 0))          # 많이 빠진 순
+            _bb = _bb[:BUYBACK_MAX_HELD - _bb_held]
+            if _bb:
+                print(f"[자사주] 매입 공시 다음날 후보 {len(_bb)}개: {', '.join(c['name'] for c in _bb)}")
+            candidates = _bb + candidates
+        else:
+            print(f"[자사주] 이미 {_bb_held}종목 보유(최대 {BUYBACK_MAX_HELD}) — 추가 안 함")
+    if BAD_DART_ENFORCE and _bi and candidates:
+        _kept = []
+        for c in candidates:
+            _why_bad = bad_dart_reason(_bi.get(c["ticker"].split(".")[0], []))
+            if _why_bad:
+                print(f"[나쁜 공시] {c['name']} 매수 안 함 — {_why_bad}")
+            else:
+                _kept.append(c)
+        candidates = _kept
+
     # 보유 / 쿨다운 / 일일 한도 적용
     held = set(pos.get("positions", {}).keys())
     cooldown = pos.get("loss_cooldown", {})
@@ -6779,7 +6979,13 @@ def run_auto_buy():
     today_bought = {h.get("code") for h in pos.get("history", [])
                     if h.get("date") == today and h.get("side") == "buy"}
 
-    candidates.sort(key=lambda x: x.get("swing_score", 0), reverse=True)
+    candidates.sort(key=lambda x: (not x.get("buyback"), -x.get("swing_score", 0)))   # 11/20 자사주 후보 먼저(하루 몇 건뿐·시가 진입)
+    _uniq, _seen_codes = [], set()   # 11/20 같은 종목이 자사주·스윙 후보 둘 다 걸리면 한 번만(이중 매수 방지)
+    for _c in candidates:
+        _cc = _c["ticker"].split(".")[0]
+        if _cc not in _seen_codes:
+            _seen_codes.add(_cc); _uniq.append(_c)
+    candidates = _uniq
 
     # qty_factor: 시장 위험 지수 기반 자동 조정 (Phase 1.5)
     qty_factor = risk['qty_factor']
@@ -6810,8 +7016,8 @@ def run_auto_buy():
             continue
         if cooldown.get(code) and today_iso < cooldown[code]:
             continue
-        # regime 가드 (매수 루프와 동일 조건을 사전에 적용 — 알림 정확성)
-        if _thr:
+        # regime 가드 (매수 루프와 동일 조건을 사전에 적용 — 알림 정확성). 자사주 후보는 점수·거래량 규칙이 아니라 공시 신호라 제외
+        if _thr and not s.get("buyback"):
             if s.get("score", 0) < _thr["score_min"]:
                 continue
             _vr = s.get("vol_ratio", 0)
@@ -6859,14 +7065,18 @@ def run_auto_buy():
         qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
         # 급등 모멘텀 종목은 🚀, tomorrow_picks 사전 후보는 🎯 표시
-        if s.get("momentum_signal"):
+        if s.get("buyback"):
+            tag = "🏦 자사주 매입"
+        elif s.get("momentum_signal"):
             tag = "🚀 급등"
         elif s.get("from_tomorrow_picks"):
             tag = "🎯 사전 후보"
         else:
             tag = "📊 스윙"
         preview_lines.append(
-            f"• {tag} <b>{s['name']}</b> ({s['swing_score']}점, {sec}) — {qty}주 약 {amt:,}원"
+            f"• {tag} <b>{s['name']}</b> ("
+            + (f"공시 {s['buyback_date'][4:6]}/{s['buyback_date'][6:8]}, 직전 20일 {s.get('pre20', 0):+.0f}%" if s.get("buyback") else f"{s['swing_score']}점, {sec}")
+            + f") — {qty}주 약 {amt:,}원"
         )
     tg_send("\n".join(preview_lines))
 
@@ -6896,6 +7106,9 @@ def run_auto_buy():
         price = s["price"]
         qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
         amt   = price * qty
+        if code in pos.get("positions", {}) or code in _bought_codes:   # 11/20 이중 매수 최종 방어
+            _buy_skip[code] = "이미 보유/이번 회차 매수"
+            continue
 
         # A: 일일 한도 동적 (5/13 회장 결정) — 시장 환경 따라 조정
         # 강세 5종목/1,000만원 / 중립 4종목/800만원 / 약세 3종목/600만원
@@ -6922,34 +7135,35 @@ def run_auto_buy():
         # → 인라인 가드가 막을 종목까지 검증부 판정을 기록 → 인라인 vs 검증부 차이 분석 가능.
         # shadow(기본): 로그+통계만, 매수는 인라인 그대로. enforce(VERIFY_ENFORCE=true): reject 시 차단.
         _verify_ok = True
-        try:
-            _vreq = {
-                "code":           code,
-                "name":           s["name"],
-                "qty":            qty,
-                "price":          price,
-                "amount":         amt,
-                "score":          s.get("score", 0),
-                "sector":         s.get("sector", ""),
-                "curr_price":     price,
-                "day_change_pct": s.get("today_change", s.get("change_pct", 0)) or 0,
-                "market_risk":    risk.get("score", 0),
-            }
-            _vres = verify_buy(_vreq)
-            log_verify_result(_vreq, _vres, side="buy")
-            _verify_ok = _vres.get("ok", True)
-            if not _verify_ok:
-                _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
-                if VERIFY_ENFORCE:
-                    _buy_skip[code] = f"검증부 차단: {_vreasons}"
-                    print(f"  [verify] {s['name']} 검증부 차단(enforce): {_vreasons}")
-                    continue
-                print(f"  [verify-shadow] {s['name']} 검증부 reject: {_vreasons}")
-            else:
-                print(f"  [verify-shadow] {s['name']} 검증부 통과")
-        except Exception as e:
-            # 검증부 오류가 매수를 막지 않도록 (shadow 안전) — enforce에서도 오류 시 통과
-            print(f"  [verify] 검증부 오류(매수 계속 진행): {e}")
+        if not s.get("buyback"):   # 11/20 자사주 후보는 점수 기반이 아니라 검증부(점수 65) 판정 대상 아님 — 통계 오염 방지
+            try:
+                _vreq = {
+                    "code":           code,
+                    "name":           s["name"],
+                    "qty":            qty,
+                    "price":          price,
+                    "amount":         amt,
+                    "score":          s.get("score", 0),
+                    "sector":         s.get("sector", ""),
+                    "curr_price":     price,
+                    "day_change_pct": s.get("today_change", s.get("change_pct", 0)) or 0,
+                    "market_risk":    risk.get("score", 0),
+                }
+                _vres = verify_buy(_vreq)
+                log_verify_result(_vreq, _vres, side="buy")
+                _verify_ok = _vres.get("ok", True)
+                if not _verify_ok:
+                    _vreasons = ", ".join(r.get("reason", "") for r in _vres.get("rejects", []))
+                    if VERIFY_ENFORCE:
+                        _buy_skip[code] = f"검증부 차단: {_vreasons}"
+                        print(f"  [verify] {s['name']} 검증부 차단(enforce): {_vreasons}")
+                        continue
+                    print(f"  [verify-shadow] {s['name']} 검증부 reject: {_vreasons}")
+                else:
+                    print(f"  [verify-shadow] {s['name']} 검증부 통과")
+            except Exception as e:
+                # 검증부 오류가 매수를 막지 않도록 (shadow 안전) — enforce에서도 오류 시 통과
+                print(f"  [verify] 검증부 오류(매수 계속 진행): {e}")
 
         # ── 한국 스윙 확률 룰 가드 (5/12, NEW_RULES_ENABLED 토글) ──
         # 백테스트 검증된 룰만 활성화. 검증 전 false (기본).
@@ -6971,8 +7185,8 @@ def run_auto_buy():
         # ── Regime-Adaptive 동적 임계 가드 (5/13 회장 결정) ──
         # 시장 위험 등급에 따라 매수 임계 자동 조정
         # 강세=공격 (점수 45) / 중립=중간 (점수 50) / 약세=보수 (점수 55)
-        # thresholds는 루프 시작 전 1회 계산 (위에서 정의)
-        if thresholds:
+        # thresholds는 루프 시작 전 1회 계산 (위에서 정의). 자사주 후보(공시 신호)는 점수 규칙 대상 아님
+        if thresholds and not s.get("buyback"):
             real_score = s.get("score", 0)  # 진짜 점수 (보너스 제외)
             if real_score < thresholds["score_min"]:
                 _buy_skip[code] = f"점수 {real_score}<{thresholds['score_min']} ({thresholds['label']})"
@@ -7026,14 +7240,20 @@ def run_auto_buy():
                 "sector":        s.get("sector", ""),
                 "order_no":      result.get("order_no", ""),
             }
+            if s.get("buyback"):   # 11/20 자사주 매입 스윙 — 성적 따로 집계. exit_rule='buyback'(BUYBACK_OWN_EXIT 켰을 때)이면 전용 매도(−8%·10거래일)
+                pos["positions"][code]["strategy"] = "buyback"
+                pos["positions"][code]["buyback_date"] = s.get("buyback_date", "")
+                pos["positions"][code]["pre20"] = s.get("pre20")
+                pos["positions"][code]["exit_rule"] = "buyback" if BUYBACK_OWN_EXIT else "swing"
             pos["history"].append({
                 "date": today,
                 "time": _now_kst().strftime("%H:%M"),
                 "side": "buy", "code": code, "name": s["name"],
                 "qty": qty, "price": price, "amount": amt,
-                "reason": f"swing_score {s.get('swing_score',0)}",
+                "reason": (f"자사주 매입 공시 {s.get('buyback_date','')}" if s.get("buyback") else f"swing_score {s.get('swing_score',0)}"),
                 "sector": s.get("sector", ""),
-                "tag": "🚀 급등" if s.get("momentum_signal") else ("🎯 사전 후보" if s.get("from_tomorrow_picks") else "📊 스윙"),
+                "strategy": "buyback" if s.get("buyback") else "swing",
+                "tag": "🏦 자사주 매입" if s.get("buyback") else "🚀 급등" if s.get("momentum_signal") else ("🎯 사전 후보" if s.get("from_tomorrow_picks") else "📊 스윙"),
             })
             daily["buy_count"]   += 1
             daily["buy_amount"]  += amt
@@ -7041,7 +7261,7 @@ def run_auto_buy():
             _bought_codes.add(code)
             tg_send(
                 f"✅ {mode_tag} 매수 체결: <b>{s['name']}</b> {qty}주 @ 약 {price:,}원 "
-                f"(총 {amt:,}원 / 스윙점수 {s.get('swing_score',0)})"
+                + (f"(총 {amt:,}원 / 🏦 자사주 매입 공시 다음날)" if s.get("buyback") else f"(총 {amt:,}원 / 스윙점수 {s.get('swing_score',0)})")
             )
         else:
             _buy_skip[code] = f"체결 실패: {result.get('msg','')}"
@@ -7216,7 +7436,17 @@ def run_auto_sell():
         is_loss = False
         is_force = False
 
-        if pct <= -SWING_STOP_LOSS_PCT * 100:
+        if p.get("strategy") == "buyback" and p.get("exit_rule") == "buyback":
+            # 11/20 자사주 매입 스윙 전용: 손절 −8% · 10거래일 보유 · 익절선 없음 (8년 검산 근거는 BUYBACK_* 상수 주석)
+            if pct <= -BUYBACK_STOP_PCT:
+                sell_qty = held_qty
+                sell_reason = f"자사주 스윙 손절 ({pct:.1f}%)"
+                is_loss = True
+            elif days >= BUYBACK_HOLD_DAYS:
+                sell_qty = held_qty
+                sell_reason = f"자사주 스윙 {days}거래일 보유 완료 ({pct:+.1f}%)"
+                is_force = True
+        elif pct <= -SWING_STOP_LOSS_PCT * 100:
             sell_qty = held_qty
             sell_reason = f"손절 ({pct:.1f}%)"
             is_loss = True
@@ -7365,6 +7595,7 @@ def run_auto_sell():
             "qty": sell_qty, "price": cur_price, "amount": amt,
             "reason": sell_reason, "pct": round(pct, 2),
             "sector": p.get("sector", ""),
+            "strategy": p.get("strategy", "swing"),   # 11/20 자사주 스윙 성과를 따로 집계하려고
             # 사용자 메모 대체용 — 봇이 모든 정보 자동 저장
             "buy_price": buy_price,
             "profit": round(profit),
@@ -7460,6 +7691,8 @@ def run_auto_sell():
                 continue
             pnl_pct = (curr - buy_price) / buy_price * 100
             partial = p.get("partial_sold", False)  # 절반 매도 완료 여부
+            if p.get("exit_rule") == "buyback":   # 11/20 자사주 스윙 전용 매도 규칙을 쓰는 종목은 손절 −8%·익절 없음 → 기존 임박 알림 기준 해당 없음
+                continue
 
             # 등급 판정 — partial_sold 반영하여 다음 트리거에 맞게
             # 절반 매도 안 한 경우 → 다음 트리거 +6% (1차)
