@@ -844,7 +844,7 @@ def challenger_verdicts(rec: dict, market: dict, breadth_prev) -> dict:
     return out
 
 
-def log_candidates(results: list, market: dict, passed_codes: set | None = None) -> int:
+def log_candidates(results: list, market: dict, passed_codes: set | None = None, dart_titles: dict | None = None) -> int:
     """자동매수 1회차의 분석 결과를 오늘자 후보 로그에 병합.
 
     results: analyze() 결과 dict 리스트 / market: {"risk":..,"risk_level":..,"fg":..,"kospi_chg":..}
@@ -879,6 +879,13 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
                     stocks[code]["ch"] = _v
                     stocks[code][CHALLENGER_ID] = _v.get("C1", "buy")
                     changed += 1
+                _new_t = (dart_titles or {}).get(code)
+                if _new_t:   # 11/19: 장중에 새로 나온 공시도 덧붙임
+                    _old = stocks[code].get("dart_titles", [])
+                    _merged = list(dict.fromkeys(_old + _new_t))[:6]
+                    if _merged != _old:
+                        stocks[code]["dart_titles"] = _merged
+                        changed += 1
                 continue
             rec = {"t": now.strftime("%H:%M"), "name": r.get("name", ""), "sector": r.get("sector", ""),
                    # 장 시작 후 경과 분 — 장중 vol_ratio(부분 거래량) 보정용
@@ -892,6 +899,8 @@ def log_candidates(results: list, market: dict, passed_codes: set | None = None)
             rec["sector_bonus"] = _cand_val(r.get("sector_bonus", 0)) or 0
             ds = r.get("dart_signals") or {}
             rec["dart"] = sorted(k for k, v in ds.items() if v) if isinstance(ds, dict) else []
+            # 11/19: 최근 3일 공시 제목(전체 상장사 일괄 조회) — '왜 떨어졌나' 조사용, 최대 6개
+            rec["dart_titles"] = list(dict.fromkeys((dart_titles or {}).get(code, [])))[:6]
             rec["mkt"] = market
             rec["passed"] = code in passed_codes
             _v = challenger_verdicts(rec, market, _bp)

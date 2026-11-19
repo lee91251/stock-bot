@@ -908,6 +908,8 @@ def _dart_req(endpoint: str, params: dict) -> dict:
 
 
 def dart_corp_code(stock_code: str) -> str:
+    # ⚠️ 11/19 확인: 전체 기업코드 목록(dart_load_corp_code_map)을 먼저 안 불렀으면 아래 company.json은 종목코드로 조회가
+    #    안 돼 늘 실패한다(그래서 매수 회차 공시가 0건이었음). 고치면 매수 점수가 바뀌므로 회장 승인 전까지 그대로 둠.
     if stock_code in _corp_cache:
         return _corp_cache[stock_code]
     d = _dart_req("company.json", {"stock_code": stock_code})
@@ -1053,6 +1055,29 @@ def dart_disclosures(corp_code: str, days: int = 7) -> list:
         "page_count": "40",
     })
     return d.get("list", [])
+
+
+def dart_recent_titles_all(days: int = 3, max_pages: int = 40) -> dict:
+    """11/19: 최근 N일 전체 상장사 공시를 한 번에 받아 {종목코드: [공시제목,…]} (자가학습 기록용, 매수 점수엔 안 씀).
+
+    종목마다 조회하던 방식(대형주 100개만·늘 실패)을 대신 — 시장 스캔 종목까지 전부 커버. 호출 수 = 페이지 수(최대 40).
+    """
+    if not DART_API_KEY:
+        return {}
+    today = _now_kst()
+    start = (today - timedelta(days=days)).strftime("%Y%m%d")
+    end = today.strftime("%Y%m%d")
+    out: dict = {}
+    for page in range(1, max_pages + 1):
+        d = _dart_req("list.json", {"bgn_de": start, "end_de": end, "page_no": str(page), "page_count": "100"})
+        items = d.get("list", []) if d else []
+        for it in items:
+            sc = (it.get("stock_code") or "").strip()
+            if sc:
+                out.setdefault(sc, []).append(str(it.get("report_nm", "")).strip()[:60])
+        if len(items) < 100:
+            break
+    return out
 
 
 def fetch_recent_disclosures_by_stock_codes(stock_codes: set, days: int = 1) -> list:
@@ -6626,7 +6651,9 @@ def run_auto_buy():
     # 종목 분석
     print(f"\n[자동매수] {len(pool)}종목 분석 중...")
     # DART 데이터는 KR_STOCKS만 (market_scan 종목은 코드 정보 부족하여 스킵)
-    all_dart = get_all_dart_data(KR_STOCKS)
+    # 11/19: 매수 회차의 종목별 공시 조회는 기업코드 목록 없이 늘 실패(빈 값)였음 → 결과는 그대로(빈 값), 헛된 조회 100번만 생략.
+    #        공시를 매수 점수에 쓰는 건 '왜 떨어졌나' 검증 후 회장 승인 사항. 기록용 공시는 아래 dart_recent_titles_all.
+    all_dart = {}
     candidates = []
     analyzed_all = []                   # 10/1 자가학습: 검토한 전 종목 (산 것+안 산 것) 기록용
     diag_buckets  = {"65+": 0, "50-64": 0, "<50": 0}
@@ -6690,6 +6717,12 @@ def run_auto_buy():
 
     # 10/1 자가학습 ① — 검토한 모든 종목의 매수시점 상태 기록 (매매 판단 무관, 실패해도 매수 진행)
     try:
+        try:   # 11/19: 공시 제목(최근 3일)을 후보 기록에 함께 저장 — 기록 전용, 매수 점수엔 미반영
+            _dart_titles = dart_recent_titles_all(days=3)
+            print(f"[후보기록] 최근 3일 공시 {sum(len(v) for v in _dart_titles.values())}건 ({len(_dart_titles)}종목)")
+        except Exception as e:
+            _dart_titles = {}
+            print(f"[후보기록] 공시 수집 실패(매매 영향 없음): {e}")
         _n = log_candidates(
             analyzed_all,
             {"risk": risk.get("score"), "risk_level": risk.get("level"), "fg": fg.get("score"),
@@ -6697,6 +6730,7 @@ def run_auto_buy():
              "kospi_chg": None if "kospi" in (mood or {}).get("missing", []) else (mood or {}).get("kospi_chg"),
              "mood_missing": (mood or {}).get("missing", [])},
             {c["ticker"].split(".")[0] for c in candidates},
+            dart_titles=_dart_titles,
         )
         print(f"[후보기록] 오늘 신규 {_n}종목 기록 (검토 {len(analyzed_all)})")
     except Exception as e:
