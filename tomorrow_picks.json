@@ -1,48 +1,7 @@
 {
-  "date": "2026-11-19",
-  "generated_at": "2026-11-18T15:46:19.531113",
+  "date": "2026-11-20",
+  "generated_at": "2026-11-19T15:44:20.893953",
   "source_phase": "close_summary",
-  "picks": [
-    {
-      "code": "277810",
-      "name": "레인보우로보틱스",
-      "sector": "로봇",
-      "score_bonus": 10,
-      "today_change": 20.06,
-      "today_vol_ratio": 322.0,
-      "today_score": 59,
-      "reasons": [
-        "오늘 +20.1% 마감",
-        "거래량 평균 +322%",
-        "스윙점수 59"
-      ],
-      "source": "close_summary"
-    }
-  ],
-  "sector_weights": {
-    "금융": -1,
-    "은행": -1,
-    "보험": -1,
-    "에너지": -5,
-    "정유": -5,
-    "바이오": -3,
-    "제약": -3,
-    "헬스": -3,
-    "화학": -1,
-    "소재": -1,
-    "철강": -1,
-    "자동차": 3,
-    "유통": 3
-  },
-  "us_etf_changes": {
-    "SOXX": 0.28,
-    "XLK": 0.3,
-    "XLF": -1.13,
-    "XLE": -3.25,
-    "XLV": -2.2,
-    "XLI": -0.03,
-    "XLB": -0.78,
-    "XLY": 1.81
-  },
-  "sector_updated_at": "2026-11-19T06:01:07.827637"
+  "picks": [],
+  "sector_weights": {}
 }
