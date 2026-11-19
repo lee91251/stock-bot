@@ -1,0 +1,35 @@
+name: 연구용 데이터 수집 (수동)
+
+# 11/19: 매매와 무관한 일회성 연구 작업. 수동 실행만. 결과는 커밋하지 않고 실행 결과물(artifact)로 보관(14일).
+on:
+  workflow_dispatch:
+    inputs:
+      types:
+        description: "DART 공시 유형 (B=주요사항, I=거래소공시)"
+        default: "B,I"
+
+permissions:
+  contents: read
+
+jobs:
+  dart-backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: DART 과거 공시 내려받기
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python research_dart_backfill.py "${{ github.event.inputs.types }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dart-backfill
+          path: dart_backfill.jsonl.gz
+          retention-days: 14
