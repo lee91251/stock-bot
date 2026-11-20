@@ -48,7 +48,10 @@ env:
   # ── 11/20 공시 기반 규칙 (GitHub Settings → Variables 에서 false 로 바꾸면 커밋 없이 다음 회차부터 꺼짐) ──
   BAD_DART_ENFORCE:     ${{ vars.BAD_DART_ENFORCE || 'true' }}    # 나쁜 공시 14일 매수 금지
   BUYBACK_ENABLED:      ${{ vars.BUYBACK_ENABLED || 'true' }}     # 하락 뒤 자사주 매입 스윙
-  BUYBACK_OWN_EXIT:     ${{ vars.BUYBACK_OWN_EXIT || 'false' }}   # 자사주 전용 매도(−8%·10일) — 회장 승인 후 true
+  BUYBACK_OWN_EXIT:     ${{ vars.BUYBACK_OWN_EXIT || 'true' }}    # 자사주 전용 매도(−8%·10일) — 11/20 회장 승인
+  BUYBACK_IGNORE_RISK:  ${{ vars.BUYBACK_IGNORE_RISK || 'false' }} # 위험 70+ 정지 중에도 자사주만 매수 — 회장 승인 시 true
+  TREND_ENABLED:        ${{ vars.TREND_ENABLED || 'true' }}       # 고점 근처 추세(−8%·20일) — 11/20 회장 승인
+  MOMENTUM_BUY_ENABLED: ${{ vars.MOMENTUM_BUY_ENABLED || 'false' }} # 🚀급등 매수 — 11/20 회장 승인으로 끔(기록만)
 
 jobs:
   # ── 일일 AI 리포트 (cron-job.org 평일 08:00 KST) ────
@@ -219,6 +222,7 @@ jobs:
           [ -f alerts.json ] && git add alerts.json || true
           [ -f ai_advisor_log.json ] && git add ai_advisor_log.json || true
           [ -f b4_notified.json ] && git add b4_notified.json || true   # 10/7 B4 권장 알림 중복 방지
+          [ -f trend_picks.json ] && git add trend_picks.json || true   # 11/20 다음날 '고점 근처 추세' 후보
           echo "=== git status (디버그) ==="
           git status --short
           git diff --staged --quiet && echo "변경 없음 — commit 스킵" && exit 0 || true

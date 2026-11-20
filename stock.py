@@ -281,6 +281,10 @@ KIS_PAPER_APP_SECRET = os.environ.get("KIS_PAPER_APP_SECRET", "")
 KIS_PAPER_ACCOUNT    = os.environ.get("KIS_PAPER_ACCOUNT",    "")  # 형식: 12345678-01
 
 # 스윙 자동매매 파라미터 (장기/가치 기반인 STOP_LOSS_PCT/TARGET*_PCT와는 별개)
+# 11/20 회장 승인 — 🚀급등 매수(B: 거래량 2배·당일 +3~5%)만으로 통과한 후보는 실제 매수 안 함(기록·자가학습은 계속).
+#   근거: 8년 3,249종목 같은 모양 43,353건 → 아무 날 산 경우보다 5일 −0.36/−0.24%p(학습/시험), 10년 중 9년 손해.
+#   봇 실제 6/16~11/13 급등 매수 36건 = +9,575원(본전). 되돌리기 = GitHub Variables MOMENTUM_BUY_ENABLED=true
+MOMENTUM_BUY_ENABLED = os.environ.get("MOMENTUM_BUY_ENABLED", "false").lower() == "true"
 SWING_SCORE_MIN          = 65          # 매수 임계 스윙 점수 (5/4: 70→65, 100종목 전체 70+ 통과 0개 확인 후 완화)
 SWING_TARGET1_PCT        = 0.06        # +6% 절반 매도
 SWING_TARGET2_PCT        = 0.10        # +10% 전량 매도
@@ -1119,6 +1123,9 @@ BUYBACK_HOLD_DAYS = 10              # 전용 보유 10거래일 (익절선 없�
 # 전용 매도 규칙은 회장 승인 대기 → 기본 꺼짐(승인받은 '지금 봇 매도 규칙' −4%·+6/+10%·5일로 운용, 하락 뒤 자사주 8년 +1.48%).
 #   켜면(env BUYBACK_OWN_EXIT=true) 그 뒤 새로 산 자사주 종목부터 −8%·10일·익절 없음(8년 +4.89%). 이미 산 종목은 산 때 규칙 유지.
 BUYBACK_OWN_EXIT = os.environ.get("BUYBACK_OWN_EXIT", "false").lower() == "true"
+# 11/20 자사주 무기는 폭락장에서 가장 강함(자가학습/23_bb_crash: 코스피 20일 −10%↓ 때 10일 +8.27%·승률 80%, 2020 제외 173건)
+#   → 켜면 시장 위험 70+ '자동매수 정지' 중에도 자사주 후보만은 삼(일반 스윙은 그대로 정지). 회장 승인 사항.
+BUYBACK_IGNORE_RISK = os.environ.get("BUYBACK_IGNORE_RISK", "false").lower() == "true"
 
 
 def dart_recent_bi(days: int = 14) -> dict:
@@ -6254,6 +6261,8 @@ def run_close_summary():
         tg_send(make_daily_bot_summary(), silent=True)
     except Exception as e:
         print(f"  [브리핑] 한 줄 요약 오류: {e}")
+    if TREND_ENABLED:   # 11/20 내일 아침 '고점 근처 추세' 매수 후보 — 무거운 분석보다 먼저(시간초과 대비)
+        build_trend_picks()
     try:
         mood = get_market_mood()
         fg   = get_fear_greed(mood)
@@ -6534,6 +6543,117 @@ def _load_auto_buy_pool() -> dict:
         print(f"  [auto_buy] market_scan_cache 로드 실패: {e} — KR_STOCKS만 사용")
 
     return pool
+
+
+# 11/20 회장 승인 — 차트 무기 '강한 종목 고점 근처'(자가학습/20·21·22_*):
+#   어제 종가가 52주 최고가 3% 안(돌파 전) + 최근 60거래일 +20%↑ + 20일 평균 거래대금 50억↑ + 코스피 60일선 위
+#   → 다음날 시가 매수 → 손절 −8% · 20거래일 보유 (익절 없음). 8년 9,199건 1건당 +1.67% (18-22 +0.87 / 23-26 +2.28), 승률 36%.
+#   ⚠️ 기존 봇 매도 규칙(−4%·+6/+10%·5일)으로는 −0.30% → 반드시 전용 매도. 큰 상승 몇 개가 먹여 살리는 구조라 승률 낮음.
+TREND_ENABLED = os.environ.get("TREND_ENABLED", "true").lower() != "false"
+TREND_MAX_HELD = int(os.environ.get("TREND_MAX_HELD", "3"))
+TREND_STOP_PCT = 8.0
+TREND_HOLD_DAYS = 20
+TREND_PICKS_FILE = "trend_picks.json"
+
+
+def build_trend_picks() -> dict:
+    """장 마감(--close)에서 오늘 종가 기준 '강한 종목 고점 근처' 후보를 뽑아 trend_picks.json 저장 → 다음 거래일 아침 매수용."""
+    if not _FDR_OK:
+        return {}
+    now = _now_kst()
+    today = now.strftime("%Y-%m-%d")
+    since = (now - timedelta(days=430)).strftime("%Y-%m-%d")
+    try:
+        k = None
+        for sym in ("NAVER:KOSPI", "KS11"):   # 11/20 딴지봇: 오늘 값이 있는 소스만 채택(KS11은 당일이 늦게 들어옴)
+            try:
+                k = _fdr.DataReader(sym, since)["Close"].dropna()
+                if len(k) > 60 and str(k.index[-1])[:10] == today:
+                    break
+            except Exception:
+                pass
+            k = None
+        if k is None or len(k) <= 60 or str(k.index[-1])[:10] != today:
+            print(f"[추세후보] 코스피 오늘 종가 없음 — 생략")
+            return {}
+        bull = float(k.iloc[-1]) > float(k.rolling(60).mean().iloc[-1])
+        out = {"date": today, "bull": bull, "picks": []}
+        if not bull:
+            print(f"[추세후보] 코스피 60일선 아래 — 후보 없음(연구 조건)")
+            json.dump(out, open(TREND_PICKS_FILE, "w", encoding="utf-8"), ensure_ascii=False)
+            return out
+        lst = pd.concat([_fdr.StockListing("KOSPI"), _fdr.StockListing("KOSDAQ")])
+        _amt = pd.to_numeric(lst.get("Amount"), errors="coerce") if "Amount" in lst else None
+        if _amt is not None and _amt.notna().sum() > 100:   # 당일 거래대금 있으면 30억↑ 상위 700으로 줄여 빠르게
+            lst = lst.assign(_a=_amt)[_amt >= 3e9].sort_values("_a", ascending=False).head(700)
+        else:                                               # 목록에 거래대금이 비면 전 종목(거래대금 조건은 아래 20일 평균으로)
+            print("[추세후보] 종목목록 거래대금 없음 — 전 종목 검토")
+        names = dict(zip(lst["Code"], lst["Name"]))
+
+        def _one(code):
+            try:
+                d = _fdr.DataReader(code, since)
+                if len(d) < 260 or str(d.index[-1])[:10] != today:
+                    return None
+                C, H, V = d["Close"].astype(float), d["High"].astype(float), d["Volume"].astype(float)
+                c = float(C.iloc[-1]); hi = float(H.iloc[-250:].max()); hip = float(H.iloc[-251:-1].max())
+                r60 = (c / float(C.iloc[-61]) - 1) * 100
+                tv20 = float((C * V).iloc[-20:].mean())
+                if c >= 1000 and c >= hi * 0.97 and c < hip and r60 >= 20 and tv20 >= 5e9:
+                    return {"code": code, "name": names.get(code, code), "close": c, "r60": round(r60, 1),
+                            "from_high": round((c / hi - 1) * 100, 1), "tv20_eok": round(tv20 / 1e8)}
+            except Exception:
+                return None
+            return None
+
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            res = [r for r in ex.map(_one, list(names)) if r]
+        out["picks"] = sorted(res, key=lambda r: -r["tv20_eok"])
+        json.dump(out, open(TREND_PICKS_FILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"[추세후보] {len(out['picks'])}종목 (검토 {len(names)}) → {TREND_PICKS_FILE}")
+        return out
+    except Exception as e:
+        print(f"[추세후보] 오류(다른 작업 영향 없음): {e}")
+        return {}
+
+
+def _trend_candidates(now: datetime) -> list:
+    """11/20: 직전 거래일 장 마감에 뽑은 trend_picks.json → 오늘 10시 전·시가+3% 이내만 (연구의 '다음날 시가' 진입)."""
+    if now.hour * 100 + now.minute >= BUYBACK_LAST_HHMM:
+        return []
+    try:
+        tp = json.load(open(TREND_PICKS_FILE, encoding="utf-8"))
+    except Exception:
+        return []
+    prev = now - timedelta(days=1)
+    for _ in range(15):
+        if _is_trading_day(prev):
+            break
+        prev -= timedelta(days=1)
+    if tp.get("date") != prev.strftime("%Y-%m-%d"):
+        print(f"[추세] 후보 파일 날짜 {tp.get('date')} ≠ 직전 거래일 {prev:%Y-%m-%d} — 생략")
+        return []
+    out = []
+    for p in tp.get("picks", [])[:15]:
+        code = p["code"]
+        try:
+            q = _kis.get_price(code) or {}
+            price = int(_safe_float(q.get("stck_prpr"))); opn = _safe_float(q.get("stck_oprc"))
+            chg = _safe_float(q.get("prdy_ctrt")); st = str(q.get("iscd_stat_cls_code", "") or "")
+        except Exception as e:
+            print(f"  [추세] {p.get('name')} 시세 실패: {e}"); continue
+        if price <= 0 or opn <= 0:
+            continue
+        if str(q.get("temp_stop_yn", "")).upper() == "Y" or st in ("51", "52", "53", "58", "59"):
+            print(f"  [추세] {p.get('name')} 관리·경고·정지(상태 {st}) — 제외"); continue
+        if (price / opn - 1) * 100 > BUYBACK_MAX_FROM_OPEN:
+            print(f"  [추세] {p.get('name')} 시가 대비 +{(price / opn - 1) * 100:.1f}% — 제외"); continue
+        out.append({"ticker": code + ".KS", "name": p.get("name", code), "price": price, "sector": "추세(고점 근처)",
+                    "score": 0, "swing_score": 0, "today_change": chg, "change_pct": chg,
+                    "trend": True, "r60": p.get("r60"), "from_high": p.get("from_high")})
+        time.sleep(0.15)
+    return out
 
 
 def _buyback_candidates(bi: dict, now: datetime) -> list:
@@ -6884,6 +7004,13 @@ def run_auto_buy():
     except Exception as e:
         print(f"[후보기록] 오류(매매 영향 없음): {e}")
 
+    # 11/20 🚀급등 매수 그림자 전환 — 후보 기록(위)은 그대로 남기고, 급등 신호만으로 통과한 종목은 실제 매수에서 뺌
+    if not MOMENTUM_BUY_ENABLED and candidates:
+        _mom_only = [c for c in candidates if not (c.get("swing_signal") and c.get("swing_score", 0) >= SWING_SCORE_MIN)]
+        if _mom_only:
+            print(f"[자동매수] 🚀급등 신호만 통과 {len(_mom_only)}개 — 기록만, 매수 안 함: {', '.join(c['name'] for c in _mom_only[:5])}")
+            candidates = [c for c in candidates if c not in _mom_only]
+
     # 진단 로그 — swing_signal 통과 0인 경우 어느 조건이 막는지 즉시 파악 가능
     diag_top_score.sort()
     print(f"\n[진단] 점수 분포: 65+ {diag_buckets['65+']} / 50-64 {diag_buckets['50-64']} / <50 {diag_buckets['<50']}")
@@ -6916,11 +7043,35 @@ def run_auto_buy():
         print(f"[자동매수] 시장 위험 {risk['score']}/100 정지 — 후보 {len(candidates)}개 매수 안 함")
         candidates = []
 
+    # 11/20 회장 승인 — 차트 무기 '강한 종목 고점 근처' 후보 (어제 장 마감에 뽑은 trend_picks.json, 10시 전만)
+    _c1_trend_block = False   # 추세 무기는 8년 근거가 '모든 날' 아님 → 승인된 C1(나쁜 날 쉬기)도 똑같이 적용
+    if os.environ.get("C1_ENFORCE", "true").lower() != "false":
+        _kc_t = None if "kospi" in (mood or {}).get("missing", []) else (mood or {}).get("kospi_chg")
+        _bp_t = _lrn_prev_breadth(today)
+        _c1_trend_block = (_kc_t is not None and _kc_t < C1_KOSPI_MIN) or (_bp_t is not None and _bp_t < C1_BREADTH_MIN)
+        if _c1_trend_block and TREND_ENABLED:
+            print("[추세] C1 나쁜 날 — 추세 후보 매수 안 함")
+    if TREND_ENABLED and not _risk_halt and not _c1_trend_block:
+        _tr_held = sum(1 for p in pos.get("positions", {}).values() if p.get("strategy") == "trend")
+        if _tr_held < TREND_MAX_HELD:
+            _excl_t = set(pos.get("positions", {}).keys()) | {h.get("code") for h in pos.get("history", [])
+                                                              if h.get("date") == today and h.get("side") == "buy"}
+            _cd_t = pos.get("loss_cooldown", {})
+            _tr = [c for c in _trend_candidates(now)
+                   if c["ticker"].split(".")[0] not in _excl_t
+                   and not (_cd_t.get(c["ticker"].split(".")[0]) and today < _cd_t[c["ticker"].split(".")[0]])]
+            if _tr:
+                print(f"[추세] 고점 근처 강한 종목 후보 {len(_tr)}개: {', '.join(c['name'] for c in _tr[:5])}")
+            candidates = _tr + candidates
+        else:
+            print(f"[추세] 이미 {_tr_held}종목 보유(최대 {TREND_MAX_HELD}) — 추가 안 함")
+
     # 11/20 회장 승인 — 공시 기반: ② 자사주 매입 스윙 후보 추가 ① 나쁜 공시 종목 매수 금지 (자세한 근거는 BAD_DART_PATTERNS 위 주석)
     #   자사주 후보는 C1(나쁜 날 쉬기)과 무관하게 8년 모든 장에서 플러스였으므로 C1 뒤에 붙임. 위험 70+ 정지 때는 안 삼.
     _bi = {}
     _bi_fail = 0
-    _need_bb = BUYBACK_ENABLED and not _risk_halt and now.hour * 100 + now.minute < BUYBACK_LAST_HHMM
+    _bb_ok_risk = (not _risk_halt) or BUYBACK_IGNORE_RISK
+    _need_bb = BUYBACK_ENABLED and _bb_ok_risk and now.hour * 100 + now.minute < BUYBACK_LAST_HHMM
     if (BAD_DART_ENFORCE and candidates) or _need_bb:   # 거를 후보도 없고 자사주 시간도 아니면 조회 생략(회차 시간 절약)
         try:
             _t1 = time.time()
@@ -6941,7 +7092,7 @@ def run_auto_buy():
             save_positions(pos)
         except Exception as e:
             print(f"[공시] 수집 실패 — 나쁜 공시 거르기·자사주 후보 이번 회차 생략: {e}")
-    if BUYBACK_ENABLED and _bi and not _risk_halt and not _bi_fail:
+    if BUYBACK_ENABLED and _bi and _bb_ok_risk and not _bi_fail:
         _bb_held = sum(1 for p in pos.get("positions", {}).values() if p.get("strategy") == "buyback")
         if _bb_held < BUYBACK_MAX_HELD:
             _excl = set(pos.get("positions", {}).keys()) | {h.get("code") for h in pos.get("history", [])
@@ -6967,6 +7118,10 @@ def run_auto_buy():
             else:
                 _kept.append(c)
         candidates = _kept
+    if TREND_ENABLED:   # 추세 후보는 남은 슬롯만큼(거래대금 큰 순 유지)
+        _tr_room = TREND_MAX_HELD - sum(1 for p in pos.get("positions", {}).values() if p.get("strategy") == "trend")
+        _tr_list = [c for c in candidates if c.get("trend")][:max(0, _tr_room)]
+        candidates = [c for c in candidates if not c.get("trend")] + _tr_list
 
     # 보유 / 쿨다운 / 일일 한도 적용
     held = set(pos.get("positions", {}).keys())
@@ -6979,7 +7134,7 @@ def run_auto_buy():
     today_bought = {h.get("code") for h in pos.get("history", [])
                     if h.get("date") == today and h.get("side") == "buy"}
 
-    candidates.sort(key=lambda x: (not x.get("buyback"), -x.get("swing_score", 0)))   # 11/20 자사주 후보 먼저(하루 몇 건뿐·시가 진입)
+    candidates.sort(key=lambda x: (0 if x.get("buyback") else 1 if x.get("trend") else 2, -x.get("swing_score", 0)))   # 11/20 자사주 후보 먼저(하루 몇 건뿐·시가 진입)
     _uniq, _seen_codes = [], set()   # 11/20 같은 종목이 자사주·스윙 후보 둘 다 걸리면 한 번만(이중 매수 방지)
     for _c in candidates:
         _cc = _c["ticker"].split(".")[0]
@@ -7017,7 +7172,7 @@ def run_auto_buy():
         if cooldown.get(code) and today_iso < cooldown[code]:
             continue
         # regime 가드 (매수 루프와 동일 조건을 사전에 적용 — 알림 정확성). 자사주 후보는 점수·거래량 규칙이 아니라 공시 신호라 제외
-        if _thr and not s.get("buyback"):
+        if _thr and not (s.get("buyback") or s.get("trend")):
             if s.get("score", 0) < _thr["score_min"]:
                 continue
             _vr = s.get("vol_ratio", 0)
@@ -7033,7 +7188,7 @@ def run_auto_buy():
                 continue
         # 일일 금액 한도 예측 (매수루프 break와 동일 기준 — 예고=매수 보장)
         _sp = s["price"]
-        _sq = max(1, int(INVEST_PER_STOCK * qty_factor / _sp))
+        _sq = max(1, int(INVEST_PER_STOCK * (qty_factor if (qty_factor > 0 or not s.get("buyback")) else 1.0) / _sp))   # 11/20 위험 정지 중 자사주는 정량
         _sa = _sp * _sq
         if _running_amt + _sa > _amt_limit:
             continue
@@ -7062,11 +7217,13 @@ def run_auto_buy():
     for s in selected:
         price = s["price"]
         sec   = s.get("sector", "")
-        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        qty   = max(1, int(INVEST_PER_STOCK * (qty_factor if (qty_factor > 0 or not s.get("buyback")) else 1.0) / price))
         amt   = price * qty
         # 급등 모멘텀 종목은 🚀, tomorrow_picks 사전 후보는 🎯 표시
         if s.get("buyback"):
             tag = "🏦 자사주 매입"
+        elif s.get("trend"):
+            tag = "📈 고점 근처 추세"
         elif s.get("momentum_signal"):
             tag = "🚀 급등"
         elif s.get("from_tomorrow_picks"):
@@ -7075,7 +7232,8 @@ def run_auto_buy():
             tag = "📊 스윙"
         preview_lines.append(
             f"• {tag} <b>{s['name']}</b> ("
-            + (f"공시 {s['buyback_date'][4:6]}/{s['buyback_date'][6:8]}, 직전 20일 {s.get('pre20', 0):+.0f}%" if s.get("buyback") else f"{s['swing_score']}점, {sec}")
+            + (f"공시 {s['buyback_date'][4:6]}/{s['buyback_date'][6:8]}, 직전 20일 {s.get('pre20', 0):+.0f}%" if s.get("buyback")
+               else f"3개월 {s.get('r60', 0):+.0f}%, 고점 {s.get('from_high', 0):+.1f}%" if s.get("trend") else f"{s['swing_score']}점, {sec}")
             + f") — {qty}주 약 {amt:,}원"
         )
     tg_send("\n".join(preview_lines))
@@ -7104,7 +7262,7 @@ def run_auto_buy():
 
         code  = s["ticker"].split(".")[0]
         price = s["price"]
-        qty   = max(1, int(INVEST_PER_STOCK * qty_factor / price))
+        qty   = max(1, int(INVEST_PER_STOCK * (qty_factor if (qty_factor > 0 or not s.get("buyback")) else 1.0) / price))
         amt   = price * qty
         if code in pos.get("positions", {}) or code in _bought_codes:   # 11/20 이중 매수 최종 방어
             _buy_skip[code] = "이미 보유/이번 회차 매수"
@@ -7135,7 +7293,7 @@ def run_auto_buy():
         # → 인라인 가드가 막을 종목까지 검증부 판정을 기록 → 인라인 vs 검증부 차이 분석 가능.
         # shadow(기본): 로그+통계만, 매수는 인라인 그대로. enforce(VERIFY_ENFORCE=true): reject 시 차단.
         _verify_ok = True
-        if not s.get("buyback"):   # 11/20 자사주 후보는 점수 기반이 아니라 검증부(점수 65) 판정 대상 아님 — 통계 오염 방지
+        if not (s.get("buyback") or s.get("trend")):   # 11/20 자사주·추세 후보는 점수 기반이 아니라 검증부(점수 65) 판정 대상 아님 — 통계 오염 방지
             try:
                 _vreq = {
                     "code":           code,
@@ -7186,7 +7344,7 @@ def run_auto_buy():
         # 시장 위험 등급에 따라 매수 임계 자동 조정
         # 강세=공격 (점수 45) / 중립=중간 (점수 50) / 약세=보수 (점수 55)
         # thresholds는 루프 시작 전 1회 계산 (위에서 정의). 자사주 후보(공시 신호)는 점수 규칙 대상 아님
-        if thresholds and not s.get("buyback"):
+        if thresholds and not (s.get("buyback") or s.get("trend")):
             real_score = s.get("score", 0)  # 진짜 점수 (보너스 제외)
             if real_score < thresholds["score_min"]:
                 _buy_skip[code] = f"점수 {real_score}<{thresholds['score_min']} ({thresholds['label']})"
@@ -7245,15 +7403,19 @@ def run_auto_buy():
                 pos["positions"][code]["buyback_date"] = s.get("buyback_date", "")
                 pos["positions"][code]["pre20"] = s.get("pre20")
                 pos["positions"][code]["exit_rule"] = "buyback" if BUYBACK_OWN_EXIT else "swing"
+            if s.get("trend"):   # 11/20 추세 무기 — 전용 매도(−8%·20거래일) 필수(기존 규칙이면 8년 −0.30%)
+                pos["positions"][code]["strategy"] = "trend"
+                pos["positions"][code]["exit_rule"] = "trend"
             pos["history"].append({
                 "date": today,
                 "time": _now_kst().strftime("%H:%M"),
                 "side": "buy", "code": code, "name": s["name"],
                 "qty": qty, "price": price, "amount": amt,
-                "reason": (f"자사주 매입 공시 {s.get('buyback_date','')}" if s.get("buyback") else f"swing_score {s.get('swing_score',0)}"),
+                "reason": (f"자사주 매입 공시 {s.get('buyback_date','')}" if s.get("buyback")
+                           else f"고점 근처 추세 (3개월 {s.get('r60',0):+.0f}%)" if s.get("trend") else f"swing_score {s.get('swing_score',0)}"),
                 "sector": s.get("sector", ""),
-                "strategy": "buyback" if s.get("buyback") else "swing",
-                "tag": "🏦 자사주 매입" if s.get("buyback") else "🚀 급등" if s.get("momentum_signal") else ("🎯 사전 후보" if s.get("from_tomorrow_picks") else "📊 스윙"),
+                "strategy": "buyback" if s.get("buyback") else "trend" if s.get("trend") else "swing",
+                "tag": "🏦 자사주 매입" if s.get("buyback") else "📈 고점 근처 추세" if s.get("trend") else "🚀 급등" if s.get("momentum_signal") else ("🎯 사전 후보" if s.get("from_tomorrow_picks") else "📊 스윙"),
             })
             daily["buy_count"]   += 1
             daily["buy_amount"]  += amt
@@ -7261,7 +7423,8 @@ def run_auto_buy():
             _bought_codes.add(code)
             tg_send(
                 f"✅ {mode_tag} 매수 체결: <b>{s['name']}</b> {qty}주 @ 약 {price:,}원 "
-                + (f"(총 {amt:,}원 / 🏦 자사주 매입 공시 다음날)" if s.get("buyback") else f"(총 {amt:,}원 / 스윙점수 {s.get('swing_score',0)})")
+                + (f"(총 {amt:,}원 / 🏦 자사주 매입 공시 다음날)" if s.get("buyback")
+                   else f"(총 {amt:,}원 / 📈 고점 근처 추세, 손절 −8%·20일)" if s.get("trend") else f"(총 {amt:,}원 / 스윙점수 {s.get('swing_score',0)})")
             )
         else:
             _buy_skip[code] = f"체결 실패: {result.get('msg','')}"
@@ -7436,7 +7599,17 @@ def run_auto_sell():
         is_loss = False
         is_force = False
 
-        if p.get("strategy") == "buyback" and p.get("exit_rule") == "buyback":
+        if p.get("exit_rule") == "trend":
+            # 11/20 추세 무기 전용: 손절 −8% · 20거래일 보유 · 익절 없음
+            if pct <= -TREND_STOP_PCT:
+                sell_qty = held_qty
+                sell_reason = f"추세 손절 ({pct:.1f}%)"
+                is_loss = True
+            elif days >= TREND_HOLD_DAYS:
+                sell_qty = held_qty
+                sell_reason = f"추세 {days}거래일 보유 완료 ({pct:+.1f}%)"
+                is_force = True
+        elif p.get("strategy") == "buyback" and p.get("exit_rule") == "buyback":
             # 11/20 자사주 매입 스윙 전용: 손절 −8% · 10거래일 보유 · 익절선 없음 (8년 검산 근거는 BUYBACK_* 상수 주석)
             if pct <= -BUYBACK_STOP_PCT:
                 sell_qty = held_qty
@@ -7691,7 +7864,7 @@ def run_auto_sell():
                 continue
             pnl_pct = (curr - buy_price) / buy_price * 100
             partial = p.get("partial_sold", False)  # 절반 매도 완료 여부
-            if p.get("exit_rule") == "buyback":   # 11/20 자사주 스윙 전용 매도 규칙을 쓰는 종목은 손절 −8%·익절 없음 → 기존 임박 알림 기준 해당 없음
+            if p.get("exit_rule") in ("buyback", "trend"):   # 11/20 자사주 스윙 전용 매도 규칙을 쓰는 종목은 손절 −8%·익절 없음 → 기존 임박 알림 기준 해당 없음
                 continue
 
             # 등급 판정 — partial_sold 반영하여 다음 트리거에 맞게
