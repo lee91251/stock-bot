@@ -12,10 +12,15 @@ from datetime import date
 import requests
 
 KEY = os.environ.get("DART_API_KEY", "")
-OUT = "dart_fin.jsonl.gz"
 REPRTS = ["11013", "11012", "11014", "11011"]   # 1분기, 반기, 3분기, 사업보고서
 KEEP = {"매출액", "영업이익", "당기순이익", "당기순이익(손실)", "자산총계", "자본총계", "영업이익(손실)"}
 Y0 = int(sys.argv[1]) if len(sys.argv) > 1 else 2016
+# 11/20: 100사 1회 조회가 ~33초라 4시간에 2년치뿐 → 워크플로 matrix로 '연도 보고서' 하나씩 병렬 실행
+ONLY_RP = sys.argv[2] if len(sys.argv) > 2 else ""
+Y1 = Y0 if ONLY_RP else date.today().year
+if ONLY_RP:
+    REPRTS = [ONLY_RP]
+OUT = f"dart_fin_{Y0}_{ONLY_RP}.jsonl.gz" if ONLY_RP else "dart_fin.jsonl.gz"
 
 
 def corp_codes():
@@ -38,7 +43,7 @@ def main():
     batches = [cc[i:i + 100] for i in range(0, len(cc), 100)]
     calls = n = 0
     with gzip.open(OUT, "wt", encoding="utf-8") as fo:
-        for y in range(Y0, date.today().year + 1):
+        for y in range(Y0, Y1 + 1):
             for rp in REPRTS:
                 got = 0
                 for b in batches:

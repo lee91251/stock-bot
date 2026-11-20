@@ -1,12 +1,13 @@
 name: 연구용 재무 숫자 수집 (수동)
 
 # 11/20: 매매와 무관한 실적 서프라이즈 연구용. 수동 실행만, 결과는 커밋하지 않고 artifact(14일)로만 보관.
+# DART 100사 1회 조회가 ~33초 → 연도×보고서 단위로 쪼개 병렬(동시 10개, 봇 매매 작업 자리 남김).
 on:
   workflow_dispatch:
     inputs:
-      start_year:
-        description: "시작 연도"
-        default: "2016"
+      years:
+        description: "연도 목록(JSON)"
+        default: '["2018","2019","2020","2021","2022","2023","2024","2025","2026"]'
 
 permissions:
   contents: read
@@ -14,7 +15,13 @@ permissions:
 jobs:
   dart-fin:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        year: ${{ fromJSON(github.event.inputs.years) }}
+        reprt: ["11013", "11012", "11014", "11011"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,10 +33,10 @@ jobs:
       - name: DART 분기 재무 숫자 내려받기
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
-        run: python research_dart_fin.py "${{ github.event.inputs.start_year }}"
+        run: python research_dart_fin.py "${{ matrix.year }}" "${{ matrix.reprt }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dart-fin
-          path: dart_fin.jsonl.gz
+          name: dart-fin-${{ matrix.year }}-${{ matrix.reprt }}
+          path: dart_fin_*.jsonl.gz
           retention-days: 14
