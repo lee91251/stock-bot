@@ -7022,6 +7022,15 @@ def run_auto_buy():
             print(f"[자동매수] 🚀급등 신호만 통과 {len(_mom_only)}개 — 기록만, 매수 안 함: {', '.join(c['name'] for c in _mom_only[:5])}")
             candidates = [c for c in candidates if c not in _mom_only]
 
+    # 11/20 밤 회장 "모의계좌로 할 수 있는 모든 걸, 덜 잃고 많이 따게" — 기존 스윙(1~5일) 신규매수 끔.
+    #   근거: 8년 월별 시뮬(자가학습/29_portfolio_month.py) 스윙 C1통과 1,949건 비용 뺀 −0.09%/건, 현재설정 9년 중 5년 손실
+    #   → 자사주5·추세5가 학습·시험 두 기간 모두 우위(카운슬 5봇: 방향 유지, 크기는 절반으로 볼 것).
+    #   여기 candidates = 일반 스윙뿐(추세·자사주 후보는 아래에서 붙음). 후보기록·자가학습은 위에서 이미 끝남. 매도는 영향 없음.
+    #   되돌리기 = GitHub Variables SWING_BUY_ENABLED=true
+    if os.environ.get("SWING_BUY_ENABLED", "true").lower() == "false" and candidates:
+        print(f"[자동매수] 기존 스윙 신규매수 꺼짐 — 후보 {len(candidates)}개 기록만, 매수 안 함 (자사주·추세 무기는 아래에서 그대로)")
+        candidates = []
+
     # 진단 로그 — swing_signal 통과 0인 경우 어느 조건이 막는지 즉시 파악 가능
     diag_top_score.sort()
     print(f"\n[진단] 점수 분포: 65+ {diag_buckets['65+']} / 50-64 {diag_buckets['50-64']} / <50 {diag_buckets['<50']}")

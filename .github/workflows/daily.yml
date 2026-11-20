@@ -52,6 +52,10 @@ env:
   BUYBACK_IGNORE_RISK:  ${{ vars.BUYBACK_IGNORE_RISK || 'false' }} # 위험 70+ 정지 중에도 자사주만 매수 — 회장 승인 시 true
   TREND_ENABLED:        ${{ vars.TREND_ENABLED || 'true' }}       # 고점 근처 추세(−8%·20일) — 11/20 회장 승인
   MOMENTUM_BUY_ENABLED: ${{ vars.MOMENTUM_BUY_ENABLED || 'false' }} # 🚀급등 매수 — 11/20 회장 승인으로 끔(기록만)
+  # ── 11/20 밤 회장 "모의계좌로 할 수 있는 모든 걸, 덜 잃고 많이 따게" → 8년 월별 시뮬+카운슬 5봇 (자가학습/29_*.py) ──
+  SWING_BUY_ENABLED:    ${{ vars.SWING_BUY_ENABLED || 'false' }}  # 기존 스윙 신규매수 끔(후보기록·자가학습 유지). 되돌리기=Variables true
+  BUYBACK_MAX_HELD:     ${{ vars.BUYBACK_MAX_HELD || '5' }}        # 자사주 동시보유 3→5
+  TREND_MAX_HELD:       ${{ vars.TREND_MAX_HELD || '5' }}          # 추세 동시보유 3→5 (자사주5+추세5 = 10종목×100만)
 
 jobs:
   # ── 일일 AI 리포트 (cron-job.org 평일 08:00 KST) ────
