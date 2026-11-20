@@ -1,0 +1,35 @@
+name: 연구용 재무 숫자 수집 (수동)
+
+# 11/20: 매매와 무관한 실적 서프라이즈 연구용. 수동 실행만, 결과는 커밋하지 않고 artifact(14일)로만 보관.
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: "시작 연도"
+        default: "2016"
+
+permissions:
+  contents: read
+
+jobs:
+  dart-fin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: DART 분기 재무 숫자 내려받기
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python research_dart_fin.py "${{ github.event.inputs.start_year }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dart-fin
+          path: dart_fin.jsonl.gz
+          retention-days: 14
