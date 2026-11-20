@@ -6729,8 +6729,17 @@ def _buyback_candidates(bi: dict, now: datetime) -> list:
     return out
 
 
-def run_auto_buy():
+class _SkipCandidateLog(Exception):
+    """무기 먼저 회차에서 후보 기록 건너뛰기용 (run_auto_buy 내부 전용)."""
+
+
+def run_auto_buy(weapons_only: bool = False):
     """장 시작 후 자동 매수 (스윙). 09:30~15:30 30분 간격으로 호출.
+
+    weapons_only=True (11/21 회장 "무조건 벌어"): 250종목 분석을 건너뛰고 자사주·추세 무기 후보만 바로 매수.
+      연구 진입가 = '다음날 시가'라 늦을수록 손해(자사주 첫날 시가→종가 평균 +0.94%, 카운슬 딴지봇:
+      진입 0.5~1%p 불리하면 월 수익 절반). --autobuy가 10시 전엔 이 모드를 먼저 한 번 돌리고 일반 회차를 이어 돔.
+      일반 회차는 오늘 산 종목을 제외하므로 이중 매수 없음. 안내성 텔레그램은 콘솔로만(일반 회차가 보냄).
 
     스윙 점수 ≥ SWING_SCORE_MIN + swing_signal 통과 종목을 시장가 매수.
     보유 중 / 손절 쿨다운 종목 제외, 일일 한도(positions.json daily) 누적 추적.
@@ -6747,7 +6756,7 @@ def run_auto_buy():
 
     now = _now_kst()
     # 첫 호출 판단 — 09:00~09:40 사이만 텔레그램 차단/안내. 그 외 호출은 콘솔만.
-    is_first_call = now.hour == 9 and now.minute < 40
+    is_first_call = now.hour == 9 and now.minute < 40 and not weapons_only
 
     def _alert(msg: str) -> None:
         if is_first_call:
@@ -6899,7 +6908,9 @@ def run_auto_buy():
         _risk_halt = True
 
     # ── 종목 풀 구성 (KR_STOCKS + market_scan_cache) ──
-    pool = _load_auto_buy_pool()
+    pool = {} if weapons_only else _load_auto_buy_pool()   # 11/21 무기 먼저 회차는 분석 생략
+    if weapons_only:
+        print("[자동매수] ⚡ 무기 먼저 회차 — 분석 생략, 자사주·추세 후보만 바로 매수")
 
     # tomorrow_picks 로드 (어제 장마감/미장마감 분석으로 추출된 강세 후보)
     # 풀에서 picks 종목을 앞으로 빼서 먼저 분석 (cron 지연 시에도 우선 캐치)
@@ -6996,6 +7007,8 @@ def run_auto_buy():
 
     # 10/1 자가학습 ① — 검토한 모든 종목의 매수시점 상태 기록 (매매 판단 무관, 실패해도 매수 진행)
     try:
+        if weapons_only:   # 11/21 무기 먼저 회차 — 분석 안 했으니 기록할 것 없음(바로 뒤 일반 회차가 기록)
+            raise _SkipCandidateLog
         try:   # 11/19: 공시 제목(최근 3일)을 후보 기록에 함께 저장 — 기록 전용, 매수 점수엔 미반영
             _dart_titles = dart_recent_titles_all(days=3)
             print(f"[후보기록] 최근 3일 공시 {sum(len(v) for v in _dart_titles.values())}건 ({len(_dart_titles)}종목)")
@@ -7012,6 +7025,8 @@ def run_auto_buy():
             dart_titles=_dart_titles,
         )
         print(f"[후보기록] 오늘 신규 {_n}종목 기록 (검토 {len(analyzed_all)})")
+    except _SkipCandidateLog:
+        pass
     except Exception as e:
         print(f"[후보기록] 오류(매매 영향 없음): {e}")
 
@@ -7221,6 +7236,8 @@ def run_auto_buy():
         # 다이어트: 매수 후보 0개는 텔레그램 X (콘솔만). 30분마다 13번 호출되므로 시끄러움 방지.
         print(f"[자동매수] 매수할 종목 없음 — 시그널 통과 후보 {len(candidates)}개, "
               f"보유/쿨다운 제외 후 0개")
+        if weapons_only:   # 대시보드는 바로 뒤 일반 회차가 갱신
+            return
         # 매수 발생 X에도 대시보드 갱신 (현재가/평가손익/매도시점 거리 등 항상 최신)
         try:
             build_and_save_dashboard()
@@ -9338,6 +9355,14 @@ if __name__ == "__main__":
                 run_auto_sell()
             except Exception as _e:
                 print(f"[autobuy] 선행 매도점검 오류(매수는 계속): {_e}")
+            # 11/21 회장 "무조건 벌어": 10시 전엔 자사주·추세 무기부터 분석 없이 바로 매수(시가에 가깝게) → 그다음 일반 회차
+            _nw = _now_kst()
+            if (BUYBACK_ENABLED or TREND_ENABLED) and _nw.hour * 100 + _nw.minute < BUYBACK_LAST_HHMM:
+                try:
+                    run_auto_buy(weapons_only=True)
+                except Exception as _e:
+                    import traceback; traceback.print_exc()
+                    print(f"[autobuy] 무기 먼저 회차 오류(일반 회차는 계속): {_e}")
             try:
                 run_auto_buy()
             except Exception as _e:
