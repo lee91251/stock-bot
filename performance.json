@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-25",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-25",
-      "month": "2026-08",
-      "ticker": "079960.KQ",
-      "name": "동양이엔피",
-      "price": 18720.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-25",
-      "month": "2026-08",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 31500.0,
-      "score": 103,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-25",
-      "month": "2026-08",
-      "ticker": "298000.KS",
-      "name": "효성화학",
-      "price": 61300.0,
-      "score": 103,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-25",
-      "month": "2026-08",
-      "ticker": "005990.KQ",
-      "name": "매일홀딩스",
-      "price": 10520.0,
-      "score": 100,
-      "buy_signal": false,
-      "result": null
-    },
-    {
       "date": "2026-08-26",
       "month": "2026-08",
       "ticker": "023760.KQ",
@@ -3028,6 +2978,56 @@
       "price": 18000.0,
       "score": 113,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "month": "2026-11",
+      "ticker": "009540.KS",
+      "name": "HD한국조선해양",
+      "price": 222500.0,
+      "score": 136,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "month": "2026-11",
+      "ticker": "039490.KS",
+      "name": "키움증권",
+      "price": 188500.0,
+      "score": 123,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "month": "2026-11",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 25550.0,
+      "score": 121,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "month": "2026-11",
+      "ticker": "267250.KS",
+      "name": "HD현대",
+      "price": 113000.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "month": "2026-11",
+      "ticker": "023590.KS",
+      "name": "다우기술",
+      "price": 28950.0,
+      "score": 118,
+      "buy_signal": true,
       "result": null
     }
   ]
