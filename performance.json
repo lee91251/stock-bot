@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-27",
-      "month": "2026-08",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 34800.0,
-      "score": 128,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-27",
-      "month": "2026-08",
-      "ticker": "023760.KQ",
-      "name": "한국캐피탈",
-      "price": 670.0,
-      "score": 123,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-27",
-      "month": "2026-08",
-      "ticker": "243070.KQ",
-      "name": "휴온스",
-      "price": 24800.0,
-      "score": 105,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-27",
-      "month": "2026-08",
-      "ticker": "039490.KS",
-      "name": "키움증권",
-      "price": 278500.0,
-      "score": 101,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-27",
-      "month": "2026-08",
-      "ticker": "348950.KS",
-      "name": "제이알글로벌리츠",
-      "price": 1182.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-28",
       "month": "2026-08",
       "ticker": "214320.KS",
@@ -3028,6 +2978,56 @@
       "price": 92500.0,
       "score": 118,
       "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "month": "2026-11",
+      "ticker": "042420.KQ",
+      "name": "네오위즈홀딩스",
+      "price": 16440.0,
+      "score": 118,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "month": "2026-11",
+      "ticker": "009540.KS",
+      "name": "HD한국조선해양",
+      "price": 225000.0,
+      "score": 113,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "month": "2026-11",
+      "ticker": "088350.KS",
+      "name": "한화생명",
+      "price": 3520.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "month": "2026-11",
+      "ticker": "381970.KS",
+      "name": "KG모빌리티플랫폼",
+      "price": 5150.0,
+      "score": 111,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "month": "2026-11",
+      "ticker": "051500.KQ",
+      "name": "CJ프레시웨이",
+      "price": 20150.0,
+      "score": 111,
+      "buy_signal": false,
       "result": null
     }
   ]
