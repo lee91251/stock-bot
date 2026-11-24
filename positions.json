@@ -1,5 +1,57 @@
 {
-  "positions": {},
+  "positions": {
+    "205100": {
+      "name": "엑셈",
+      "qty": 189,
+      "buy_price": 5290,
+      "buy_date": "2026-11-24",
+      "buy_time": "09:04",
+      "buy_amount": 999810,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "자사주 매입",
+      "order_no": "0000004125",
+      "strategy": "buyback",
+      "buyback_date": "20261123",
+      "pre20": -31.0,
+      "exit_rule": "buyback"
+    },
+    "042660": {
+      "name": "한화오션",
+      "qty": 23,
+      "buy_price": 41750,
+      "buy_date": "2026-11-24",
+      "buy_time": "09:04",
+      "buy_amount": 960250,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "자사주 매입",
+      "order_no": "0000004133",
+      "strategy": "buyback",
+      "buyback_date": "20261123",
+      "pre20": -24.7,
+      "exit_rule": "buyback"
+    },
+    "006060": {
+      "name": "화승인더스트리",
+      "qty": 549,
+      "buy_price": 1820,
+      "buy_date": "2026-11-24",
+      "buy_time": "09:04",
+      "buy_amount": 999180,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "자사주 매입",
+      "order_no": "0000004145",
+      "strategy": "buyback",
+      "buyback_date": "20261123",
+      "pre20": -15.2,
+      "exit_rule": "buyback"
+    }
+  },
   "history": [
     {
       "date": "2026-06-16",
@@ -1541,6 +1593,48 @@
       "profit": 58220,
       "ai_opinion": "",
       "journal": ""
+    },
+    {
+      "date": "2026-11-24",
+      "time": "09:04",
+      "side": "buy",
+      "code": "205100",
+      "name": "엑셈",
+      "qty": 189,
+      "price": 5290,
+      "amount": 999810,
+      "reason": "자사주 매입 공시 20261123",
+      "sector": "자사주 매입",
+      "strategy": "buyback",
+      "tag": "🏦 자사주 매입"
+    },
+    {
+      "date": "2026-11-24",
+      "time": "09:04",
+      "side": "buy",
+      "code": "042660",
+      "name": "한화오션",
+      "qty": 23,
+      "price": 41750,
+      "amount": 960250,
+      "reason": "자사주 매입 공시 20261123",
+      "sector": "자사주 매입",
+      "strategy": "buyback",
+      "tag": "🏦 자사주 매입"
+    },
+    {
+      "date": "2026-11-24",
+      "time": "09:04",
+      "side": "buy",
+      "code": "006060",
+      "name": "화승인더스트리",
+      "qty": 549,
+      "price": 1820,
+      "amount": 999180,
+      "reason": "자사주 매입 공시 20261123",
+      "sector": "자사주 매입",
+      "strategy": "buyback",
+      "tag": "🏦 자사주 매입"
     }
   ],
   "daily": {
@@ -1938,6 +2032,11 @@
       "buy_count": 0,
       "buy_amount": 0,
       "trade_count": 0
+    },
+    "2026-11-24": {
+      "buy_count": 3,
+      "buy_amount": 2959240,
+      "trade_count": 3
     }
   },
   "loss_cooldown": {
@@ -1950,7 +2049,7 @@
   },
   "halted": false,
   "pending_cancel": {},
-  "last_risk_level": "위험",
+  "last_risk_level": "안전",
   "_algorithm_reset_date": "2026-06-16",
   "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)",
   "reconcile_seen": {
