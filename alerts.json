@@ -1,13 +1,5 @@
 [
   {
-    "time": "2026-11-24T09:18:08.287725+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 엑셈 🏠",
-    "detail": "주요사항보고서(자기주식취득결정)"
-  },
-  {
     "time": "2026-11-25T06:01:01.153202+09:00",
     "category": "briefing",
     "level": "info",
@@ -46,5 +38,13 @@
     "emoji": "📰",
     "title": "DART 📰 인텔리안테크 🏠",
     "detail": "주요사항보고서(자기주식취득신탁계약체결결정)"
+  },
+  {
+    "time": "2026-11-25T10:47:57.612913+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 한화오션 🏠",
+    "detail": "풍문또는보도에대한해명              "
   }
 ]
