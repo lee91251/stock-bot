@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-28",
-      "month": "2026-08",
-      "ticker": "214320.KS",
-      "name": "이노션",
-      "price": 18670.0,
-      "score": 105,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-28",
-      "month": "2026-08",
-      "ticker": "069620.KS",
-      "name": "대웅제약",
-      "price": 124900.0,
-      "score": 102,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-28",
-      "month": "2026-08",
-      "ticker": "243070.KQ",
-      "name": "휴온스",
-      "price": 22700.0,
-      "score": 102,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-28",
-      "month": "2026-08",
-      "ticker": "005710.KQ",
-      "name": "대원산업",
-      "price": 10620.0,
-      "score": 100,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-28",
-      "month": "2026-08",
-      "ticker": "348950.KS",
-      "name": "제이알글로벌리츠",
-      "price": 1182.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-08-31",
       "month": "2026-08",
       "ticker": "243070.KQ",
@@ -3028,6 +2978,56 @@
       "price": 20150.0,
       "score": 111,
       "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-26",
+      "month": "2026-11",
+      "ticker": "009540.KS",
+      "name": "HD한국조선해양",
+      "price": 221000.0,
+      "score": 122,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-26",
+      "month": "2026-11",
+      "ticker": "004800.KS",
+      "name": "효성",
+      "price": 113500.0,
+      "score": 113,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-26",
+      "month": "2026-11",
+      "ticker": "003650.KS",
+      "name": "미창석유",
+      "price": 101600.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-26",
+      "month": "2026-11",
+      "ticker": "107590.KS",
+      "name": "미원홀딩스",
+      "price": 53100.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-26",
+      "month": "2026-11",
+      "ticker": "148150.KQ",
+      "name": "세경하이테크",
+      "price": 2760.0,
+      "score": 110,
+      "buy_signal": true,
       "result": null
     }
   ]
