@@ -1,85 +1,38 @@
 {
-  "date": "2026-11-25",
-  "generated_at": "2026-11-24T15:43:11.959180",
+  "date": "2026-11-26",
+  "generated_at": "2026-11-25T15:44:19.279208",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "108490",
-      "name": "로보티즈",
-      "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 19.51,
-      "today_vol_ratio": 264.0,
-      "today_score": 57,
-      "reasons": [
-        "오늘 +19.5% 마감",
-        "거래량 평균 +264%",
-        "스윙점수 57"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "090360",
-      "name": "로보스타",
-      "sector": "기타",
-      "score_bonus": 10,
-      "today_change": 13.46,
-      "today_vol_ratio": 258.0,
+      "code": "003230",
+      "name": "삼양식품",
+      "sector": "음식료",
+      "score_bonus": 7,
+      "today_change": 6.94,
+      "today_vol_ratio": 169.0,
       "today_score": 53,
       "reasons": [
-        "오늘 +13.5% 마감",
-        "거래량 평균 +258%",
+        "오늘 +6.9% 마감",
+        "거래량 평균 +169%",
         "스윙점수 53"
       ],
       "source": "close_summary"
     },
     {
-      "code": "214150",
-      "name": "클래시스",
-      "sector": "헬스케어",
+      "code": "097950",
+      "name": "CJ제일제당",
+      "sector": "음식료",
       "score_bonus": 6,
-      "today_change": 6.4,
-      "today_vol_ratio": 430.0,
-      "today_score": 52,
+      "today_change": 6.05,
+      "today_vol_ratio": 205.0,
+      "today_score": 66,
       "reasons": [
-        "오늘 +6.4% 마감",
-        "거래량 평균 +430%",
-        "스윙점수 52"
+        "오늘 +6.0% 마감",
+        "거래량 평균 +205%",
+        "스윙점수 66"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -5,
-    "IT": -5,
-    "통신": -5,
-    "AI": -5,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": 5,
-    "제약": 5,
-    "헬스": 5,
-    "조선": -1,
-    "방산": -1,
-    "기계": -1,
-    "화학": 1,
-    "소재": 1,
-    "철강": 1,
-    "자동차": 1,
-    "유통": 1
-  },
-  "us_etf_changes": {
-    "SOXX": -8.27,
-    "XLK": -3.37,
-    "XLF": 0.82,
-    "XLE": 0.94,
-    "XLV": 3.01,
-    "XLI": -0.56,
-    "XLB": 0.56,
-    "XLY": 0.64
-  },
-  "sector_updated_at": "2026-11-25T06:01:02.876665"
+  "sector_weights": {}
 }
