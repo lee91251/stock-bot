@@ -50,6 +50,40 @@
       "buyback_date": "20261123",
       "pre20": -15.2,
       "exit_rule": "buyback"
+    },
+    "272110": {
+      "name": "케이엔제이",
+      "qty": 47,
+      "buy_price": 21050,
+      "buy_date": "2026-11-25",
+      "buy_time": "09:04",
+      "buy_amount": 989350,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "자사주 매입",
+      "order_no": "0000004516",
+      "strategy": "buyback",
+      "buyback_date": "20261124",
+      "pre20": -18.1,
+      "exit_rule": "buyback"
+    },
+    "189300": {
+      "name": "인텔리안테크",
+      "qty": 22,
+      "buy_price": 44600,
+      "buy_date": "2026-11-25",
+      "buy_time": "09:04",
+      "buy_amount": 981200,
+      "partial_sold": false,
+      "score": 0,
+      "swing_score": 0,
+      "sector": "자사주 매입",
+      "order_no": "0000004519",
+      "strategy": "buyback",
+      "buyback_date": "20261124",
+      "pre20": -15.4,
+      "exit_rule": "buyback"
     }
   },
   "history": [
@@ -1635,6 +1669,34 @@
       "sector": "자사주 매입",
       "strategy": "buyback",
       "tag": "🏦 자사주 매입"
+    },
+    {
+      "date": "2026-11-25",
+      "time": "09:04",
+      "side": "buy",
+      "code": "272110",
+      "name": "케이엔제이",
+      "qty": 47,
+      "price": 21050,
+      "amount": 989350,
+      "reason": "자사주 매입 공시 20261124",
+      "sector": "자사주 매입",
+      "strategy": "buyback",
+      "tag": "🏦 자사주 매입"
+    },
+    {
+      "date": "2026-11-25",
+      "time": "09:04",
+      "side": "buy",
+      "code": "189300",
+      "name": "인텔리안테크",
+      "qty": 22,
+      "price": 44600,
+      "amount": 981200,
+      "reason": "자사주 매입 공시 20261124",
+      "sector": "자사주 매입",
+      "strategy": "buyback",
+      "tag": "🏦 자사주 매입"
     }
   ],
   "daily": {
@@ -2037,6 +2099,11 @@
       "buy_count": 3,
       "buy_amount": 2959240,
       "trade_count": 3
+    },
+    "2026-11-25": {
+      "buy_count": 2,
+      "buy_amount": 1970550,
+      "trade_count": 2
     }
   },
   "loss_cooldown": {
@@ -2049,7 +2116,7 @@
   },
   "halted": false,
   "pending_cancel": {},
-  "last_risk_level": "안전",
+  "last_risk_level": "위험",
   "_algorithm_reset_date": "2026-06-16",
   "_algorithm_version": "2026-06-16 슬롯10·종목당100만·분산 (안 잃기)",
   "reconcile_seen": {
