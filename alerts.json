@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-11-25T14:48:01.327708+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ BNK금융지주",
-    "detail": "현금ㆍ현물배당을위한주주명부폐쇄(기준일)결정(자회사의 주요경영사항)              "
-  },
-  {
-    "time": "2026-11-25T14:48:01.328117+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "✅",
-    "title": "DART ✅ BNK금융지주",
-    "detail": "현금ㆍ현물배당결정(자회사의 주요경영사항)              "
-  },
-  {
     "time": "2026-11-26T06:01:09.270889+09:00",
     "category": "briefing",
     "level": "danger",
@@ -94,5 +78,13 @@
     "emoji": "📰",
     "title": "DART 📰 SKC 🏠",
     "detail": "대규모기업집단현황공시[분기별공시(개별회사용)]"
+  },
+  {
+    "time": "2026-11-27T06:01:06.745709+09:00",
+    "category": "briefing",
+    "level": "info",
+    "emoji": "🌙",
+    "title": "미국 마감",
+    "detail": "S&P -0.25% / 나스닥 -0.62% / VIX 26.80 / 환율 1,343원 · 📊 미국 혼조 — 코스피 횡보 가능성. 개별 종목 대응 집중."
   }
 ]
