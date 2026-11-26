@@ -1,68 +1,23 @@
 {
-  "date": "2026-11-26",
-  "generated_at": "2026-11-25T15:44:19.279208",
+  "date": "2026-11-27",
+  "generated_at": "2026-11-26T15:44:11.931815",
   "source_phase": "close_summary",
   "picks": [
     {
-      "code": "003230",
-      "name": "삼양식품",
-      "sector": "음식료",
+      "code": "204620",
+      "name": "글로벌텍스프리",
+      "sector": "기타",
       "score_bonus": 7,
-      "today_change": 6.94,
-      "today_vol_ratio": 169.0,
-      "today_score": 53,
+      "today_change": 7.49,
+      "today_vol_ratio": 296.0,
+      "today_score": 59,
       "reasons": [
-        "오늘 +6.9% 마감",
-        "거래량 평균 +169%",
-        "스윙점수 53"
-      ],
-      "source": "close_summary"
-    },
-    {
-      "code": "097950",
-      "name": "CJ제일제당",
-      "sector": "음식료",
-      "score_bonus": 6,
-      "today_change": 6.05,
-      "today_vol_ratio": 205.0,
-      "today_score": 66,
-      "reasons": [
-        "오늘 +6.0% 마감",
-        "거래량 평균 +205%",
-        "스윙점수 66"
+        "오늘 +7.5% 마감",
+        "거래량 평균 +296%",
+        "스윙점수 59"
       ],
       "source": "close_summary"
     }
   ],
-  "sector_weights": {
-    "반도체": -1,
-    "IT": -1,
-    "통신": -1,
-    "AI": -1,
-    "금융": 1,
-    "은행": 1,
-    "보험": 1,
-    "에너지": 1,
-    "정유": 1,
-    "바이오": -1,
-    "제약": -1,
-    "헬스": -1,
-    "조선": 1,
-    "방산": 1,
-    "기계": 1,
-    "화학": 3,
-    "소재": 3,
-    "철강": 3
-  },
-  "us_etf_changes": {
-    "SOXX": -0.51,
-    "XLK": -0.77,
-    "XLF": 0.77,
-    "XLE": 0.84,
-    "XLV": -0.52,
-    "XLI": 0.9,
-    "XLB": 2.12,
-    "XLY": -0.13
-  },
-  "sector_updated_at": "2026-11-26T06:01:10.550657"
+  "sector_weights": {}
 }
