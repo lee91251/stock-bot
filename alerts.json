@@ -1,21 +1,5 @@
 [
   {
-    "time": "2026-11-25T09:10:54.924723+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 케이엔제이 🏠",
-    "detail": "주요사항보고서(자기주식취득신탁계약체결결정)"
-  },
-  {
-    "time": "2026-11-25T09:10:54.925316+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 인텔리안테크 🏠",
-    "detail": "주요사항보고서(자기주식취득신탁계약체결결정)"
-  },
-  {
     "time": "2026-11-25T10:47:57.612913+09:00",
     "category": "disclosure",
     "level": "info",
@@ -70,5 +54,13 @@
     "emoji": "✅",
     "title": "위험 등급 하락: 위험 → 경계",
     "detail": "50/100 — 정상화 추세"
+  },
+  {
+    "time": "2026-11-26T09:52:00.803189+09:00",
+    "category": "risk",
+    "level": "info",
+    "emoji": "✅",
+    "title": "위험 등급 하락: 경계 → 주의",
+    "detail": "35/100 — 정상화 추세"
   }
 ]
