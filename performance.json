@@ -31,56 +31,6 @@
   },
   "recommendations": [
     {
-      "date": "2026-08-31",
-      "month": "2026-08",
-      "ticker": "243070.KQ",
-      "name": "휴온스",
-      "price": 22200.0,
-      "score": 105,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-31",
-      "month": "2026-08",
-      "ticker": "015760.KS",
-      "name": "한국전력",
-      "price": 32550.0,
-      "score": 98,
-      "buy_signal": false,
-      "result": null
-    },
-    {
-      "date": "2026-08-31",
-      "month": "2026-08",
-      "ticker": "037460.KQ",
-      "name": "삼지전자",
-      "price": 30400.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-31",
-      "month": "2026-08",
-      "ticker": "348950.KS",
-      "name": "제이알글로벌리츠",
-      "price": 1182.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
-      "date": "2026-08-31",
-      "month": "2026-08",
-      "ticker": "007330.KQ",
-      "name": "푸른저축은행",
-      "price": 10100.0,
-      "score": 98,
-      "buy_signal": true,
-      "result": null
-    },
-    {
       "date": "2026-09-01",
       "month": "2026-09",
       "ticker": "418470.KQ",
@@ -3027,6 +2977,56 @@
       "name": "세경하이테크",
       "price": 2760.0,
       "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-27",
+      "month": "2026-11",
+      "ticker": "009540.KS",
+      "name": "HD한국조선해양",
+      "price": 223000.0,
+      "score": 115,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-27",
+      "month": "2026-11",
+      "ticker": "003650.KS",
+      "name": "미창석유",
+      "price": 100100.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-27",
+      "month": "2026-11",
+      "ticker": "078070.KQ",
+      "name": "유비쿼스홀딩스",
+      "price": 7090.0,
+      "score": 110,
+      "buy_signal": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-27",
+      "month": "2026-11",
+      "ticker": "015760.KS",
+      "name": "한국전력",
+      "price": 25550.0,
+      "score": 108,
+      "buy_signal": false,
+      "result": null
+    },
+    {
+      "date": "2026-11-27",
+      "month": "2026-11",
+      "ticker": "004000.KS",
+      "name": "롯데정밀화학",
+      "price": 30950.0,
+      "score": 108,
       "buy_signal": true,
       "result": null
     }
