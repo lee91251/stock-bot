@@ -1,37 +1,5 @@
 [
   {
-    "time": "2026-11-26T14:09:42.758985+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 GS건설 🏠",
-    "detail": "[기재정정]타인에대한채무보증결정              "
-  },
-  {
-    "time": "2026-11-26T14:18:04.043119+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 화승인더스트리 🏠",
-    "detail": "주식등의대량보유상황보고서(일반)"
-  },
-  {
-    "time": "2026-11-26T14:33:19.185914+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 엑셈 🏠",
-    "detail": "주식등의대량보유상황보고서(일반)"
-  },
-  {
-    "time": "2026-11-26T14:33:19.186512+09:00",
-    "category": "disclosure",
-    "level": "info",
-    "emoji": "📰",
-    "title": "DART 📰 SKC 🏠",
-    "detail": "대규모기업집단현황공시[분기별공시(개별회사용)]"
-  },
-  {
     "time": "2026-11-27T06:01:06.745709+09:00",
     "category": "briefing",
     "level": "info",
@@ -118,5 +86,13 @@
     "emoji": "📰",
     "title": "DART 📰 삼성전자 🏠",
     "detail": "임원ㆍ주요주주특정증권등소유상황보고서"
+  },
+  {
+    "time": "2026-11-27T14:48:05.606305+09:00",
+    "category": "disclosure",
+    "level": "info",
+    "emoji": "📰",
+    "title": "DART 📰 삼성전자 🏠",
+    "detail": "[기재정정]임원ㆍ주요주주특정증권등소유상황보고서"
   }
 ]
