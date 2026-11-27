@@ -1,17 +1,12 @@
 {
-  "updated": "2026-11-26 16:11",
-  "breadth": 71.9,
-  "smoothed_5d": 46.7,
+  "updated": "2026-11-27 16:23",
+  "breadth": 88.8,
+  "smoothed_5d": 62.6,
   "ma_days": 5,
-  "regime": "bad",
+  "regime": "good",
   "good_min": 50.0,
   "enforce": false,
   "history": [
-    {
-      "date": "2026-10-16",
-      "breadth": 89.3,
-      "n": 1394
-    },
     {
       "date": "2026-10-19",
       "breadth": 71.3,
@@ -155,6 +150,11 @@
     {
       "date": "2026-11-26",
       "breadth": 71.9,
+      "n": 1394
+    },
+    {
+      "date": "2026-11-27",
+      "breadth": 88.8,
       "n": 1394
     }
   ]
